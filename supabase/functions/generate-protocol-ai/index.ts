@@ -139,6 +139,8 @@ serve(async (req) => {
 
     // Optional student context (labs, weight, gender, current stack)
     let dossier = "";
+    const bodyImageParts: Array<{ type: "image_url"; image_url: { url: string } }> = [];
+    let imagesMeta = "";
     if (studentId && !isReview) {
       try {
         const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -152,6 +154,56 @@ serve(async (req) => {
         if (prof) {
           dossier = `DOSSIÊ DO ALUNO:\n${JSON.stringify(prof, null, 2)}`;
         }
+
+        // Fetch latest body images (current session) for visual body composition analysis
+        try {
+          const { data: imgs } = await admin
+            .from("body_images")
+            .select("type, storage_path, image_url, uploaded_at, is_current")
+            .eq("user_id", studentId)
+            .order("uploaded_at", { ascending: false })
+            .limit(12);
+
+          if (imgs && imgs.length) {
+            // Prefer is_current; fallback to most recent session (10-min window from latest)
+            let selected = imgs.filter((i: any) => i.is_current);
+            if (!selected.length) {
+              const anchor = new Date(imgs[0].uploaded_at).getTime();
+              selected = imgs.filter(
+                (i: any) => Math.abs(new Date(i.uploaded_at).getTime() - anchor) <= 10 * 60 * 1000
+              );
+            }
+            // Keep only front/back/profile, dedup by type (keep newest)
+            const byType: Record<string, any> = {};
+            for (const img of selected) {
+              if (!["front", "back", "profile"].includes(img.type)) continue;
+              if (!byType[img.type]) byType[img.type] = img;
+            }
+
+            const metaLines: string[] = [];
+            for (const t of ["front", "back", "profile"]) {
+              const img = byType[t];
+              if (!img) continue;
+              let url: string | null = null;
+              if (img.storage_path) {
+                const { data: signed } = await admin.storage
+                  .from("body-images")
+                  .createSignedUrl(img.storage_path, 60 * 30);
+                url = signed?.signedUrl ?? null;
+              }
+              if (!url && img.image_url) url = img.image_url;
+              if (url) {
+                bodyImageParts.push({ type: "image_url", image_url: { url } });
+                metaLines.push(`- ${t} · ${new Date(img.uploaded_at).toLocaleString("pt-BR")}`);
+              }
+            }
+            if (metaLines.length) {
+              imagesMeta = `\nFOTOS DE EVOLUÇÃO (mais recentes) — use CAMADA 7 (ANÁLISE DE IMAGENS) para estimar %GC, distribuição muscular, assimetrias, retenção hídrica, pontos fracos e maturidade muscular. Rotule como "estimativa visual — não é diagnóstico":\n${metaLines.join("\n")}`;
+            }
+          }
+        } catch (e) {
+          console.warn("body images fetch failed", e);
+        }
       } catch (e) {
         console.warn("dossier fetch failed", e);
       }
@@ -163,7 +215,11 @@ serve(async (req) => {
 
     const userText = isReview
       ? `Revise este protocolo (HTML) e devolva análise + versão revisada:\n\n${protocolContent}`
-      : `BRIEFING DO ADMIN/CONSULTOR:\n${JSON.stringify(brief, null, 2)}\n\n${dossier}\n\nObservações livres:\n${freeText || "(nenhuma)"}\n\nMonte o protocolo agora, HTML puro no formato SMART PROTOCOL.`;
+      : `BRIEFING DO ADMIN/CONSULTOR:\n${JSON.stringify(brief, null, 2)}\n\n${dossier}${imagesMeta}\n\nObservações livres:\n${freeText || "(nenhuma)"}\n\nMonte o protocolo agora, HTML puro no formato SMART PROTOCOL.`;
+
+    const userMessage = (!isReview && bodyImageParts.length)
+      ? { role: "user" as const, content: [{ type: "text" as const, text: userText }, ...bodyImageParts] }
+      : { role: "user" as const, content: userText };
 
     const tool = isReview
       ? {
@@ -217,7 +273,7 @@ serve(async (req) => {
         temperature: 0.4,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userText },
+          userMessage,
         ],
         tools: [tool],
         tool_choice: { type: "function", function: { name: tool.function.name } },
@@ -240,7 +296,7 @@ serve(async (req) => {
     const call = data?.choices?.[0]?.message?.tool_calls?.[0];
     if (!call?.function?.arguments) throw new Error("Sem tool call na resposta");
     const parsed = JSON.parse(call.function.arguments);
-    parsed._meta = { usage: data?.usage, model: MODEL_ID };
+    parsed._meta = { usage: data?.usage, model: MODEL_ID, images_used: bodyImageParts.length };
 
     return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
