@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera } from "lucide-react";
+import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera, Save } from "lucide-react";
+import ClinicalExportDialog from "@/components/admin/ClinicalExportDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/utils";
@@ -40,6 +41,7 @@ export default function AdminStudentAnalysis() {
   const [extraImagePaths, setExtraImagePaths] = useState<{ path: string; name: string }[]>([]);
   const [extraExamPaths, setExtraExamPaths] = useState<{ path: string; name: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const examInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -506,7 +508,12 @@ export default function AdminStudentAnalysis() {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Parecer completo</CardTitle>
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-sm">Parecer completo</CardTitle>
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setExportOpen(true)}>
+                      <Save className="w-3.5 h-3.5" /> Salvar / Exportar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div
@@ -516,6 +523,19 @@ export default function AdminStudentAnalysis() {
                 </CardContent>
               </Card>
             </div>
+          )}
+
+          {current && (
+            <ClinicalExportDialog
+              open={exportOpen}
+              onOpenChange={setExportOpen}
+              reportHtml={current.report_html}
+              title={current.title}
+              studentName={selectedStudent?.full_name || ""}
+              analysisId={current.id}
+              createdAt={current.created_at}
+              onSaved={() => refetchHistory()}
+            />
           )}
         </div>
       </div>
