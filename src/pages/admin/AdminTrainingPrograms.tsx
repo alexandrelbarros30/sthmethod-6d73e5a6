@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon, Download, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
@@ -415,6 +415,25 @@ const AdminTrainingPrograms = () => {
               queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
             }}
           />
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const toastId = toast.loading("Sincronizando capas no ST Coach...");
+              try {
+                const { data, error } = await supabase.functions.invoke("supercoach-sync-covers", { body: {} });
+                if (error) throw error;
+                toast.success(
+                  `Capas sincronizadas · ${data?.programs_synced || 0} programas / ${data?.trainings_synced || 0} treinos` +
+                    (data?.programs_failed || data?.trainings_failed ? ` · falhas: ${(data?.programs_failed || 0) + (data?.trainings_failed || 0)}` : ""),
+                  { id: toastId }
+                );
+              } catch (e: any) {
+                toast.error(`Falha ao sincronizar capas: ${e?.message || e}`, { id: toastId });
+              }
+            }}
+          >
+            <RefreshCw className="w-4 h-4 mr-1" /> Sincronizar capas ST Coach
+          </Button>
           <Button onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
             <Plus className="w-4 h-4 mr-1" /> Novo Programa
           </Button>
