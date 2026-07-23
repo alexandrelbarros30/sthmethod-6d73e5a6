@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/utils";
@@ -36,6 +36,12 @@ export default function AdminStudentAnalysis() {
   const [examText, setExamText] = useState("");
   const [consultantNotes, setConsultantNotes] = useState("");
   const [current, setCurrent] = useState<Analysis | null>(null);
+  const [selectedBodyIds, setSelectedBodyIds] = useState<string[]>([]);
+  const [extraImagePaths, setExtraImagePaths] = useState<{ path: string; name: string }[]>([]);
+  const [extraExamPaths, setExtraExamPaths] = useState<{ path: string; name: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const examInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-min"],
@@ -73,11 +79,121 @@ export default function AdminStudentAnalysis() {
     },
   });
 
+  const { data: bodyImages = [] } = useQuery({
+    queryKey: ["body-images-for-analysis", studentId],
+    enabled: !!studentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("body_images")
+        .select("id, type, storage_path, image_url, uploaded_at, is_current")
+        .eq("user_id", studentId!)
+        .order("uploaded_at", { ascending: false })
+        .limit(40);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: bodyImagePreviews = {} } = useQuery({
+    queryKey: ["body-image-signed", studentId, bodyImages.map((b: any) => b.id).join(",")],
+    enabled: !!studentId && bodyImages.length > 0,
+    queryFn: async () => {
+      const out: Record<string, string> = {};
+      for (const b of bodyImages as any[]) {
+        if (b.storage_path) {
+          const { data } = await supabase.storage.from("body-images").createSignedUrl(b.storage_path, 60 * 30);
+          if (data?.signedUrl) out[b.id] = data.signedUrl;
+        } else if (b.image_url) {
+          out[b.id] = b.image_url;
+        }
+      }
+      return out;
+    },
+  });
+
+  const toggleBody = (id: string) =>
+    setSelectedBodyIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const uploadExamFiles = async (files: FileList | null) => {
+    if (!files || !studentId) return;
+    setUploading(true);
+    try {
+      const uploaded: { path: string; name: string }[] = [];
+      for (const file of Array.from(files)) {
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+        if (!["pdf", "jpg", "jpeg", "png", "webp"].includes(ext)) {
+          toast.error(`Formato não suportado: ${file.name}`);
+          continue;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+          toast.error(`${file.name} maior que 15MB`);
+          continue;
+        }
+        const path = `clinical-analysis/${studentId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error } = await supabase.storage.from("documents").upload(path, file, {
+          contentType: file.type || undefined,
+          upsert: false,
+        });
+        if (error) { toast.error(`${file.name}: ${error.message}`); continue; }
+        uploaded.push({ path, name: file.name });
+      }
+      if (uploaded.length) {
+        setExtraExamPaths((p) => [...p, ...uploaded]);
+        toast.success(`${uploaded.length} exame(s) anexado(s)`);
+      }
+    } finally {
+      setUploading(false);
+      if (examInputRef.current) examInputRef.current.value = "";
+    }
+  };
+
+  const uploadRefImages = async (files: FileList | null) => {
+    if (!files || !studentId) return;
+    setUploading(true);
+    try {
+      const uploaded: { path: string; name: string }[] = [];
+      for (const file of Array.from(files)) {
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+        if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
+          toast.error(`Só imagens JPG/PNG/WEBP: ${file.name}`);
+          continue;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+          toast.error(`${file.name} maior que 15MB`);
+          continue;
+        }
+        const path = `clinical-analysis/${studentId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error } = await supabase.storage.from("body-images").upload(path, file, {
+          contentType: file.type || undefined,
+          upsert: false,
+        });
+        if (error) { toast.error(`${file.name}: ${error.message}`); continue; }
+        uploaded.push({ path, name: file.name });
+      }
+      if (uploaded.length) {
+        setExtraImagePaths((p) => [...p, ...uploaded]);
+        toast.success(`${uploaded.length} imagem(ns) anexada(s)`);
+      }
+    } finally {
+      setUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
   const generate = useMutation({
     mutationFn: async () => {
       if (!studentId) throw new Error("Selecione um aluno");
       const { data, error } = await supabase.functions.invoke("sthia-clinical-analysis", {
-        body: { studentId, examText, consultantNotes, focus, save: true },
+        body: {
+          studentId,
+          examText,
+          consultantNotes,
+          focus,
+          save: true,
+          bodyImageIds: selectedBodyIds.length ? selectedBodyIds : null,
+          extraImagePaths: extraImagePaths.map((f) => f.path),
+          extraExamPaths: extraExamPaths.map((f) => f.path),
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -88,6 +204,9 @@ export default function AdminStudentAnalysis() {
       setCurrent(data);
       setExamText("");
       setConsultantNotes("");
+      setExtraExamPaths([]);
+      setExtraImagePaths([]);
+      setSelectedBodyIds([]);
       qc.invalidateQueries({ queryKey: ["clinical-analyses", studentId] });
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao gerar parecer"),
@@ -220,6 +339,118 @@ export default function AdminStudentAnalysis() {
                     A STHIA cruza este texto com o dossiê (bioimpedância, fotos, peso, protocolo/dieta atuais).
                   </p>
                 </div>
+
+                {/* Upload de exames laboratoriais (PDF/JPG/PNG) */}
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG/PNG)
+                    </Label>
+                    <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={uploading} onClick={() => examInputRef.current?.click()}>
+                      <Upload className="w-3.5 h-3.5" /> Anexar
+                    </Button>
+                    <input
+                      ref={examInputRef}
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,image/webp"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => uploadExamFiles(e.target.files)}
+                    />
+                  </div>
+                  {extraExamPaths.length === 0 ? (
+                    <p className="text-[10px] text-muted-foreground">Envie laudos/PDFs — a STHIA fará OCR e integrará todos os marcadores encontrados.</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {extraExamPaths.map((f, i) => (
+                        <li key={f.path} className="flex items-center justify-between gap-2 text-xs bg-muted/50 rounded px-2 py-1">
+                          <span className="truncate flex items-center gap-1.5"><FileText className="w-3 h-3" />{f.name}</span>
+                          <button onClick={() => setExtraExamPaths((p) => p.filter((_, idx) => idx !== i))} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Seleção de fotos antes/depois do dossiê */}
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  <Label className="text-xs flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5" /> Fotos do aluno para análise visual (antes/depois)
+                  </Label>
+                  {bodyImages.length === 0 ? (
+                    <p className="text-[10px] text-muted-foreground">Aluno não possui fotos cadastradas. Anexe imagens abaixo se quiser análise visual.</p>
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-muted-foreground">
+                        {selectedBodyIds.length === 0
+                          ? "Nenhuma selecionada → STHIA usa automaticamente as fotos mais recentes (front/back/profile)."
+                          : `${selectedBodyIds.length} foto(s) selecionada(s) manualmente.`}
+                      </p>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-[240px] overflow-y-auto">
+                        {(bodyImages as any[]).map((b) => {
+                          const url = (bodyImagePreviews as Record<string, string>)[b.id];
+                          const active = selectedBodyIds.includes(b.id);
+                          return (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => toggleBody(b.id)}
+                              className={`relative rounded-md overflow-hidden border-2 transition ${active ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"}`}
+                            >
+                              {url ? (
+                                <img src={url} alt={b.type} className="w-full h-24 object-cover" />
+                              ) : (
+                                <div className="w-full h-24 bg-muted animate-pulse" />
+                              )}
+                              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] px-1 py-0.5 flex justify-between">
+                                <span className="uppercase">{b.type}</span>
+                                <span>{new Date(b.uploaded_at).toLocaleDateString("pt-BR")}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedBodyIds.length > 0 && (
+                        <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setSelectedBodyIds([])}>
+                          Limpar seleção
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Upload de imagens adicionais para análise visual */}
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <ImagePlus className="w-3.5 h-3.5" /> Imagens adicionais para análise visual (JPG/PNG)
+                    </Label>
+                    <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={uploading} onClick={() => imageInputRef.current?.click()}>
+                      <Upload className="w-3.5 h-3.5" /> Anexar
+                    </Button>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => uploadRefImages(e.target.files)}
+                    />
+                  </div>
+                  {extraImagePaths.length === 0 ? (
+                    <p className="text-[10px] text-muted-foreground">Envie fotos avulsas (referência, pose, close muscular) que não estão no dossiê oficial.</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {extraImagePaths.map((f, i) => (
+                        <li key={f.path} className="flex items-center justify-between gap-2 text-xs bg-muted/50 rounded px-2 py-1">
+                          <span className="truncate flex items-center gap-1.5"><ImagePlus className="w-3 h-3" />{f.name}</span>
+                          <button onClick={() => setExtraImagePaths((p) => p.filter((_, idx) => idx !== i))} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 <Button onClick={() => generate.mutate()} disabled={generate.isPending} className="gap-2">
                   {generate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                   Gerar parecer STHIA
