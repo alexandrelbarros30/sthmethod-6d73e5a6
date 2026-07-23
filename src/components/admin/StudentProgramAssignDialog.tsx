@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Layers, Check, X, Loader2, Calendar, Save, Dumbbell, Target, Gauge, ChevronDown, ChevronUp } from "lucide-react";
+import { Layers, Check, X, Loader2, Calendar, Save, Dumbbell, Target, Gauge, ChevronDown, ChevronUp, Download } from "lucide-react";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const getWindowStatus = (start?: string | null, end?: string | null, visible?: boolean | null) => {
@@ -156,6 +156,30 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
   });
 
   const pending = assignMutation.isPending || unassignMutation.isPending;
+
+  const importFromSC = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error("Aluno inválido");
+      const { data, error } = await supabase.functions.invoke(
+        "supercoach-import-student-assignments",
+        { body: { userId } },
+      );
+      if (error) throw error;
+      if (data?.ok === false) throw new Error(data?.error || "Falha ao importar");
+      return data as any;
+    },
+    onSuccess: (d: any) => {
+      if (d?.notFound && !d?.matched) {
+        toast.warning("Aluno não encontrado no ST Coach.");
+      } else if ((d?.programsAssigned || 0) === 0) {
+        toast.info("Nenhum programa novo do ST Coach para importar.");
+      } else {
+        toast.success(`Importados ${d.programsAssigned} programa(s) do ST Coach (${d.templatesUpserted} treinos).`);
+      }
+      qc.invalidateQueries({ queryKey: ["student-assignments", userId] });
+    },
+    onError: (e: any) => toast.error(e.message || "Falha na importação do ST Coach."),
+  });
   const activeAssignments = (assignments || []).filter((a: any) => a.active);
 
   // Agrupa por programa (via template.program_id) e ordena por data de atribuição (mais antiga → mais recente)
@@ -190,6 +214,20 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
           </DialogTitle>
           {userName && <p className="text-xs text-muted-foreground">{userName}</p>}
         </DialogHeader>
+
+        <div className="flex items-center justify-between rounded-lg border p-2.5 bg-primary/5">
+          <div className="min-w-0">
+            <p className="text-xs font-medium">Espelhar do ST Coach</p>
+            <p className="text-[10px] text-muted-foreground">Traz para o STH os programas já atribuídos a este aluno no ST Coach.</p>
+          </div>
+          <Button size="sm" variant="secondary" disabled={importFromSC.isPending}
+            onClick={() => importFromSC.mutate()}>
+            {importFromSC.isPending
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+              : <Download className="w-3.5 h-3.5 mr-1" />}
+            Importar
+          </Button>
+        </div>
 
         <div className="rounded-lg border p-3 space-y-2 bg-muted/30">
           <div className="flex items-center gap-2 text-xs font-medium">
