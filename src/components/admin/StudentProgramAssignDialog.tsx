@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Layers, Check, X, Loader2, Calendar, Save, Dumbbell, Target, Gauge, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Search } from "lucide-react";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const getWindowStatus = (start?: string | null, end?: string | null, visible?: boolean | null) => {
@@ -35,6 +36,10 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
   const [endDate, setEndDate] = useState<string>("");
   const [editingWindows, setEditingWindows] = useState<Record<string, { start: string; end: string }>>({});
   const [expandedProgram, setExpandedProgram] = useState<Record<string, boolean>>({});
+  const [search, setSearch] = useState("");
+
+  const normalize = (s: string) =>
+    (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
   const { data: programs } = useQuery({
     queryKey: ["all-programs-for-student-assign"],
@@ -273,10 +278,32 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
         </div>
 
         <div className="max-h-[35vh] overflow-y-auto divide-y border rounded-lg">
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar programa pelo nome…"
+            className="h-9 pl-8 text-sm"
+          />
+        </div>
+        <div className="max-h-[35vh] overflow-y-auto divide-y border rounded-lg">
           {(programs || []).length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum programa criado.</p>
           )}
-          {(programs || []).map((p: any) => {
+          {(() => {
+            const q = normalize(search);
+            const filtered = q
+              ? (programs || []).filter((p: any) =>
+                  normalize(p.title).includes(q) ||
+                  normalize(p.subtitle || "").includes(q) ||
+                  normalize(p.objective || "").includes(q)
+                )
+              : (programs || []);
+            if ((programs || []).length > 0 && filtered.length === 0) {
+              return <p className="text-xs text-muted-foreground text-center py-6">Nenhum programa encontrado para “{search}”.</p>;
+            }
+            return filtered.map((p: any) => {
             const assigned = programAssigned[p.id];
             const tCount = (templates || []).filter((t: any) => t.program_id === p.id).length;
             return (
@@ -301,7 +328,8 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
                 )}
               </div>
             );
-          })}
+            });
+          })()}
         </div>
 
         {activeAssignments.length > 0 && (
