@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Lock, Hourglass, Unlock, Clock, Target, Sparkles } from "lucide-react";
+import { Check, Lock, Hourglass, Unlock, Clock, Target, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { parseProtocolPhases, type ProtocolPhase } from "@/lib/protocol-phase-parser";
@@ -178,9 +178,49 @@ const MedicamentosWeekCarousel = ({
             {parent.title}
           </h3>
         </div>
-        <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground tabular-nums">
-          {active + 1}/{weeks.length}
+        <span
+          className="text-[10px] tracking-[0.2em] uppercase tabular-nums font-semibold"
+          style={{ color: STH_GREEN }}
+        >
+          Semana {active + 1}/{weeks.length}
         </span>
+      </div>
+
+      {/* Banner de instrução: passador de semanas */}
+      <div
+        className="rounded-xl border px-3 py-2 flex items-center justify-between gap-2"
+        style={{
+          borderColor: `${STH_GREEN}55`,
+          background: `linear-gradient(90deg, ${STH_GREEN}10, transparent 60%, ${STH_GREEN}10)`,
+          boxShadow: `0 0 18px -8px ${STH_GREEN}66`,
+        }}
+      >
+        <button
+          type="button"
+          aria-label="Semana anterior"
+          onClick={() => goTo(Math.max(0, active - 1))}
+          disabled={active === 0}
+          className="shrink-0 w-7 h-7 rounded-full border border-white/15 flex items-center justify-center text-foreground/80 disabled:opacity-30 active:scale-95 transition"
+          style={{ background: "rgba(255,255,255,0.04)" }}
+        >
+          <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
+        </button>
+        <p className="flex-1 text-center text-[10.5px] leading-tight tracking-[0.12em] uppercase font-semibold" style={{ color: STH_GREEN }}>
+          Deslize para trocar a semana
+          <span className="block text-[9px] tracking-[0.18em] mt-0.5 text-foreground/60 font-normal normal-case">
+            Arraste ← → ou toque nas setas
+          </span>
+        </p>
+        <button
+          type="button"
+          aria-label="Próxima semana"
+          onClick={() => goTo(Math.min(weeks.length - 1, active + 1))}
+          disabled={active === weeks.length - 1}
+          className="shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-black disabled:opacity-30 active:scale-95 transition animate-pulse"
+          style={{ background: STH_GREEN, borderColor: STH_GREEN, boxShadow: `0 0 14px -2px ${STH_GREEN}` }}
+        >
+          <ChevronRight className="w-4 h-4" strokeWidth={2.8} />
+        </button>
       </div>
 
       <div
