@@ -188,7 +188,7 @@ serve(async (req) => {
           .select("type, image_url, storage_path, uploaded_at")
           .eq("user_id", studentId)
           .order("uploaded_at", { ascending: false })
-          .limit(12);
+          .limit(60);
         const byType: Record<string, any[]> = {};
         for (const r of imgs || []) {
           const t = String(r.type || "").toLowerCase();

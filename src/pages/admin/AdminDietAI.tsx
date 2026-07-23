@@ -108,12 +108,37 @@ const AdminDietAI = () => {
         return normalizeSearch(s.full_name || "").includes(q) || normalizeSearch(s.email || "").includes(q);
       });
 
-  const applyStudentMacros = (s: any) => {
-    if (s?.daily_calories) setKcalTarget(String(Math.round(s.daily_calories)));
-    if (s?.protein_g) setProteinTarget(String(Math.round(s.protein_g)));
-    if (s?.carbs_g) setCarbsTarget(String(Math.round(s.carbs_g)));
-    if (s?.fat_g) setFatTarget(String(Math.round(s.fat_g)));
-    if (s?.objective) setObjective(s.objective);
+  const applyStudentMacros = async (s: any) => {
+    if (!s?.user_id) return;
+    try {
+      // Prioridade absoluta: última dieta prescrita ao aluno (mais recente por updated_at)
+      const { data: latestDiet } = await supabase
+        .from("student_diets")
+        .select("energy_kcal, protein_g, carbs_g, fat_g, title, updated_at")
+        .eq("user_id", s.user_id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const kcal = latestDiet?.energy_kcal ?? s?.daily_calories ?? null;
+      const p = latestDiet?.protein_g ?? s?.protein_g ?? null;
+      const c = latestDiet?.carbs_g ?? s?.carbs_g ?? null;
+      const g = latestDiet?.fat_g ?? s?.fat_g ?? null;
+
+      if (kcal) setKcalTarget(String(Math.round(Number(kcal))));
+      if (p) setProteinTarget(String(Math.round(Number(p))));
+      if (c) setCarbsTarget(String(Math.round(Number(c))));
+      if (g) setFatTarget(String(Math.round(Number(g))));
+      if (s?.objective) setObjective(s.objective);
+
+      if (latestDiet?.energy_kcal) {
+        toast.success(`Macros puxados da última dieta: ${latestDiet.title || "sem título"}`);
+      } else {
+        toast.message("Sem dieta anterior — usando macros do perfil do aluno.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar macros");
+    }
   };
 
   const pickStudent = async (s: any) => {
