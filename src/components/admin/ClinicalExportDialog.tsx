@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Download, Copy, Sparkles } from "lucide-react";
+import { Loader2, Download, Copy, Sparkles, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -150,12 +150,15 @@ ${body}
     const payload: any = {};
     if (includeSummary && summaryHtml) payload.summary = summaryHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 1200);
     payload.brief = { exported_sections: sections.filter((s) => checked[s.id]).map((s) => s.title), patient_summary_html: includeSummary ? summaryHtml : null, exported_at: new Date().toISOString() };
+    payload.report_html = composedHtml();
+    payload.released_to_student = true;
+    payload.released_at = new Date().toISOString();
     const { error } = await supabase.from("student_clinical_analyses").update(payload).eq("id", analysisId);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Parecer salvo no registro do aluno");
+    toast.success("Parecer exportado para a Central de Análise do aluno");
     onSaved?.(includeSummary ? summaryHtml : "");
     onOpenChange(false);
   };
@@ -164,8 +167,11 @@ ${body}
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Salvar / Exportar parecer</DialogTitle>
+          <DialogTitle>Exportar parecer para o aluno</DialogTitle>
         </DialogHeader>
+        <p className="text-[12px] text-muted-foreground -mt-2">
+          Ao confirmar, o parecer é publicado na <strong>Central de Análise</strong> do aluno com as seções selecionadas e o resumo (se ativado).
+        </p>
 
         <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
           <div className="space-y-2">
@@ -214,7 +220,7 @@ ${body}
         <DialogFooter className="gap-2 flex-wrap">
           <Button variant="ghost" onClick={copy} className="gap-1.5"><Copy className="w-4 h-4" /> Copiar HTML</Button>
           <Button variant="outline" onClick={download} className="gap-1.5"><Download className="w-4 h-4" /> Baixar .html</Button>
-          <Button onClick={persist} className="gap-1.5">Salvar no registro</Button>
+          <Button onClick={persist} className="gap-1.5"><Send className="w-4 h-4" /> Exportar para Central do Aluno</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
