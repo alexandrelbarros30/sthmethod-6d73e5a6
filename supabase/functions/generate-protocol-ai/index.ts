@@ -88,41 +88,64 @@ Ajuste dose, ativo, timing e estratégia conforme: sexo, idade, experiência, ob
 - Comunicação clara: linguagem acessível sem perder rigor técnico quando pedido.`;
 
 const FORMAT_SPEC = `FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), estrutura SMART PROTOCOL
-que o portal do aluno renderiza em cards gamificados. Cada FASE é um bloco começando por
-um parágrafo com o EMOJI-ÂNCORA + TÍTULO em CAIXA ALTA. Use exatamente estes emojis-âncora:
+que o portal do aluno renderiza em cards gamificados. Siga LITERALMENTE o gabarito abaixo,
+parágrafo por parágrafo. Cada FASE começa com um parágrafo âncora (emoji + TÍTULO CAIXA ALTA).
 
-  💊  MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS
-  ☀️  MANHÃ
+ANCORAS DE FASE (uma por bloco, exatamente estes emojis + títulos):
+  💊 MEDICAMENTOS
+  ☀️ MANHÃ
   🍽️ ALMOÇO
-  ☕  TARDE
+  ☕ LANCHE DA TARDE
   🏋️ PRÉ-TREINO
-  🧊  PÓS-TREINO
-  🌙  NOITE
+  🧊 PÓS-TREINO
+  🌙 JANTAR/CEIA
 
-Dentro de cada fase, use estes campos (um por parágrafo, rótulo em <strong>):
-  - <p>"Frase headline entre aspas — mote da fase."</p>
-  - <p><strong>Ação:</strong> descrição objetiva do que fazer.</p>
-  - <p><strong>Stack:</strong> substâncias/suplementos/insumos, com dose e via.</p>
-  - <p>⏱ <strong>Timing:</strong> minutos antes/depois do treino, com/sem alimento.</p>
-  - <p><strong>Horário:</strong> HH:MM (ou faixa) — pode ter várias linhas.</p>
-  - <p>📌 <strong>Foco:</strong> biomarcador ou objetivo alvo da fase.</p>
+GABARITO CANÔNICO (copie a estrutura para CADA fase):
 
-REGRAS:
-- Comece cada fase com <p><strong>EMOJI TÍTULO</strong></p> (ex: <p><strong>💊 MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS</strong></p>).
-- Doses em mg/mcg/UI/ml, frequência semanal, via (SC, IM, VO).
-- Nomes de ativos em português BR, entre parênteses o comercial quando útil.
-- NÃO invente marca proibida; use nome do ativo.
-- NÃO use <ul>/<li> — apenas <p>. NÃO use <h1>-<h6>. NÃO use markdown.
-- Se a fase não se aplica ao caso, OMITA (não deixe fase vazia).
-- Sempre inclua um bloco final <p><strong>⚠️ MONITORAMENTO E SEGURANÇA</strong></p> com
-  exames de acompanhamento (mensal/trimestral), sinais de alerta e sinergias de proteção.
-- Ao citar hormônios/peptídeos, mencione risco relevante em 1 linha (hepato/cardio/eixo).
-- Quando a evidência é fraca, escreva "(evidência limitada)" ao lado da recomendação.
-- A fase 💊 MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS é OBRIGATÓRIA sempre que o briefing indicar
-  stack atual, objetivo enhanced, fase hormonal (bulking/cutting/off-season/ponte/tpc/pré-contest)
-  ou reposição. Liste TODOS os ativos com dose, via, frequência semanal e duração — nunca
-  devolva essa fase vazia nem omita substâncias por cautela genérica. Se faltar dado clínico,
-  entregue a recomendação com faixa segura e sinalize no summary o que precisa ser coletado.
+<p><strong>💊 MEDICAMENTOS</strong></p>
+<p><strong>Sem 1-4:</strong> (Fase de Transição, Aceleração Metabólica e Bloqueio Progestagênico)</p>
+<p>"1. Enantato de Testosterona ou Durateston: 125mg por aplicação (0,5ml)<br>
+2. Acetato de Trembolona: 100mg por aplicação (1,0ml)<br>
+3. Cabergolina: 0,5mg (1 comprimido inteiro via oral)<br>
+4. Anastrozol: 0,5mg (Apenas S.O.S se houver início real de sensibilidade mamária)"</p>
+<p>⚙️ <strong>Ação:</strong> descrição farmacológica e mecanicista da fase.</p>
+<p>⏰ <strong>Horário:</strong> via, frequência (DSDN, ED, etc.) e período do dia por ativo.</p>
+<p>🎯 <strong>Foco:</strong> objetivo fisiológico/estético da fase.</p>
+
+<p><strong>Sem 5-8:</strong> (Fase de Densidade, Dureza Muscle-Skin e Lipólise Profunda)</p>
+<p>"1. ...<br>2. ...<br>3. ...<br>4. ...<br>5. ..."</p>
+<p>⚙️ <strong>Ação:</strong> ...</p>
+<p>⏰ <strong>Horário:</strong> ...</p>
+<p>🎯 <strong>Foco:</strong> ...</p>
+
+<p><strong>Sem 9-12:</strong> (Fase de Finalização, Secagem Adiposa Localizada e Polimento Final)</p>
+<p>"1. ...<br>2. ...<br>3. ...<br>4. ...<br>5. ...<br>6. ..."</p>
+<p>⚙️ <strong>Ação:</strong> ...</p>
+<p>⏰ <strong>Horário:</strong> ...</p>
+<p>🎯 <strong>Foco:</strong> ...</p>
+
+<p><strong>☀️ MANHÃ</strong></p>
+<p>"1. NAC: 600mg<br>2. Vitamina D3: 10.000ui + K2 MK7: 100mcg<br>3. ..."</p>
+<p>⚙️ <strong>Ação:</strong> ...</p>
+<p>⏰ <strong>Horário:</strong> ...</p>
+<p>🎯 <strong>Foco:</strong> ...</p>
+
+(repita para 🍽️ ALMOÇO · ☕ LANCHE DA TARDE · 🏋️ PRÉ-TREINO · 🧊 PÓS-TREINO · 🌙 JANTAR/CEIA)
+
+REGRAS ESTRITAS:
+- Use SEMPRE aspas retas ("...") envolvendo o STACK numerado. Itens separados por <br>.
+- Rótulos EXATOS com emoji na frente: "⚙️ <strong>Ação:</strong>", "⏰ <strong>Horário:</strong>",
+  "🎯 <strong>Foco:</strong>". Não troque emojis nem rótulos.
+- A fase 💊 MEDICAMENTOS DEVE ser dividida em blocos de semanas (Sem 1-4 / Sem 5-8 / Sem 9-12
+  ou faixas equivalentes ao ciclo). Cada bloco tem seu próprio Ação/Horário/Foco.
+- Doses em mg/mcg/UI/ml, via (IM profunda, SC, VO, tópico), frequência (DSDN, ED, 1x/sem etc.).
+- Nomes de ativos em português BR; comercial entre parênteses quando útil.
+- NÃO use <ul>/<li>, NÃO use <h1>-<h6>, NÃO use markdown. Apenas <p>, <strong>, <br>, <em>.
+- Nível de evidência quando sensível: "<em>(evidência ★★★★)</em>" ao lado da recomendação.
+- Ao final, inclua <p><strong>⚠️ MONITORAMENTO E SEGURANÇA</strong></p> com parágrafos
+  <strong>Previsão:</strong>, <strong>Riscos prováveis:</strong>, <strong>Marcadores a acompanhar:</strong>.
+- A fase 💊 é OBRIGATÓRIA quando o briefing indicar stack, objetivo enhanced, fase hormonal
+  (bulking/cutting/off-season/ponte/tpc/pré-contest) ou reposição. Nunca devolver vazia.
 - Retorne SOMENTE via tool call.`;
 
 serve(async (req) => {

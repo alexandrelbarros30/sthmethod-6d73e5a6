@@ -284,11 +284,15 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
     }
     if (!current) continue;
     current._rawLines!.push(line);
+    // Strip common leading label-emojis (⚙️ ⏰ ⏱ ⌚ 📌 📍 📝 🎯 🕐-🕧) for label detection
+    const LABEL_EMOJI_RX = /^[\u2699\u23F0\u23F1\u231A\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}\u{1F550}-\u{1F567}⏱]+(?:\uFE0F)?\s*/u;
+    const lineNoEmoji = line.replace(LABEL_EMOJI_RX, "");
     const quoted = extractQuoted(line);
     if (quoted && !current.headline) { current.headline = quoted; continue; }
-    if (/^a[çc][aã]o\s*[:\-]/i.test(line))     { current.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
-    if (/^stack\s*[:\-]/i.test(line))           { current.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
-    const currentScheduleMatch = line.match(/^(?:[\u23F1\u231A\u23F0⏱]\s*)?hor[aá]rio\s*[:\-]\s*(.*)$/iu);
+    if (/^a[çc][aã]o\s*[:\-]/i.test(lineNoEmoji))     { current.action = lineNoEmoji.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
+    if (/^stack\s*[:\-]/i.test(lineNoEmoji))           { current.stack  = lineNoEmoji.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
+    if (/^foco\s*[:\-]/i.test(lineNoEmoji))            { current.focus  = lineNoEmoji.replace(/^foco\s*[:\-]\s*/i, "").trim(); continue; }
+    const currentScheduleMatch = lineNoEmoji.match(/^hor[aá]rio\s*[:\-]\s*(.*)$/iu);
     if (currentScheduleMatch) {
       const v = currentScheduleMatch[1].trim();
       current.schedule = current.schedule ? current.schedule + "\n" + v : v;
@@ -368,9 +372,12 @@ function splitMedicamentosByWeek(phase: ProtocolPhase): ProtocolPhase[] {
     for (const line of b.lines) {
       const quoted = extractQuoted(line);
       if (quoted && !sp.headline) { sp.headline = quoted; continue; }
-      if (/^a[çc][aã]o\s*[:\-]/i.test(line)) { sp.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
-      if (/^stack\s*[:\-]/i.test(line))       { sp.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
-      const subScheduleMatch = line.match(/^(?:[\u23F1\u231A\u23F0⏱]\s*)?hor[aá]rio\s*[:\-]\s*(.*)$/iu);
+      const LABEL_EMOJI_RX2 = /^[\u2699\u23F0\u23F1\u231A\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}\u{1F550}-\u{1F567}⏱]+(?:\uFE0F)?\s*/u;
+      const lineNoEmoji = line.replace(LABEL_EMOJI_RX2, "");
+      if (/^a[çc][aã]o\s*[:\-]/i.test(lineNoEmoji)) { sp.action = lineNoEmoji.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
+      if (/^stack\s*[:\-]/i.test(lineNoEmoji))       { sp.stack  = lineNoEmoji.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
+      if (/^foco\s*[:\-]/i.test(lineNoEmoji))        { sp.focus  = lineNoEmoji.replace(/^foco\s*[:\-]\s*/i, "").trim(); continue; }
+      const subScheduleMatch = lineNoEmoji.match(/^hor[aá]rio\s*[:\-]\s*(.*)$/iu);
       if (subScheduleMatch) {
         const v = subScheduleMatch[1].trim();
         sp.schedule = sp.schedule ? sp.schedule + "\n" + v : v;
