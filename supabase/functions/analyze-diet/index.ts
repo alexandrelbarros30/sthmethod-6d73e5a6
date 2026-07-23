@@ -431,7 +431,22 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
         if (items && items.length > 0) {
           const fsMeals = await reconcileWithFatSecret(items);
           const overrides: Record<number, typeof fsMeals[number]> = {};
-          for (const fm of fsMeals) if (fm.resolved) overrides[fm.meal_number] = fm;
+          // Sanity gate: only trust FatSecret when kcal is within ±30% of the TACO estimate.
+          // Prevents bad generic matches (e.g. raw vs cooked oats) from skewing totals.
+          const skipped: Array<{ meal_number: number; reason: string; fs_kcal: number; taco_kcal: number }> = [];
+          for (const fm of fsMeals) {
+            if (!fm.resolved) continue;
+            const taco = (analysis.meals || []).find((mm: any) => mm.meal_number === fm.meal_number);
+            const tacoKcal = taco?.energy_kcal ?? 0;
+            if (tacoKcal > 0) {
+              const diff = Math.abs(fm.energy_kcal - tacoKcal) / tacoKcal;
+              if (diff > 0.30) {
+                skipped.push({ meal_number: fm.meal_number, reason: "kcal_out_of_tolerance", fs_kcal: fm.energy_kcal, taco_kcal: tacoKcal });
+                continue;
+              }
+            }
+            overrides[fm.meal_number] = fm;
+          }
 
           const newMeals = (analysis.meals || []).map((m: any) => {
             const ov = overrides[m.meal_number];
@@ -461,6 +476,7 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
             enabled: true,
             meals_reconciled: Object.keys(overrides).length,
             meals_total: fsMeals.length,
+            skipped,
             per_meal: fsMeals.map((m) => ({
               meal_number: m.meal_number,
               resolved: m.resolved,
