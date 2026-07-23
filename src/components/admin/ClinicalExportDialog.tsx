@@ -151,14 +151,12 @@ ${body}
     if (includeSummary && summaryHtml) payload.summary = summaryHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 1200);
     payload.brief = { exported_sections: sections.filter((s) => checked[s.id]).map((s) => s.title), patient_summary_html: includeSummary ? summaryHtml : null, exported_at: new Date().toISOString() };
     payload.report_html = composedHtml();
-    payload.released_to_student = true;
-    payload.released_at = new Date().toISOString();
     const { error } = await supabase.from("student_clinical_analyses").update(payload).eq("id", analysisId);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Parecer exportado para a Central de Análise do aluno");
+    toast.success("Parecer salvo na Central de Análise (admin). Use 'Liberar para o aluno' quando quiser publicar.");
     onSaved?.(includeSummary ? summaryHtml : "");
     onOpenChange(false);
   };
