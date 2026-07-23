@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import marketingHero from "@/assets/marketing-launch-hero.png";
 
-const APK_URL =
-  "https://drive.google.com/uc?export=download&id=1Dll24Nhli7bS-xR4hm8faXXCUDxsfmFu";
+const APK_URL = "/baixar-apk";
 
 export default function BaixarApp() {
   return (

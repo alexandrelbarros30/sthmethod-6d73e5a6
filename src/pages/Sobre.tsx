@@ -23,8 +23,7 @@ const impactStyle = {
   patch: "bg-white/10 text-white/70 border-white/20",
 } as const;
 
-const APK_URL =
-  "https://drive.google.com/uc?export=download&id=1Dll24Nhli7bS-xR4hm8faXXCUDxsfmFu";
+const APK_URL = "/baixar-apk";
 
 const isNativeApp = () => {
   if (typeof window === "undefined") return false;
