@@ -338,7 +338,7 @@ const AdminProtocolAI = () => {
                 </CardHeader>
                 <CardContent>
                   {isSmart ? (
-                    <GamifiedProtocolPanel content={result.protocol_html} />
+                    <GamifiedProtocolPanel content={result.protocol_html} userId={selectedStudent?.user_id ?? user?.id ?? ""} readOnly />
                   ) : (
                     <div className="rounded-lg border border-border bg-card p-4 max-h-[600px] overflow-y-auto">
                       <RichContentRenderer content={result.protocol_html} showParagraphBullets={false} showZebra={false} />
