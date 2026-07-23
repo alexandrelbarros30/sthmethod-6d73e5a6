@@ -175,8 +175,8 @@ serve(async (req) => {
     const authed = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-    const { data: auth } = await authed.auth.getClaims(authHeader.replace("Bearer ", ""));
-    const actorId = auth?.claims?.sub as string | undefined;
+    const { data: userData } = await authed.auth.getUser(authHeader.replace("Bearer ", ""));
+    const actorId = userData?.user?.id as string | undefined;
     if (!actorId) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", actorId);
