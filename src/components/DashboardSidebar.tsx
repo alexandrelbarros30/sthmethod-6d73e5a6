@@ -116,6 +116,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       icon: FlaskConical,
       children: [
         { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
+        { to: "/admin/protocolo-ia", icon: Sparkles, label: "Protocolo IA (beta)" },
         { to: "/admin/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
       ],
     },
