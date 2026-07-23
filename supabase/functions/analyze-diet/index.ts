@@ -5,6 +5,220 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ============= FatSecret integration =============
+const FS_CLIENT_ID = Deno.env.get("FATSECRET_CLIENT_ID");
+const FS_CLIENT_SECRET = Deno.env.get("FATSECRET_CLIENT_SECRET");
+let fsToken: { token: string; exp: number } | null = null;
+
+async function fsGetToken(): Promise<string | null> {
+  if (!FS_CLIENT_ID || !FS_CLIENT_SECRET) return null;
+  if (fsToken && fsToken.exp > Date.now() + 60_000) return fsToken.token;
+  try {
+    const basic = btoa(`${FS_CLIENT_ID}:${FS_CLIENT_SECRET}`);
+    const res = await fetch("https://oauth.fatsecret.com/connect/token", {
+      method: "POST",
+      headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body: "grant_type=client_credentials&scope=basic",
+    });
+    const json = await res.json();
+    if (!res.ok || !json.access_token) return null;
+    fsToken = { token: json.access_token, exp: Date.now() + (json.expires_in ?? 86400) * 1000 };
+    return fsToken.token;
+  } catch (_) {
+    return null;
+  }
+}
+
+function fsParseDescription(desc: string) {
+  if (!desc) return null;
+  const perMatch = desc.match(/Per\s+([\d.,]+)\s*(g|ml|oz|fl oz|cup|piece|unit|tbsp|tsp|serving)/i);
+  let servingSize = 100;
+  let servingUnit: "g" | "ml" = "g";
+  if (perMatch) {
+    servingSize = parseFloat(perMatch[1].replace(",", ".")) || 100;
+    const u = perMatch[2].toLowerCase();
+    servingUnit = u.includes("ml") || u.includes("fl") ? "ml" : "g";
+  }
+  const num = (re: RegExp) => {
+    const r = desc.match(re);
+    return r ? parseFloat(r[1].replace(",", ".")) : 0;
+  };
+  const kcal = num(/Calories:\s*([\d.,]+)\s*kcal/i);
+  const fat = num(/Fat:\s*([\d.,]+)\s*g/i);
+  const carbs = num(/Carbs:\s*([\d.,]+)\s*g/i);
+  const protein = num(/Protein:\s*([\d.,]+)\s*g/i);
+  const factor = servingSize > 0 ? 100 / servingSize : 1;
+  return {
+    per100: {
+      energy_kcal: kcal * factor,
+      protein_g: protein * factor,
+      carbs_g: carbs * factor,
+      fat_g: fat * factor,
+    },
+    serving_unit: servingUnit,
+  };
+}
+
+const fsMemCache = new Map<string, { per100: { energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number }; serving_unit: "g" | "ml"; label: string } | null>();
+
+async function fsLookup(name: string) {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  if (fsMemCache.has(key)) return fsMemCache.get(key)!;
+  const token = await fsGetToken();
+  if (!token) {
+    fsMemCache.set(key, null);
+    return null;
+  }
+  try {
+    const params = new URLSearchParams({
+      method: "foods.search",
+      search_expression: name.trim(),
+      page_number: "0",
+      max_results: "5",
+      format: "json",
+      region: "BR",
+      language: "pt",
+    });
+    const res = await fetch(`https://platform.fatsecret.com/rest/server.api?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) {
+      fsMemCache.set(key, null);
+      return null;
+    }
+    const rawFoods = json.foods?.food
+      ? Array.isArray(json.foods.food) ? json.foods.food : [json.foods.food]
+      : [];
+    // Prefer generic (no brand) first
+    const generic = rawFoods.find((f: any) => !f.brand_name) || rawFoods[0];
+    if (!generic) {
+      fsMemCache.set(key, null);
+      return null;
+    }
+    const parsed = fsParseDescription(generic.food_description || "");
+    if (!parsed) {
+      fsMemCache.set(key, null);
+      return null;
+    }
+    const out = { ...parsed, label: generic.food_name as string };
+    fsMemCache.set(key, out);
+    return out;
+  } catch (_) {
+    fsMemCache.set(key, null);
+    return null;
+  }
+}
+
+type ExtractedItem = { name: string; grams: number };
+type ExtractedMeal = { meal_number: number; meal_name: string; items: ExtractedItem[] };
+
+async function extractItems(plainText: string, apiKey: string): Promise<ExtractedMeal[] | null> {
+  try {
+    const sys = `Extraia APENAS os alimentos BASE (ignore substituições/opções/alternativas/OU) de cada refeição do cardápio, convertendo cada quantidade para GRAMAS (para líquidos, use ml tratado como gramas 1:1). Use estas conversões: 1 ovo=50g; 1 col. sopa azeite=13g; 1 col. sopa pasta amendoim=15g; 1 fatia pão forma=25g; 1 pão francês=50g; 1 scoop whey=30g; 1 xícara arroz cozido=150g; 1 concha média feijão=80g; 1 filé médio frango=120g; 1 fatia média queijo=30g. Refeição 1=Café da Manhã, 2=Lanche Manhã, 3=Almoço, 4=Lanche Tarde, 5=Jantar, 6=Ceia. Retorne apenas via tool call.`;
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        temperature: 0,
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: plainText },
+        ],
+        tools: [{
+          type: "function",
+          function: {
+            name: "return_items",
+            parameters: {
+              type: "object",
+              properties: {
+                meals: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      meal_number: { type: "number" },
+                      meal_name: { type: "string" },
+                      items: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            name: { type: "string", description: "Nome curto do alimento em português (ex: 'arroz branco cozido', 'peito de frango grelhado', 'aveia em flocos')" },
+                            grams: { type: "number", description: "Quantidade em gramas" },
+                          },
+                          required: ["name", "grams"],
+                          additionalProperties: false,
+                        },
+                      },
+                    },
+                    required: ["meal_number", "meal_name", "items"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["meals"],
+              additionalProperties: false,
+            },
+          },
+        }],
+        tool_choice: { type: "function", function: { name: "return_items" } },
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const tc = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (!tc) return null;
+    const parsed = JSON.parse(tc.function.arguments);
+    return parsed.meals as ExtractedMeal[];
+  } catch (_) {
+    return null;
+  }
+}
+
+async function reconcileWithFatSecret(meals: ExtractedMeal[]) {
+  // resolve unique names
+  const uniqueNames = Array.from(new Set(meals.flatMap((m) => m.items.map((i) => i.name.trim().toLowerCase())).filter(Boolean)));
+  await Promise.all(uniqueNames.map((n) => fsLookup(n)));
+
+  const perMeal: Array<{
+    meal_number: number; meal_name: string;
+    energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number;
+    resolved: boolean; resolved_count: number; total_count: number;
+  }> = [];
+
+  for (const meal of meals) {
+    let kcal = 0, p = 0, c = 0, f = 0;
+    let resolvedCount = 0;
+    for (const item of meal.items) {
+      const hit = await fsLookup(item.name);
+      if (hit) {
+        const factor = (item.grams || 0) / 100;
+        kcal += hit.per100.energy_kcal * factor;
+        p += hit.per100.protein_g * factor;
+        c += hit.per100.carbs_g * factor;
+        f += hit.per100.fat_g * factor;
+        resolvedCount++;
+      }
+    }
+    perMeal.push({
+      meal_number: meal.meal_number,
+      meal_name: meal.meal_name,
+      energy_kcal: +kcal.toFixed(2),
+      protein_g: +p.toFixed(2),
+      carbs_g: +c.toFixed(2),
+      fat_g: +f.toFixed(2),
+      resolved: meal.items.length > 0 && resolvedCount === meal.items.length,
+      resolved_count: resolvedCount,
+      total_count: meal.items.length,
+    });
+  }
+  return perMeal;
+}
+// ============= end FatSecret integration =============
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
