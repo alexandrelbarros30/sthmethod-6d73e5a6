@@ -165,6 +165,24 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
 
   const pending = assignMutation.isPending || unassignMutation.isPending;
 
+  const resyncMutation = useMutation({
+    mutationFn: async (programId: string) => {
+      if (!userId) throw new Error("Aluno inválido");
+      const { data, error } = await supabase.functions.invoke(
+        "supercoach-assign-program",
+        { body: { userId, programId, action: "assign" } },
+      );
+      if (error) throw error;
+      if ((data as any)?.ok === false) throw new Error((data as any)?.error || "Falha ao sincronizar");
+      return data as any;
+    },
+    onSuccess: (d: any) => {
+      if (d?.status === "already_assigned") toast.info("Já estava atribuído no ST Coach.");
+      else toast.success("Sincronizado no ST Coach.");
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao sincronizar ST Coach."),
+  });
+
   const importFromSC = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("Aluno inválido");
