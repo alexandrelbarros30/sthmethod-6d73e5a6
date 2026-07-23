@@ -144,6 +144,27 @@ REGRAS ESTRITAS:
   Exemplos: 0,67mg → 0,7mg · 0,65ml → 0,7ml · 0,33ml → 0,3ml · 0,125mg → 0,1mg · 1,45ml → 1,5ml.
   Comprimidos: use frações práticas (1/4, 1/2, 3/4, 1 inteiro) — nunca 0,33 comp. ou 0,67 comp.
   Objetivo: o aluno lê e mede sem calculadora, com seringa/dosador de 0,1 em 0,1.
+- CONSOLIDAÇÃO DE APLICAÇÕES INJETÁVEIS (OBRIGATÓRIA): sempre que dois ou mais injetáveis
+  coincidirem no MESMO DIA da semana, UNA-OS na MESMA SERINGA (dose fracionada somando os ml)
+  em vez de aplicações separadas. Regra de agendamento semanal:
+    1. Distribua cada ativo respeitando sua meia-vida e frequência (ex.: Testo Enantato 2x/sem
+       seg+qui; Masteron Propionato 3x/sem seg+qua+sex; Trembolona Ac. DSDN; etc.).
+    2. Alinhe os dias para MAXIMIZAR sobreposição (ex.: se Testo é 2x/sem e Masteron 3x/sem,
+       mova Testo para seg+qui de forma que seg e qui já concentrem Masteron+Testo).
+    3. Some os volumes: "Segunda — Testo 0,5ml + Masteron 0,4ml = 0,9ml na MESMA seringa (IM)".
+    4. Exiba um MINI-CALENDÁRIO SEMANAL dentro do bloco de semanas, no formato:
+       <p>🗓️ <strong>Aplicações da semana:</strong><br>
+       Seg: Testo 0,5ml + Masteron 0,4ml = <strong>0,9ml</strong> (1 seringa IM)<br>
+       Ter: —<br>
+       Qua: Masteron 0,4ml (1 seringa IM) + Trembolona 0,5ml (2ª seringa, ativos incompatíveis)<br>
+       Qui: Testo 0,5ml + Masteron 0,4ml = <strong>0,9ml</strong> (1 seringa IM)<br>
+       Sex: Masteron 0,4ml (1 seringa IM)<br>
+       Sáb: Trembolona 0,5ml<br>
+       Dom: descanso</p>
+    5. Só SEPARE em seringas distintas quando houver incompatibilidade real (ex.: ativos aquosos
+       x oleosos, HCG SC x AAS IM, insulina, peptídeos SC) — e explique o motivo em 1 linha.
+    6. Confira ao final: nenhum dia deve ter 2 furos se as drogas forem oleosas compatíveis.
+  Objetivo: menos furos, mais adesão, mesma farmacocinética.
 - Nomes de ativos em português BR; comercial entre parênteses quando útil.
 - NÃO use <ul>/<li>, NÃO use <h1>-<h6>, NÃO use markdown. Apenas <p>, <strong>, <br>, <em>.
 - Nível de evidência quando sensível: "<em>(evidência ★★★★)</em>" ao lado da recomendação.
