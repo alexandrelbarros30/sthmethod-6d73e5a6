@@ -100,6 +100,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/diet-library", icon: BookOpen, label: "Bib. Dietas" },
         { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
         { to: "/admin/dieta-ia", icon: Sparkles, label: "Cardápio IA (beta)" },
+        { to: "/admin/dieta-auditoria", icon: ClipboardList, label: "Auditoria FatSecret" },
       ],
     },
     {
