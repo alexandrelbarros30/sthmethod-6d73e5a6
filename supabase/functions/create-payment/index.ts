@@ -104,6 +104,94 @@ serve(async (req) => {
 
     finalAmount = Math.round(finalAmount * 100) / 100;
 
+    // ==========================================================
+    // 100% de desconto (cupom gratuidade — ex.: PRIMEIRO testers APK)
+    // Bypass total do Mercado Pago: ativa a assinatura direto.
+    // Mercado Pago rejeita unit_price=0 e travava o checkout em tela branca.
+    // ==========================================================
+    if (finalAmount <= 0 && validCouponId) {
+      const freePayload: any = {
+        user_id: userId,
+        plan_id,
+        amount: 0,
+        original_amount: originalAmount,
+        method: "free",
+        action_type: action_type || "new",
+        status: "approved",
+        installments: 1,
+        coupon_id: validCouponId,
+        coupon_discount: couponDiscount,
+      };
+
+      // Reaproveita registro pendente se existir; senão insere novo
+      const { data: prevPending } = await supabaseAdmin
+        .from("payments")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("plan_id", plan_id)
+        .eq("status", "pending")
+        .gt("created_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let freePayment: any;
+      if (prevPending?.id) {
+        const { data: upd, error: uErr } = await supabaseAdmin
+          .from("payments").update(freePayload).eq("id", prevPending.id).select().single();
+        if (uErr) throw new Error(`Free activation update error: ${uErr.message}`);
+        freePayment = upd;
+      } else {
+        const { data: ins, error: iErr } = await supabaseAdmin
+          .from("payments").insert(freePayload).select().single();
+        if (iErr) throw new Error(`Free activation insert error: ${iErr.message}`);
+        freePayment = ins;
+      }
+
+      // Ativa/estende assinatura
+      const durationDays = plan.duration_days || 30;
+      const startDate = new Date();
+      const { data: existingSub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id, start_date, end_date, status")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let baseDate = new Date(startDate);
+      if (existingSub?.end_date) {
+        const currentEnd = new Date(existingSub.end_date + "T23:59:59");
+        if (currentEnd > startDate && existingSub.status === "active") {
+          baseDate = currentEnd;
+        }
+      }
+      const endDate = new Date(baseDate);
+      endDate.setDate(endDate.getDate() + durationDays);
+
+      const subPayload = {
+        user_id: userId,
+        plan_id,
+        status: "active",
+        start_date: startDate.toISOString().split("T")[0],
+        end_date: endDate.toISOString().split("T")[0],
+      };
+      if (existingSub) {
+        await supabaseAdmin.from("subscriptions").update(subPayload).eq("user_id", userId);
+      } else {
+        await supabaseAdmin.from("subscriptions").insert(subPayload);
+      }
+
+      console.log(`Free activation via coupon: user=${userId}, plan=${plan.name}, days=${durationDays}`);
+
+      const origin = req.headers.get("origin") || "https://sthmethod.com.br";
+      return new Response(JSON.stringify({
+        free_activation: true,
+        payment_id: freePayment.id,
+        redirect_url: `${origin}/dashboard/subscription?status=approved&free=1`,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // SERVER-SIDE installment calculation based on plan duration and method
     let maxInstallments = 1;
     if (method === "credit") {
