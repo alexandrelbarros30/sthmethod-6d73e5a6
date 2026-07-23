@@ -26,6 +26,11 @@ function mapPaymentStatus(status: string | null | undefined) {
 }
 
 async function activateSubscriptionForPayment(supabase: any, payment: any) {
+  // Idempotência: se este pagamento já ativou/estendeu a assinatura, não repetir.
+  if (payment?.subscription_applied_at) {
+    return;
+  }
+
   const startDate = new Date();
   const durationDays = payment?.plans?.duration_days || 30;
 
@@ -58,7 +63,7 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
       status: "active",
       start_date: startDate.toISOString().split("T")[0],
       end_date: endDate.toISOString().split("T")[0],
-    }).eq("user_id", payment.user_id);
+    }).eq("id", existingSub.id);
   } else {
     await supabase.from("subscriptions").insert({
       user_id: payment.user_id,
@@ -68,6 +73,13 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
       end_date: endDate.toISOString().split("T")[0],
     });
   }
+
+  // Marca o pagamento como já aplicado para bloquear reprocessamento.
+  await supabase
+    .from("payments")
+    .update({ subscription_applied_at: new Date().toISOString() })
+    .eq("id", payment.id)
+    .is("subscription_applied_at", null);
 
   // Espelha vencimento no SuperCoach (fire-and-forget).
   triggerSupercoachSync({
@@ -244,7 +256,7 @@ serve(async (req) => {
         })
         .eq("id", payment.id)
         .eq("status", "pending")
-        .select("id, user_id, plan_id, status, plans(duration_days)")
+        .select("id, user_id, plan_id, status, subscription_applied_at, plans(duration_days)")
         .maybeSingle();
 
       if (updateError) throw updateError;

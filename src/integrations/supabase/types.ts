@@ -3989,6 +3989,7 @@ export type Database = {
           original_amount: number
           plan_id: string
           status: string
+          subscription_applied_at: string | null
           updated_at: string
           user_id: string
         }
@@ -4005,6 +4006,7 @@ export type Database = {
           original_amount: number
           plan_id: string
           status?: string
+          subscription_applied_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -4021,6 +4023,7 @@ export type Database = {
           original_amount?: number
           plan_id?: string
           status?: string
+          subscription_applied_at?: string | null
           updated_at?: string
           user_id?: string
         }
