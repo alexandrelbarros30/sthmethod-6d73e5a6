@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,7 +67,33 @@ const StudentMetabolic = () => {
       return data || [];
     },
     enabled: !!user?.id,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
+
+  // Realtime: novo parecer liberado pelo consultor aparece imediatamente
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`clinical-analyses-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "student_clinical_analyses",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: ["clinical-analyses-student", user.id] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, qc]);
 
   const latestPanel = panels[0] || null;
 
