@@ -15,6 +15,7 @@ import Cadastro from "./pages/Cadastro";
 import Questionario from "./pages/Questionario";
 import Install from "./pages/Install";
 import BaixarApp from "./pages/BaixarApp";
+import BaixarApk from "./pages/BaixarApk";
 import Sobre from "./pages/Sobre";
 import Free from "./pages/Free";
 import ComoFunciona from "./pages/ComoFunciona";
@@ -215,6 +216,7 @@ const App = () => (
             <Route path="/questionario" element={<Questionario />} />
             <Route path="/install" element={<Install />} />
             <Route path="/baixar-app" element={<BaixarApp />} />
+            <Route path="/baixar-apk" element={<BaixarApk />} />
             <Route path="/download" element={<BaixarApp />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/como-funciona" element={<ComoFunciona />} />
@@ -331,6 +333,7 @@ const App = () => (
             <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminFeedback /></ProtectedRoute>} />
             <Route path="/admin/access-audit" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccessAudit /></ProtectedRoute>} />
             <Route path="/admin/backups" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBackups /></ProtectedRoute>} />
+            <Route path="/admin/app-releases" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAppReleases /></ProtectedRoute>} />
             <Route path="/admin/budgets" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBudgets /></ProtectedRoute>} />
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
