@@ -118,6 +118,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
         { to: "/admin/protocolo-ia", icon: Sparkles, label: "Protocolo IA (beta)" },
         { to: "/admin/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
+        { to: "/admin/analise-aluno", icon: Stethoscope, label: "Análise Clínica STHIA" },
       ],
     },
     {
