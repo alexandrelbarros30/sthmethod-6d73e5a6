@@ -334,6 +334,11 @@ const AdminProtocolAI = () => {
                   <div className="flex flex-wrap gap-2 mt-3">
                     {result.phases_detected?.map((p) => <Badge key={p} variant="outline">{p}</Badge>)}
                     {isSmart && <Badge variant="outline" className="border-primary/40 text-primary">Smart Protocol ✓</Badge>}
+                    {typeof (result as any)?._meta?.images_used === "number" && (
+                      <Badge variant="outline" className="border-primary/40 text-primary">
+                        📸 {(result as any)._meta.images_used} foto(s) analisada(s)
+                      </Badge>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>

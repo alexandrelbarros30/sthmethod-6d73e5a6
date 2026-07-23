@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-3.5-flash";
+const MODEL_ID = "google/gemini-3.6-flash";
 
 const STHIA_IDENTITY = `# STHIA | ELITE MEDICAL PERFORMANCE ENGINE
 
@@ -118,6 +118,11 @@ REGRAS:
   exames de acompanhamento (mensal/trimestral), sinais de alerta e sinergias de proteção.
 - Ao citar hormônios/peptídeos, mencione risco relevante em 1 linha (hepato/cardio/eixo).
 - Quando a evidência é fraca, escreva "(evidência limitada)" ao lado da recomendação.
+- A fase 💊 MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS é OBRIGATÓRIA sempre que o briefing indicar
+  stack atual, objetivo enhanced, fase hormonal (bulking/cutting/off-season/ponte/tpc/pré-contest)
+  ou reposição. Liste TODOS os ativos com dose, via, frequência semanal e duração — nunca
+  devolva essa fase vazia nem omita substâncias por cautela genérica. Se faltar dado clínico,
+  entregue a recomendação com faixa segura e sinalize no summary o que precisa ser coletado.
 - Retorne SOMENTE via tool call.`;
 
 serve(async (req) => {
