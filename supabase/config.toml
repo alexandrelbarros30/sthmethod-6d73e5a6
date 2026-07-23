@@ -41,6 +41,8 @@ project_id = "tthahgwkkdyvxdbhsgyb"
     verify_jwt = false
   [functions.import-students]
     verify_jwt = false
+  [functions.sthia-clinical-summary]
+    verify_jwt = false
   [functions.mercado-pago-webhook]
     verify_jwt = false
   [functions.preview-transactional-email]
