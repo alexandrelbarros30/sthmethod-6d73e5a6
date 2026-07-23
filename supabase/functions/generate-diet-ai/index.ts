@@ -157,6 +157,50 @@ const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
 - Abacate: 96 kcal | 1.2 P | 6 C | 8.4 G
 - Brócolis cozido: 25 kcal | 2.1 P | 4 C | 0.4 G`;
 
+// Reconcile generated macros with the SAME analyzer used on the student diet screen
+// (supabase/functions/analyze-diet). This guarantees that "Cardápio IA (BETA)" and
+// "Análise IA" show identical numbers instead of two divergent estimates.
+async function reconcileWithAnalyzer(parsed: any): Promise<void> {
+  if (!parsed || typeof parsed.diet_text !== "string" || !parsed.diet_text.trim()) return;
+  try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!SUPABASE_URL || !ANON) return;
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/analyze-diet`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${ANON}`, apikey: ANON },
+      body: JSON.stringify({ dietContent: parsed.diet_text }),
+    });
+    if (!resp.ok) { console.warn("reconcile analyze-diet non-ok", resp.status); return; }
+    const a = await resp.json();
+    if (!a?.total || !Array.isArray(a?.meals)) return;
+    const byNum: Record<string, any> = {};
+    for (const m of a.meals) byNum[String(m.meal_number)] = m;
+    if (Array.isArray(parsed.meals)) {
+      parsed.meals = parsed.meals.map((m: any) => {
+        const src = byNum[String(m?.meal_number)];
+        if (!src) return m;
+        return {
+          ...m,
+          energy_kcal: roundInt(src.energy_kcal),
+          protein_g: roundInt(src.protein_g),
+          carbs_g: roundInt(src.carbs_g),
+          fat_g: roundInt(src.fat_g),
+        };
+      });
+    }
+    parsed.total = {
+      energy_kcal: roundInt(a.total.energy_kcal),
+      protein_g: roundInt(a.total.protein_g),
+      carbs_g: roundInt(a.total.carbs_g),
+      fat_g: roundInt(a.total.fat_g),
+    };
+    parsed._reconciled_with = "analyze-diet";
+  } catch (e) {
+    console.warn("reconcile analyze-diet failed", e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -418,13 +462,16 @@ REGRAS:
     // do not match the admin briefing. The previous implementation only warned;
     // this one retries aggressively and then blocks the response if still wrong.
     if (!isReview && targetsForRetry) {
+      // Reconcile using the same analyzer the student diet screen uses,
+      // so the quality gate validates the AUTHORITATIVE numbers.
+      await reconcileWithAnalyzer(parsed);
       let gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
       while (!gate.valid && retries < MAX_TARGET_RETRIES) {
         retries++;
         const currentTotal = gate.total || parsed?.total || {};
-        const feedback = `REPROVADO PELO VALIDADOR STH METHOD. O cardápio anterior NÃO pode ser entregue porque ficou fora das metas do admin (tolerância máxima ±${TARGET_TOLERANCE_PCT}%) ou com nº incorreto de refeições.\n\n` +
+        const feedback = `REPROVADO PELO VALIDADOR STH METHOD (números medidos pelo mesmo analisador TACO usado na tela da dieta do aluno). O cardápio anterior NÃO pode ser entregue porque ficou fora das metas do admin (tolerância máxima ±${TARGET_TOLERANCE_PCT}%) ou com nº incorreto de refeições.\n\n` +
           `Falhas encontradas:\n- ${gate.violations.join("\n- ")}\n\n` +
-          `Total gerado pela soma das refeições: ${currentTotal.energy_kcal ?? "?"} kcal | P ${currentTotal.protein_g ?? "?"}g | C ${currentTotal.carbs_g ?? "?"}g | G ${currentTotal.fat_g ?? "?"}g\n` +
+          `Total MEDIDO pelo analisador TACO: ${currentTotal.energy_kcal ?? "?"} kcal | P ${currentTotal.protein_g ?? "?"}g | C ${currentTotal.carbs_g ?? "?"}g | G ${currentTotal.fat_g ?? "?"}g\n` +
           `Metas do admin: ${targetsForRetry.energy_kcal ?? "livre"} kcal | P ${targetsForRetry.protein_g ?? "livre"}g | C ${targetsForRetry.carbs_g ?? "livre"}g | G ${targetsForRetry.fat_g ?? "livre"}g\n` +
           `Nº de refeições obrigatório: ${expectedMeals}\n` +
           `Desvios %: ${JSON.stringify(gate.deviation_pct)}\n\n` +
@@ -442,6 +489,7 @@ REGRAS:
         if (!nextCall) break;
         toolCall = nextCall;
         try { parsed = JSON.parse(nextCall.function.arguments); } catch { break; }
+        await reconcileWithAnalyzer(parsed);
         gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
       }
 
@@ -459,6 +507,11 @@ REGRAS:
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+    }
+    // Non-target flows (or review==false without targets) still benefit from reconciling
+    // so the numbers shown match the student diet screen.
+    if (!isReview && !targetsForRetry) {
+      await reconcileWithAnalyzer(parsed);
     }
     normalizeGeneratedMacros(parsed);
     // Validate against admin targets and expose deviation so the client can warn.
