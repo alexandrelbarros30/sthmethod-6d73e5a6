@@ -377,6 +377,15 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
                           onClick={() => setExpandedProgram((prev) => ({ ...prev, [p.id]: !prev[p.id] }))}>
                           {expanded ? <><ChevronUp className="w-3 h-3 mr-1" /> Ocultar treinos</> : <><ChevronDown className="w-3 h-3 mr-1" /> Editar janelas ({g.items.length})</>}
                         </Button>
+                        <Button size="sm" variant="outline" className="w-full h-7 text-[11px]"
+                          disabled={resyncMutation.isPending}
+                          onClick={() => resyncMutation.mutate(p.id)}
+                          title="Reenvia a atribuição deste programa ao ST Coach">
+                          {resyncMutation.isPending
+                            ? <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                            : <Download className="w-3 h-3 mr-1 rotate-180" />}
+                          Sincronizar ST Coach
+                        </Button>
                         {expanded && (
                           <div className="border-t pt-2 space-y-2">
                             {g.items
