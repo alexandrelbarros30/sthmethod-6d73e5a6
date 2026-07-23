@@ -421,7 +421,61 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
     const analysis = JSON.parse(toolCall.function.arguments);
     const usage = data?.usage || null;
 
-    return new Response(JSON.stringify({ ...analysis, _meta: { model: "google/gemini-2.5-pro", usage } }), {
+    // ============= FatSecret reconciliation pass =============
+    // Extrai itens estruturados e recalcula por refeição via FatSecret.
+    // Só sobrescreve uma refeição se TODOS os itens forem resolvidos com sucesso.
+    let fsMeta: any = { enabled: false };
+    try {
+      if (FS_CLIENT_ID && FS_CLIENT_SECRET) {
+        const items = await extractItems(plainText, LOVABLE_API_KEY);
+        if (items && items.length > 0) {
+          const fsMeals = await reconcileWithFatSecret(items);
+          const overrides: Record<number, typeof fsMeals[number]> = {};
+          for (const fm of fsMeals) if (fm.resolved) overrides[fm.meal_number] = fm;
+
+          const newMeals = (analysis.meals || []).map((m: any) => {
+            const ov = overrides[m.meal_number];
+            if (!ov) return { ...m, _source: "taco" };
+            return {
+              meal_number: m.meal_number,
+              meal_name: m.meal_name,
+              energy_kcal: ov.energy_kcal,
+              protein_g: ov.protein_g,
+              carbs_g: ov.carbs_g,
+              fat_g: ov.fat_g,
+              _source: "fatsecret",
+            };
+          });
+          const total = newMeals.reduce(
+            (acc: any, m: any) => ({
+              energy_kcal: +(acc.energy_kcal + (m.energy_kcal || 0)).toFixed(2),
+              protein_g: +(acc.protein_g + (m.protein_g || 0)).toFixed(2),
+              carbs_g: +(acc.carbs_g + (m.carbs_g || 0)).toFixed(2),
+              fat_g: +(acc.fat_g + (m.fat_g || 0)).toFixed(2),
+            }),
+            { energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 },
+          );
+          analysis.meals = newMeals;
+          analysis.total = total;
+          fsMeta = {
+            enabled: true,
+            meals_reconciled: Object.keys(overrides).length,
+            meals_total: fsMeals.length,
+            per_meal: fsMeals.map((m) => ({
+              meal_number: m.meal_number,
+              resolved: m.resolved,
+              resolved_count: m.resolved_count,
+              total_count: m.total_count,
+            })),
+          };
+        }
+      }
+    } catch (fsErr) {
+      console.warn("FatSecret reconciliation failed, keeping TACO result:", fsErr);
+      fsMeta = { enabled: false, error: fsErr instanceof Error ? fsErr.message : String(fsErr) };
+    }
+
+    return new Response(JSON.stringify({ ...analysis, _meta: { model: "google/gemini-2.5-pro", usage, fatsecret: fsMeta } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
