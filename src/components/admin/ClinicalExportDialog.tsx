@@ -218,7 +218,7 @@ ${body}
         <DialogFooter className="gap-2 flex-wrap">
           <Button variant="ghost" onClick={copy} className="gap-1.5"><Copy className="w-4 h-4" /> Copiar HTML</Button>
           <Button variant="outline" onClick={download} className="gap-1.5"><Download className="w-4 h-4" /> Baixar .html</Button>
-          <Button onClick={persist} className="gap-1.5"><Send className="w-4 h-4" /> Exportar para Central do Aluno</Button>
+          <Button onClick={persist} className="gap-1.5"><Send className="w-4 h-4" /> Salvar na Central de Análise (admin)</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
