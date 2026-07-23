@@ -168,7 +168,7 @@ ${body}
           <DialogTitle>Exportar parecer para o aluno</DialogTitle>
         </DialogHeader>
         <p className="text-[12px] text-muted-foreground -mt-2">
-          Ao confirmar, o parecer é publicado na <strong>Central de Análise</strong> do aluno com as seções selecionadas e o resumo (se ativado).
+          Ao confirmar, o parecer é salvo na <strong>Central de Análise (dashboard admin/consultor)</strong>. O aluno <strong>não</strong> recebe automaticamente — a liberação é feita depois com o botão <em>"Liberar para o aluno"</em>.
         </p>
 
         <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
