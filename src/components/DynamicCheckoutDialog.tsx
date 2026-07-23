@@ -152,6 +152,12 @@ const DynamicCheckoutDialog = ({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      if (data?.free_activation && data?.redirect_url) {
+        toast.success("🎉 Acesso gratuito ativado! Bem-vindo(a) aos testes.");
+        window.location.href = data.redirect_url;
+        return;
+      }
+
       if (data?.init_point) {
         // Redirect to Mercado Pago checkout
         window.location.href = data.init_point;
