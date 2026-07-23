@@ -4839,6 +4839,63 @@ export type Database = {
         }
         Relationships: []
       }
+      student_clinical_analyses: {
+        Row: {
+          brief: Json
+          created_at: string
+          created_by: string | null
+          exam_input: string | null
+          id: string
+          markers: Json
+          model: string | null
+          recommendations: Json
+          red_flags: Json
+          report_html: string
+          scope: string
+          summary: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          visual_composition: Json
+        }
+        Insert: {
+          brief?: Json
+          created_at?: string
+          created_by?: string | null
+          exam_input?: string | null
+          id?: string
+          markers?: Json
+          model?: string | null
+          recommendations?: Json
+          red_flags?: Json
+          report_html: string
+          scope?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          visual_composition?: Json
+        }
+        Update: {
+          brief?: Json
+          created_at?: string
+          created_by?: string | null
+          exam_input?: string | null
+          id?: string
+          markers?: Json
+          model?: string | null
+          recommendations?: Json
+          red_flags?: Json
+          report_html?: string
+          scope?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          visual_composition?: Json
+        }
+        Relationships: []
+      }
       student_content_batches: {
         Row: {
           batch_started_at: string | null

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow, Mail, ImageIcon, Brain, ShieldOff, ShieldCheck, History, Phone, Download, Database, Info } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow, Mail, ImageIcon, Brain, ShieldOff, ShieldCheck, History, Phone, Download, Database, Info, Stethoscope } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,6 +118,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
         { to: "/admin/protocolo-ia", icon: Sparkles, label: "Protocolo IA (beta)" },
         { to: "/admin/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
+        { to: "/admin/analise-aluno", icon: Stethoscope, label: "Análise Clínica STHIA" },
       ],
     },
     {

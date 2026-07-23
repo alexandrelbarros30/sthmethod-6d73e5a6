@@ -167,6 +167,7 @@ const AdminDietAI = lazy(() => import("./pages/admin/AdminDietAI"));
 const AdminDietAudit = lazy(() => import("./pages/admin/AdminDietAudit"));
 const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
 const AdminProtocolAI = lazy(() => import("./pages/admin/AdminProtocolAI"));
+const AdminStudentAnalysis = lazy(() => import("./pages/admin/AdminStudentAnalysis"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
@@ -320,6 +321,7 @@ const App = () => (
             <Route path="/admin/nutrition" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutrition /></ProtectedRoute>} />
             <Route path="/admin/dieta-ia" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminDietAI /></Suspense></ProtectedRoute>} />
             <Route path="/admin/protocolo-ia" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminProtocolAI /></Suspense></ProtectedRoute>} />
+            <Route path="/admin/analise-aluno" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminStudentAnalysis /></Suspense></ProtectedRoute>} />
             <Route path="/admin/dieta-auditoria" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminDietAudit /></Suspense></ProtectedRoute>} />
             <Route path="/admin/diet-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDietLibrary /></ProtectedRoute>} />
             <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminProtocol /></Suspense></ProtectedRoute>} />
