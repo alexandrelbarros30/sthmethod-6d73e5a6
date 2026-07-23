@@ -51,7 +51,22 @@ const NotificationCenter = () => {
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data || [];
+      const list = data || [];
+      // Anexa código do cupom (quando houver) para exibir na notificação
+      const ids = list.map((n: any) => n.payment_id).filter(Boolean);
+      if (ids.length) {
+        const { data: pays } = await supabase
+          .from("payments")
+          .select("id, coupon_id, coupons(code)")
+          .in("id", ids);
+        const map = new Map<string, string>();
+        (pays || []).forEach((p: any) => {
+          const code = p?.coupons?.code;
+          if (code) map.set(p.id, code);
+        });
+        return list.map((n: any) => ({ ...n, coupon_code: map.get(n.payment_id) || null }));
+      }
+      return list;
     },
   });
 
@@ -260,7 +275,11 @@ const NotificationCenter = () => {
                         title={n.student_name}
                         statusIcon={n.payment_status === "approved" ? "✅" : "⏳"}
                         subtitle={`${n.plan_name} • ${Number(n.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`}
-                        chips={[actionLabel(n.action_type), (n.method || "").toUpperCase()].filter(Boolean)}
+                        chips={[
+                          actionLabel(n.action_type),
+                          (n.method || "").toUpperCase(),
+                          n.coupon_code ? `🎟️ ${n.coupon_code}` : null,
+                        ].filter(Boolean) as string[]}
                         time={n.created_at}
                         actions={
                           <>
