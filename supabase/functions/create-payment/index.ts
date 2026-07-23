@@ -149,6 +149,16 @@ serve(async (req) => {
       }
 
       // Ativa/estende assinatura
+      // Idempotência: se este pagamento já ativou a assinatura antes, sai sem repetir.
+      if (freePayment?.subscription_applied_at) {
+        const origin = req.headers.get("origin") || "https://sthmethod.com.br";
+        return new Response(JSON.stringify({
+          free_activation: true,
+          payment_id: freePayment.id,
+          redirect_url: `${origin}/dashboard/subscription?status=approved&free=1`,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       const durationDays = plan.duration_days || 30;
       const startDate = new Date();
       const { data: existingSub } = await supabaseAdmin
@@ -162,7 +172,11 @@ serve(async (req) => {
       let baseDate = new Date(startDate);
       if (existingSub?.end_date) {
         const currentEnd = new Date(existingSub.end_date + "T23:59:59");
-        if (currentEnd > startDate && existingSub.status === "active") {
+        const today = startDate.toISOString().split("T")[0];
+        const startedToday = existingSub.start_date === today;
+        // Só empilha em cima da assinatura vigente se ela NÃO foi criada hoje pelo
+        // próprio fluxo — evita somar dias em reexecuções do mesmo checkout.
+        if (currentEnd > startDate && existingSub.status === "active" && !startedToday) {
           baseDate = currentEnd;
         }
       }
@@ -177,10 +191,17 @@ serve(async (req) => {
         end_date: endDate.toISOString().split("T")[0],
       };
       if (existingSub) {
-        await supabaseAdmin.from("subscriptions").update(subPayload).eq("user_id", userId);
+        await supabaseAdmin.from("subscriptions").update(subPayload).eq("id", existingSub.id);
       } else {
         await supabaseAdmin.from("subscriptions").insert(subPayload);
       }
+
+      // Marca o pagamento como aplicado para bloquear reprocessamento futuro.
+      await supabaseAdmin
+        .from("payments")
+        .update({ subscription_applied_at: new Date().toISOString() })
+        .eq("id", freePayment.id)
+        .is("subscription_applied_at", null);
 
       console.log(`Free activation via coupon: user=${userId}, plan=${plan.name}, days=${durationDays}`);
 
