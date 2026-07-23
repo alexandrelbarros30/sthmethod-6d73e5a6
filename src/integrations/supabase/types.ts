@@ -206,6 +206,39 @@ export type Database = {
         }
         Relationships: []
       }
+      app_releases: {
+        Row: {
+          created_by: string | null
+          file_path: string
+          id: string
+          is_current: boolean
+          notes: string | null
+          released_at: string
+          size_bytes: number | null
+          version: string
+        }
+        Insert: {
+          created_by?: string | null
+          file_path: string
+          id?: string
+          is_current?: boolean
+          notes?: string | null
+          released_at?: string
+          size_bytes?: number | null
+          version: string
+        }
+        Update: {
+          created_by?: string | null
+          file_path?: string
+          id?: string
+          is_current?: boolean
+          notes?: string | null
+          released_at?: string
+          size_bytes?: number | null
+          version?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
