@@ -67,3 +67,5 @@ project_id = "tthahgwkkdyvxdbhsgyb"
     verify_jwt = false
   [functions.daily-backup]
     verify_jwt = false
+  [functions.download-apk]
+    verify_jwt = false
