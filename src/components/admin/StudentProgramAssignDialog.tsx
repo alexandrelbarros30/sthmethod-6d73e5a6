@@ -94,16 +94,20 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
         .from("student_workout_assignments")
         .upsert(rows as any, { onConflict: "user_id,template_id" });
       if (error) throw error;
-      // Best-effort: espelha a atribuição no ST Coach
-      supabase.functions.invoke("supercoach-assign-program", {
-        body: { userId, programId, action: "assign" },
-      }).then(({ data, error: sErr }: any) => {
-        if (sErr || data?.ok === false) {
-          toast.warning("Atribuído no STH; ST Coach falhou: " + (data?.error || sErr?.message || "erro"));
-        } else if (data?.status === "assigned") {
+      // Espelha a atribuição no ST Coach (await para garantir disparo + surfaçar erro)
+      try {
+        const { data, error: sErr } = await supabase.functions.invoke(
+          "supercoach-assign-program",
+          { body: { userId, programId, action: "assign" } },
+        );
+        if (sErr || (data as any)?.ok === false) {
+          toast.warning("Atribuído no STH; ST Coach falhou: " + ((data as any)?.error || sErr?.message || "erro"));
+        } else if ((data as any)?.status === "assigned") {
           toast.success("Espelhado no ST Coach.");
         }
-      }).catch(() => {});
+      } catch (e: any) {
+        toast.warning("Atribuído no STH; ST Coach falhou: " + (e?.message || "erro"));
+      }
     },
     onSuccess: () => {
       toast.success("Programa atribuído ao aluno!");
@@ -123,15 +127,19 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
         .eq("user_id", userId)
         .in("template_id", tIds);
       if (error) throw error;
-      supabase.functions.invoke("supercoach-assign-program", {
-        body: { userId, programId, action: "unassign" },
-      }).then(({ data, error: sErr }: any) => {
-        if (sErr || data?.ok === false) {
-          toast.warning("Removido no STH; ST Coach falhou: " + (data?.error || sErr?.message || "erro"));
-        } else if (data?.status === "unassigned") {
+      try {
+        const { data, error: sErr } = await supabase.functions.invoke(
+          "supercoach-assign-program",
+          { body: { userId, programId, action: "unassign" } },
+        );
+        if (sErr || (data as any)?.ok === false) {
+          toast.warning("Removido no STH; ST Coach falhou: " + ((data as any)?.error || sErr?.message || "erro"));
+        } else if ((data as any)?.status === "unassigned") {
           toast.success("Removido também do ST Coach.");
         }
-      }).catch(() => {});
+      } catch (e: any) {
+        toast.warning("Removido no STH; ST Coach falhou: " + (e?.message || "erro"));
+      }
     },
     onSuccess: () => {
       toast.success("Programa removido do aluno.");
@@ -156,6 +164,24 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
   });
 
   const pending = assignMutation.isPending || unassignMutation.isPending;
+
+  const resyncMutation = useMutation({
+    mutationFn: async (programId: string) => {
+      if (!userId) throw new Error("Aluno inválido");
+      const { data, error } = await supabase.functions.invoke(
+        "supercoach-assign-program",
+        { body: { userId, programId, action: "assign" } },
+      );
+      if (error) throw error;
+      if ((data as any)?.ok === false) throw new Error((data as any)?.error || "Falha ao sincronizar");
+      return data as any;
+    },
+    onSuccess: (d: any) => {
+      if (d?.status === "already_assigned") toast.info("Já estava atribuído no ST Coach.");
+      else toast.success("Sincronizado no ST Coach.");
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao sincronizar ST Coach."),
+  });
 
   const importFromSC = useMutation({
     mutationFn: async () => {
@@ -350,6 +376,15 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
                         <Button size="sm" variant="ghost" className="w-full h-7 text-[11px]"
                           onClick={() => setExpandedProgram((prev) => ({ ...prev, [p.id]: !prev[p.id] }))}>
                           {expanded ? <><ChevronUp className="w-3 h-3 mr-1" /> Ocultar treinos</> : <><ChevronDown className="w-3 h-3 mr-1" /> Editar janelas ({g.items.length})</>}
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-full h-7 text-[11px]"
+                          disabled={resyncMutation.isPending}
+                          onClick={() => resyncMutation.mutate(p.id)}
+                          title="Reenvia a atribuição deste programa ao ST Coach">
+                          {resyncMutation.isPending
+                            ? <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                            : <Download className="w-3 h-3 mr-1 rotate-180" />}
+                          Sincronizar ST Coach
                         </Button>
                         {expanded && (
                           <div className="border-t pt-2 space-y-2">
