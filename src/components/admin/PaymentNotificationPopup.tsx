@@ -28,7 +28,18 @@ const PaymentNotificationPopup = () => {
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data;
+      const paymentIds = (data || []).map((n: any) => n.payment_id).filter(Boolean);
+      let couponByPayment: Record<string, string> = {};
+      if (paymentIds.length > 0) {
+        const { data: pays } = await supabase
+          .from("payments")
+          .select("id, coupon_id, coupons(code)")
+          .in("id", paymentIds);
+        (pays || []).forEach((p: any) => {
+          if (p.coupons?.code) couponByPayment[p.id] = p.coupons.code;
+        });
+      }
+      return (data || []).map((n: any) => ({ ...n, coupon_code: couponByPayment[n.payment_id] || null }));
     },
     enabled: !!user && (role === "admin" || role === "consultor" || role === "financeiro"),
     refetchInterval: 30000,
@@ -104,6 +115,11 @@ const PaymentNotificationPopup = () => {
                   <div className="flex gap-1 mt-1 flex-wrap">
                     <Badge variant="secondary" className="text-[10px]">{actionLabel(n.action_type)}</Badge>
                     <Badge variant="outline" className="text-[10px]">{n.method?.toUpperCase()}</Badge>
+                    {n.coupon_code && (
+                      <Badge className="text-[10px] bg-primary/20 text-primary border border-primary/40">
+                        🎟️ {n.coupon_code}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1">
                     {n.plan_name} • {Number(n.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
