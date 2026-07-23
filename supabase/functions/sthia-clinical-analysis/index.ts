@@ -64,7 +64,11 @@ exames de reavaliação. Cada linha com nível de evidência entre parênteses.<
 <p><strong>⚠️ DISCLAIMER</strong></p>
 <p>Este parecer é apoio à decisão do consultor. Não substitui avaliação médica presencial.</p>`;
 
-async function fetchDossier(admin: ReturnType<typeof createClient>, studentId: string) {
+async function fetchDossier(
+  admin: ReturnType<typeof createClient>,
+  studentId: string,
+  bodyImageIds?: string[] | null,
+) {
   const out: Record<string, unknown> = {};
   const imageParts: Array<{ type: "image_url"; image_url: { url: string } }> = [];
 
@@ -114,25 +118,29 @@ async function fetchDossier(admin: ReturnType<typeof createClient>, studentId: s
   }
   out.clinical_documents = docLinks;
 
-  // Body images (front / back / profile) — signed URLs for Gemini vision
+  // Body images — either explicit selection (bodyImageIds) or auto (front/back/profile most recent)
   const { data: imgs } = await admin.from("body_images")
-    .select("type, storage_path, image_url, uploaded_at, is_current")
-    .eq("user_id", studentId).order("uploaded_at", { ascending: false }).limit(12);
+    .select("id, type, storage_path, image_url, uploaded_at, is_current")
+    .eq("user_id", studentId).order("uploaded_at", { ascending: false }).limit(40);
   if (imgs?.length) {
-    let selected = imgs.filter((i: any) => i.is_current);
-    if (!selected.length) {
-      const anchor = new Date(imgs[0].uploaded_at).getTime();
-      selected = imgs.filter((i: any) => Math.abs(new Date(i.uploaded_at).getTime() - anchor) <= 10 * 60 * 1000);
-    }
-    const byType: Record<string, any> = {};
-    for (const img of selected) {
-      if (!["front", "back", "profile"].includes(img.type)) continue;
-      if (!byType[img.type]) byType[img.type] = img;
+    let selected: any[] = [];
+    if (bodyImageIds && bodyImageIds.length) {
+      selected = imgs.filter((i: any) => bodyImageIds.includes(i.id));
+    } else {
+      selected = imgs.filter((i: any) => i.is_current);
+      if (!selected.length) {
+        const anchor = new Date(imgs[0].uploaded_at).getTime();
+        selected = imgs.filter((i: any) => Math.abs(new Date(i.uploaded_at).getTime() - anchor) <= 10 * 60 * 1000);
+      }
+      const byType: Record<string, any> = {};
+      for (const img of selected) {
+        if (!["front", "back", "profile"].includes(img.type)) continue;
+        if (!byType[img.type]) byType[img.type] = img;
+      }
+      selected = Object.values(byType);
     }
     const meta: string[] = [];
-    for (const t of ["front", "back", "profile"]) {
-      const img = byType[t];
-      if (!img) continue;
+    for (const img of selected) {
       let url: string | null = null;
       if (img.storage_path) {
         const { data: signed } = await admin.storage.from("body-images").createSignedUrl(img.storage_path, 60 * 30);
@@ -141,7 +149,7 @@ async function fetchDossier(admin: ReturnType<typeof createClient>, studentId: s
       if (!url && img.image_url) url = img.image_url;
       if (url) {
         imageParts.push({ type: "image_url", image_url: { url } });
-        meta.push(`${t} · ${new Date(img.uploaded_at).toLocaleString("pt-BR")}`);
+        meta.push(`${img.type} · ${new Date(img.uploaded_at).toLocaleString("pt-BR")}`);
       }
     }
     out.body_images_meta = meta;
@@ -175,17 +183,69 @@ serve(async (req) => {
     const allowed = Array.isArray(roles) && roles.some((r: any) => ["admin", "consultor"].includes(r.role));
     if (!allowed) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { studentId, examText = "", consultantNotes = "", focus = "full", save = true } = await req.json();
+    const {
+      studentId,
+      examText = "",
+      consultantNotes = "",
+      focus = "full",
+      save = true,
+      bodyImageIds = null,
+      extraImagePaths = [],
+      extraExamPaths = [],
+    } = await req.json();
     if (!studentId) return new Response(JSON.stringify({ error: "studentId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { dossier, imageParts } = await fetchDossier(admin, studentId);
+    const { dossier, imageParts } = await fetchDossier(admin, studentId, bodyImageIds);
+
+    // Extra body/reference images uploaded ad hoc for this analysis (body-images bucket)
+    const extraImgMeta: string[] = [];
+    for (const p of Array.isArray(extraImagePaths) ? extraImagePaths : []) {
+      if (typeof p !== "string" || !p) continue;
+      const { data: s } = await admin.storage.from("body-images").createSignedUrl(p, 60 * 30);
+      if (s?.signedUrl) {
+        imageParts.push({ type: "image_url", image_url: { url: s.signedUrl } });
+        extraImgMeta.push(p.split("/").pop() || p);
+      }
+    }
+    if (extraImgMeta.length) (dossier as any).extra_reference_images = extraImgMeta;
+
+    // Lab exam files (PDF or image) uploaded ad hoc — documents bucket
+    const examParts: any[] = [];
+    const examMeta: string[] = [];
+    for (const p of Array.isArray(extraExamPaths) ? extraExamPaths : []) {
+      if (typeof p !== "string" || !p) continue;
+      try {
+        const { data: blob, error: dErr } = await admin.storage.from("documents").download(p);
+        if (dErr || !blob) continue;
+        const name = p.split("/").pop() || "exame";
+        const ext = name.split(".").pop()?.toLowerCase() || "";
+        const mime = ext === "pdf" ? "application/pdf"
+          : ext === "png" ? "image/png"
+          : ext === "webp" ? "image/webp"
+          : "image/jpeg";
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        let bin = "";
+        for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+        const b64 = btoa(bin);
+        if (mime.startsWith("image/")) {
+          examParts.push({ type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } });
+        } else {
+          examParts.push({ type: "file", file: { filename: name, file_data: `data:${mime};base64,${b64}` } });
+        }
+        examMeta.push(`${name} (${mime})`);
+      } catch (e) {
+        console.warn("exam file load failed", p, e);
+      }
+    }
+    if (examMeta.length) (dossier as any).uploaded_exam_files = examMeta;
 
     const systemPrompt = `${STHIA_IDENTITY}\n\n${STHIA_LAYERS}\n\n${FORMAT_SPEC}\n\nAplique silenciosamente as 12 camadas durante o raciocínio. Se dados críticos faltarem, sinalize no summary o que precisa ser coletado antes de escalar decisões.`;
 
-    const userText = `FOCO SOLICITADO: ${focus}\n\nDOSSIÊ ATUAL DO ALUNO:\n${JSON.stringify(dossier, null, 2)}\n\nEXAMES / RESULTADOS FORNECIDOS (texto colado ou OCR):\n${examText || "(nenhum texto colado — usar apenas dossiê e imagens)"}\n\nOBSERVAÇÕES DO CONSULTOR:\n${consultantNotes || "(nenhuma)"}\n\nGere agora o parecer completo no formato HTML especificado, cruzando exames + composição visual + bioimpedância + protocolo/dieta atuais + histórico. Se não houver dados para uma seção, omita-a explicitando "sem dados suficientes".`;
+    const userText = `FOCO SOLICITADO: ${focus}\n\nDOSSIÊ ATUAL DO ALUNO:\n${JSON.stringify(dossier, null, 2)}\n\nEXAMES / RESULTADOS FORNECIDOS (texto colado ou OCR):\n${examText || "(nenhum texto colado — usar apenas dossiê, imagens e arquivos anexados)"}\n\nOBSERVAÇÕES DO CONSULTOR:\n${consultantNotes || "(nenhuma)"}\n\nARQUIVOS DE EXAMES ANEXADOS: ${examMeta.length ? examMeta.join("; ") : "nenhum"}. Leia (OCR quando necessário) e integre todos os marcadores encontrados na seção 🩸 INTERPRETAÇÃO LABORATORIAL.\n\nIMAGENS DE REFERÊNCIA/EVOLUÇÃO ANEXADAS: ${extraImgMeta.length ? extraImgMeta.join("; ") : "nenhuma além das oficiais do dossiê"}. Use na 📸 COMPOSIÇÃO VISUAL.\n\nGere agora o parecer completo no formato HTML especificado, cruzando exames + composição visual + bioimpedância + protocolo/dieta atuais + histórico. Se não houver dados para uma seção, omita-a explicitando "sem dados suficientes".`;
 
-    const userMessage = imageParts.length
-      ? { role: "user" as const, content: [{ type: "text" as const, text: userText }, ...imageParts] }
+    const allParts = [...imageParts, ...examParts];
+    const userMessage = allParts.length
+      ? { role: "user" as const, content: [{ type: "text" as const, text: userText }, ...allParts] }
       : { role: "user" as const, content: userText };
 
     const tool = {
