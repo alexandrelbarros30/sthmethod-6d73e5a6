@@ -4850,6 +4850,8 @@ export type Database = {
           model: string | null
           recommendations: Json
           red_flags: Json
+          released_at: string | null
+          released_to_student: boolean
           report_html: string
           scope: string
           summary: string | null
@@ -4868,6 +4870,8 @@ export type Database = {
           model?: string | null
           recommendations?: Json
           red_flags?: Json
+          released_at?: string | null
+          released_to_student?: boolean
           report_html: string
           scope?: string
           summary?: string | null
@@ -4886,6 +4890,8 @@ export type Database = {
           model?: string | null
           recommendations?: Json
           red_flags?: Json
+          released_at?: string | null
+          released_to_student?: boolean
           report_html?: string
           scope?: string
           summary?: string | null

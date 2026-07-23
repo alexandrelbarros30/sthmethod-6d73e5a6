@@ -6,7 +6,7 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Microscope, AlertCircle, X, ChevronDown } from "lucide-react";
+import { Microscope, AlertCircle, X, ChevronDown, FlaskConical, ClipboardList, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,7 @@ const StudentMetabolic = () => {
   const { isPreviewing } = usePreviewAs();
   const qc = useQueryClient();
   const [closedIds, setClosedIds] = useState<Set<string>>(new Set());
+  const [closedAnalyses, setClosedAnalyses] = useState<Set<string>>(new Set());
   const { data: panels = [], isLoading } = useQuery({
     queryKey: ["metabolic-panel-student", user?.id],
     queryFn: async () => {
@@ -46,6 +47,21 @@ const StudentMetabolic = () => {
         .from("metabolic_panels")
         .select("*")
         .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: analyses = [], isLoading: loadingAnalyses } = useQuery({
+    queryKey: ["clinical-analyses-student", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("student_clinical_analyses")
+        .select("id, title, scope, summary, report_html, red_flags, recommendations, created_at, released_at")
+        .eq("user_id", user!.id)
+        .eq("released_to_student", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -69,9 +85,89 @@ const StudentMetabolic = () => {
     return <DashboardLayout role="student" title="Central de Análise"><SubscriptionBlock /></DashboardLayout>;
   }
 
+  const hasContent = panels.length > 0 || analyses.length > 0;
+
   return (
     <DashboardLayout role="student" title="Central de Análise">
       <div className="space-y-4 sm:space-y-6 animate-fade-in">
+        {/* Pareceres STHIA liberados pelo consultor */}
+        {analyses.map((a: any) => {
+          const isClosed = closedAnalyses.has(a.id);
+          const toggle = () => {
+            setClosedAnalyses((prev) => {
+              const next = new Set(prev);
+              if (next.has(a.id)) next.delete(a.id);
+              else next.add(a.id);
+              return next;
+            });
+          };
+          const redFlags: string[] = Array.isArray(a.red_flags) ? a.red_flags : [];
+          const recs: string[] = Array.isArray(a.recommendations) ? a.recommendations : [];
+          return (
+            <div key={a.id} className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] backdrop-blur-xl p-5 animate-fade-in">
+              <div className="flex items-start justify-between mb-4 gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2 shrink-0">
+                    <FlaskConical className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-emerald-400/80">Parecer STHIA</p>
+                    <p className="text-[15px] text-foreground font-medium tracking-tight mt-0.5 truncate">{a.title}</p>
+                    <p className="text-[11px] text-muted-foreground font-light tracking-tight mt-0.5">
+                      {new Date(a.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground shrink-0"
+                  onClick={toggle}
+                  aria-label={isClosed ? "Abrir" : "Fechar"}
+                >
+                  {isClosed ? <ChevronDown className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                </Button>
+              </div>
+              {!isClosed && (
+                <div className="space-y-4">
+                  {a.summary && (
+                    <div className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3">
+                      <p className="text-[13px] text-foreground/80 leading-relaxed">{a.summary}</p>
+                    </div>
+                  )}
+                  {redFlags.length > 0 && (
+                    <div className="rounded-xl border border-red-500/25 bg-red-500/[0.05] px-3.5 py-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                        <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-red-300">Pontos de atenção</p>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-[13px] text-foreground/85">
+                        {redFlags.map((r, i) => <li key={i}>{r}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {recs.length > 0 && (
+                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] px-3.5 py-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <ClipboardList className="w-3.5 h-3.5 text-emerald-400" />
+                        <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-emerald-300">Recomendações</p>
+                      </div>
+                      <ol className="list-decimal list-inside space-y-1 text-[13px] text-foreground/85">
+                        {recs.map((r, i) => <li key={i}>{r}</li>)}
+                      </ol>
+                    </div>
+                  )}
+                  <div
+                    className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 sm:px-4 sm:py-3.5 prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:text-xs [&_th]:border [&_th]:border-border [&_th]:p-1.5 [&_th]:bg-muted [&_td]:border [&_td]:border-border [&_td]:p-1.5"
+                    dangerouslySetInnerHTML={{ __html: a.report_html }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando...</p>
         ) : panels.length > 0 ? (
@@ -122,13 +218,13 @@ const StudentMetabolic = () => {
               </div>
             );
           })
-        ) : (
+        ) : !hasContent && !loadingAnalyses ? (
           <div className="rounded-3xl border border-border/40 bg-background py-14 px-6 text-center">
             <AlertCircle className="w-8 h-8 mx-auto text-muted-foreground/40 mb-4" strokeWidth={1.5} />
             <p className="text-[14px] text-foreground font-medium tracking-tight">Nenhuma análise disponível</p>
             <p className="text-[12px] text-muted-foreground font-light mt-1.5 tracking-tight">Seu consultor publicará os resultados aqui em breve.</p>
           </div>
-        )}
+        ) : null}
       </div>
 
     </DashboardLayout>

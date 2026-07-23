@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera, Save } from "lucide-react";
+import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera, Save, Eye, EyeOff } from "lucide-react";
 import ClinicalExportDialog from "@/components/admin/ClinicalExportDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,8 @@ type Analysis = {
   markers: any[];
   visual_composition: Record<string, string>;
   created_at: string;
+  released_to_student?: boolean;
+  released_at?: string | null;
 };
 
 export default function AdminStudentAnalysis() {
@@ -72,7 +74,7 @@ export default function AdminStudentAnalysis() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_clinical_analyses")
-        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at")
+        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at")
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false })
         .limit(30);
@@ -226,6 +228,24 @@ export default function AdminStudentAnalysis() {
     },
   });
 
+  const toggleRelease = useMutation({
+    mutationFn: async (a: Analysis) => {
+      const next = !a.released_to_student;
+      const { error } = await supabase
+        .from("student_clinical_analyses")
+        .update({ released_to_student: next, released_at: next ? new Date().toISOString() : null })
+        .eq("id", a.id);
+      if (error) throw error;
+      return next;
+    },
+    onSuccess: (next) => {
+      toast.success(next ? "Parecer liberado para o aluno" : "Parecer ocultado do aluno");
+      refetchHistory();
+      if (current) setCurrent({ ...current, released_to_student: next, released_at: next ? new Date().toISOString() : null });
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar liberação"),
+  });
+
   const selectedStudent = students.find((s) => s.user_id === studentId);
 
   return (
@@ -275,7 +295,23 @@ export default function AdminStudentAnalysis() {
                     <button className="flex-1 text-left px-2 py-1.5" onClick={() => setCurrent(h)}>
                       <div className="font-medium truncate">{h.title}</div>
                       <div className="opacity-70">{new Date(h.created_at).toLocaleString("pt-BR")}</div>
+                      <Badge
+                        variant="outline"
+                        className={`mt-1 text-[9px] px-1.5 py-0 ${h.released_to_student ? "border-emerald-500/40 text-emerald-500" : "border-muted-foreground/30 text-muted-foreground"}`}
+                      >
+                        {h.released_to_student ? "Liberado" : "Não liberado"}
+                      </Badge>
                     </button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="w-7 h-7"
+                      onClick={() => toggleRelease.mutate(h)}
+                      aria-label={h.released_to_student ? "Ocultar do aluno" : "Liberar para o aluno"}
+                      title={h.released_to_student ? "Ocultar do aluno" : "Liberar para o aluno"}
+                    >
+                      {h.released_to_student ? <Eye className="w-3.5 h-3.5 text-emerald-500" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    </Button>
                     <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => removeAnalysis.mutate(h.id)} aria-label="Excluir">
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -469,6 +505,21 @@ export default function AdminStudentAnalysis() {
                     <CardTitle className="text-base">{current.title}</CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-[10px] uppercase">{current.scope}</Badge>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${current.released_to_student ? "border-emerald-500/40 text-emerald-500" : "border-muted-foreground/30 text-muted-foreground"}`}
+                      >
+                        {current.released_to_student ? "Liberado" : "Não liberado"}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5"
+                        onClick={() => toggleRelease.mutate(current)}
+                        disabled={toggleRelease.isPending}
+                      >
+                        {current.released_to_student ? <><EyeOff className="w-3.5 h-3.5" /> Ocultar do aluno</> : <><Eye className="w-3.5 h-3.5" /> Liberar para o aluno</>}
+                      </Button>
                       <span className="text-xs text-muted-foreground">{new Date(current.created_at).toLocaleString("pt-BR")}</span>
                     </div>
                   </div>
