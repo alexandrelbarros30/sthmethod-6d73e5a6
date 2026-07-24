@@ -7,10 +7,18 @@ const corsHeaders = {
 };
 
 const MODEL_ID = "google/gemini-3-flash-preview";
-const TARGET_TOLERANCE_PCT = 5;
+// Tolerância operacional do portão de qualidade. O Gemini Flash tende a estourar
+// kcal/proteína em ~10-15% em briefings enxutos; ±5% inviabilizava a entrega mesmo
+// após vários retries. ±8% mantém o cardápio nutricionalmente próximo do alvo e
+// destaca o desvio no cliente via parsed.deviation_pct.
+const TARGET_TOLERANCE_PCT = 8;
 // Cada retry roda: geração (~10s) + reconcile via analyze-diet (~30-45s).
 // Com 5 retries estourava o timeout da edge function (~200s) e o usuário via "Falha ao gerar".
 const MAX_TARGET_RETRIES = 4;
+// Se após todos os retries o desvio ainda estiver acima da tolerância operacional,
+// mas dentro deste teto de segurança, entregamos o cardápio marcado como "fora da meta"
+// em vez de bloquear (o admin/consultor revisa antes de liberar ao aluno).
+const HARD_BLOCK_TOLERANCE_PCT = 15;
 const RECONCILE_TIMEOUT_MS = 25000;
 
 type MacroTotal = {
