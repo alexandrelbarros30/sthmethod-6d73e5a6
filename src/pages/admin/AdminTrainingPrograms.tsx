@@ -434,6 +434,47 @@ const AdminTrainingPrograms = () => {
           >
             <RefreshCw className="w-4 h-4 mr-1" /> Sincronizar capas ST Coach
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">
+                <ImageIcon className="w-4 h-4 mr-1" /> Regerar TODAS as capas
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Regerar todas as capas dos programas?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Isso vai gerar novamente as capas (estilo Apple puro) para <b>{filteredPrograms.length}</b> programa(s) visíveis. A operação leva alguns minutos e consome créditos de IA.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={async () => {
+                  const list = [...filteredPrograms];
+                  const total = list.length;
+                  if (!total) { toast.info("Nenhum programa para regerar"); return; }
+                  const toastId = toast.loading(`Regenerando capas 0/${total}...`);
+                  let ok = 0, fail = 0;
+                  for (let i = 0; i < list.length; i++) {
+                    const p = list[i];
+                    try {
+                      const { data, error } = await supabase.functions.invoke("generate-program-cover", { body: { programId: p.id } });
+                      if (error || (data as any)?.error) throw new Error((error as any)?.message || (data as any)?.error);
+                      ok++;
+                    } catch (e) {
+                      fail++;
+                      console.error("cover regen failed", p.id, e);
+                    }
+                    toast.loading(`Regenerando capas ${i + 1}/${total} · ok ${ok} · falhas ${fail}`, { id: toastId });
+                  }
+                  queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                  toast.success(`Regeração concluída · ${ok} capas OK · ${fail} falhas`, { id: toastId });
+                }}>
+                  Regerar agora
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
             <Plus className="w-4 h-4 mr-1" /> Novo Programa
           </Button>
