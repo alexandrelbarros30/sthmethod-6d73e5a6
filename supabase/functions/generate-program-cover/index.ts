@@ -2,7 +2,7 @@
 // Faixa rosa (feminino) / azul (masculino). Upload em ai-training-media.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { buildProgramCoverPrompt } from '../_shared/program-cover-prompt.ts';
+import { buildProgramCoverPrompt, inferGenderFromText } from '../_shared/program-cover-prompt.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -32,16 +32,17 @@ Deno.serve(async (req) => {
     const { programId, gender: genderIn, studentId } = await req.json().catch(() => ({}));
     if (!programId) return new Response(JSON.stringify({ error: 'programId obrigatório' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    const { data: prog, error: progErr } = await admin.from('training_programs').select('id, title').eq('id', programId).maybeSingle();
+    const { data: prog, error: progErr } = await admin.from('training_programs').select('id, title, details').eq('id', programId).maybeSingle();
     if (progErr || !prog) return new Response(JSON.stringify({ error: 'Programa não encontrado' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    // Definir gênero: input explícito > gênero do aluno > masculino
-    let gender: 'F' | 'M' = 'M';
+    // Definir gênero: input explícito > gênero do aluno > heurística por título/detalhes
+    let gender: 'F' | 'M' = inferGenderFromText(`${prog.title || ''} ${prog.details || ''}`);
     if (genderIn === 'F' || genderIn === 'M') gender = genderIn;
     else if (studentId) {
       const { data: prof } = await admin.from('profiles').select('gender').eq('id', studentId).maybeSingle();
       const g = String(prof?.gender || '').toLowerCase();
       if (g.startsWith('f') || g.includes('fem') || g.includes('mulher')) gender = 'F';
+      else if (g.startsWith('m')) gender = 'M';
     }
 
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
