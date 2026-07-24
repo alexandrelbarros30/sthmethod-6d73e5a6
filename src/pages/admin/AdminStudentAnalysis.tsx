@@ -254,9 +254,9 @@ export default function AdminStudentAnalysis() {
       title="Central de Análise · STHIA"
       subtitle="Leitura e interpretação de exames, composição visual, parecer clínico e recomendações personalizadas."
     >
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] w-full min-w-0">
         {/* Seleção de aluno + histórico */}
-        <div className="space-y-3">
+        <div className="space-y-3 min-w-0">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2"><Stethoscope className="w-4 h-4" /> Aluno</CardTitle>
@@ -323,7 +323,7 @@ export default function AdminStudentAnalysis() {
         </div>
 
         {/* Área principal */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {!studentId && (
             <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Selecione um aluno para começar a análise.</CardContent></Card>
           )}
@@ -566,9 +566,9 @@ export default function AdminStudentAnalysis() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto">
                   <div
-                    className="prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:text-xs [&_th]:border [&_th]:border-border [&_th]:p-1.5 [&_th]:bg-muted [&_td]:border [&_td]:border-border [&_td]:p-1.5"
+                    className="prose prose-sm dark:prose-invert max-w-none break-words [&_*]:max-w-full [&_img]:h-auto [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_table]:w-full [&_table]:text-xs [&_th]:border [&_th]:border-border [&_th]:p-1.5 [&_th]:bg-muted [&_td]:border [&_td]:border-border [&_td]:p-1.5"
                     dangerouslySetInnerHTML={{ __html: current.report_html }}
                   />
                 </CardContent>
