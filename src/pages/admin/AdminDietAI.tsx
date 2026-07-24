@@ -220,7 +220,14 @@ const AdminDietAI = () => {
   };
 
   const saveToStudent = async () => {
-    if (!selectedStudent || !result) return;
+    if (!result) {
+      toast.error("Gere um cardápio antes de salvar.");
+      return;
+    }
+    if (!selectedStudent) {
+      toast.error("Selecione um aluno para salvar o rascunho na ficha.");
+      return;
+    }
     const defaultName = `Dieta IA — ${new Date().toLocaleDateString("pt-BR")}`;
     const name = window.prompt("Nome do rascunho da dieta:", defaultName);
     if (name === null) return; // cancelado
@@ -480,8 +487,14 @@ const AdminDietAI = () => {
                         {reviewMut.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ClipboardCheck className="w-4 h-4 mr-1" />}
                         Revisar com IA
                       </Button>
-                      <Button size="sm" onClick={saveToStudent} disabled={saving || !selectedStudent}>
-                        <Save className="w-4 h-4 mr-1" /> {saving ? "Salvando..." : "Salvar como rascunho"}
+                      <Button
+                        size="sm"
+                        onClick={saveToStudent}
+                        disabled={saving}
+                        title={!selectedStudent ? "Selecione um aluno na coluna da esquerda para salvar" : undefined}
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        {saving ? "Salvando..." : selectedStudent ? "Salvar como rascunho" : "Selecionar aluno e salvar"}
                       </Button>
                     </div>
                   </div>
