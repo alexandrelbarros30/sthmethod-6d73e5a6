@@ -1,23 +1,21 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PlayCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }
 
-// URL do vídeo hospedado como asset da Lovable (ver src/assets/mission-evolution-tutorial.mp4.asset.json)
-// Se o asset ainda não existir, o dialog mostra estado de fallback.
-let tutorialUrl: string | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const asset = require("@/assets/mission-evolution-tutorial.mp4.asset.json");
-  tutorialUrl = asset?.url ?? null;
-} catch {
-  tutorialUrl = null;
-}
-
 export const EvolutionTutorialVideoDialog = ({ open, onOpenChange }: Props) => {
+  const [tutorialUrl, setTutorialUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open || tutorialUrl) return;
+    // Lazy-load do asset pointer — se ainda não existir, cai no fallback.
+    import("@/assets/mission-evolution-tutorial.mp4.asset.json")
+      .then((mod: any) => setTutorialUrl(mod?.default?.url ?? mod?.url ?? null))
+      .catch(() => setTutorialUrl(null));
+  }, [open, tutorialUrl]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden bg-black border-white/10">
