@@ -6,7 +6,7 @@ export const RemotionRoot = () => (
     <Composition
       id="main"
       component={MissionEvolution}
-      durationInFrames={720}
+      durationInFrames={840}
       fps={30}
       width={1080}
       height={1920}
