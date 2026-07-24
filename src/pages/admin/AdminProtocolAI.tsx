@@ -357,7 +357,7 @@ const AdminProtocolAI = () => {
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                     <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG)
                   </p>
-                  <DocumentUpload userId={selectedStudent.user_id} />
+                  <DocumentUpload userId={selectedStudent.user_id} allowImages />
                 </div>
               )}
               <div>
