@@ -349,9 +349,20 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               <Trophy className="w-4 h-4" style={{ color: `hsl(${GREEN})` }} />
               Missão Evolução
             </CardTitle>
-            <span className="text-xs font-medium" style={{ color: `hsl(${GREEN})` }}>
-              {completedCount}/3 conquistas
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTourOpen(true)}
+                className="text-[11px] font-medium inline-flex items-center gap-1 px-2 py-1 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                style={{ color: `hsl(${GREEN})`, border: `1px solid hsl(${GREEN} / 0.35)` }}
+              >
+                <HelpCircle className="w-3 h-3" />
+                Como funciona?
+              </button>
+              <span className="text-xs font-medium" style={{ color: `hsl(${GREEN})` }}>
+                {completedCount}/3
+              </span>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
             Complete as 3 etapas no seu ritmo. Cada uma salva sozinha — sem pressa, sem ordem obrigatória.
@@ -366,7 +377,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
         <CardContent className="space-y-2">
           {/* ETAPA 1 */}
-          <div className="rounded-xl border border-border/60">
+          <div className="rounded-xl border border-border/60" data-tour="evolution-stage-1">
             <StageHeader
               n={1}
               icon={<Scale className="w-4 h-4" style={{ color: `hsl(${GREEN})` }} />}
@@ -429,7 +440,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           </div>
 
           {/* ETAPA 2 */}
-          <div className="rounded-xl border border-border/60">
+          <div className="rounded-xl border border-border/60" data-tour="evolution-stage-2">
             <StageHeader
               n={2}
               icon={<Camera className="w-4 h-4" style={{ color: `hsl(${BLUE})` }} />}
@@ -462,7 +473,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           </div>
 
           {/* ETAPA 3 */}
-          <div className="rounded-xl border border-border/60">
+          <div className="rounded-xl border border-border/60" data-tour="evolution-stage-3">
             <StageHeader
               n={3}
               icon={<Activity className="w-4 h-4" style={{ color: `hsl(${AMBER})` }} />}
@@ -536,6 +547,16 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EvolutionTour
+        open={tourOpen}
+        onClose={handleCloseTour}
+        onOpenVideo={() => {
+          handleCloseTour();
+          setVideoOpen(true);
+        }}
+      />
+      <EvolutionTutorialVideoDialog open={videoOpen} onOpenChange={setVideoOpen} />
     </>
   );
 };
