@@ -8,7 +8,10 @@ const corsHeaders = {
 
 const MODEL_ID = "google/gemini-3-flash-preview";
 const TARGET_TOLERANCE_PCT = 3;
-const MAX_TARGET_RETRIES = 5;
+// Cada retry roda: geração (~10s) + reconcile via analyze-diet (~30-45s).
+// Com 5 retries estourava o timeout da edge function (~200s) e o usuário via "Falha ao gerar".
+const MAX_TARGET_RETRIES = 2;
+const RECONCILE_TIMEOUT_MS = 25000;
 
 type MacroTotal = {
   energy_kcal: number;
@@ -166,11 +169,19 @@ async function reconcileWithAnalyzer(parsed: any): Promise<void> {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const ANON = Deno.env.get("SUPABASE_ANON_KEY");
     if (!SUPABASE_URL || !ANON) return;
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/analyze-diet`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${ANON}`, apikey: ANON },
-      body: JSON.stringify({ dietContent: parsed.diet_text }),
-    });
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), RECONCILE_TIMEOUT_MS);
+    let resp: Response;
+    try {
+      resp = await fetch(`${SUPABASE_URL}/functions/v1/analyze-diet`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${ANON}`, apikey: ANON },
+        body: JSON.stringify({ dietContent: parsed.diet_text }),
+        signal: ctl.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
     if (!resp.ok) { console.warn("reconcile analyze-diet non-ok", resp.status); return; }
     const a = await resp.json();
     if (!a?.total || !Array.isArray(a?.meals)) return;

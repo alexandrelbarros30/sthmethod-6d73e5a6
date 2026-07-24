@@ -335,7 +335,7 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         temperature: 0,
         messages: [
           { role: "system", content: systemPrompt },
@@ -491,7 +491,7 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
       fsMeta = { enabled: false, error: fsErr instanceof Error ? fsErr.message : String(fsErr) };
     }
 
-    return new Response(JSON.stringify({ ...analysis, _meta: { model: "google/gemini-2.5-pro", usage, fatsecret: fsMeta } }), {
+    return new Response(JSON.stringify({ ...analysis, _meta: { model: "google/gemini-2.5-flash", usage, fatsecret: fsMeta } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
