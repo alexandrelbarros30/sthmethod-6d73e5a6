@@ -514,17 +514,23 @@ REGRAS:
 
       if (!gate.valid) {
         console.error("generate-diet-ai quality gate failed", { violations: gate.violations, total: gate.total, targets: targetsForRetry, retries });
-        return new Response(JSON.stringify({
-          error: `A STHIA não entregou uma dieta dentro da meta após ${retries} tentativa(s). Nenhum cardápio incorreto foi liberado. Ajuste o briefing ou gere novamente. Falhas: ${gate.violations.join("; ")}`,
-          blocked: true,
-          total: gate.total,
-          targets: targetsForRetry,
-          deviation_pct: gate.deviation_pct,
-          retries,
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // Só bloqueia se o desvio for realmente absurdo. Caso contrário, entrega o cardápio
+        // marcado como "fora da meta" para o admin revisar e ajustar manualmente — evita
+        // que o admin fique preso sem nenhum resultado quando o modelo estoura ±8%.
+        if (gate.worst_deviation_pct > HARD_BLOCK_TOLERANCE_PCT) {
+          return new Response(JSON.stringify({
+            error: `A STHIA não entregou uma dieta dentro da meta após ${retries} tentativa(s). Nenhum cardápio incorreto foi liberado. Ajuste o briefing ou gere novamente. Falhas: ${gate.violations.join("; ")}`,
+            blocked: true,
+            total: gate.total,
+            targets: targetsForRetry,
+            deviation_pct: gate.deviation_pct,
+            retries,
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Segue o fluxo com aviso de desvio (parsed.validation.ok = false).
       }
     }
     // Non-target flows (or review==false without targets) still benefit from reconciling
