@@ -16,6 +16,8 @@ import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { hasSmartProtocolStructure } from "@/lib/protocol-phase-parser";
 import { toast } from "sonner";
+import DocumentUpload from "@/components/shared/DocumentUpload";
+import { FileText, Brain } from "lucide-react";
 
 type GenResult = {
   title: string;
@@ -54,6 +56,57 @@ const AdminProtocolAI = () => {
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [pullingAnalysis, setPullingAnalysis] = useState(false);
+
+  const stripHtml = (html: string) =>
+    html.replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+  const pullClinicalAnalysis = async () => {
+    if (!selectedStudent) {
+      toast.error("Selecione um aluno primeiro");
+      return;
+    }
+    setPullingAnalysis(true);
+    try {
+      const { data, error } = await supabase
+        .from("student_clinical_analyses")
+        .select("title, summary, report_html, red_flags, recommendations, markers, created_at")
+        .eq("user_id", selectedStudent.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        toast.info("Nenhum parecer STHIA encontrado para este aluno");
+        return;
+      }
+      const parts: string[] = [];
+      parts.push(`=== PARECER STHIA (${new Date(data.created_at).toLocaleDateString("pt-BR")}) ===`);
+      if (data.title) parts.push(`Título: ${data.title}`);
+      if (data.summary) parts.push(`Resumo: ${data.summary}`);
+      if (Array.isArray(data.red_flags) && data.red_flags.length)
+        parts.push(`Pontos de atenção: ${data.red_flags.join("; ")}`);
+      if (Array.isArray(data.recommendations) && data.recommendations.length)
+        parts.push(`Recomendações: ${data.recommendations.join("; ")}`);
+      if (data.markers && typeof data.markers === "object")
+        parts.push(`Marcadores: ${JSON.stringify(data.markers)}`);
+      if (data.report_html) {
+        const plain = stripHtml(data.report_html);
+        parts.push(`Parecer completo: ${plain.slice(0, 4000)}`);
+      }
+      const block = parts.join("\n");
+      setLabsNotes((prev) => (prev ? `${prev}\n\n${block}` : block));
+      toast.success("Parecer STHIA anexado ao briefing");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar parecer");
+    } finally {
+      setPullingAnalysis(false);
+    }
+  };
 
   const { data: students = [] } = useQuery({
     queryKey: ["protocol-ai-students", displayRole, user?.id],
@@ -280,11 +333,33 @@ const AdminProtocolAI = () => {
               <div>
                 <Label className="text-xs">Exames recentes / biomarcadores relevantes</Label>
                 <Textarea rows={3} value={labsNotes} onChange={(e) => setLabsNotes(e.target.value)} placeholder="Ex: HDL 32, LDL 145, HCT 52%, TGO 60, TGP 78, Estradiol 68..." />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={pullClinicalAnalysis}
+                  disabled={!selectedStudent || pullingAnalysis}
+                >
+                  {pullingAnalysis ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Puxando parecer...</>
+                  ) : (
+                    <><Brain className="w-4 h-4 mr-2" /> Puxar análise IA STHIA</>
+                  )}
+                </Button>
               </div>
               <div>
                 <Label className="text-xs">Restrições / condições clínicas</Label>
                 <Input value={restrictions} onChange={(e) => setRestrictions(e.target.value)} placeholder="HAS controlada, gastrite, alergia a lactose..." />
               </div>
+              {selectedStudent && (
+                <div className="rounded-lg border border-border p-3 bg-muted/20">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG)
+                  </p>
+                  <DocumentUpload userId={selectedStudent.user_id} />
+                </div>
+              )}
               <div>
                 <Label className="text-xs">Observações livres (prompt)</Label>
                 <Textarea rows={4} value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Ex: montar protocolo off-season 12 semanas com foco em ganho de massa magra e proteção cardiovascular, incluir peptídeos de recuperação..." />
