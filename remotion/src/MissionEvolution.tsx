@@ -1,6 +1,7 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, useVideoConfig, Sequence } from "remotion";
 import { loadFont } from "@remotion/google-fonts/Inter";
 import { IntroScene } from "./scenes/IntroScene";
+import { NavBarScene } from "./scenes/NavBarScene";
 import { StageScene } from "./scenes/StageScene";
 import { OutroScene } from "./scenes/OutroScene";
 
@@ -10,10 +11,13 @@ export const MissionEvolution = () => {
   return (
     <AbsoluteFill style={{ background: "#000", fontFamily: "Inter, sans-serif" }}>
       <BackgroundGlow />
-      <Sequence from={0} durationInFrames={90}>
+      <Sequence from={0} durationInFrames={120}>
+        <NavBarScene />
+      </Sequence>
+      <Sequence from={120} durationInFrames={90}>
         <IntroScene />
       </Sequence>
-      <Sequence from={90} durationInFrames={180}>
+      <Sequence from={210} durationInFrames={180}>
         <StageScene
           number={1}
           title="Peso & Mensagem"
@@ -23,7 +27,7 @@ export const MissionEvolution = () => {
           bullets={["Digite seu peso atual", "Escreva como está se sentindo", "Confirmar & salvar"]}
         />
       </Sequence>
-      <Sequence from={270} durationInFrames={180}>
+      <Sequence from={390} durationInFrames={180}>
         <StageScene
           number={2}
           title="Fotos Corporais"
@@ -33,7 +37,7 @@ export const MissionEvolution = () => {
           bullets={["Frente, lado e costas", "Boa iluminação", "Confirma automático"]}
         />
       </Sequence>
-      <Sequence from={450} durationInFrames={180}>
+      <Sequence from={570} durationInFrames={180}>
         <StageScene
           number={3}
           title="Rotina"
@@ -43,7 +47,7 @@ export const MissionEvolution = () => {
           bullets={["Mudou o trabalho?", "Novo treino ou lesão?", "Recalcula seus macros"]}
         />
       </Sequence>
-      <Sequence from={630} durationInFrames={90}>
+      <Sequence from={750} durationInFrames={90}>
         <OutroScene />
       </Sequence>
     </AbsoluteFill>
