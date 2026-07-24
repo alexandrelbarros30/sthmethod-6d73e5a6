@@ -7,10 +7,18 @@ const corsHeaders = {
 };
 
 const MODEL_ID = "google/gemini-3-flash-preview";
-const TARGET_TOLERANCE_PCT = 5;
+// Tolerância operacional do portão de qualidade. O Gemini Flash tende a estourar
+// kcal/proteína em ~10-15% em briefings enxutos; ±5% inviabilizava a entrega mesmo
+// após vários retries. ±8% mantém o cardápio nutricionalmente próximo do alvo e
+// destaca o desvio no cliente via parsed.deviation_pct.
+const TARGET_TOLERANCE_PCT = 8;
 // Cada retry roda: geração (~10s) + reconcile via analyze-diet (~30-45s).
 // Com 5 retries estourava o timeout da edge function (~200s) e o usuário via "Falha ao gerar".
 const MAX_TARGET_RETRIES = 4;
+// Se após todos os retries o desvio ainda estiver acima da tolerância operacional,
+// mas dentro deste teto de segurança, entregamos o cardápio marcado como "fora da meta"
+// em vez de bloquear (o admin/consultor revisa antes de liberar ao aluno).
+const HARD_BLOCK_TOLERANCE_PCT = 15;
 const RECONCILE_TIMEOUT_MS = 25000;
 
 type MacroTotal = {
@@ -506,17 +514,23 @@ REGRAS:
 
       if (!gate.valid) {
         console.error("generate-diet-ai quality gate failed", { violations: gate.violations, total: gate.total, targets: targetsForRetry, retries });
-        return new Response(JSON.stringify({
-          error: `A STHIA não entregou uma dieta dentro da meta após ${retries} tentativa(s). Nenhum cardápio incorreto foi liberado. Ajuste o briefing ou gere novamente. Falhas: ${gate.violations.join("; ")}`,
-          blocked: true,
-          total: gate.total,
-          targets: targetsForRetry,
-          deviation_pct: gate.deviation_pct,
-          retries,
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // Só bloqueia se o desvio for realmente absurdo. Caso contrário, entrega o cardápio
+        // marcado como "fora da meta" para o admin revisar e ajustar manualmente — evita
+        // que o admin fique preso sem nenhum resultado quando o modelo estoura ±8%.
+        if (gate.worst_deviation_pct > HARD_BLOCK_TOLERANCE_PCT) {
+          return new Response(JSON.stringify({
+            error: `A STHIA não entregou uma dieta dentro da meta após ${retries} tentativa(s). Nenhum cardápio incorreto foi liberado. Ajuste o briefing ou gere novamente. Falhas: ${gate.violations.join("; ")}`,
+            blocked: true,
+            total: gate.total,
+            targets: targetsForRetry,
+            deviation_pct: gate.deviation_pct,
+            retries,
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Segue o fluxo com aviso de desvio (parsed.validation.ok = false).
       }
     }
     // Non-target flows (or review==false without targets) still benefit from reconciling
