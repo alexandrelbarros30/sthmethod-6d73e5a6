@@ -23,8 +23,6 @@ const isGroup = (item: NavItem): item is NavGroup => (item as NavGroup).group !=
 const linksByRole: Record<AppRole, NavItem[]> = {
   student: [
     { to: "/dashboard", icon: LayoutDashboard, label: "Visão Geral" },
-    { to: "/dashboard/profile", icon: ClipboardList, label: "Minha Ficha" },
-    { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
     { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
     {
       group: "Nutrição",
@@ -34,6 +32,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/diario-alimentar", icon: NotebookPen, label: "Diário Alimentar" },
       ],
     },
+    { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
     {
       group: "Treino",
       icon: Dumbbell,
@@ -43,7 +42,8 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/dashboard/feedbacks", icon: History, label: "Meus Feedbacks" },
       ],
     },
-    { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
+    { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
+    { to: "/dashboard/profile", icon: ClipboardList, label: "Minha Ficha" },
     { to: "/dashboard/metabolic", icon: Microscope, label: "Central de Análise" },
     {
       group: "Conteúdo",
