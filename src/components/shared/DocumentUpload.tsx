@@ -12,9 +12,10 @@ import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 interface DocumentUploadProps {
   userId: string;
   onUploaded?: () => void;
+  allowImages?: boolean;
 }
 
-export default function DocumentUpload({ userId, onUploaded }: DocumentUploadProps) {
+export default function DocumentUpload({ userId, onUploaded, allowImages = false }: DocumentUploadProps) {
   const [uploadingExam, setUploadingExam] = useState(false);
   const [uploadingPrescription, setUploadingPrescription] = useState(false);
   const examRef = useRef<HTMLInputElement>(null);
@@ -44,6 +45,12 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
     return mime === "application/pdf" || name.endsWith(".pdf");
   };
 
+  const isImageFile = (file: File) => {
+    const mime = file.type?.toLowerCase() || "";
+    const name = file.name?.toLowerCase() || "";
+    return mime.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(name);
+  };
+
   const normalizePdfForUpload = async (file: File) => {
     const buffer = await file.arrayBuffer();
 
@@ -55,8 +62,10 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
   };
 
   const uploadFile = async (file: File, type: "lab_exam" | "medical_prescription") => {
-    if (!isPdfFile(file)) {
-      toast.error("Apenas arquivos PDF são aceitos");
+    const pdf = isPdfFile(file);
+    const image = allowImages && isImageFile(file);
+    if (!pdf && !image) {
+      toast.error(allowImages ? "Envie PDF, JPG, PNG ou WEBP" : "Apenas arquivos PDF são aceitos");
       return;
     }
     if (file.size > 55 * 1024 * 1024) {
@@ -71,12 +80,22 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Sessão expirada. Faça login novamente.");
 
-      const normalizedFile = await normalizePdfForUpload(file);
-      const path = `${userId}/${type}_${Date.now()}.pdf`;
+      let payload: Blob;
+      let ext = "pdf";
+      let contentType = "application/pdf";
+      if (pdf) {
+        payload = await normalizePdfForUpload(file);
+      } else {
+        payload = file;
+        contentType = file.type || "image/jpeg";
+        const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
+        ext = (match?.[1] || "jpg").toLowerCase();
+      }
+      const path = `${userId}/${type}_${Date.now()}.${ext}`;
       const { error: storageError } = await supabase.storage
         .from("documents")
-        .upload(path, normalizedFile, {
-          contentType: "application/pdf",
+        .upload(path, payload, {
+          contentType,
           upsert: false,
         });
       if (storageError) throw storageError;
@@ -150,7 +169,7 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
       <input
         ref={inputRef}
         type="file"
-        accept="application/pdf,.pdf"
+        accept={allowImages ? "application/pdf,.pdf,image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" : "application/pdf,.pdf"}
         className="hidden"
         onChange={(e) => {
           if (e.target.files?.[0]) uploadFile(e.target.files[0], type);
