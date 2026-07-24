@@ -11,9 +11,10 @@ export const EvolutionTutorialVideoDialog = ({ open, onOpenChange }: Props) => {
   const [tutorialUrl, setTutorialUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!open || tutorialUrl) return;
-    // Lazy-load do asset pointer — se ainda não existir, cai no fallback.
-    import("@/assets/mission-evolution-tutorial.mp4.asset.json")
-      .then((mod: any) => setTutorialUrl(mod?.default?.url ?? mod?.url ?? null))
+    // Verifica se o vídeo tutorial existe em /public. Se ainda não estiver publicado, cai no fallback.
+    const url = "/tutorial-missao-evolucao.mp4";
+    fetch(url, { method: "HEAD" })
+      .then((r) => setTutorialUrl(r.ok ? url : null))
       .catch(() => setTutorialUrl(null));
   }, [open, tutorialUrl]);
   return (
