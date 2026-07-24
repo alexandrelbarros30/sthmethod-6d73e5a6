@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TrendingUp, Scale, Camera, ChevronDown, ChevronUp, Sparkles, Trophy, CheckCircle2, Activity, MessageCircle } from "lucide-react";
+import { TrendingUp, Scale, Camera, ChevronDown, ChevronUp, Sparkles, Trophy, CheckCircle2, Activity, MessageCircle, HelpCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +22,8 @@ import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionActivityChange, { ActivityData } from "@/components/student/EvolutionActivityChange";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
 import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
+import EvolutionTour from "@/components/student/EvolutionTour";
+import EvolutionTutorialVideoDialog from "@/components/student/EvolutionTutorialVideoDialog";
 
 interface EvolutionUpdateCardProps {
   userId: string;
@@ -46,8 +48,25 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   const [confirmStage, setConfirmStage] = useState<0 | 1 | 2 | 3>(0);
 
   const [draftReady, setDraftReady] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const tourSeenKey = `sth:evolution-tour-seen:v1:${userId}`;
   const draftKey = `sth:evolution-card-draft:v3:${userId}`;
   const imageDraftKey = `sth:evolution-card-images:v3:${userId}`;
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(tourSeenKey)) {
+        const t = setTimeout(() => setTourOpen(true), 600);
+        return () => clearTimeout(t);
+      }
+    } catch {}
+  }, [tourSeenKey]);
+
+  const handleCloseTour = () => {
+    setTourOpen(false);
+    try { localStorage.setItem(tourSeenKey, "1"); } catch {}
+  };
 
   const toggleStage = (n: 1 | 2 | 3) => setOpenStages((s) => ({ ...s, [n]: !s[n] }));
 
