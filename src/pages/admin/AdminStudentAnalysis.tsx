@@ -254,9 +254,9 @@ export default function AdminStudentAnalysis() {
       title="Central de Análise · STHIA"
       subtitle="Leitura e interpretação de exames, composição visual, parecer clínico e recomendações personalizadas."
     >
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] w-full min-w-0">
         {/* Seleção de aluno + histórico */}
-        <div className="space-y-3">
+        <div className="space-y-3 min-w-0">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2"><Stethoscope className="w-4 h-4" /> Aluno</CardTitle>
@@ -323,7 +323,7 @@ export default function AdminStudentAnalysis() {
         </div>
 
         {/* Área principal */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {!studentId && (
             <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Selecione um aluno para começar a análise.</CardContent></Card>
           )}
