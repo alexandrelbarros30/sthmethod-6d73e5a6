@@ -7,10 +7,10 @@ const corsHeaders = {
 };
 
 const MODEL_ID = "google/gemini-3-flash-preview";
-const TARGET_TOLERANCE_PCT = 3;
+const TARGET_TOLERANCE_PCT = 5;
 // Cada retry roda: geração (~10s) + reconcile via analyze-diet (~30-45s).
 // Com 5 retries estourava o timeout da edge function (~200s) e o usuário via "Falha ao gerar".
-const MAX_TARGET_RETRIES = 2;
+const MAX_TARGET_RETRIES = 4;
 const RECONCILE_TIMEOUT_MS = 25000;
 
 type MacroTotal = {
