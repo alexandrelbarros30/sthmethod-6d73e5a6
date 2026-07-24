@@ -8,10 +8,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const mainItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Início" },
-  { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
   { to: "/dashboard/diet", icon: Salad, label: "Dieta", center: true },
   { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
   { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
+  { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
 ];
 
 const menuItems = [
