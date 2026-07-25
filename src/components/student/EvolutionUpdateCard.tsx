@@ -391,20 +391,23 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               n={1}
               icon={<Scale className="w-4 h-4" style={{ color: `hsl(${GREEN})` }} />}
               title="Peso & Mensagem"
-              subtitle="Registre seu peso atual e envie uma mensagem para seu consultor"
+              subtitle="Atualize seu peso (opcional) e mande um recado ao consultor"
               done={stage1Done}
               open={openStages[1]}
               accent={GREEN}
+              xp={10}
             />
             {openStages[1] && (
               <div className="px-3 pb-4 space-y-4">
-                <div className="rounded-lg p-3 text-xs" style={{ background: `hsl(${GREEN} / 0.06)`, border: `1px dashed hsl(${GREEN} / 0.3)` }}>
-                  <p className="font-semibold flex items-center gap-1.5 mb-1" style={{ color: `hsl(${GREEN})` }}>
-                    <Sparkles className="w-3.5 h-3.5" /> Por que isso importa?
+                <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: `hsl(${GREEN} / 0.06)`, border: `1px dashed hsl(${GREEN} / 0.3)` }}>
+                  <p className="font-semibold flex items-center gap-1.5" style={{ color: `hsl(${GREEN})` }}>
+                    <Target className="w-3.5 h-3.5" /> Missão da etapa
                   </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Seu peso guia o recálculo automático dos macros. A mensagem é lida pelo consultor para entender como você está se sentindo.
-                  </p>
+                  <ul className="text-muted-foreground leading-relaxed space-y-1 pl-0.5">
+                    <li>⚖️ <strong>Peso</strong>: pese-se pela manhã, em jejum, sem roupa pesada — é opcional, mas guia o recálculo automático dos macros.</li>
+                    <li>💬 <strong>Mensagem</strong>: conte como está se sentindo, dores, dúvidas, vitórias. O consultor lê antes do próximo ajuste.</li>
+                    <li>✅ Você pode salvar só o peso, só a mensagem, ou os dois juntos.</li>
+                  </ul>
                 </div>
 
                 <div className="space-y-2">
@@ -444,6 +447,11 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
                 >
                   {savingStage === 1 ? "Salvando..." : "Confirmar & salvar etapa 1"}
                 </Button>
+                {!canSubmitStage1 && (
+                  <p className="text-[11px] text-muted-foreground text-center flex items-center justify-center gap-1">
+                    <Info className="w-3 h-3" /> Informe peso <em>ou</em> mensagem para liberar o botão.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -454,20 +462,23 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               n={2}
               icon={<Camera className="w-4 h-4" style={{ color: `hsl(${BLUE})` }} />}
               title="Fotos corporais"
-              subtitle="Envie novas fotos — as anteriores ficam preservadas para comparação"
+              subtitle="Envie frente, costas e lateral — anteriores ficam preservadas"
               done={stage2Done}
               open={openStages[2]}
               accent={BLUE}
+              xp={15}
             />
             {openStages[2] && (
               <div className="px-3 pb-4 space-y-3">
-                <div className="rounded-lg p-3 text-xs" style={{ background: `hsl(${BLUE} / 0.06)`, border: `1px dashed hsl(${BLUE} / 0.3)` }}>
-                  <p className="font-semibold flex items-center gap-1.5 mb-1" style={{ color: `hsl(${BLUE})` }}>
-                    <Sparkles className="w-3.5 h-3.5" /> Dica visual
+                <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: `hsl(${BLUE} / 0.06)`, border: `1px dashed hsl(${BLUE} / 0.3)` }}>
+                  <p className="font-semibold flex items-center gap-1.5" style={{ color: `hsl(${BLUE})` }}>
+                    <Target className="w-3.5 h-3.5" /> Missão da etapa
                   </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Boa iluminação, mesmo ângulo e mesma roupa das fotos anteriores. O envio já é confirmado automaticamente ao concluir o upload.
-                  </p>
+                  <ul className="text-muted-foreground leading-relaxed space-y-1 pl-0.5">
+                    <li>💡 <strong>Iluminação boa</strong>, mesmo ângulo e mesma roupa das fotos anteriores.</li>
+                    <li>📸 Selecione as fotos e revise a pré-visualização antes de enviar.</li>
+                    <li>🔒 Clique em <strong>“Enviar fotos”</strong> logo abaixo para confirmar — só aí o registro é salvo.</li>
+                  </ul>
                 </div>
                 <BodyImageUpload
                   userId={userId}
@@ -487,20 +498,24 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               n={3}
               icon={<Activity className="w-4 h-4" style={{ color: `hsl(${AMBER})` }} />}
               title="Rotina de atividades"
-              subtitle="Atualize apenas se houve mudança real na rotina"
+              subtitle="Só atualize se houve mudança real (social, profissional ou saúde)"
               done={stage3Done}
               open={openStages[3]}
               accent={AMBER}
+              xp={20}
             />
             {openStages[3] && (
               <div className="px-3 pb-4 space-y-4">
-                <div className="rounded-lg p-3 text-xs" style={{ background: `hsl(${AMBER} / 0.06)`, border: `1px dashed hsl(${AMBER} / 0.3)` }}>
-                  <p className="font-semibold flex items-center gap-1.5 mb-1" style={{ color: `hsl(${AMBER})` }}>
-                    <Sparkles className="w-3.5 h-3.5" /> Atualize só se mudou
+                <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: `hsl(${AMBER} / 0.06)`, border: `1px dashed hsl(${AMBER} / 0.3)` }}>
+                  <p className="font-semibold flex items-center gap-1.5" style={{ color: `hsl(${AMBER})` }}>
+                    <Target className="w-3.5 h-3.5" /> Atualize só se mudou de verdade
                   </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Só ative essa etapa se houve mudança real por demanda <strong>social</strong>, <strong>profissional</strong> ou de <strong>saúde</strong> (ex.: novo emprego, lesão, mudança de treino). Alterar sem necessidade recalcula seus macros à toa.
-                  </p>
+                  <ul className="text-muted-foreground leading-relaxed space-y-1 pl-0.5">
+                    <li>👔 <strong>Social/profissional</strong>: novo emprego, mudança de turno, viagem longa.</li>
+                    <li>🩺 <strong>Saúde</strong>: lesão, cirurgia, restrição médica, gestação.</li>
+                    <li>🏋️ <strong>Treino</strong>: mudou de modalidade, frequência ou intensidade.</li>
+                    <li>⚠️ Alterar sem necessidade recalcula seus macros à toa — na dúvida, deixe como está.</li>
+                  </ul>
                 </div>
                 <EvolutionActivityChange profile={profile} value={activityChange} onChange={setActivityChange} />
                 <Button
@@ -515,6 +530,11 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
                 >
                   {savingStage === 3 ? "Salvando..." : "Confirmar & salvar etapa 3"}
                 </Button>
+                {!canSubmitStage3 && (
+                  <p className="text-[11px] text-muted-foreground text-center flex items-center justify-center gap-1">
+                    <Info className="w-3 h-3" /> Preencha a nova rotina abaixo para liberar o botão.
+                  </p>
+                )}
               </div>
             )}
           </div>
