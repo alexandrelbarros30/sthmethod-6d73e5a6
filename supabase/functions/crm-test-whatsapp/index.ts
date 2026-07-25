@@ -19,41 +19,21 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
     const { provider } = await req.json();
-    if (provider === 'zapi') {
-      const { data: row } = await admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle();
-      const cfg: any = row?.value || {};
-      const id = (cfg.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
-      const tok = (cfg.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
-      const client = (cfg.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
-      if (!id || !tok || !client) {
-        return new Response(JSON.stringify({ ok: false, error: 'Credenciais Z-API ausentes. Preencha Instance ID, Instance Token e Client Token e clique em Salvar.', missing: { instance_id: !id, instance_token: !tok, client_token: !client } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (provider === 'zapi' || provider === 'wapi' || provider === 'wapi_sucesso') {
+      // provider='zapi' (canal Comercial) foi migrado para W-API, config em 'wapi_comercial'.
+      const cfgKey = provider === 'zapi' ? 'wapi_comercial' : provider;
+      const envPrefix = provider === 'zapi' ? 'WAPI_COMERCIAL' : (provider === 'wapi_sucesso' ? 'WAPI_SUCESSO' : 'WAPI');
+      let { data: row } = await admin.from('crm_settings').select('value').eq('key', cfgKey).maybeSingle();
+      if (provider === 'zapi' && !row?.value) {
+        row = (await admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle()).data;
       }
-      const r = await fetch(`https://api.z-api.io/instances/${id}/token/${tok}/status`, { headers: { 'Client-Token': client } });
-      const d = await r.json().catch(() => ({}));
-      const dd: any = d || {};
-      const benignErrors = ['you are already connected'];
-      const errStr = typeof dd.error === 'string' ? dd.error.toLowerCase() : '';
-      const isBenign = benignErrors.some((e: string) => errStr.includes(e));
-      const ok = r.ok && (dd.connected === true || isBenign) && !(errStr && !isBenign);
-      return new Response(JSON.stringify({
-        ok,
-        status: r.status,
-        data: d,
-        error: ok ? null : (dd.error || null),
-        message: ok ? (dd.smartphoneConnected ? 'Instância conectada e celular pareado.' : 'Instância conectada.') : null,
-        source: cfg.client_token ? 'crm_settings' : 'env',
-      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-    
-    if (provider === 'wapi' || provider === 'wapi_sucesso') {
-      const { data: row } = await admin.from('crm_settings').select('value').eq('key', provider).maybeSingle();
       const cfg: any = row?.value || {};
       const serverUrl = (cfg.server_url || '').trim() || 'https://api.w-api.app';
-      const id = (cfg.instance_id || '').trim() || (provider === 'wapi' ? Deno.env.get('WAPI_INSTANCE_ID') : '');
-      const tok = (cfg.token || '').trim() || (provider === 'wapi' ? Deno.env.get('WAPI_TOKEN') : '');
-      const client = (cfg.client_token || '').trim() || (provider === 'wapi' ? Deno.env.get('WAPI_CLIENT_TOKEN') : '');
+      const id = (cfg.instance_id || '').trim() || Deno.env.get(`${envPrefix}_INSTANCE_ID`) || '';
+      const tok = (cfg.token || cfg.instance_token || '').trim() || Deno.env.get(`${envPrefix}_TOKEN`) || '';
+      const client = (cfg.client_token || '').trim() || Deno.env.get(`${envPrefix}_CLIENT_TOKEN`) || '';
       if (!id || !tok) {
-        return new Response(JSON.stringify({ ok: false, error: `Credenciais ${provider.toUpperCase()} ausentes. Preencha Instance ID e Token e clique em Salvar.`, missing: { instance_id: !id, token: !tok } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ ok: false, error: `Credenciais W-API (${cfgKey}) ausentes. Preencha Instance ID e Token e clique em Salvar.`, missing: { instance_id: !id, token: !tok } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       const headers: Record<string, string> = { Authorization: `Bearer ${tok}` };
       if (client) headers['Client-Token'] = client;
@@ -66,7 +46,7 @@ Deno.serve(async (req) => {
         status: r.status,
         data: d,
         error: ok ? null : (dd.error || null),
-        message: ok ? `Instância ${provider.toUpperCase()} conectada.` : null,
+        message: ok ? `Instância W-API (${cfgKey}) conectada.` : null,
         source: cfg.token ? 'crm_settings' : 'env',
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
