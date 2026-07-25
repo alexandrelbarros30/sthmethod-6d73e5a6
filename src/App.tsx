@@ -395,6 +395,7 @@ const App = () => (
             <Route path="/autorizacao-imagem/:token" element={<AutorizacaoImagem />} />
             <Route path="/autorizar-telefone" element={<AutorizarTelefone />} />
             <Route path="/alterar-dados" element={<AlterarDados />} />
+            <Route path="/erro" element={<Erro />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </FriendlyErrorBoundary>
