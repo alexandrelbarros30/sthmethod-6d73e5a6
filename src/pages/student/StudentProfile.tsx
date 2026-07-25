@@ -342,6 +342,27 @@ const StudentProfile = () => {
               <div><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[p.objective] || p.objective || "—"}</span></div>
             </div>
             <div className="mt-4 border-t pt-4">
+              {/* Ajuda: como enviar PDF de exames laboratoriais */}
+              <details className="mb-4 rounded-xl border border-primary/30 bg-primary/5 p-3 open:bg-primary/10 transition-colors">
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-2 text-sm font-medium">
+                  <span className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    Como enviar meus exames laboratoriais (PDF)
+                  </span>
+                  <span className="text-xs text-primary">Ver passo a passo</span>
+                </summary>
+                <ol className="mt-3 space-y-2 text-xs text-muted-foreground list-decimal list-inside">
+                  <li>Toque em <b className="text-foreground">Editar</b> aqui em <b className="text-foreground">Minha Ficha</b>.</li>
+                  <li>Role até o bloco <b className="text-foreground">Documentos clínicos (PDF)</b> → linha <b className="text-foreground">Exames laboratoriais</b>.</li>
+                  <li>Toque em <b className="text-foreground">Enviar exames laboratoriais (PDF)</b> (ou <b className="text-foreground">Adicionar novo</b> se já houver um anterior — o histórico é preservado).</li>
+                  <li>Selecione o <b className="text-foreground">PDF</b> no seu aparelho (máx. <b className="text-foreground">55&nbsp;MB</b>).</li>
+                  <li>Aguarde <i>"Enviando…"</i> → aparecerá <b className="text-foreground">"Exame enviado!"</b> com data e hora.</li>
+                  <li>Pronto! A equipe STH METHOD é notificada e o parecer volta aqui em <b className="text-foreground">Minha Ficha → Central de Análise</b>.</li>
+                </ol>
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  <b className="text-foreground">Dica iPhone:</b> se o exame estiver em foto, use <b className="text-foreground">Arquivos → Digitalizar Documentos</b> para gerar um PDF antes de enviar.
+                </p>
+              </details>
               <DocumentUpload userId={p.user_id} />
             </div>
           </CardContent>
