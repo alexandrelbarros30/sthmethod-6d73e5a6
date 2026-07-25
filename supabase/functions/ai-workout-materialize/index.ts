@@ -32,7 +32,11 @@ async function generateProgramCover(opts: {
 
   const resp = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    headers: {
+      'Content-Type': 'application/json',
+      'Lovable-API-Key': apiKey,
+      'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
+    },
     body: JSON.stringify({
       model: 'openai/gpt-image-2',
       prompt,
