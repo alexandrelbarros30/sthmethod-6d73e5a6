@@ -1316,7 +1316,7 @@ Deno.serve(async (req) => {
 
     const cls = classify(body);
     let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
-    if ((identifiedAs !== 'lead' && provider === 'zapi') || forceSucessoQueue) finalQueue = 'sucesso';
+    if (forceSucessoQueue) finalQueue = 'sucesso';
 
     // HARD BLOCK: Nutri é exclusivo para aluno ATIVO. Qualquer inbound wapi
     // (Fale com o Nutri) de lead/vencido/ex-aluno é forçado para o Comercial —
