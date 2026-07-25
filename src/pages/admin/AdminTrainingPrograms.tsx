@@ -58,6 +58,9 @@ interface ProgramForm {
 
 const emptyForm: ProgramForm = { title: "", details: "", objective: "general", difficulty: "intermediate", status: "published", poster_url: "", video_url: "", expires_at: "" };
 
+const COVER_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-program-cover`;
+const COVER_FUNCTION_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 const AdminTrainingPrograms = () => {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
@@ -367,26 +370,77 @@ const AdminTrainingPrograms = () => {
   const getDifficultyInfo = (v: string) => DIFFICULTIES.find(d => d.value === v) || DIFFICULTIES[1];
 
   const generateCoverAttempt = async (program: any, provider: "openai" | "gemini") => {
-    const invokePromise = supabase.functions.invoke("generate-program-cover", { body: { programId: program.id, provider } });
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error(`TIMEOUT_AI_COVER_GENERATION_${provider.toUpperCase()}_55S`)), 55000);
-    });
-    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
-    const body: any = data || {};
-    if (error) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
       return {
-        error: error.message || "Falha ao chamar a função de capa.",
-        code: "EDGE_INVOKE_FAILED",
-        model: body?.model || "edge-function",
-        details: error,
+        error: "Sua sessão administrativa expirou. Faça login novamente antes de gerar a capa.",
+        code: "AUTH_SESSION_MISSING",
+        model: "edge-function",
+        when: new Date().toISOString(),
       };
     }
-    return body;
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 56000);
+    try {
+      const response = await fetch(COVER_FUNCTION_URL, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: COVER_FUNCTION_KEY,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ programId: program.id, provider }),
+      });
+
+      const raw = await response.text();
+      let body: any = {};
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch {
+        body = { raw };
+      }
+
+      if (!response.ok || body?.error) {
+        return {
+          ...body,
+          error: body?.error || `Falha HTTP ${response.status} ao chamar a geração de capa.`,
+          code: body?.code || `HTTP_${response.status}`,
+          model: body?.model || (provider === "openai" ? "openai/gpt-image-2" : "google/gemini-3.1-flash-image"),
+          status: response.status,
+          raw: raw || undefined,
+          when: body?.when || new Date().toISOString(),
+        };
+      }
+
+      return body;
+    } catch (error: any) {
+      const isAbort = error?.name === "AbortError";
+      return {
+        error: isAbort
+          ? `Tempo limite atingido na tentativa ${provider.toUpperCase()}.`
+          : (error?.message || "Falha de rede ao chamar a função de capa."),
+        code: isAbort ? `TIMEOUT_AI_COVER_GENERATION_${provider.toUpperCase()}_56S` : "EDGE_FETCH_FAILED",
+        model: "edge-function",
+        details: { name: error?.name, message: error?.message },
+        retryable: !isAbort,
+        when: new Date().toISOString(),
+      };
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
   };
 
   const generateCoverWithAi = async (program: any) => {
     const first = await generateCoverAttempt(program, "openai");
     if (!first?.error) return first;
+
+    if (["EDGE_FETCH_FAILED", "AUTH_SESSION_MISSING"].includes(String(first.code || ""))) {
+      return first;
+    }
 
     const second = await generateCoverAttempt(program, "gemini");
     if (!second?.error) return second;
