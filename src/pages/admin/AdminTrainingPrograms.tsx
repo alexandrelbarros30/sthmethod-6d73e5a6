@@ -393,7 +393,7 @@ const AdminTrainingPrograms = () => {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ programId: program.id, provider }),
+        body: JSON.stringify({ programId: program.id, provider, async: true }),
       });
 
       const raw = await response.text();
@@ -436,21 +436,48 @@ const AdminTrainingPrograms = () => {
 
   const generateCoverWithAi = async (program: any) => {
     const first = await generateCoverAttempt(program, "openai");
-    if (!first?.error) return first;
-
-    if (["EDGE_FETCH_FAILED", "AUTH_SESSION_MISSING"].includes(String(first.code || ""))) {
+    if (first?.error || !first?.accepted) {
       return first;
     }
 
-    const second = await generateCoverAttempt(program, "gemini");
-    if (!second?.error) return second;
+    const startedAt = Date.now();
+    const initialPosterUrl = String(program.poster_url || "");
+    for (let attempt = 1; attempt <= 45; attempt++) {
+      await new Promise((resolve) => window.setTimeout(resolve, attempt <= 5 ? 2000 : 3000));
+      const { data, error } = await supabase
+        .from("training_programs")
+        .select("poster_url")
+        .eq("id", program.id)
+        .maybeSingle();
+
+      if (error) {
+        return {
+          error: error.message || "Falha ao verificar a capa gerada.",
+          code: "POSTER_POLL_FAILED",
+          model: first.model || "edge-function",
+          details: error,
+          when: new Date().toISOString(),
+        };
+      }
+
+      const posterUrl = String((data as any)?.poster_url || "");
+      if (posterUrl && posterUrl !== initialPosterUrl) {
+        return {
+          ok: true,
+          posterUrl,
+          accepted: true,
+          elapsedMs: Date.now() - startedAt,
+          model: first.model || "openai/gpt-image-2 → google/gemini-3.1-flash-image",
+        };
+      }
+    }
 
     return {
-      error: second.error || first.error || "Falha ao gerar capa.",
-      code: second.code || first.code || "AI_IMAGE_FAILED",
-      model: `${first.model || "openai/gpt-image-2"} → ${second.model || "google/gemini-3.1-flash-image"}`,
-      attempts: [first, second],
-      when: second.when || first.when || new Date().toISOString(),
+      error: "A geração foi aceita, mas a capa ainda não ficou disponível. Tente atualizar a lista em alguns segundos.",
+      code: "ASYNC_COVER_TIMEOUT",
+      model: first.model || "openai/gpt-image-2 → google/gemini-3.1-flash-image",
+      attempts: [first],
+      when: new Date().toISOString(),
     };
   };
 
