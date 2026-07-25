@@ -490,7 +490,8 @@ const AdminTrainingPrograms = () => {
     try {
       const invokePromise = supabase.functions.invoke("generate-program-cover", { body: { programId: program.id } });
       const timeoutPromise = new Promise<never>((_, reject) => {
-        window.setTimeout(() => reject(new Error("TIMEOUT_EDGE_FUNCTION")), 15000);
+        // IA (Gemini + OpenAI) pode levar até ~90s; damos folga para 120s
+        window.setTimeout(() => reject(new Error("TIMEOUT_EDGE_FUNCTION")), 120000);
       });
       const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
       const body: any = data || {};
