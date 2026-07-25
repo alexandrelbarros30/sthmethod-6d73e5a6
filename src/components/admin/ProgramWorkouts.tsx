@@ -173,7 +173,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
               </div>
               {exs.map((ex: any, i: number) => {
                 const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
-                const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: lib?.image_url });
+                const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: ex.image_url || lib?.image_url });
                 const prev = i > 0 ? exs[i - 1] : null;
                 const next = i < exs.length - 1 ? exs[i + 1] : null;
                 const linkedTop = prev && ex.group_id && prev.group_id === ex.group_id;
@@ -205,7 +205,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-foreground truncate">{ex.custom_name || lib?.name || "Sem nome"}</span>
-                        {(ex.video_url || lib?.video_url || lib?.image_url) && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+                        {(ex.video_url || ex.image_url || lib?.video_url || lib?.image_url) && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
                         {ex.group_name && (
                           <Badge
                             variant="outline"

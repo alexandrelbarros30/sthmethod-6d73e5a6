@@ -168,7 +168,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
         {expanded ? <ChevronDown className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />}
         <ExerciseMediaPreview
           videoUrl={row.video_url || selectedExercise?.video_url}
-          imageUrl={selectedExercise?.image_url}
+          imageUrl={row.image_url || selectedExercise?.image_url}
           alt={displayName}
           className="w-14 h-14 shrink-0"
           showBadge
