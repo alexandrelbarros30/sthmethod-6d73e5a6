@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, MessageSquare, Sparkles, Copy, Check, Clock, BellOff, ImageIcon, Upload, X, Workflow } from "lucide-react";
 
-type ZapiCfg = { enabled: boolean; instance_id: string; instance_token: string; client_token: string; webhook: string };
 type WapiCfg = { enabled: boolean; server_url: string; instance_id: string; token: string; client_token: string; webhook: string };
 type AiMode = { mode: "copilot" | "auto" };
 type Hours = { tz: string; mon_fri: { start: string; end: string } | null; sat: { start: string; end: string } | null; sun: { start: string; end: string } | null };
@@ -39,7 +38,9 @@ export default function AdminCrmSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [testing, setTesting] = useState<string | null>(null);
-  const [zapi, setZapi] = useState<ZapiCfg>({ enabled: false, instance_id: "", instance_token: "", client_token: "", webhook: "" });
+  // Canal Comercial (linha 21998496289) migrado de Z-API para W-API.
+  // Configuração agora persiste em crm_settings.key = 'wapi_comercial'.
+  const [wapiComercial, setWapiComercial] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
   const [wapi, setWapi] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
   const [wapiSucesso, setWapiSucesso] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
   const [aiMode, setAiMode] = useState<AiMode>({ mode: "copilot" });
@@ -55,14 +56,14 @@ export default function AdminCrmSettings() {
   const [flowTpls, setFlowTpls] = useState<Record<string, FlowTpl>>({});
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
-  const zapiWebhook = `${INBOUND_WEBHOOK_BASE}?provider=zapi`;
+  const wapiComercialWebhook = INBOUND_WEBHOOK_BASE;
   const wapiWebhook = INBOUND_WEBHOOK_BASE;
   const wapiSucessoWebhook = INBOUND_WEBHOOK_BASE;
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("crm_settings").select("key,value").in("key", [
-        "zapi","wapi","wapi_sucesso","ai_mode",
+        "zapi","wapi","wapi_sucesso","wapi_comercial","ai_mode",
         "business_hours_comercial","business_hours_nutri","business_hours_sucesso",
         "comercial_away_lead","comercial_away_active","comercial_away_expired",
         "nutri_away_active","nutri_away_inactive",
@@ -70,7 +71,18 @@ export default function AdminCrmSettings() {
       ]);
       const tpls: Record<string, FlowTpl> = {};
       (data ?? []).forEach((r: any) => {
-        if (r.key === "zapi") setZapi({ ...zapi, ...(r.value || {}) });
+        if (r.key === "wapi_comercial") setWapiComercial((prev) => ({ ...prev, ...(r.value || {}) }));
+        else if (r.key === "zapi") {
+          // Legado: se ainda houver config Z-API antiga, mapeia campos compatíveis para W-API Comercial.
+          const v = r.value || {};
+          setWapiComercial((prev) => ({
+            ...prev,
+            enabled: prev.enabled || !!v.enabled,
+            instance_id: prev.instance_id || v.instance_id || "",
+            token: prev.token || v.instance_token || "",
+            client_token: prev.client_token || v.client_token || "",
+          }));
+        }
         if (r.key === "wapi") setWapi({ ...wapi, ...(r.value || {}) });
         if (r.key === "wapi_sucesso") setWapiSucesso({ ...wapiSucesso, ...(r.value || {}) });
         if (r.key === "ai_mode") setAiMode({ mode: r.value?.mode || "copilot" });
@@ -119,7 +131,9 @@ export default function AdminCrmSettings() {
   }
 
   async function saveAndTest(key: "zapi" | "wapi" | "wapi_sucesso", value: any) {
-    await save(key, value);
+    // 'zapi' aqui é o identificador legado do canal Comercial; persistimos em 'wapi_comercial'.
+    const persistKey = key === "zapi" ? "wapi_comercial" : key;
+    await save(persistKey, value);
     await testConn(key);
   }
 
@@ -181,44 +195,45 @@ export default function AdminCrmSettings() {
           </Button>
         </div>
 
-        {/* Z-API */}
+        {/* Comercial (W-API) — migrado de Z-API */}
         <Card className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-base font-semibold">STH One — Comercial (Z-API)</h2>
-                <Badge variant={zapi.enabled ? "default" : "secondary"}>{zapi.enabled ? "Ativo" : "Inativo"}</Badge>
+                <h2 className="text-base font-semibold">STH One — Comercial (W-API)</h2>
+                <Badge variant={wapiComercial.enabled ? "default" : "secondary"}>{wapiComercial.enabled ? "Ativo" : "Inativo"}</Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Captação de leads, planos, cadastro, conversão, renovação.</p>
+              <p className="text-xs text-muted-foreground mt-1">Linha 21 99849-6289 — captação, planos, cadastro, conversão, renovação. Migrado de Z-API para W-API.</p>
             </div>
-            <Switch checked={zapi.enabled} onCheckedChange={(v) => setZapi({ ...zapi, enabled: v })} />
+            <Switch checked={wapiComercial.enabled} onCheckedChange={(v) => setWapiComercial({ ...wapiComercial, enabled: v })} />
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Instance ID</Label><Input value={zapi.instance_id} onChange={(e) => setZapi({ ...zapi, instance_id: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Instance Token</Label><Input value={zapi.instance_token} onChange={(e) => setZapi({ ...zapi, instance_token: e.target.value })} type="password" /></div>
-            <div className="space-y-1 sm:col-span-2"><Label>Client Token</Label><Input value={zapi.client_token} onChange={(e) => setZapi({ ...zapi, client_token: e.target.value })} type="password" /></div>
+            <div className="space-y-1 sm:col-span-2"><Label>Server URL</Label><Input value={wapiComercial.server_url} onChange={(e) => setWapiComercial({ ...wapiComercial, server_url: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Instance ID</Label><Input value={wapiComercial.instance_id} onChange={(e) => setWapiComercial({ ...wapiComercial, instance_id: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Token</Label><Input value={wapiComercial.token} onChange={(e) => setWapiComercial({ ...wapiComercial, token: e.target.value })} type="password" /></div>
+            <div className="space-y-1 sm:col-span-2"><Label>Client Token (opcional)</Label><Input value={wapiComercial.client_token} onChange={(e) => setWapiComercial({ ...wapiComercial, client_token: e.target.value })} type="password" /></div>
           </div>
           <div className="space-y-1">
-            <Label>Webhook (configure este URL na Z-API)</Label>
+            <Label>Webhook (configure este URL na W-API)</Label>
             <div className="flex gap-2">
-              <Input readOnly value={zapiWebhook} className="font-mono text-[11px]" />
-              <Button variant="outline" size="icon" onClick={() => copy(zapiWebhook, "zapi-wh")}>
-                {copied === "zapi-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <Input readOnly value={wapiComercialWebhook} className="font-mono text-[11px]" />
+              <Button variant="outline" size="icon" onClick={() => copy(wapiComercialWebhook, "wapi-com-wh")}>
+                {copied === "wapi-com-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground">Inclua header <code>x-webhook-secret</code> com o valor do secret MP_WEBHOOK_SECRET.</p>
+            <p className="text-[11px] text-muted-foreground">O canal é identificado automaticamente pelo <b>Instance ID</b> salvo acima.</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => save("zapi", zapi)} disabled={saving === "zapi"}>{saving === "zapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
-            <Button variant="secondary" onClick={() => saveAndTest("zapi", zapi)} disabled={saving === "zapi" || testing === "zapi"}>
-              {(saving === "zapi" || testing === "zapi") ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar e Testar"}
+            <Button onClick={() => save("wapi_comercial", wapiComercial)} disabled={saving === "wapi_comercial"}>{saving === "wapi_comercial" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
+            <Button variant="secondary" onClick={() => saveAndTest("zapi", wapiComercial)} disabled={saving === "wapi_comercial" || testing === "zapi"}>
+              {(saving === "wapi_comercial" || testing === "zapi") ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar e Testar"}
             </Button>
             <Button variant="outline" onClick={() => testConn("zapi")} disabled={testing === "zapi"}>
               {testing === "zapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Testar Conexão"}
             </Button>
           </div>
-          <p className="text-[11px] text-muted-foreground">Os valores acima são a <b>fonte oficial</b> usada pelos envios e pelo teste de conexão. Atualize o Client-Token aqui sempre que regenerar no painel Z-API.</p>
+          <p className="text-[11px] text-muted-foreground">Os valores acima são a <b>fonte oficial</b> do canal Comercial. Z-API foi descontinuado.</p>
         </Card>
 
         {/* W-API */}
