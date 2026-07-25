@@ -429,12 +429,19 @@ const ProgramWorkouts = ({ programId }: Props) => {
     if (!list.length) { toast.error("Nenhum treino para espelhar"); return; }
     setPushingAll(true);
     let counts: Record<string, number> = {};
+    let countsChecked = false;
     try {
       counts = await fetchExerciseCounts(list.map((w: any) => w.id));
+      countsChecked = true;
     } catch (e) {
       console.warn("[push-all] não foi possível conferir contagem de exercícios; tentando espelhar todos", e);
     }
     const eligible = list.filter((w: any) => (templateExercisesMap?.[w.id]?.length ?? 0) > 0 || (counts[w.id] || 0) > 0);
+    if (countsChecked && !eligible.length) {
+      toast.error("Nenhum treino com exercícios para espelhar. Abra o treino e adicione ao menos 1 exercício antes de sincronizar.");
+      setPushingAll(false);
+      return;
+    }
     const finalList = eligible.length ? eligible : list;
     const skipped = eligible.length ? list.length - eligible.length : 0;
     if (!eligible.length) {
