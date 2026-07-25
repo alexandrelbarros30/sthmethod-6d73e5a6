@@ -1136,10 +1136,11 @@ Deno.serve(async (req) => {
       return await finish({ ok: true, opt_out: isOptOut });
     }
 
-    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }, { data: hoursComCfg }, { data: hoursNutriCfg }, { data: hoursSucessoCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }, { data: comAwayLead }, { data: comAwayActive }, { data: comAwayExpired }, { data: flowSteps }] = await Promise.all([
+    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiComercialCfg }, { data: wapiSucessoCfg }, { data: hoursComCfg }, { data: hoursNutriCfg }, { data: hoursSucessoCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }, { data: comAwayLead }, { data: comAwayActive }, { data: comAwayExpired }, { data: flowSteps }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'ai_mode').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'wapi_comercial').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'business_hours_comercial').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'business_hours_nutri').maybeSingle(),
@@ -1541,7 +1542,12 @@ Deno.serve(async (req) => {
     };
 
     let autoReply: any;
-    const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
+    const commercialCfg = (wapiComercialCfg?.value as any) || (zapiCfg?.value as any) || {};
+    const channelEnabled = provider === 'wapi'
+      ? (wapiCfg?.value as any)?.enabled === true
+      : (provider === 'wapi_sucesso'
+        ? (wapiSucessoCfg?.value as any)?.enabled === true
+        : commercialCfg?.enabled === true);
 
     // SALVAGUARDA: se a última mensagem enviada nesta conversa foi manual (humano
     // pelo painel ou pelo próprio WhatsApp do atendente), tratamos como handoff

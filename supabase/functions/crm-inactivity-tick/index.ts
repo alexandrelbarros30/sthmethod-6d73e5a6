@@ -117,11 +117,19 @@ Deno.serve(async (req) => {
     const source = resolvedProvider;
 
     try {
-      const { data: cfgRow } = await admin
+      const cfgKey = resolvedProvider === 'zapi' ? 'wapi_comercial' : resolvedProvider;
+      let { data: cfgRow } = await admin
         .from('crm_settings')
         .select('value')
-        .eq('key', resolvedProvider)
+        .eq('key', cfgKey)
         .maybeSingle();
+      if (resolvedProvider === 'zapi' && !cfgRow?.value) {
+        cfgRow = (await admin
+          .from('crm_settings')
+          .select('value')
+          .eq('key', 'zapi')
+          .maybeSingle()).data;
+      }
       const cfg: any = cfgRow?.value || {};
       if (cfg.enabled !== true) {
         const error = `Canal ${resolvedProvider.toUpperCase()} inativo`;
@@ -133,34 +141,21 @@ Deno.serve(async (req) => {
       let resp: Response;
       let sendData: any = {};
 
-      if (resolvedProvider === 'zapi') {
-        const id = (cfg.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
-        const tok = (cfg.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
-        const client = (cfg.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
-        if (!id || !tok || !client) return { ok: false, error: 'Credenciais Z-API ausentes' };
+      const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
+      const envPrefix = resolvedProvider === 'zapi' ? 'WAPI_COMERCIAL' : (resolvedProvider === 'wapi_sucesso' ? 'WAPI_SUCESSO' : 'WAPI');
+      const id = (cfg.instance_id || '').trim() || Deno.env.get(`${envPrefix}_INSTANCE_ID`);
+      const tok = (cfg.token || cfg.instance_token || '').trim() || Deno.env.get(`${envPrefix}_TOKEN`);
+      const client = (cfg.client_token || '').trim() || Deno.env.get(`${envPrefix}_CLIENT_TOKEN`);
+      if (!id || !tok) return { ok: false, error: 'Credenciais W-API ausentes' };
 
-        resp = await fetch(`https://api.z-api.io/instances/${id}/token/${tok}/send-text`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Client-Token': client },
-          body: JSON.stringify({ phone: fullPhone, message: body }),
-        });
-        sendData = await resp.json().catch(() => ({}));
-      } else {
-        const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
-        const id = (cfg.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
-        const tok = (cfg.token || '').trim() || Deno.env.get('WAPI_TOKEN');
-        const client = (cfg.client_token || '').trim() || Deno.env.get('WAPI_CLIENT_TOKEN');
-        if (!id || !tok) return { ok: false, error: 'Credenciais W-API ausentes' };
-
-        const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` };
-        if (client) headers['Client-Token'] = client;
-        resp = await fetch(`${serverUrl}/v1/message/send-text?instanceId=${id}`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ phone: fullPhone, message: body }),
-        });
-        sendData = await resp.json().catch(() => ({}));
-      }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` };
+      if (client) headers['Client-Token'] = client;
+      resp = await fetch(`${serverUrl}/v1/message/send-text?instanceId=${id}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ phone: fullPhone, message: body }),
+      });
+      sendData = await resp.json().catch(() => ({}));
 
       const ok = resp.ok && !sendData?.error;
       const externalId = sendData?.messageId || sendData?.id || sendData?.zaapId || null;
