@@ -24,6 +24,16 @@ interface Body {
   user_id?: string;
   user_ids?: string[];
   payload: PushPayload;
+  use_variables?: boolean;
+  campaign_id?: string;
+}
+
+function applyVars(template: string | undefined, vars: Record<string, string>): string | undefined {
+  if (!template) return template;
+  return template
+    .replace(/\{\{\s*nome\s*\}\}/gi, vars.nome || 'aluno(a)')
+    .replace(/\{\{\s*plano\s*\}\}/gi, vars.plano || 'seu plano')
+    .replace(/\{\{\s*vencimento\s*\}\}/gi, vars.vencimento || 'em breve');
 }
 
 Deno.serve(async (req) => {
@@ -52,13 +62,47 @@ Deno.serve(async (req) => {
     if (error) return json({ ok: false, error: error.message }, 500);
     if (!subs || subs.length === 0) return json({ ok: true, sent: 0, note: 'no active subscriptions' });
 
-    const payloadStr = JSON.stringify(body.payload);
+    // Resolve per-user variables when requested
+    let userVars: Record<string, { nome: string; plano: string; vencimento: string }> = {};
+    if (body.use_variables) {
+      const uniqIds = Array.from(new Set(subs.map((s: any) => s.user_id)));
+      const [{ data: profs }, { data: subsRows }] = await Promise.all([
+        admin.from('profiles').select('user_id, full_name').in('user_id', uniqIds),
+        admin
+          .from('subscriptions')
+          .select('user_id, end_date, status, plans:plan_id(name)')
+          .in('user_id', uniqIds)
+          .order('end_date', { ascending: false }),
+      ]);
+      const bestSub: Record<string, any> = {};
+      for (const r of subsRows || []) {
+        if (!bestSub[r.user_id]) bestSub[r.user_id] = r;
+      }
+      for (const p of profs || []) {
+        const s = bestSub[p.user_id];
+        const first = String(p.full_name || '').trim().split(/\s+/)[0] || 'aluno(a)';
+        const planName = s?.plans?.name || 'seu plano';
+        const venc = s?.end_date ? new Date(s.end_date).toLocaleDateString('pt-BR') : 'em breve';
+        userVars[p.user_id] = { nome: first, plano: planName, vencimento: venc };
+      }
+    }
+
     let sent = 0;
     let failed = 0;
 
     await Promise.all(
       subs.map(async (s: any) => {
         try {
+          const vars = userVars[s.user_id] || { nome: 'aluno(a)', plano: 'seu plano', vencimento: 'em breve' };
+          const perPayload = body.use_variables
+            ? {
+                ...body.payload,
+                title: applyVars(body.payload.title, vars)!,
+                body: applyVars(body.payload.body, vars),
+                url: applyVars(body.payload.url, vars),
+              }
+            : body.payload;
+          const payloadStr = JSON.stringify(perPayload);
           await webpush.sendNotification(
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
             payloadStr,
