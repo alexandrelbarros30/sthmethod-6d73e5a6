@@ -279,8 +279,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
   // Qualquer criação/edição/duplicação/agrupamento espelha o treino no ST Coach.
   const autoSyncTemplate = (templateId: string) => {
     if (!templateId) return;
-    supabase.functions
-      .invoke("supercoach-push-template", { body: { templateId, programId } })
+    invokePushTemplate({ templateId, programId })
       .then(({ data, error }) => {
         if (error || data?.ok === false) {
           console.warn("[auto-sync ST Coach]", error?.message || data?.error);
@@ -347,6 +346,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
   };
 
   const invokePushTemplate = async (payload: { templateId: string; programId?: string }): Promise<{ data: any; error: any }> => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
     try {
       const r = await supabase.functions.invoke("supercoach-push-template", { body: payload });
       if (!r.error) return r as any;
@@ -355,15 +356,31 @@ const ProgramWorkouts = ({ programId }: Props) => {
     try {
       const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-push-template`;
       const key = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token || key;
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${token || key}` },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      return { data, error: null };
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
+    } catch {}
+
+    // Última rota: requisição "simples" sem headers customizados.
+    // Evita bloqueio de preflight/CORS do navegador que aparece como "Failed to fetch".
+    try {
+      if (!token) throw new Error("Sessão administrativa expirada. Entre novamente antes de sincronizar.");
+      const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-push-template`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify({ ...payload, accessToken: token }),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { data = { error: text }; }
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
     } catch (e: any) {
       return { data: null, error: e };
     }

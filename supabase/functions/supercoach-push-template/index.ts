@@ -13,7 +13,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { getSuperCoachToken, getSuperCoachLibraryRaw, SC_COMMON_HEADERS, normalizeExName } from '../_shared/supercoach-library.ts';
 
-interface Body { templateId: string; programId?: string }
+interface Body { templateId: string; programId?: string; accessToken?: string }
 
 const SC = 'https://supertreinosapp.com/api/v2';
 
@@ -205,7 +205,14 @@ async function createScProgram(token: string, prog: any, tpl: any): Promise<numb
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const auth = req.headers.get('Authorization') || '';
+    const body = (await req.json().catch(() => ({}))) as Body;
+    const bodyToken = String(body.accessToken || '').trim();
+    const headerAuth = req.headers.get('Authorization') || '';
+    const auth = headerAuth.startsWith('Bearer ')
+      ? headerAuth
+      : bodyToken
+        ? `Bearer ${bodyToken}`
+        : '';
     if (!auth.startsWith('Bearer ')) throw new Error('Não autenticado');
 
     const url = Deno.env.get('SUPABASE_URL')!;
@@ -224,7 +231,6 @@ Deno.serve(async (req) => {
     if (!roles?.length) throw new Error('Apenas admin/consultor podem espelhar no ST Coach');
     const adminUserId = userRes.user.id;
 
-    const body = (await req.json().catch(() => ({}))) as Body;
     const templateId = body.templateId;
     if (!templateId) throw new Error('templateId obrigatório');
 
