@@ -134,6 +134,14 @@ const AdminTraining = () => {
         .eq("user_id", userId)
         .in("template_id", tIds);
       if (error) throw error;
+      // Espelha remoção no ST Coach (best-effort)
+      try {
+        await supabase.functions.invoke("supercoach-assign-program", {
+          body: { userId, programId, action: "unassign" },
+        });
+      } catch (e) {
+        console.warn("[unassign ST Coach]", e);
+      }
     },
     onSuccess: () => {
       toast.success("Programa desatribuído do aluno.");
