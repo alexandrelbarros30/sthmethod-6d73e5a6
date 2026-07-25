@@ -50,51 +50,70 @@ Deno.serve(async (req) => {
 
     const prompt = buildProgramCoverPrompt(prog.title, gender);
 
-    // Tenta OpenAI primeiro; se falhar (moderação/erro), faz fallback para Gemini.
-    async function tryOpenAI(): Promise<{ ok: boolean; b64?: string; err?: string; status?: number }> {
-      const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: 'openai/gpt-image-2', prompt, size: '1024x1024', quality: 'low', n: 1 }),
-      });
-      if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, err: t, status: r.status }; }
-      const j = await r.json().catch(() => ({} as any));
-      const b = j?.data?.[0]?.b64_json;
-      return b ? { ok: true, b64: b } : { ok: false, err: 'empty response', status: 502 };
+    // Ordem: Gemini primeiro (mais rápido, menos timeout) → OpenAI como fallback.
+    async function withTimeout(p: Promise<Response>, ms: number): Promise<Response> {
+      const ctrl = new AbortController();
+      const id = setTimeout(() => ctrl.abort(), ms);
+      try { return await p; } finally { clearTimeout(id); }
     }
     async function tryGemini(): Promise<{ ok: boolean; b64?: string; err?: string; status?: number }> {
-      const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model: 'google/gemini-3.1-flash-image',
-          messages: [{ role: 'user', content: prompt }],
-          modalities: ['image', 'text'],
-        }),
-      });
-      if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, err: t, status: r.status }; }
-      const j = await r.json().catch(() => ({} as any));
-      const b = j?.data?.[0]?.b64_json;
-      return b ? { ok: true, b64: b } : { ok: false, err: 'empty response', status: 502 };
+      try {
+        const ctrl = new AbortController();
+        const id = setTimeout(() => ctrl.abort(), 40000);
+        const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+          method: 'POST', signal: ctrl.signal,
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({
+            model: 'google/gemini-3.1-flash-image',
+            messages: [{ role: 'user', content: prompt }],
+            modalities: ['image', 'text'],
+          }),
+        });
+        clearTimeout(id);
+        if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, err: t, status: r.status }; }
+        const j = await r.json().catch(() => ({} as any));
+        const b = j?.data?.[0]?.b64_json;
+        return b ? { ok: true, b64: b } : { ok: false, err: 'empty response', status: 502 };
+      } catch (e: any) {
+        return { ok: false, err: e?.name === 'AbortError' ? 'timeout 40s' : (e?.message || 'network error'), status: 504 };
+      }
+    }
+    async function tryOpenAI(): Promise<{ ok: boolean; b64?: string; err?: string; status?: number }> {
+      try {
+        const ctrl = new AbortController();
+        const id = setTimeout(() => ctrl.abort(), 45000);
+        const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+          method: 'POST', signal: ctrl.signal,
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: 'openai/gpt-image-2', prompt, size: '1024x1024', quality: 'low', n: 1 }),
+        });
+        clearTimeout(id);
+        if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, err: t, status: r.status }; }
+        const j = await r.json().catch(() => ({} as any));
+        const b = j?.data?.[0]?.b64_json;
+        return b ? { ok: true, b64: b } : { ok: false, err: 'empty response', status: 502 };
+      } catch (e: any) {
+        return { ok: false, err: e?.name === 'AbortError' ? 'timeout 45s' : (e?.message || 'network error'), status: 504 };
+      }
     }
 
-    let usedModel = 'openai/gpt-image-2';
-    let openaiErr: { status?: number; err?: string } | null = null;
-    let gen = await tryOpenAI();
+    let usedModel = 'google/gemini-3.1-flash-image';
+    let geminiErr: { status?: number; err?: string } | null = null;
+    let gen = await tryGemini();
     if (!gen.ok) {
-      openaiErr = { status: gen.status, err: gen.err };
-      console.error('openai image gen failed', gen.status, (gen.err || '').slice(0, 400));
-      usedModel = 'google/gemini-3.1-flash-image';
-      gen = await tryGemini();
+      geminiErr = { status: gen.status, err: gen.err };
+      console.error('gemini image gen failed', gen.status, (gen.err || '').slice(0, 400));
+      usedModel = 'openai/gpt-image-2';
+      gen = await tryOpenAI();
     }
     if (!gen.ok || !gen.b64) {
-      console.error('gemini fallback failed', gen.status, (gen.err || '').slice(0, 400));
+      console.error('openai fallback failed', gen.status, (gen.err || '').slice(0, 400));
       return new Response(JSON.stringify({
         error: 'Não foi possível gerar a capa agora. Tente novamente em instantes.',
         code: gen.status || 502,
         model: usedModel,
-        openai: openaiErr ? { status: openaiErr.status, details: (openaiErr.err || '').slice(0, 400) } : null,
-        gemini: { status: gen.status, details: (gen.err || '').slice(0, 400) },
+        gemini: geminiErr ? { status: geminiErr.status, details: (geminiErr.err || '').slice(0, 400) } : null,
+        openai: { status: gen.status, details: (gen.err || '').slice(0, 400) },
         when: new Date().toISOString(),
       }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
