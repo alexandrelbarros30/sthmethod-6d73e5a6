@@ -275,6 +275,25 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [pushingAll, setPushingAll] = useState(false);
   const [inlineSel, setInlineSel] = useState<Record<string, Set<string>>>({});
 
+  // Sincronização automática (fire-and-forget) com ST Coach.
+  // Qualquer criação/edição/duplicação/agrupamento espelha o treino no ST Coach.
+  const autoSyncTemplate = (templateId: string) => {
+    if (!templateId) return;
+    supabase.functions
+      .invoke("supercoach-push-template", { body: { templateId, programId } })
+      .then(({ data, error }) => {
+        if (error || data?.ok === false) {
+          console.warn("[auto-sync ST Coach]", error?.message || data?.error);
+        }
+      })
+      .catch((e) => console.warn("[auto-sync ST Coach]", e));
+  };
+
+  const autoSyncProgram = async () => {
+    const list = (workouts || []) as any[];
+    for (const w of list) autoSyncTemplate(w.id);
+  };
+
   const toggleInlineSel = (wId: string, exId: string) => {
     setInlineSel(prev => {
       const cur = new Set(prev[wId] || []);
@@ -291,9 +310,16 @@ const ProgramWorkouts = ({ programId }: Props) => {
         .update({ group_id: groupId, group_name: name || "", group_color: color || "" } as any)
         .in("id", ids);
       if (error) throw error;
+      // Descobre os templates afetados para sincronizar depois
+      const { data: rows } = await supabase
+        .from("workout_template_exercises")
+        .select("template_id")
+        .in("id", ids);
+      return Array.from(new Set((rows || []).map((r: any) => r.template_id))).filter(Boolean);
     },
-    onSuccess: () => {
+    onSuccess: (affectedTemplateIds) => {
       queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
+      (affectedTemplateIds || []).forEach((tid) => autoSyncTemplate(tid as string));
     },
     onError: (e: any) => toast.error(e?.message || "Erro ao agrupar"),
   });
@@ -454,12 +480,14 @@ const ProgramWorkouts = ({ programId }: Props) => {
           if (exErr) throw exErr;
         }
       }
+      return templateId;
     },
-    onSuccess: () => {
+    onSuccess: (templateId) => {
       queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
       queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
       queryClient.invalidateQueries({ queryKey: ["program-workout-counts"] });
       toast.success(editingWorkout ? "Treino atualizado!" : "Treino criado!");
+      if (templateId) autoSyncTemplate(templateId);
       closeWorkoutDialog();
     },
     onError: (e: any) => toast.error(e.message || "Erro ao salvar."),
@@ -503,12 +531,14 @@ const ProgramWorkouts = ({ programId }: Props) => {
           }))
         );
       }
+      return newW.id as string;
     },
-    onSuccess: () => {
+    onSuccess: (newTemplateId) => {
       queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
       queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
       queryClient.invalidateQueries({ queryKey: ["program-workout-counts"] });
       toast.success("Treino duplicado!");
+      if (newTemplateId) autoSyncTemplate(newTemplateId);
     },
     onError: () => toast.error("Erro ao duplicar treino."),
   });
@@ -517,9 +547,11 @@ const ProgramWorkouts = ({ programId }: Props) => {
     mutationFn: async ({ id, released }: { id: string; released: boolean }) => {
       const { error } = await supabase.from("workout_templates").update({ released }).eq("id", id);
       if (error) throw error;
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (id) => {
       queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
+      if (id) autoSyncTemplate(id);
     },
   });
 

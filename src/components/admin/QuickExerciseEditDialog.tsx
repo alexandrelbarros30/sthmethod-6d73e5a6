@@ -108,6 +108,10 @@ const QuickExerciseEditDialog = ({ open, onOpenChange, exercise, invalidateKeys 
           .from("student_workout_assignments")
           .update({ seen_by_student: false } as any)
           .eq("template_id", exercise.template_id);
+        // Auto-sync ST Coach (fire-and-forget)
+        supabase.functions
+          .invoke("supercoach-push-template", { body: { templateId: exercise.template_id } })
+          .catch((e) => console.warn("[auto-sync ST Coach]", e));
       }
     },
     onSuccess: () => {
