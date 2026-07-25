@@ -6,8 +6,8 @@ export function buildProgramCoverPrompt(title: string, gender: 'F' | 'M'): strin
   const isF = gender === 'F';
 
   const character = isF
-    ? 'a REAL athletic FEMALE athlete performing a strength-training exercise (dumbbell curl, hip thrust, squat, cable row or similar) — toned defined physique, sportswear, dynamic realistic pose, cinematic rim lighting, hyper-real skin and muscle definition'
-    : 'a REAL athletic MUSCULAR MALE athlete performing a strength-training exercise (dumbbell curl, bench press, squat, cable row or similar) — powerful defined physique, sportswear, dynamic realistic pose, cinematic rim lighting, hyper-real skin and muscle definition';
+    ? 'an athletic female fitness model performing a strength-training exercise (dumbbell curl, hip thrust, squat, cable row or similar) — toned defined physique, generic sportswear, dynamic pose, cinematic rim lighting, photographic quality'
+    : 'an athletic muscular male fitness model performing a strength-training exercise (dumbbell curl, bench press, squat, cable row or similar) — powerful defined physique, generic sportswear, dynamic pose, cinematic rim lighting, photographic quality';
 
   // Sutil coloração de rim light por gênero (mantendo composição unificada
   // no estilo da referência: capa fotográfica escura + faixa preta translúcida
@@ -15,11 +15,11 @@ export function buildProgramCoverPrompt(title: string, gender: 'F' | 'M'): strin
   const rimColor = isF ? 'soft warm pink #ff8fb8' : 'electric neon-green #22c26a with cool cyan #1e90ff accents';
 
   return [
-    'Ultra-premium vertical fitness training-card cover (1024x1024), cinematic editorial photography, dark moody atmosphere — pure jet-black background (#000000) with subtle warm/cool gradient falloff. Composition mirrors a Nike / Gymshark / Apple Fitness+ hero card: full-bleed athletic portrait, no borders, no clutter, no extra text, no watermarks, no other logos.',
-    `MAIN SUBJECT (fills ~85% of the frame from top): ${character}. Tight, cropped portrait — powerful, intentional pose mid-exercise, sweat highlights, defined musculature, dramatic ${rimColor} rim light carving the silhouette against the deep black background. Cinematic depth of field, hyper-real skin texture, editorial magazine quality.`,
-    `BOTTOM STRIP (lower ~15% of image): a clean, flat, semi-transparent BLACK band (rgba 0,0,0,0.85) spanning full width, sitting flush at the bottom, no rounded corners, no glow. INSIDE the band, LEFT-ALIGNED: the exact program name "${title}" in bold uppercase white sans-serif (SF Pro Display / Helvetica Neue vibe), tight letter-spacing, sharp legible typography, no typos, no additional words, no subtitles. On the FAR-LEFT of the band, immediately before or below the title, place the official STH METHOD SHIELD LOGO small and crisp: a pentagonal shield outlined in vibrant emerald green (#22c26a) with a stylized geometric "STH" monogram in the same emerald green inside, and the word "METHOD" in bold uppercase white sans-serif to the right of the shield. Reproduce the shield exactly, crisp edges, no distortion, no misspelling.`,
-    'Overall vibe: premium editorial training card — dark, focused, aspirational. Meticulous typography, tack-sharp focus on the athlete, deep true blacks, cinematic rim lighting. Feels like a card in a top-tier fitness app catalog.',
-    'Strict rules: ONLY the program title and the STH METHOD lockup (shield + word) inside the bottom black band. No captions, no descriptors, no numbers, no duration labels, no extra logos, no misspellings, no repeated text, no borders around the card.',
+    'Ultra-premium vertical fitness training-card cover (1024x1024), cinematic editorial photography, dark moody atmosphere — pure jet-black background (#000000) with subtle warm/cool gradient falloff. Full-bleed athletic portrait, no borders, no clutter, no extra text, no watermarks, no third-party logos.',
+    `MAIN SUBJECT (fills ~85% of the frame from top): ${character}. Tight cropped portrait, intentional pose mid-exercise, defined musculature, dramatic ${rimColor} rim light carving the silhouette against the deep black background. Cinematic depth of field, editorial magazine quality.`,
+    `BOTTOM STRIP (lower ~15% of image): a clean, flat, semi-transparent BLACK band (rgba 0,0,0,0.85) spanning full width, sitting flush at the bottom, no rounded corners, no glow. INSIDE the band, LEFT-ALIGNED: the exact program name "${title}" in bold uppercase white sans-serif (Helvetica Neue vibe), tight letter-spacing, sharp legible typography, no typos, no additional words, no subtitles. On the FAR-LEFT of the band, place a small crisp pentagonal shield outlined in emerald green (#22c26a) with a simple geometric "STH" monogram in emerald green inside, and the word "METHOD" in bold uppercase white sans-serif to the right of the shield.`,
+    'Overall vibe: premium editorial training card — dark, focused, aspirational. Meticulous typography, tack-sharp focus on the athlete, deep true blacks, cinematic rim lighting.',
+    'Strict rules: ONLY the program title and the STH METHOD lockup (shield + word) inside the bottom black band. No captions, no descriptors, no numbers, no duration labels, no third-party logos, no misspellings, no repeated text, no borders around the card.',
   ].join(' ');
 }
 
