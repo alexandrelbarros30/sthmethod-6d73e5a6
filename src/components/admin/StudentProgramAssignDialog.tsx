@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { invokeSuperCoachEdge } from "@/lib/supercoach-edge";
 import { toast } from "sonner";
 import { Layers, Check, X, Loader2, Calendar, Save, Dumbbell, Target, Gauge, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { Search } from "lucide-react";
@@ -101,13 +102,8 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
       if (error) throw error;
       // Espelha a atribuição no ST Coach (await para garantir disparo + surfaçar erro)
       try {
-        const { data, error: sErr } = await supabase.functions.invoke(
-          "supercoach-assign-program",
-          { body: { userId, programId, action: "assign" } },
-        );
-        if (sErr || (data as any)?.ok === false) {
-          toast.warning("Atribuído no STH; ST Coach falhou: " + ((data as any)?.error || sErr?.message || "erro"));
-        } else if ((data as any)?.status === "assigned") {
+        const data = await invokeSuperCoachEdge("supercoach-assign-program", { userId, programId, action: "assign" });
+        if ((data as any)?.status === "assigned") {
           toast.success("Espelhado no ST Coach.");
         }
       } catch (e: any) {
@@ -133,13 +129,8 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
         .in("template_id", tIds);
       if (error) throw error;
       try {
-        const { data, error: sErr } = await supabase.functions.invoke(
-          "supercoach-assign-program",
-          { body: { userId, programId, action: "unassign" } },
-        );
-        if (sErr || (data as any)?.ok === false) {
-          toast.warning("Removido no STH; ST Coach falhou: " + ((data as any)?.error || sErr?.message || "erro"));
-        } else if ((data as any)?.status === "unassigned") {
+        const data = await invokeSuperCoachEdge("supercoach-assign-program", { userId, programId, action: "unassign" });
+        if ((data as any)?.status === "unassigned") {
           toast.success("Removido também do ST Coach.");
         }
       } catch (e: any) {
@@ -173,13 +164,7 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
   const resyncMutation = useMutation({
     mutationFn: async (programId: string) => {
       if (!userId) throw new Error("Aluno inválido");
-      const { data, error } = await supabase.functions.invoke(
-        "supercoach-assign-program",
-        { body: { userId, programId, action: "assign" } },
-      );
-      if (error) throw error;
-      if ((data as any)?.ok === false) throw new Error((data as any)?.error || "Falha ao sincronizar");
-      return data as any;
+      return await invokeSuperCoachEdge("supercoach-assign-program", { userId, programId, action: "assign" });
     },
     onSuccess: (d: any) => {
       if (d?.status === "already_assigned") toast.info("Já estava atribuído no ST Coach.");

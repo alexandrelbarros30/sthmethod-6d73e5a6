@@ -23,6 +23,44 @@ function normalize(s: string): string {
     .toLowerCase().replace(/[^a-z0-9]/g, ' ').trim().replace(/\s+/g, ' ')
 }
 
+function findCustomer(list: any[], email?: string | null, name?: string | null) {
+  const em = (email || '').toLowerCase().trim()
+  const nm = normalize(name || '')
+  const parts = nm.split(' ')
+  const partialName = parts.length >= 2 ? `${parts[0]} ${parts[1]}` : ''
+  return (em ? list.find((c) => (c?.email || '').toLowerCase().trim() === em) : null)
+    || (nm ? list.find((c) => normalize(c?.name || '') === nm) : null)
+    || (partialName ? list.find((c) => normalize(c?.name || '').startsWith(partialName)) : null)
+}
+
+async function fetchCustomers(headers: Record<string, string>): Promise<any[]> {
+  const listRes = await fetch(INDEX_URL, { headers })
+  if (!listRes.ok) throw new Error(`Listagem ST Coach falhou (${listRes.status})`)
+  const listJson = JSON.parse(await listRes.text())
+  return Array.isArray(listJson) ? listJson : (listJson?.data || listJson?.customers || [])
+}
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function verifyAssignment(params: {
+  headers: Record<string, string>
+  email?: string | null
+  name?: string | null
+  scProgramId: number
+  shouldHave: boolean
+}) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await wait(700)
+    const verifyList = await fetchCustomers(params.headers)
+    const verified = findCustomer(verifyList, params.email, params.name)
+    const verifiedPrograms: any[] = Array.isArray(verified?.programs) ? verified.programs : []
+    const verifiedIds = new Set(verifiedPrograms.map((p: any) => Number(p?.program_id ?? p?.id)).filter(Number.isFinite))
+    const confirmed = verifiedIds.has(params.scProgramId)
+    if (confirmed === params.shouldHave) return true
+  }
+  return false
+}
+
 async function scLogin(): Promise<string> {
   const email = Deno.env.get('SUPERCOACH_EMAIL')
   const password = Deno.env.get('SUPERCOACH_PASSWORD')
@@ -103,15 +141,24 @@ Deno.serve(async (req) => {
     // Login e busca customer
     const token = await scLogin()
     const scHdr = { ...COMMON_HEADERS, authorization: `Bearer ${token}` }
-    const listRes = await fetch(INDEX_URL, { headers: scHdr })
-    if (!listRes.ok) throw new Error(`Listagem ST Coach falhou (${listRes.status})`)
-    const listJson = JSON.parse(await listRes.text())
-    const list: any[] = Array.isArray(listJson) ? listJson : (listJson?.data || listJson?.customers || [])
-    const em = (profile.email || '').toLowerCase().trim()
-    const nm = normalize(profile.full_name || '')
-    const customer = list.find((c) => (c?.email || '').toLowerCase().trim() === em)
-      || list.find((c) => normalize(c?.name || '') === nm)
-    if (!customer) throw new Error('Aluno não encontrado no ST Coach. Cadastre-o primeiro.')
+    let list = await fetchCustomers(scHdr)
+    let customer = findCustomer(list, profile.email, profile.full_name)
+
+    if (!customer && action === 'assign') {
+      const createRes = await fetch(`${url}/functions/v1/supercoach-sync-expiration`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', apikey: service, Authorization: `Bearer ${service}` },
+        body: JSON.stringify({ action: 'create', userId }),
+      })
+      const createJson = await createRes.json().catch(() => ({}))
+      if (!createRes.ok || (createJson?.ok === false && createJson?.status !== 'already_exists')) {
+        throw new Error(createJson?.error || createJson?.message || 'Aluno não encontrado no ST Coach e cadastro automático falhou')
+      }
+      list = await fetchCustomers(scHdr)
+      customer = findCustomer(list, profile.email, profile.full_name)
+    }
+
+    if (!customer) throw new Error('Aluno não encontrado no ST Coach. Cadastre o aluno ou sincronize o vencimento primeiro.')
 
     // Atualiza programs
     const currentPrograms: any[] = Array.isArray(customer.programs) ? customer.programs : []
@@ -136,6 +183,19 @@ Deno.serve(async (req) => {
     const upd = await fetch(ACCOUNT_URL, { method: 'PUT', headers: scHdr, body: JSON.stringify(payload) })
     const updText = await upd.text()
     if (!upd.ok) throw new Error(`PUT customer falhou (${upd.status}): ${updText.slice(0, 220)}`)
+
+    const confirmed = await verifyAssignment({
+      headers: scHdr,
+      email: profile.email,
+      name: profile.full_name,
+      scProgramId,
+      shouldHave: action === 'assign',
+    })
+    if (!confirmed) {
+      throw new Error(action === 'assign'
+        ? 'ST Coach não confirmou a atribuição do programa'
+        : 'ST Coach não confirmou a remoção do programa')
+    }
 
     return new Response(JSON.stringify({
       ok: true, status: action === 'assign' ? 'assigned' : 'unassigned',
