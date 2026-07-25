@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     // Autorização: apenas admin ou consultant
     const { data: rolesData } = await admin.from('user_roles').select('role').eq('user_id', userId);
     const roles = (rolesData || []).map((r: any) => r.role);
-    if (!roles.includes('admin') && !roles.includes('consultant')) {
+    if (!roles.includes('admin') && !roles.includes('consultant') && !roles.includes('consultor')) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -130,7 +130,10 @@ Deno.serve(async (req) => {
           unique.push({ id: e.id, name: key });
         }
         unique.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-        const capped = unique.slice(0, 1200);
+        // Cap agressivo — catálogo enorme (1200+ exercícios) estava estourando
+        // o wall-clock da edge function quando combinado com streaming +
+        // multimodal, causando "Failed to fetch" no cliente.
+        const capped = unique.slice(0, 400);
         libraryCount = capped.length;
         libraryBlock = [
           '',
@@ -195,15 +198,23 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!apiKey) throw new Error('LOVABLE_API_KEY missing');
-    const model = 'google/gemini-3-flash-preview';
+    // Modelo estável do gateway. `gemini-3-flash-preview` era o preview e
+    // vinha derrubando conexões longas com contexto grande.
+    const model = 'google/gemini-3.6-flash';
     const wantStream = body.stream === true;
 
     if (wantStream) {
-      const upstream = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages, stream: true }),
-      });
+      let upstream: Response;
+      try {
+        upstream = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({ model, messages, stream: true }),
+        });
+      } catch (e) {
+        console.error('upstream fetch failed', e);
+        return new Response(JSON.stringify({ error: 'Falha ao conectar com o provedor de IA. Tente novamente.' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       if (upstream.status === 429) {
         return new Response(JSON.stringify({ error: 'Limite de uso da IA atingido. Aguarde alguns instantes e tente novamente.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
