@@ -71,11 +71,14 @@ export function installRequestIdInterceptor() {
         setLastRequestId(rid);
         const headers = new Headers(init?.headers || (input as Request).headers);
         const contentType = headers.get("Content-Type") || "";
-        const isSimpleCoverFallback =
-          /\/functions\/v1\/generate-program-cover/i.test(url) &&
-          /^text\/plain/i.test(contentType);
+        const isEdgeFunction = /\/functions\/v1\//i.test(url);
+        const isSimpleTextRequest = /^text\/plain/i.test(contentType);
 
-        if (!isSimpleCoverFallback) {
+        // Edge Functions already have their own CORS allow-list. Adding custom
+        // tracking headers here forces a preflight and can block critical flows
+        // such as ST Coach import/sync with "Failed to fetch". Keep those calls
+        // clean and only add IDs to same-origin/internal routes where headers are allowed.
+        if (!isEdgeFunction && !isSimpleTextRequest) {
           if (!headers.has("X-Request-Id")) headers.set("X-Request-Id", rid);
           if (!headers.has("X-Client-Session")) headers.set("X-Client-Session", getSessionId());
         }
