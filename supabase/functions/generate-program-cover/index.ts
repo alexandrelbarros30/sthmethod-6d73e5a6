@@ -4,7 +4,11 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { buildProgramCoverPrompt } from '../_shared/program-cover-prompt.ts';
 
-function inferGenderFromText(text: string): 'F' | 'M' {
+type Gender = 'F' | 'M';
+type Provider = 'openai' | 'gemini';
+type Attempt = { model: string; status: number; error?: string };
+
+function inferGenderFromText(text: string): Gender {
   const t = (text || '').toLowerCase();
   const female = [
     'femin', 'mulher', 'glute', 'gluteo', 'glúteo', 'posterior', 'lower focus',
@@ -23,6 +27,140 @@ const responseHeaders = {
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: responseHeaders });
+}
+
+function waitUntil(promise: Promise<unknown>) {
+  const edgeRuntime = (globalThis as unknown as { EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void } }).EdgeRuntime;
+  if (edgeRuntime?.waitUntil) {
+    edgeRuntime.waitUntil(promise);
+    return;
+  }
+  promise.catch((error) => console.error('generate-program-cover background error', error));
+}
+
+async function fetchAiImage(params: {
+  model: string;
+  prompt: string;
+  lovableKey: string;
+  timeoutMs: number;
+  bodyExtras?: Record<string, unknown>;
+  attempts: Attempt[];
+}): Promise<Uint8Array | null> {
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(`AI_IMAGE_TIMEOUT_${params.model}_${params.timeoutMs}MS`), params.timeoutMs);
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Lovable-API-Key': params.lovableKey,
+        'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
+      },
+      body: JSON.stringify({
+        model: params.model,
+        prompt: params.prompt,
+        size: '1024x1024',
+        n: 1,
+        ...(params.bodyExtras || {}),
+      }),
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      params.attempts.push({ model: params.model, status: response.status, error: text.slice(0, 300) });
+      return null;
+    }
+    const data = JSON.parse(text);
+    const b64 = data?.data?.[0]?.b64_json;
+    if (!b64) {
+      params.attempts.push({ model: params.model, status: response.status, error: 'no_image' });
+      return null;
+    }
+    return Uint8Array.from(atob(b64), (char) => char.charCodeAt(0));
+  } catch (error) {
+    params.attempts.push({
+      model: params.model,
+      status: 0,
+      error: String((error as Error)?.message || error || `AI_IMAGE_TIMEOUT_${params.timeoutMs}MS`),
+    });
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function generateAiCover(params: {
+  lovableKey: string;
+  prompt: string;
+  provider: Provider;
+  cascade: boolean;
+}): Promise<{ bytes: Uint8Array | null; model: string; attempts: Attempt[] }> {
+  const attempts: Attempt[] = [];
+  const providers: Provider[] = params.cascade
+    ? (params.provider === 'gemini' ? ['gemini', 'openai'] : ['openai', 'gemini'])
+    : [params.provider];
+
+  for (const provider of providers) {
+    const model = provider === 'gemini' ? 'google/gemini-3.1-flash-image' : 'openai/gpt-image-2';
+    const bytes = await fetchAiImage({
+      model,
+      prompt: params.prompt,
+      lovableKey: params.lovableKey,
+      timeoutMs: provider === 'gemini' ? 38000 : 42000,
+      bodyExtras: provider === 'openai' ? { quality: 'low' } : undefined,
+      attempts,
+    });
+    if (bytes) return { bytes, model, attempts };
+  }
+
+  return {
+    bytes: null,
+    model: attempts.length ? attempts.map((attempt) => attempt.model).join(' → ') : 'none',
+    attempts,
+  };
+}
+
+async function uploadCover(params: {
+  admin: ReturnType<typeof createClient>;
+  supabaseUrl: string;
+  programId: string;
+  bytes: Uint8Array;
+  model: string;
+  gender: Gender;
+  attempts: Attempt[];
+}) {
+  const path = `program-covers/${params.programId}.png`;
+  const { error: uploadError } = await params.admin.storage
+    .from('ai-training-media')
+    .upload(path, params.bytes, { contentType: 'image/png', upsert: true });
+
+  if (uploadError) {
+    console.error('storage upload failed', uploadError);
+    return {
+      error: 'Falha no upload',
+      details: uploadError.message,
+      code: 'UPLOAD',
+      model: params.model,
+      when: new Date().toISOString(),
+    };
+  }
+
+  const { data: publicUrlData } = params.admin.storage.from('ai-training-media').getPublicUrl(path);
+  const base = publicUrlData?.publicUrl || `${params.supabaseUrl}/storage/v1/object/public/ai-training-media/${path}`;
+  const posterUrl = `${base}?v=${Date.now()}`;
+  const { error: updateError } = await params.admin.from('training_programs').update({ poster_url: posterUrl }).eq('id', params.programId);
+  if (updateError) {
+    console.error('training_programs poster update failed', updateError);
+    return {
+      error: 'Falha ao aplicar capa no programa',
+      details: updateError.message,
+      code: 'POSTER_UPDATE',
+      model: params.model,
+      when: new Date().toISOString(),
+    };
+  }
+
+  return { ok: true, posterUrl, gender: params.gender, model: params.model, fallback: false, attempts: params.attempts };
 }
 
 Deno.serve(async (req) => {
@@ -59,14 +197,14 @@ Deno.serve(async (req) => {
     const isAdmin = (roles || []).some((r: any) => ['admin', 'consultor'].includes(r.role));
     if (!isAdmin) return jsonResponse({ error: 'Forbidden' }, 403);
 
-    const { programId, gender: genderIn, studentId, provider: providerIn } = await req.json().catch(() => ({}));
+    const { programId, gender: genderIn, studentId, provider: providerIn, async: asyncIn } = await req.json().catch(() => ({}));
     if (!programId) return jsonResponse({ error: 'programId obrigatório' }, 400);
 
     const { data: prog, error: progErr } = await admin.from('training_programs').select('id, title, details').eq('id', programId).maybeSingle();
     if (progErr || !prog) return jsonResponse({ error: 'Programa não encontrado' }, 404);
 
     // Definir gênero: input explícito > gênero do aluno > heurística por título/detalhes
-    let gender: 'F' | 'M' = inferGenderFromText(`${prog.title || ''} ${prog.details || ''}`);
+    let gender: Gender = inferGenderFromText(`${prog.title || ''} ${prog.details || ''}`);
     if (genderIn === 'F' || genderIn === 'M') gender = genderIn;
     else if (studentId) {
       const { data: prof } = await admin.from('profiles').select('gender').eq('user_id', studentId).maybeSingle();
@@ -75,93 +213,11 @@ Deno.serve(async (req) => {
       else if (g.startsWith('m')) gender = 'M';
     }
 
-    console.info('generate-program-cover AI render start', { programId, gender, title: prog.title });
+    console.info('generate-program-cover request accepted', { programId, gender, title: prog.title, async: Boolean(asyncIn) });
 
-    // Tenta gerar capa fotográfica via Lovable AI Gateway.
-    // Importante: cada invocação tenta somente UM modelo. Encadear GPT + Gemini na
-    // mesma chamada pode passar do limite de resposta da função e virar "Failed to send".
-    // O painel faz a segunda tentativa em uma nova invocação, mantendo o erro rastreável.
     const lovableKey = Deno.env.get('LOVABLE_API_KEY') || '';
     const prompt = buildProgramCoverPrompt(prog.title, gender);
-    let uploadBytes: Uint8Array | null = null;
-    const contentType = 'image/png';
-    const fileExtension = 'png';
-    let usedModel = 'none';
-    const attempts: Array<{ model: string; status: number; error?: string }> = [];
-    const requestedProvider = providerIn === 'gemini' ? 'gemini' : 'openai';
-
-    async function tryGemini(): Promise<Uint8Array | null> {
-      const model = 'google/gemini-3.1-flash-image';
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort('AI_IMAGE_TIMEOUT_GEMINI_38S'), 38000);
-      try {
-        const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
-          method: 'POST',
-          signal: ctrl.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'Lovable-API-Key': lovableKey,
-            'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
-          },
-          body: JSON.stringify({
-            model,
-            prompt,
-            size: '1024x1024',
-            n: 1,
-          }),
-        });
-        const txt = await r.text();
-        if (!r.ok) {
-          attempts.push({ model, status: r.status, error: txt.slice(0, 200) });
-          return null;
-        }
-        const data = JSON.parse(txt);
-        const b64 = data?.data?.[0]?.b64_json;
-        if (!b64) { attempts.push({ model, status: r.status, error: 'no_image' }); return null; }
-        usedModel = model;
-        return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      } catch (e) {
-        attempts.push({ model, status: 0, error: String((e as Error)?.message || e || 'AI_IMAGE_TIMEOUT_GEMINI_38S') });
-        return null;
-      } finally { clearTimeout(t); }
-    }
-
-    async function tryOpenAI(): Promise<Uint8Array | null> {
-      const model = 'openai/gpt-image-2';
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort('AI_IMAGE_TIMEOUT_OPENAI_42S'), 42000);
-      try {
-        const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
-          method: 'POST',
-          signal: ctrl.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'Lovable-API-Key': lovableKey,
-            'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
-          },
-          body: JSON.stringify({
-            model,
-            prompt,
-            size: '1024x1024',
-            quality: 'low',
-            n: 1,
-          }),
-        });
-        const txt = await r.text();
-        if (!r.ok) {
-          attempts.push({ model, status: r.status, error: txt.slice(0, 200) });
-          return null;
-        }
-        const data = JSON.parse(txt);
-        const b64 = data?.data?.[0]?.b64_json;
-        if (!b64) { attempts.push({ model, status: r.status, error: 'no_image' }); return null; }
-        usedModel = model;
-        return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      } catch (e) {
-        attempts.push({ model, status: 0, error: String((e as Error)?.message || e || 'AI_IMAGE_TIMEOUT_OPENAI_42S') });
-        return null;
-      } finally { clearTimeout(t); }
-    }
+    const requestedProvider: Provider = providerIn === 'gemini' ? 'gemini' : 'openai';
 
     if (!lovableKey) {
       return jsonResponse({
@@ -172,36 +228,46 @@ Deno.serve(async (req) => {
       }, 500);
     }
 
-    uploadBytes = requestedProvider === 'gemini' ? await tryGemini() : await tryOpenAI();
+    if (asyncIn === true) {
+      waitUntil((async () => {
+        console.info('generate-program-cover background started', { programId, provider: requestedProvider });
+        const generated = await generateAiCover({ lovableKey, prompt, provider: requestedProvider, cascade: true });
+        if (!generated.bytes) {
+          console.error('generate-program-cover background AI failed', generated.attempts);
+          return;
+        }
+        const uploaded = await uploadCover({ admin, supabaseUrl, programId, bytes: generated.bytes, model: generated.model, gender, attempts: generated.attempts });
+        console.info('generate-program-cover background finished', { programId, ok: Boolean((uploaded as any)?.ok), model: generated.model });
+      })());
 
-    if (!uploadBytes) {
-      const modelChain = attempts.length ? attempts.map((a) => a.model).join(' → ') : 'none';
-      console.error('generate-program-cover AI failed without fallback', attempts);
+      return jsonResponse({
+        ok: true,
+        accepted: true,
+        status: 'processing',
+        programId,
+        gender,
+        model: requestedProvider === 'gemini' ? 'google/gemini-3.1-flash-image → openai/gpt-image-2' : 'openai/gpt-image-2 → google/gemini-3.1-flash-image',
+        when: new Date().toISOString(),
+      }, 202);
+    }
+
+    const generated = await generateAiCover({ lovableKey, prompt, provider: requestedProvider, cascade: false });
+
+    if (!generated.bytes) {
+      console.error('generate-program-cover AI failed without fallback', generated.attempts);
       return jsonResponse({
         error: 'A IA não retornou uma imagem fotográfica nesta tentativa. Nenhuma capa segura foi aplicada.',
         code: 'AI_IMAGE_ATTEMPT_FAILED',
-        model: modelChain,
+        model: generated.model,
         fallback: false,
-        attempts,
+        attempts: generated.attempts,
         when: new Date().toISOString(),
       }, 502);
     }
 
-    console.info('generate-program-cover AI success', { model: usedModel });
-
-    const path = `program-covers/${programId}.${fileExtension}`;
-    const { error: upErr } = await admin.storage.from('ai-training-media').upload(path, uploadBytes, { contentType, upsert: true });
-    if (upErr) {
-      console.error('storage upload failed', upErr);
-      return jsonResponse({ error: 'Falha no upload', details: upErr.message, code: 'UPLOAD', model: usedModel, when: new Date().toISOString() }, 500);
-    }
-    // cache-busting via query string para forçar re-fetch no <img>
-    const { data: pub } = admin.storage.from('ai-training-media').getPublicUrl(path);
-    const base = pub?.publicUrl || `${supabaseUrl}/storage/v1/object/public/ai-training-media/${path}`;
-    const posterUrl = `${base}?v=${Date.now()}`;
-    await admin.from('training_programs').update({ poster_url: posterUrl }).eq('id', programId);
-
-    return jsonResponse({ ok: true, posterUrl, gender, model: usedModel, fallback: false, attempts });
+    console.info('generate-program-cover AI success', { model: generated.model });
+    const uploaded = await uploadCover({ admin, supabaseUrl, programId, bytes: generated.bytes, model: generated.model, gender, attempts: generated.attempts });
+    return jsonResponse(uploaded, (uploaded as any)?.ok ? 200 : 500);
   } catch (e: any) {
     console.error('generate-program-cover error', e);
     return jsonResponse({ error: e?.message || 'erro', code: 500, model: 'unknown', when: new Date().toISOString() }, 500);
