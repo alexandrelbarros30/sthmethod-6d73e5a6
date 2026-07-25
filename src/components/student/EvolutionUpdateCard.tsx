@@ -25,6 +25,8 @@ import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
 import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 import EvolutionTour from "@/components/student/EvolutionTour";
 import EvolutionTutorialVideoDialog from "@/components/student/EvolutionTutorialVideoDialog";
+import StageStatusBlock from "@/components/student/StageStatusBlock";
+import { toFriendlyError, withRef, type FriendlyError } from "@/lib/friendly-errors";
 
 interface EvolutionUpdateCardProps {
   userId: string;
@@ -47,6 +49,14 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
   const [savingStage, setSavingStage] = useState<0 | 1 | 2 | 3>(0);
   const [confirmStage, setConfirmStage] = useState<0 | 1 | 2 | 3>(0);
+  const [stageErrors, setStageErrors] = useState<Record<1 | 2 | 3, FriendlyError | null>>({
+    1: null,
+    2: null,
+    3: null,
+  });
+
+  const setStageError = (n: 1 | 2 | 3, err: FriendlyError | null) =>
+    setStageErrors((s) => ({ ...s, [n]: err }));
 
   const [draftReady, setDraftReady] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
@@ -107,6 +117,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
   const handleSaveStage1 = async () => {
     setSavingStage(1);
+    setStageError(1, null);
     try {
       const hasNewWeight = Boolean(weight);
       const currentStoredWeight = profile?.weight ? Number(profile.weight) : null;
@@ -184,7 +195,9 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       onComplete();
     } catch (err: any) {
       console.error(err);
-      toast.error("Erro ao salvar: " + (err.message || "Tente novamente."));
+      const f = withRef(toFriendlyError(err));
+      setStageError(1, f);
+      toast.error(`[${f.code}] ${f.title}`);
     }
     setSavingStage(0);
     setConfirmStage(0);
@@ -196,6 +209,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   const handleSaveStage3 = async () => {
     if (!activityChange) return;
     setSavingStage(3);
+    setStageError(3, null);
     try {
       const currentStoredWeight = profile?.weight ? Number(profile.weight) : (currentWeight ? Number(currentWeight) : null);
       let macroUpdate: Record<string, any> = {
@@ -266,7 +280,9 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       onComplete();
     } catch (err: any) {
       console.error(err);
-      toast.error("Erro ao salvar: " + (err.message || "Tente novamente."));
+      const f = withRef(toFriendlyError(err));
+      setStageError(3, f);
+      toast.error(`[${f.code}] ${f.title}`);
     }
     setSavingStage(0);
     setConfirmStage(0);
@@ -275,6 +291,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   // ────────────────────────── Etapa 2: fotos corporais ──────────────────────────
   const handleStage2Complete = async () => {
     const note = `📊 ETAPA 2 — FOTOS CORPORAIS (${timestampBR()})\n\n📸 Novas fotos de evolução enviadas pelo aluno.\n`;
+    setStageError(2, null);
     try {
       await supabase.from("anamnesis_entries").insert({ user_id: userId, notes: note });
       await createEvolutionSnapshot(userId, "student", note);
@@ -345,10 +362,10 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
     <>
       <Card className="border-foreground/15 bg-foreground/[0.03] overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <CardTitle className="text-base font-display flex items-center gap-2 whitespace-nowrap">
+          <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
+            <CardTitle className="text-base font-display flex items-center gap-2 min-w-0">
               <Trophy className="w-4 h-4 flex-shrink-0" style={{ color: `hsl(${GREEN})` }} />
-              Missão Evolução
+              <span className="truncate">Missão Evolução</span>
             </CardTitle>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
@@ -365,7 +382,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               </span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground break-words hyphens-auto">
             Complete as 3 etapas no seu ritmo. Cada uma salva sozinha — sem pressa, sem ordem obrigatória.
           </p>
           <div className="h-1.5 w-full rounded-full bg-foreground/10 overflow-hidden mt-2">
@@ -389,7 +406,22 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               accent={GREEN}
             />
             {openStages[1] && (
-              <div className="px-3 pb-4 space-y-4">
+              <div className="px-3 pb-4 space-y-4 min-w-0 overflow-hidden">
+                {savingStage === 1 && (
+                  <StageStatusBlock kind="loading" title="Salvando etapa 1..." description="Registrando peso, mensagem e recalculando macros." accent={GREEN} />
+                )}
+                {stage1Done && !stageErrors[1] && savingStage !== 1 && (
+                  <StageStatusBlock kind="success" title="Etapa 1 salva com sucesso" description="Peso e mensagem registrados no seu histórico." accent={GREEN} />
+                )}
+                {stageErrors[1] && (
+                  <StageStatusBlock
+                    kind="error"
+                    title={stageErrors[1]!.title}
+                    error={stageErrors[1]}
+                    accent={GREEN}
+                    onRetry={() => { setStageError(1, null); setConfirmStage(1); }}
+                  />
+                )}
                 <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: `hsl(${GREEN} / 0.06)`, border: `1px dashed hsl(${GREEN} / 0.3)` }}>
                   <p className="font-semibold flex items-center gap-1.5" style={{ color: `hsl(${GREEN})` }}>
                     <Target className="w-3.5 h-3.5" /> Missão da etapa
@@ -459,7 +491,19 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               accent={BLUE}
             />
             {openStages[2] && (
-              <div className="px-3 pb-4 space-y-3">
+              <div className="px-3 pb-4 space-y-3 min-w-0 overflow-hidden">
+                {stage2Done && !stageErrors[2] && (
+                  <StageStatusBlock kind="success" title="Etapa 2 salva com sucesso" description="Suas fotos foram adicionadas ao histórico." accent={BLUE} />
+                )}
+                {stageErrors[2] && (
+                  <StageStatusBlock
+                    kind="error"
+                    title={stageErrors[2]!.title}
+                    error={stageErrors[2]}
+                    accent={BLUE}
+                    onRetry={() => setStageError(2, null)}
+                  />
+                )}
                 <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: `hsl(${BLUE} / 0.06)`, border: `1px dashed hsl(${BLUE} / 0.3)` }}>
                   <p className="font-semibold flex items-center gap-1.5" style={{ color: `hsl(${BLUE})` }}>
                     <Target className="w-3.5 h-3.5" /> Missão da etapa
@@ -498,7 +542,22 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               accent={AMBER}
             />
             {openStages[3] && (
-              <div className="px-3 pb-4 space-y-4">
+              <div className="px-3 pb-4 space-y-4 min-w-0 overflow-hidden">
+                {savingStage === 3 && (
+                  <StageStatusBlock kind="loading" title="Salvando etapa 3..." description="Atualizando sua rotina e recalculando macros." accent={AMBER} />
+                )}
+                {stage3Done && !stageErrors[3] && savingStage !== 3 && (
+                  <StageStatusBlock kind="success" title="Etapa 3 salva com sucesso" description="Nova rotina registrada e macros ajustados." accent={AMBER} />
+                )}
+                {stageErrors[3] && (
+                  <StageStatusBlock
+                    kind="error"
+                    title={stageErrors[3]!.title}
+                    error={stageErrors[3]}
+                    accent={AMBER}
+                    onRetry={() => { setStageError(3, null); setConfirmStage(3); }}
+                  />
+                )}
                 <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: `hsl(${AMBER} / 0.06)`, border: `1px dashed hsl(${AMBER} / 0.3)` }}>
                   <p className="font-semibold flex items-center gap-1.5" style={{ color: `hsl(${AMBER})` }}>
                     <Target className="w-3.5 h-3.5" /> Atualize só se mudou de verdade
