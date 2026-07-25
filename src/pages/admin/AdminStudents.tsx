@@ -1396,6 +1396,16 @@ const AdminStudents = () => {
                 {renderStudentFormFields(true)}
               </DialogContent>
             </Dialog>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => setPushOpen(true)}>
+              <Sparkles className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Enviar push</span>
+              <span className="sm:hidden">Push</span>
+            </Button>
+            <SendPushDialog
+              open={pushOpen}
+              onOpenChange={setPushOpen}
+              students={(students || []).map((s: any) => ({ user_id: s.user_id, full_name: s.full_name, status: s.status }))}
+            />
             </div>
           </div>
           {/* Search Filter */}
