@@ -8,6 +8,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login'
 const INDEX_URL = 'https://supertreinosapp.com/api/v2/adm/customer/index'
 const ACCOUNT_URL = 'https://supertreinosapp.com/api/v2/adm/customer/account'
+const PROGRAMS_URL = 'https://supertreinosapp.com/api/v2/programs?pid='
 
 const COMMON_HEADERS = {
   'accept': 'application/json, text/plain, */*',
@@ -40,6 +41,64 @@ async function fetchCustomers(headers: Record<string, string>): Promise<any[]> {
   return Array.isArray(listJson) ? listJson : (listJson?.data || listJson?.customers || [])
 }
 
+async function fetchPrograms(headers: Record<string, string>): Promise<any[]> {
+  const res = await fetch(PROGRAMS_URL, { headers })
+  const text = await res.text()
+  if (!res.ok) throw new Error(`Biblioteca de programas ST Coach falhou (${res.status})`)
+  const json = JSON.parse(text)
+  const list = json?.programs || json?.data || (Array.isArray(json) ? json : [])
+  return Array.isArray(list) ? list : []
+}
+
+function getProgramId(program: any): number | null {
+  const id = Number(program?.program_id ?? program?.id)
+  return Number.isFinite(id) && id > 0 ? id : null
+}
+
+async function findProgramReference(headers: Record<string, string>, scProgramId: number) {
+  try {
+    const programs = await fetchPrograms(headers)
+    return programs.find((program: any) => Number(program?.id ?? program?.program_id) === scProgramId) || null
+  } catch (error) {
+    console.warn('[supercoach-assign-program] não foi possível carregar referência do programa', (error as any)?.message)
+    return null
+  }
+}
+
+function dedupePrograms(programs: any[]): any[] {
+  const seen = new Set<number>()
+  const result: any[] = []
+  for (const program of programs) {
+    const id = getProgramId(program)
+    if (id && seen.has(id)) continue
+    if (id) seen.add(id)
+    result.push(program)
+  }
+  return result
+}
+
+async function buildAssignProgramVariants(headers: Record<string, string>, currentPrograms: any[], scProgramId: number): Promise<any[][]> {
+  const base = currentPrograms.filter((program: any) => getProgramId(program) !== scProgramId)
+  const variants: any[][] = []
+  const addVariant = (entry: any) => {
+    const next = dedupePrograms([...base, entry])
+    const signature = JSON.stringify(next.map((program: any) => ({ id: program?.id ?? null, program_id: program?.program_id ?? null })))
+    if (!variants.some((variant) => JSON.stringify(variant.map((program: any) => ({ id: program?.id ?? null, program_id: program?.program_id ?? null }))) === signature)) {
+      variants.push(next)
+    }
+  }
+
+  const reference = await findProgramReference(headers, scProgramId)
+  if (reference) {
+    addVariant({ ...reference, id: Number(reference.id ?? scProgramId), program_id: Number(reference.program_id ?? reference.id ?? scProgramId) })
+    addVariant({ ...reference, id: Number(reference.id ?? scProgramId) })
+  }
+  addVariant({ id: scProgramId, program_id: scProgramId })
+  addVariant({ id: scProgramId })
+  addVariant({ program_id: scProgramId })
+  return variants
+}
+
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 async function verifyAssignment(params: {
@@ -54,7 +113,7 @@ async function verifyAssignment(params: {
     const verifyList = await fetchCustomers(params.headers)
     const verified = findCustomer(verifyList, params.email, params.name)
     const verifiedPrograms: any[] = Array.isArray(verified?.programs) ? verified.programs : []
-    const verifiedIds = new Set(verifiedPrograms.map((p: any) => Number(p?.program_id ?? p?.id)).filter(Number.isFinite))
+    const verifiedIds = new Set(verifiedPrograms.map(getProgramId).filter((id): id is number => typeof id === 'number'))
     const confirmed = verifiedIds.has(params.scProgramId)
     if (confirmed === params.shouldHave) return true
   }
@@ -162,39 +221,51 @@ Deno.serve(async (req) => {
 
     // Atualiza programs
     const currentPrograms: any[] = Array.isArray(customer.programs) ? customer.programs : []
-    const currentIds = new Set(currentPrograms.map((p: any) => Number(p?.program_id ?? p?.id)).filter(Number.isFinite))
+    const currentIds = new Set(currentPrograms.map(getProgramId).filter((id): id is number => typeof id === 'number'))
 
-    let newPrograms = currentPrograms
+    let programVariants: any[][] = []
     if (action === 'assign') {
       if (currentIds.has(scProgramId)) {
         return new Response(JSON.stringify({ ok: true, status: 'already_assigned', scProgramId }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
-      newPrograms = [...currentPrograms, { program_id: scProgramId }]
+      programVariants = await buildAssignProgramVariants(scHdr, currentPrograms, scProgramId)
     } else {
       if (!currentIds.has(scProgramId)) {
         return new Response(JSON.stringify({ ok: true, status: 'not_assigned', scProgramId }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
-      newPrograms = currentPrograms.filter((p: any) => Number(p?.program_id ?? p?.id) !== scProgramId)
+      programVariants = [currentPrograms.filter((p: any) => getProgramId(p) !== scProgramId)]
     }
 
-    const payload = [{ ...customer, programs: newPrograms }]
-    const upd = await fetch(ACCOUNT_URL, { method: 'PUT', headers: scHdr, body: JSON.stringify(payload) })
-    const updText = await upd.text()
-    if (!upd.ok) throw new Error(`PUT customer falhou (${upd.status}): ${updText.slice(0, 220)}`)
+    let confirmed = false
+    let lastError = ''
+    for (let index = 0; index < programVariants.length; index++) {
+      const programs = dedupePrograms(programVariants[index])
+      const payload = [{ ...customer, programs }]
+      const upd = await fetch(ACCOUNT_URL, { method: 'PUT', headers: scHdr, body: JSON.stringify(payload) })
+      const updText = await upd.text()
+      if (!upd.ok) {
+        lastError = `PUT customer falhou (${upd.status}): ${updText.slice(0, 220)}`
+        console.error('[supercoach-assign-program]', lastError)
+        continue
+      }
 
-    const confirmed = await verifyAssignment({
-      headers: scHdr,
-      email: profile.email,
-      name: profile.full_name,
-      scProgramId,
-      shouldHave: action === 'assign',
-    })
+      confirmed = await verifyAssignment({
+        headers: scHdr,
+        email: profile.email,
+        name: profile.full_name,
+        scProgramId,
+        shouldHave: action === 'assign',
+      })
+      console.log('[supercoach-assign-program] tentativa', JSON.stringify({ action, scProgramId, customerId: customer.id, variant: index + 1, confirmed }))
+      if (confirmed) break
+    }
+
     if (!confirmed) {
-      throw new Error(action === 'assign'
+      throw new Error(lastError || (action === 'assign'
         ? 'ST Coach não confirmou a atribuição do programa'
-        : 'ST Coach não confirmou a remoção do programa')
+        : 'ST Coach não confirmou a remoção do programa'))
     }
 
     return new Response(JSON.stringify({
