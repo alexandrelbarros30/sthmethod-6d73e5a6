@@ -233,9 +233,10 @@ const BodyImageUpload = ({
 
               return (
                 <div key={key} className="space-y-2">
-                  <Label className="text-sm font-body flex items-center gap-1">
-                    <span>{icon}</span> {label}
-                  </Label>
+                   <Label className="text-xs sm:text-sm font-body flex items-center gap-1 whitespace-nowrap">
+                     <span>{icon}</span>
+                     <span className="truncate">{label}</span>
+                   </Label>
                   <div
                     className={`relative aspect-[3/4] rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-colors ${
                       (localSrc || hasExisting) ? "border-foreground/20 bg-foreground/5" : "border-border hover:border-foreground/50 bg-muted/30"
