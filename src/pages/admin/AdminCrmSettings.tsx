@@ -187,7 +187,7 @@ export default function AdminCrmSettings() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Configurações de WhatsApp</h1>
-            <p className="text-sm text-muted-foreground mt-1">Integração operacional dos canais STH One (Z-API) e Fale com o Nutri (W-API).</p>
+            <p className="text-sm text-muted-foreground mt-1">Integração operacional dos canais STH One (Comercial W-API), Fale com o Nutri (W-API) e Sucesso do Aluno (W-API).</p>
           </div>
           <Button onClick={() => window.location.href = "/admin/crm/fluxo"} variant="outline" className="gap-2">
             <Workflow className="w-4 h-4" />
