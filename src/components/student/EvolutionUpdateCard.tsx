@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TrendingUp, Scale, Camera, ChevronDown, ChevronUp, Sparkles, Trophy, CheckCircle2, Activity, MessageCircle, HelpCircle } from "lucide-react";
-import { Target, Info, Zap } from "lucide-react";
+import { Target, Info } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -296,7 +296,6 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
     done,
     open,
     accent,
-    xp,
   }: {
     n: 1 | 2 | 3;
     icon: React.ReactNode;
@@ -305,15 +304,14 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
     done: boolean;
     open: boolean;
     accent: string;
-    xp: number;
   }) => (
     <button
       type="button"
       onClick={() => toggleStage(n)}
-      className="w-full text-left flex items-center gap-3 p-3 rounded-xl transition-colors hover:bg-foreground/[0.04]"
+      className="w-full text-left flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl transition-colors hover:bg-foreground/[0.04]"
     >
       <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative"
+        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative"
         style={{ background: `hsl(${accent} / 0.12)`, border: `1px solid hsl(${accent} / 0.4)` }}
       >
         {done ? <CheckCircle2 className="w-5 h-5" style={{ color: `hsl(${accent})` }} /> : icon}
@@ -325,23 +323,17 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
         </span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate flex items-center gap-2">
-          {title}
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5"
-            style={{ background: `hsl(${accent} / 0.15)`, color: `hsl(${accent})`, border: `1px solid hsl(${accent} / 0.35)` }}
-          >
-            <Zap className="w-2.5 h-2.5" /> +{xp} XP
-          </span>
+        <p className="text-sm font-semibold flex items-center gap-2 flex-wrap leading-tight">
+          <span className="break-words">{title}</span>
           {done && (
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: `hsl(${accent} / 0.15)`, color: `hsl(${accent})` }}>
               Concluída
             </span>
           )}
         </p>
-        <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+        <p className="text-xs text-muted-foreground break-words leading-snug mt-0.5">{subtitle}</p>
       </div>
-      {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+      {open ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
     </button>
   );
 
@@ -395,7 +387,6 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               done={stage1Done}
               open={openStages[1]}
               accent={GREEN}
-              xp={10}
             />
             {openStages[1] && (
               <div className="px-3 pb-4 space-y-4">
@@ -466,7 +457,6 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               done={stage2Done}
               open={openStages[2]}
               accent={BLUE}
-              xp={15}
             />
             {openStages[2] && (
               <div className="px-3 pb-4 space-y-3">
@@ -506,7 +496,6 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               done={stage3Done}
               open={openStages[3]}
               accent={AMBER}
-              xp={20}
             />
             {openStages[3] && (
               <div className="px-3 pb-4 space-y-4">
