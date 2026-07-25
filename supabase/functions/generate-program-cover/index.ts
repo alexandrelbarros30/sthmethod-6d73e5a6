@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const isAdmin = (roles || []).some((r: any) => ['admin', 'consultor'].includes(r.role));
     if (!isAdmin) return jsonResponse({ error: 'Forbidden' }, 403);
 
-    const { programId, gender: genderIn, studentId } = await req.json().catch(() => ({}));
+    const { programId, gender: genderIn, studentId, provider: providerIn } = await req.json().catch(() => ({}));
     if (!programId) return jsonResponse({ error: 'programId obrigatório' }, 400);
 
     const { data: prog, error: progErr } = await admin.from('training_programs').select('id, title, details').eq('id', programId).maybeSingle();
@@ -78,8 +78,9 @@ Deno.serve(async (req) => {
     console.info('generate-program-cover AI render start', { programId, gender, title: prog.title });
 
     // Tenta gerar capa fotográfica via Lovable AI Gateway.
-    // Prioridade: GPT Image 2 → Gemini. Sem renderização SVG automática: se a IA falhar,
-    // a função retorna o erro real para o painel exibir o modelo/código da falha.
+    // Importante: cada invocação tenta somente UM modelo. Encadear GPT + Gemini na
+    // mesma chamada pode passar do limite de resposta da função e virar "Failed to send".
+    // O painel faz a segunda tentativa em uma nova invocação, mantendo o erro rastreável.
     const lovableKey = Deno.env.get('LOVABLE_API_KEY') || '';
     const prompt = buildProgramCoverPrompt(prog.title, gender);
     let uploadBytes: Uint8Array | null = null;
@@ -87,11 +88,12 @@ Deno.serve(async (req) => {
     const fileExtension = 'png';
     let usedModel = 'none';
     const attempts: Array<{ model: string; status: number; error?: string }> = [];
+    const requestedProvider = providerIn === 'gemini' ? 'gemini' : 'openai';
 
     async function tryGemini(): Promise<Uint8Array | null> {
       const model = 'google/gemini-3.1-flash-image';
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 40000);
+      const t = setTimeout(() => ctrl.abort('AI_IMAGE_TIMEOUT_GEMINI_38S'), 38000);
       try {
         const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
           method: 'POST',
@@ -119,7 +121,7 @@ Deno.serve(async (req) => {
         usedModel = model;
         return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       } catch (e) {
-        attempts.push({ model, status: 0, error: String((e as Error)?.message || e) });
+        attempts.push({ model, status: 0, error: String((e as Error)?.message || e || 'AI_IMAGE_TIMEOUT_GEMINI_38S') });
         return null;
       } finally { clearTimeout(t); }
     }
@@ -127,7 +129,7 @@ Deno.serve(async (req) => {
     async function tryOpenAI(): Promise<Uint8Array | null> {
       const model = 'openai/gpt-image-2';
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 45000);
+      const t = setTimeout(() => ctrl.abort('AI_IMAGE_TIMEOUT_OPENAI_42S'), 42000);
       try {
         const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
           method: 'POST',
@@ -156,7 +158,7 @@ Deno.serve(async (req) => {
         usedModel = model;
         return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       } catch (e) {
-        attempts.push({ model, status: 0, error: String((e as Error)?.message || e) });
+        attempts.push({ model, status: 0, error: String((e as Error)?.message || e || 'AI_IMAGE_TIMEOUT_OPENAI_42S') });
         return null;
       } finally { clearTimeout(t); }
     }
@@ -170,17 +172,14 @@ Deno.serve(async (req) => {
       }, 500);
     }
 
-    if (lovableKey) {
-      uploadBytes = await tryOpenAI();
-      if (!uploadBytes) uploadBytes = await tryGemini();
-    }
+    uploadBytes = requestedProvider === 'gemini' ? await tryGemini() : await tryOpenAI();
 
     if (!uploadBytes) {
       const modelChain = attempts.length ? attempts.map((a) => a.model).join(' → ') : 'none';
       console.error('generate-program-cover AI failed without fallback', attempts);
       return jsonResponse({
-        error: 'A IA não retornou uma imagem fotográfica. Nenhuma capa segura foi aplicada.',
-        code: 'AI_IMAGE_FAILED',
+        error: 'A IA não retornou uma imagem fotográfica nesta tentativa. Nenhuma capa segura foi aplicada.',
+        code: 'AI_IMAGE_ATTEMPT_FAILED',
         model: modelChain,
         fallback: false,
         attempts,
