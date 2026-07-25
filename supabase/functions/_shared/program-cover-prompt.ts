@@ -5,18 +5,53 @@
 export function buildProgramCoverPrompt(title: string, gender: 'F' | 'M'): string {
   const isF = gender === 'F';
 
-  const character = isF
-    ? 'a real athletic fitness female bodybuilder in intense strength training — dumbbell curl, hip thrust, glute kickback, cable row or heavy squat. Toned defined feminine physique, glutes and hamstrings visible, wearing generic sports bra and gym leggings, dynamic mid-exercise pose, sweat on skin, cinematic editorial photography quality'
-    : 'a real athletic muscular male bodybuilder in intense strength training — heavy bench press, bicep curl, deadlift, cable row or dumbbell press. Powerful defined masculine physique, striated chest and arms visible, wearing generic athletic tank or shirtless with gym shorts, dynamic mid-exercise pose, sweat on skin, cinematic editorial photography quality';
-
-  const rimColor = isF ? 'soft warm pink #ff5fa2 rim light' : 'cool electric blue #2388ff rim light';
+  const athlete = isF
+    ? [
+        'ATLETA: mulher atlética real, aproximadamente 25-32 anos, visual elegante, forte e feminina.',
+        'Cintura proporcional, pernas desenvolvidas, glúteos desenvolvidos, abdômen definido, baixo percentual de gordura sem exageros irreais.',
+        'Expressão de foco absoluto, concentrada no exercício. Vestindo top esportivo neutro e legging de academia, sem estampas, sem escritas, sem marcas visíveis.',
+      ].join(' ')
+    : [
+        'ATLETA: homem atlético real, aproximadamente 25-35 anos, muito definido, visual saudável.',
+        'Musculatura proporcional, baixo percentual de gordura, sem exageros irreais.',
+        'Expressão determinada, olhando para frente ou totalmente concentrado no exercício. Vestindo regata esportiva neutra ou sem camisa com shorts de academia, sem estampas, sem escritas, sem marcas visíveis.',
+      ].join(' ');
 
   return [
-    'Ultra-premium SQUARE fitness training-card cover (1024x1024), cinematic editorial photography, dark gym atmosphere — pure jet-black background (#000000) with dramatic side lighting. Full-bleed photorealistic athlete portrait, magazine-cover quality. No borders, no clutter, no watermarks, no third-party logos.',
-    `MAIN SUBJECT (fills the ENTIRE frame from top edge down to ~85%): ${character}. Tight cropped portrait framing the torso and upper body prominently, intentional pose captured mid-exercise, tack-sharp focus on defined musculature, dramatic ${rimColor} carving the silhouette against the deep black background. Cinematic depth of field, shallow blur, editorial magazine quality, hyper-realistic skin and texture.`,
-    `BOTTOM STRIP (lower ~15% of image, flush with bottom edge): a clean flat SEMI-TRANSPARENT BLACK band (rgba 0,0,0,0.9) spanning full width, no rounded corners. Inside the band, CENTER-ALIGNED: the exact program name "${title}" in bold uppercase EMERALD GREEN (#22c26a) sans-serif typography (Helvetica Neue bold), tight letter-spacing, sharp legible, no typos, no subtitles, no extra words. Directly below the title in smaller bold uppercase WHITE sans-serif: the lockup "STH METHOD" preceded by a small emerald-green (#22c26a) pentagonal shield icon containing a stylized "STH" monogram.`,
-    'Overall vibe: premium editorial fitness magazine cover — dark, focused, aspirational, aggressive. Tack-sharp athlete, deep true blacks, cinematic rim lighting. The composition MUST match the reference style: athlete photo dominating the frame with a black bottom band containing green title + STH METHOD lockup.',
-    'Strict rules: ONLY the program title (green) and the "STH METHOD" lockup (shield + white text) inside the bottom black band. No captions, no descriptors, no numbers, no duration labels, no third-party logos, no misspellings, no repeated text, no borders.',
+    // Contexto de marca / direção de arte
+    `Você é o Diretor de Arte Oficial da STH METHOD gerando a imagem principal (background) de um card para o programa de treino "${title}".`,
+    'A imagem deve transmitir performance, evolução, disciplina, saúde, estética, força, determinação, exclusividade e alto padrão — como uma campanha publicitária internacional premium.',
+
+    // Estilo
+    'ESTILO: Ultra Photorealistic, Fitness Commercial Photography, Premium Sports Campaign, Luxury Fitness Brand, Cinematic Lighting, Professional Studio Photography, Hyper Detailed, HDR, 8K, High Contrast, Professional Color Grading, Natural Skin, Sharp Focus, Magazine Cover Quality, Luxury Branding.',
+    'PROIBIDO: aparência de IA, cartoon, ilustração, desenho, render 3D estilizado. SEMPRE fotografia hiper-realista.',
+
+    // Formato
+    'FORMATO: vertical 9:16, 1080x1920. O atleta deve ocupar aproximadamente 80% da composição. Os ~20% inferiores da imagem devem ficar como fundo LIMPO, escuro e sem elementos — reservados para o sistema STH METHOD inserir depois faixa, nome do programa e logomarca. NÃO desenhar essa faixa. NÃO inserir nenhum texto, letra, número, logotipo, marca, watermark, moldura, banner ou placa.',
+
+    // Atleta
+    athlete,
+
+    // Cena
+    'CENA: escolher a melhor composição para um programa de treino de força/hipertrofia — supino, agachamento, desenvolvimento, barra fixa, levantamento terra, leg press, rosca direta, remada curvada, cabos ou halteres, com biomecânica perfeita. Nunca gerar movimentos incorretos.',
+
+    // Ambiente
+    'AMBIENTE: academia moderna e premium, equipamentos de alto padrão, fundo desfocado com profundidade de campo, poucos elementos, visual limpo, atmosfera escura e sofisticada, nada poluído.',
+
+    // Iluminação
+    'ILUMINAÇÃO: cinematográfica, luz lateral e superior realçando os músculos, sombras profundas, reflexos discretos, pele natural, volume muscular evidente.',
+
+    // Paleta
+    'PALETA: predominância de preto, cinza escuro e grafite, com detalhes verdes discretos. Nunca usar cores vibrantes em excesso.',
+
+    // Composição
+    'COMPOSIÇÃO: plano médio ou plano americano, leve ângulo inferior (visual heroico), olhar poderoso, postura perfeita, corpo ocupando quase toda a imagem, com os ~20% inferiores limpos para a arte do card.',
+
+    // Qualidade
+    'QUALIDADE: Ultra Realistic, Photorealistic, Commercial Fitness Campaign, Award Winning Photography, Professional Sports Photography, High Detail, Natural Skin Texture, Perfect Anatomy, Professional Gym Lighting, Extremely Detailed Muscles, Hyper Realistic, 8K, HDR, Sharp Focus, Magazine Cover.',
+
+    // Regras rígidas
+    'REGRAS RÍGIDAS: sem texto, sem letras, sem números, sem logotipos, sem marcas, sem watermark, sem molduras, sem banners, sem placas, sem camisetas com escrita. Não cortar mãos nem pés, não gerar dedos extras, não deformar músculos, anatomia perfeitamente correta. O resultado final deve parecer uma fotografia profissional feita para uma campanha oficial da STH METHOD, digna de capa de aplicativo fitness premium.',
   ].join(' ');
 }
 
