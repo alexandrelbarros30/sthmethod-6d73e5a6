@@ -39,7 +39,16 @@ async function scLogin(): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   try {
-    const auth = req.headers.get('Authorization') || ''
+    const body = await req.json().catch(() => ({})) as {
+      userId?: string; programId?: string; action?: 'assign' | 'unassign'; accessToken?: string
+    }
+    const bodyToken = String(body.accessToken || '').trim()
+    const headerAuth = req.headers.get('Authorization') || ''
+    const auth = headerAuth.startsWith('Bearer ')
+      ? headerAuth
+      : bodyToken
+        ? `Bearer ${bodyToken}`
+        : ''
     if (!auth.startsWith('Bearer ')) throw new Error('Não autenticado')
 
     const url = Deno.env.get('SUPABASE_URL')!
@@ -53,9 +62,6 @@ Deno.serve(async (req) => {
       .eq('user_id', userRes.user.id).in('role', ['admin', 'consultor'])
     if (!roles?.length) throw new Error('Apenas admin/consultor')
 
-    const body = await req.json().catch(() => ({})) as {
-      userId?: string; programId?: string; action?: 'assign' | 'unassign'
-    }
     const { userId, programId } = body
     const action = body.action || 'assign'
     if (!userId || !programId) throw new Error('userId e programId obrigatórios')
