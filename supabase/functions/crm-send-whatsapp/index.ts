@@ -64,9 +64,15 @@ Deno.serve(async (req) => {
 
     const fullPhone = normalizeWhatsappPhone(phone);
 
-    // Carrega credenciais do banco (fallback para env)
-    const cfgKey = provider === 'zapi' ? 'zapi' : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');
-    const { data: cfgRow } = await admin.from('crm_settings').select('value').eq('key', cfgKey).maybeSingle();
+    // Carrega credenciais do banco (fallback para env).
+    // Comercial (provider='zapi') foi migrado para W-API sob a chave 'wapi_comercial'.
+    const cfgKey = provider === 'zapi'
+      ? 'wapi_comercial'
+      : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');
+    let cfgRow = (await admin.from('crm_settings').select('value').eq('key', cfgKey).maybeSingle()).data;
+    if (provider === 'zapi' && !cfgRow?.value) {
+      cfgRow = (await admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle()).data;
+    }
     const cfg: any = cfgRow?.value || {};
     if (cfg.enabled !== true) {
       return new Response(JSON.stringify({
@@ -75,52 +81,30 @@ Deno.serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    let resp: Response;
-    let sendData: any = {};
-    if (provider === 'zapi') {
-      const id = (cfg.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
-      const tok = (cfg.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
-      const client = (cfg.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
-      if (!id || !tok || !client) {
-        return new Response(JSON.stringify({ ok: false, error: 'Credenciais Z-API não configuradas em CRM → Configurações.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      const base = `https://api.z-api.io/instances/${id}/token/${tok}`;
-      const headers = { 'Content-Type': 'application/json', 'Client-Token': client };
-      let endpoint = `${base}/send-text`;
-      let payload: Record<string, unknown> = { phone: fullPhone, message: body };
-      if (image_url) {
-        endpoint = `${base}/send-image`;
-        payload = { phone: fullPhone, image: image_url, caption: body || '' };
-      } else if (document_url) {
-        const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
-        endpoint = `${base}/send-document/${ext}`;
-        payload = { phone: fullPhone, document: document_url, fileName: document_name || `documento.${ext}`, caption: body || '' };
-      }
-      resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
-      sendData = await resp.json().catch(() => ({}));
-    } else {
-      const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
-      const id = (cfg.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
-      const tok = (cfg.token || '').trim() || Deno.env.get('WAPI_TOKEN');
-      const client = (cfg.client_token || '').trim() || Deno.env.get('WAPI_CLIENT_TOKEN');
-      if (!id || !tok) {
-        return new Response(JSON.stringify({ ok: false, error: 'Credenciais W-API não configuradas em CRM → Configurações.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` };
-      if (client) headers['Client-Token'] = client;
-      let endpoint = `${serverUrl}/v1/message/send-text?instanceId=${id}`;
-      let payload: Record<string, unknown> = { phone: fullPhone, message: body };
-      if (image_url) {
-        endpoint = `${serverUrl}/v1/message/send-image?instanceId=${id}`;
-        payload = { phone: fullPhone, image: image_url, caption: body || '' };
-      } else if (document_url) {
-        const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
-        endpoint = `${serverUrl}/v1/message/send-document?instanceId=${id}`;
-        payload = { phone: fullPhone, document: document_url, fileName: document_name || `documento.${ext}`, caption: body || '' };
-      }
-      resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
-      sendData = await resp.json().catch(() => ({}));
+    // Todos os canais agora usam W-API (Comercial, Nutri, Sucesso).
+    // A env de fallback muda por provider.
+    const envPrefix = provider === 'zapi' ? 'WAPI_COMERCIAL' : (provider === 'wapi_sucesso' ? 'WAPI_SUCESSO' : 'WAPI');
+    const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
+    const id = (cfg.instance_id || '').trim() || Deno.env.get(`${envPrefix}_INSTANCE_ID`);
+    const tok = (cfg.token || cfg.instance_token || '').trim() || Deno.env.get(`${envPrefix}_TOKEN`);
+    const client = (cfg.client_token || '').trim() || Deno.env.get(`${envPrefix}_CLIENT_TOKEN`) || '';
+    if (!id || !tok) {
+      return new Response(JSON.stringify({ ok: false, error: `Credenciais W-API (${cfgKey}) não configuradas em CRM → Configurações.` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` };
+    if (client) headers['Client-Token'] = client;
+    let endpoint = `${serverUrl}/v1/message/send-text?instanceId=${id}`;
+    let payload: Record<string, unknown> = { phone: fullPhone, message: body };
+    if (image_url) {
+      endpoint = `${serverUrl}/v1/message/send-image?instanceId=${id}`;
+      payload = { phone: fullPhone, image: image_url, caption: body || '' };
+    } else if (document_url) {
+      const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
+      endpoint = `${serverUrl}/v1/message/send-document?instanceId=${id}`;
+      payload = { phone: fullPhone, document: document_url, fileName: document_name || `documento.${ext}`, caption: body || '' };
+    }
+    const resp: Response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
+    const sendData: any = await resp.json().catch(() => ({}));
 
     const status = resp.ok && !sendData?.error ? 'sent' : 'failed';
     const externalId = sendData?.messageId || sendData?.id || sendData?.zaapId || null;
