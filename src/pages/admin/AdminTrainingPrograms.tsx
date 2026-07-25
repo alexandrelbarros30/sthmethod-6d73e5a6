@@ -539,136 +539,130 @@ const AdminTrainingPrograms = () => {
 
   return (
     <DashboardLayout role={(role as any) || "admin"} title="Programas de Treino" subtitle="Crie programas com múltiplos treinos e atribua aos alunos.">
-      <div className="space-y-4 max-w-5xl">
-        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-          <div className="relative flex-1 w-full sm:max-w-xs">
+      <div className="space-y-5 max-w-6xl">
+        {/* Toolbar compacta: busca à esquerda, ações principais à direita, ferramentas em massa em menu */}
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-sm">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar programa..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-8"
+              className="pl-8 h-9"
             />
           </div>
-          <AiWorkoutCoachDialog triggerLabel="STHIA · Elite Coach" variant="secondary" />
-          <ImportFromSuperCoachDialog
-            libraryExercises={[]}
-            buttonLabel="Importar do ST Coach"
-            buttonVariant="outline"
-            onImported={() => {
-              queryClient.invalidateQueries({ queryKey: ["training-programs"] });
-              queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
-            }}
-          />
-          <Button
-            variant="outline"
-            onClick={async () => {
-              const ids = (programs || [])
-                .filter((p: any) => p.supercoach_program_id && p.poster_url)
-                .map((p: any) => p.id);
-              if (!ids.length) { toast.info("Nenhum programa elegível para sincronizar."); return; }
-              const toastId = toast.loading(`Sincronizando capas (0/${ids.length})...`);
-              let progOk = 0, progFail = 0, trOk = 0, trFail = 0, done = 0;
-              for (const id of ids) {
-                try {
-                  const { data, error } = await supabase.functions.invoke("supercoach-sync-covers", { body: { programIds: [id] } });
-                  if (error) throw error;
-                  progOk += data?.programs_synced || 0;
-                  progFail += data?.programs_failed || 0;
-                  trOk += data?.trainings_synced || 0;
-                  trFail += data?.trainings_failed || 0;
-                } catch (e: any) {
-                  progFail++;
-                }
-                done++;
-                toast.loading(`Sincronizando capas (${done}/${ids.length})...`, { id: toastId });
-              }
-              toast.success(
-                `Capas sincronizadas · ${progOk} programas / ${trOk} treinos` +
-                  (progFail || trFail ? ` · falhas: ${progFail + trFail}` : ""),
-                { id: toastId }
-              );
-            }}
-          >
-            <RefreshCw className="w-4 h-4 mr-1" /> Sincronizar capas ST Coach
-          </Button>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              const ids = (programs || [])
-                .filter((p: any) => p.supercoach_program_id)
-                .map((p: any) => p.id);
-              if (!ids.length) { toast.info("Nenhum programa vinculado ao ST Coach."); return; }
-              const toastId = toast.loading(`Importando capas (0/${ids.length})...`);
-              let progUpd = 0, tplUpd = 0, fails = 0, done = 0;
-              for (const id of ids) {
-                try {
-                  const { data, error } = await supabase.functions.invoke("supercoach-import-covers", { body: { programIds: [id], overwrite: true } });
-                  if (error) throw error;
-                  progUpd += data?.programs_updated || 0;
-                  tplUpd += data?.templates_updated || 0;
-                  fails += data?.failures?.length || 0;
-                } catch (e: any) {
-                  fails++;
-                }
-                done++;
-                toast.loading(`Importando capas (${done}/${ids.length})...`, { id: toastId });
-              }
-              queryClient.invalidateQueries({ queryKey: ["training-programs"] });
-              queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
-              toast.success(
-                `Capas importadas · ${progUpd} programas / ${tplUpd} treinos` +
-                  (fails ? ` · falhas: ${fails}` : ""),
-                { id: toastId }
-              );
-            }}
-          >
-            <ImageIcon className="w-4 h-4 mr-1" /> Importar capas do ST Coach
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline">
-                <ImageIcon className="w-4 h-4 mr-1" /> Regerar TODAS as capas
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Regerar todas as capas dos programas?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Isso vai gerar novamente as capas (estilo Apple puro) para <b>{filteredPrograms.length}</b> programa(s) visíveis. A operação leva alguns minutos e consome créditos de IA.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={async () => {
-                  const list = [...filteredPrograms];
-                  const total = list.length;
-                  if (!total) { toast.info("Nenhum programa para regerar"); return; }
-                  const toastId = toast.loading(`Regenerando capas 0/${total}...`);
-                  let ok = 0, fail = 0;
-                  for (let i = 0; i < list.length; i++) {
-                    const p = list[i];
-                    try {
-                      const data = await generateCoverWithAi(p);
-                      if ((data as any)?.error) throw new Error((data as any)?.error);
-                      ok++;
-                    } catch (e) {
-                      fail++;
-                      console.error("cover regen failed", p.id, e);
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="hidden sm:inline text-[11px] text-muted-foreground uppercase tracking-wide mr-1">
+              {filteredPrograms.length} programa(s)
+            </span>
+            <AiWorkoutCoachDialog triggerLabel="STHIA · Elite Coach" variant="secondary" />
+            <ImportFromSuperCoachDialog
+              libraryExercises={[]}
+              buttonLabel="Importar do ST Coach"
+              buttonVariant="outline"
+              onImported={() => {
+                queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
+              }}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <Wrench className="w-4 h-4 mr-1" /> Ferramentas
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Capas · em massa</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    const ids = (programs || [])
+                      .filter((p: any) => p.supercoach_program_id && p.poster_url)
+                      .map((p: any) => p.id);
+                    if (!ids.length) { toast.info("Nenhum programa elegível para sincronizar."); return; }
+                    const toastId = toast.loading(`Sincronizando capas (0/${ids.length})...`);
+                    let progOk = 0, progFail = 0, trOk = 0, trFail = 0, done = 0;
+                    for (const id of ids) {
+                      try {
+                        const { data, error } = await supabase.functions.invoke("supercoach-sync-covers", { body: { programIds: [id] } });
+                        if (error) throw error;
+                        progOk += data?.programs_synced || 0;
+                        progFail += data?.programs_failed || 0;
+                        trOk += data?.trainings_synced || 0;
+                        trFail += data?.trainings_failed || 0;
+                      } catch { progFail++; }
+                      done++;
+                      toast.loading(`Sincronizando capas (${done}/${ids.length})...`, { id: toastId });
                     }
-                    toast.loading(`Regenerando capas ${i + 1}/${total} · ok ${ok} · falhas ${fail}`, { id: toastId });
-                  }
-                  queryClient.invalidateQueries({ queryKey: ["training-programs"] });
-                  toast.success(`Regeração concluída · ${ok} capas OK · ${fail} falhas`, { id: toastId });
-                }}>
-                  Regerar agora
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <Button onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
-            <Plus className="w-4 h-4 mr-1" /> Novo Programa
-          </Button>
+                    toast.success(
+                      `Capas sincronizadas · ${progOk} programas / ${trOk} treinos` +
+                        (progFail || trFail ? ` · falhas: ${progFail + trFail}` : ""),
+                      { id: toastId }
+                    );
+                  }}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" /> Sincronizar capas ST Coach
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    const ids = (programs || [])
+                      .filter((p: any) => p.supercoach_program_id)
+                      .map((p: any) => p.id);
+                    if (!ids.length) { toast.info("Nenhum programa vinculado ao ST Coach."); return; }
+                    const toastId = toast.loading(`Importando capas (0/${ids.length})...`);
+                    let progUpd = 0, tplUpd = 0, fails = 0, done = 0;
+                    for (const id of ids) {
+                      try {
+                        const { data, error } = await supabase.functions.invoke("supercoach-import-covers", { body: { programIds: [id], overwrite: true } });
+                        if (error) throw error;
+                        progUpd += data?.programs_updated || 0;
+                        tplUpd += data?.templates_updated || 0;
+                        fails += data?.failures?.length || 0;
+                      } catch { fails++; }
+                      done++;
+                      toast.loading(`Importando capas (${done}/${ids.length})...`, { id: toastId });
+                    }
+                    queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                    queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
+                    toast.success(
+                      `Capas importadas · ${progUpd} programas / ${tplUpd} treinos` +
+                        (fails ? ` · falhas: ${fails}` : ""),
+                      { id: toastId }
+                    );
+                  }}
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" /> Importar capas do ST Coach
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={async () => {
+                    if (!confirm(`Regerar capas com IA para ${filteredPrograms.length} programa(s) visíveis? Consome créditos de IA.`)) return;
+                    const list = [...filteredPrograms];
+                    const total = list.length;
+                    if (!total) return;
+                    const toastId = toast.loading(`Regenerando capas 0/${total}...`);
+                    let ok = 0, fail = 0;
+                    for (let i = 0; i < list.length; i++) {
+                      const p = list[i];
+                      try {
+                        const data = await generateCoverWithAi(p);
+                        if ((data as any)?.error) throw new Error((data as any)?.error);
+                        ok++;
+                      } catch { fail++; }
+                      toast.loading(`Regenerando capas ${i + 1}/${total} · ok ${ok} · falhas ${fail}`, { id: toastId });
+                    }
+                    queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                    toast.success(`Regeração concluída · ${ok} capas OK · ${fail} falhas`, { id: toastId });
+                  }}
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" /> Regerar TODAS as capas (IA)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button size="sm" className="h-9" onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
+              <Plus className="w-4 h-4 mr-1" /> Novo
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -679,81 +673,56 @@ const AdminTrainingPrograms = () => {
             <p className="text-muted-foreground">{searchQuery ? "Nenhum resultado." : "Nenhum programa criado."}</p>
           </CardContent></Card>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredPrograms.map((p: any) => {
               const wCount = workoutCounts?.[p.id] || 0;
               const diffInfo = getDifficultyInfo(p.difficulty || "intermediate");
+              const assigned = assignedCounts?.[p.id] || 0;
               return (
-                <Card key={p.id} className="group hover:shadow-md transition-all hover:border-primary/30 cursor-pointer" onClick={() => setSelectedProgramId(p.id)}>
-                  <CardContent className="py-5">
-                    <div className="flex items-start gap-3">
-                      {p.poster_url ? (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted shrink-0 border border-border">
-                          <img src={p.poster_url} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10 shrink-0">
-                          <Layers className="w-6 h-6 text-primary" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-sm truncate">{p.title}</p>
-                          {p.status === "draft" && <Badge variant="secondary" className="text-[10px] shrink-0">Rascunho</Badge>}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          <Badge variant="outline" className="text-[10px]">{getObjectiveLabel(p.objective || "general")}</Badge>
-                          <Badge variant="outline" className={`text-[10px] ${diffInfo.color}`}>{diffInfo.label}</Badge>
-                          <Badge variant="outline" className="text-[10px]">{wCount} treino(s)</Badge>
-                          {(assignedCounts?.[p.id] || 0) > 0 ? (
-                            <Badge className="text-[10px] bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">
-                              <Users className="w-2.5 h-2.5 mr-0.5" /> {assignedCounts![p.id]} aluno(s)
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground/60">Sem atribuições</Badge>
-                          )}
-                        </div>
-                        {p.details && <p className="text-xs text-muted-foreground line-clamp-2">{p.details}</p>}
+                <Card
+                  key={p.id}
+                  className="group relative overflow-hidden hover:shadow-lg transition-all hover:border-primary/40 cursor-pointer flex flex-col"
+                  onClick={() => setSelectedProgramId(p.id)}
+                >
+                  {/* Cover top */}
+                  <div className="relative aspect-[16/9] w-full bg-muted overflow-hidden">
+                    {p.poster_url ? (
+                      <img src={p.poster_url} alt={p.title} className="w-full h-full object-cover transition-transform group-hover:scale-[1.03]" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                        <Layers className="w-10 h-10 text-primary/60" />
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t justify-end" onClick={e => e.stopPropagation()}>
-                      <Button size="sm" variant="default" className="text-xs h-7" onClick={() => setSelectedProgramId(p.id)}>
-                        <Dumbbell className="w-3 h-3 mr-1" /> Treinos ({wCount})
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setAssignDialog(p.id)}>
-                        <Users className="w-3 h-3 mr-1" /> Atribuir
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setAssignedDialog(p.id)}>
-                        <UserMinus className="w-3 h-3 mr-1" /> Atribuídos
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-xs h-7" disabled={duplicateProgramMutation.isPending}>
-                            <Copy className="w-3 h-3 mr-1" /> Duplicar
+                    )}
+                    {p.status === "draft" && (
+                      <Badge variant="secondary" className="absolute top-2 left-2 text-[10px]">Rascunho</Badge>
+                    )}
+                    {/* Overflow menu */}
+                    <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="secondary" className="h-8 w-8 bg-background/80 backdrop-blur hover:bg-background">
+                            <MoreHorizontal className="w-4 h-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Duplicar programa?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Será criada uma cópia de "{p.title}" com todos os treinos e exercícios.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => duplicateProgramMutation.mutate(p.id)}>
-                              Duplicar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-xs h-7"
-                        disabled={generatingCoverId === p.id}
-                        onClick={async () => {
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem onClick={() => setAssignedDialog(p.id)}>
+                            <UserMinus className="w-4 h-4 mr-2" /> Ver atribuídos
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditProgram(p)}>
+                            <Pencil className="w-4 h-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={duplicateProgramMutation.isPending}
+                            onClick={() => {
+                              if (confirm(`Duplicar "${p.title}" com todos os treinos?`)) duplicateProgramMutation.mutate(p.id);
+                            }}
+                          >
+                            <Copy className="w-4 h-4 mr-2" /> Duplicar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            disabled={generatingCoverId === p.id}
+                            onClick={async () => {
                         const toastId = `cover-${p.id}`;
                         setGeneratingCoverId(p.id);
                         toast.loading("Gerando capa com IA… pode levar 20–60s", { id: toastId });
@@ -788,19 +757,14 @@ const AdminTrainingPrograms = () => {
                         } finally {
                           setGeneratingCoverId((cur) => (cur === p.id ? null : cur));
                         }
-                      }}>
-                        <ImageIcon className="w-3 h-3 mr-1" />
-                        {generatingCoverId === p.id
-                          ? "Gerando…"
-                          : p.poster_url ? "Regerar capa" : "Gerar capa"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-xs h-7"
-                        disabled={!p.poster_url}
-                        title={p.poster_url ? "Baixar imagem do card" : "Gere uma capa antes de baixar"}
-                        onClick={async () => {
+                            }}
+                          >
+                            <ImageIcon className="w-4 h-4 mr-2" />
+                            {generatingCoverId === p.id ? "Gerando…" : p.poster_url ? "Regerar capa" : "Gerar capa"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!p.poster_url}
+                            onClick={async () => {
                           if (!p.poster_url) { toast.info("Gere uma capa primeiro"); return; }
                           try {
                             const res = await fetch(p.poster_url, { mode: "cors" });
@@ -817,37 +781,46 @@ const AdminTrainingPrograms = () => {
                             a.remove();
                             setTimeout(() => URL.revokeObjectURL(url), 1000);
                           } catch {
-                            // fallback: abre em nova aba
                             window.open(p.poster_url, "_blank", "noopener,noreferrer");
                           }
-                        }}
-                      >
-                        <Download className="w-3 h-3 mr-1" /> Baixar capa
+                            }}
+                          >
+                            <Download className="w-4 h-4 mr-2" /> Baixar capa
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => {
+                              if (confirm(`Excluir "${p.title}"? Esta ação não pode ser desfeita.`)) deleteProgramMutation.mutate(p.id);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <CardContent className="flex-1 flex flex-col p-4 gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-sm leading-tight line-clamp-2 flex-1">{p.title}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="outline" className="text-[10px]">{getObjectiveLabel(p.objective || "general")}</Badge>
+                      <Badge variant="outline" className={`text-[10px] ${diffInfo.color}`}>{diffInfo.label}</Badge>
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-auto pt-2">
+                      <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" /> {wCount} treino(s)</span>
+                      <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {assigned} aluno(s)</span>
+                    </div>
+                    <div className="flex gap-2 pt-2" onClick={e => e.stopPropagation()}>
+                      <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => setSelectedProgramId(p.id)}>
+                        <Dumbbell className="w-3.5 h-3.5 mr-1" /> Abrir treinos
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => openEditProgram(p)}>
-                        <Pencil className="w-3 h-3 mr-1" /> Editar
+                      <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setAssignDialog(p.id)}>
+                        <Users className="w-3.5 h-3.5 mr-1" /> Atribuir
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-xs h-7 text-destructive hover:text-destructive">
-                            <Trash2 className="w-3 h-3 mr-1" /> Excluir
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir programa?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Isso removerá o programa "{p.title}" e todos os treinos associados. Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteProgramMutation.mutate(p.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>
