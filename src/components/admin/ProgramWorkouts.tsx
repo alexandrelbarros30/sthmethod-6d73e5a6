@@ -346,8 +346,30 @@ const ProgramWorkouts = ({ programId }: Props) => {
     });
   };
 
+  const invokePushTemplate = async (payload: { templateId: string; programId?: string }): Promise<{ data: any; error: any }> => {
+    try {
+      const r = await supabase.functions.invoke("supercoach-push-template", { body: payload });
+      if (!r.error) return r as any;
+      // fall through to raw fetch on transport-style errors
+    } catch {}
+    try {
+      const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-push-template`;
+      const key = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token || key;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      return { data, error: null };
+    } catch (e: any) {
+      return { data: null, error: e };
+    }
+  };
+
   const pushToSuperCoach = async (templateId: string) => {
-    // helper: invoke edge fn with transport fallback (raw fetch) to bypass CORS/network flakes
     setPushingId(templateId);
     try {
       const exCount = (templateExercisesMap?.[templateId]?.length ?? 0);
