@@ -1,10 +1,13 @@
 // Mapeamento de erros técnicos → mensagens amigáveis com códigos STH-XXX.
 // Objetivo: nunca expor Supabase / Postgres / Lovable / stack traces ao aluno.
 
+import { getLastRequestId } from "./request-id";
+
 export type FriendlyError = {
   code: string;      // ex: "STH-401"
   title: string;     // curto, humano
   message: string;   // orientação prática
+  ref?: string;      // ID de correlação (X-Request-Id / sessão)
 };
 
 const GENERIC: FriendlyError = {
@@ -179,11 +182,16 @@ export function toFriendlyError(err: unknown): FriendlyError {
 
 /** Formata como string única para toast/alert. */
 export function friendlyMessage(err: unknown): string {
-  const f = toFriendlyError(err);
-  return `${f.title} (${f.code}) — ${f.message}`;
+  const f = withRef(toFriendlyError(err));
+  return `[${f.code}] ${f.title} — ${f.message} · Ref: ${f.ref}`;
 }
 
 /** Uso rápido com sonner. */
 export function reportFriendlyError(err: unknown, toastFn: (msg: string) => void) {
   toastFn(friendlyMessage(err));
+}
+
+/** Anexa o ref (correlation id) ao friendly error. */
+export function withRef(f: FriendlyError): FriendlyError {
+  return { ...f, ref: f.ref || getLastRequestId() };
 }

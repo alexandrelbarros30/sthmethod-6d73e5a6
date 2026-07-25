@@ -8,8 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { AdminReauthProvider } from "@/hooks/useAdminReauth";
 import FriendlyErrorBoundary from "@/components/system/FriendlyErrorBoundary";
-import { friendlyMessage } from "@/lib/friendly-errors";
-import { toast as sonnerToast } from "sonner";
+import Erro from "./pages/Erro";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -396,6 +395,7 @@ const App = () => (
             <Route path="/autorizacao-imagem/:token" element={<AutorizacaoImagem />} />
             <Route path="/autorizar-telefone" element={<AutorizarTelefone />} />
             <Route path="/alterar-dados" element={<AlterarDados />} />
+            <Route path="/erro" element={<Erro />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </FriendlyErrorBoundary>

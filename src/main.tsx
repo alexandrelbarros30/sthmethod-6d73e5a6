@@ -6,6 +6,10 @@ import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "./li
 import { enableNativeFullscreen } from "./lib/native-fullscreen";
 import { friendlyMessage } from "./lib/friendly-errors";
 import { toast as sonnerToast } from "sonner";
+import { installRequestIdInterceptor } from "./lib/request-id";
+
+// Precisa rodar ANTES de qualquer chamada de rede.
+installRequestIdInterceptor();
 
 const MAX_BOOT_RELOADS = 2;
 const getBootReloadKey = (version: string) => `sth-boot-update-attempts:${version}`;
