@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Camera, Upload, X, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +28,10 @@ interface BodyImageUploadProps {
   required?: boolean;
   canDeleteExisting?: boolean;
   draftKey?: string;
+  uploadButtonLabel?: string;
+  confirmBeforeUpload?: boolean;
+  confirmTitle?: string;
+  confirmDescription?: string;
 }
 
 const IMAGE_TYPES = [
@@ -26,7 +40,18 @@ const IMAGE_TYPES = [
   { key: "profile", label: "Lado", icon: "👤" },
 ] as const;
 
-const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false, canDeleteExisting = true, draftKey }: BodyImageUploadProps) => {
+const BodyImageUpload = ({
+  userId,
+  existingImages = [],
+  onComplete,
+  required = false,
+  canDeleteExisting = true,
+  draftKey,
+  uploadButtonLabel = "Salvar Imagens",
+  confirmBeforeUpload = false,
+  confirmTitle = "Confirmar envio das imagens?",
+  confirmDescription = "As novas imagens serão salvas no seu histórico e as anteriores serão preservadas para comparação.",
+}: BodyImageUploadProps) => {
   const [images, setImages] = useState<Record<string, { file?: File; preview?: string; url?: string; storagePath?: string | null }>>(() => {
     const initial: Record<string, any> = {};
     IMAGE_TYPES.forEach(({ key }) => {
@@ -36,6 +61,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
     return initial;
   });
   const [uploading, setUploading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [draftReady, setDraftReady] = useState(!draftKey);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -115,7 +141,8 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
   const allUploaded = IMAGE_TYPES.every(({ key }) => images[key]?.file || images[key]?.url);
   const hasAnyNew = IMAGE_TYPES.some(({ key }) => images[key]?.file);
 
-  const handleUpload = async () => {
+  const performUpload = async () => {
+    setConfirmOpen(false);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       toast.error("Sessão expirada. Faça login novamente.");
@@ -180,101 +207,124 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
     setUploading(false);
   };
 
+  const handleUploadClick = () => {
+    if (confirmBeforeUpload) {
+      setConfirmOpen(true);
+      return;
+    }
+    void performUpload();
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base font-display flex items-center gap-2">
-          <Camera className="w-4 h-4" /> Imagens Corporais {required && <span className="text-destructive">*</span>}
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">Envie fotos de frente, costas e perfil (.jpg ou .png)</p>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-3 gap-4">
-          {IMAGE_TYPES.map(({ key, label, icon }) => {
-            const img = images[key];
-            const localSrc = img?.preview;
-            const hasExisting = !localSrc && (img?.url || img?.storagePath);
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-display flex items-center gap-2">
+            <Camera className="w-4 h-4" /> Imagens Corporais {required && <span className="text-destructive">*</span>}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">Envie fotos de frente, costas e perfil (.jpg ou .png)</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            {IMAGE_TYPES.map(({ key, label, icon }) => {
+              const img = images[key];
+              const localSrc = img?.preview;
+              const hasExisting = !localSrc && (img?.url || img?.storagePath);
 
-            return (
-              <div key={key} className="space-y-2">
-                <Label className="text-sm font-body flex items-center gap-1">
-                  <span>{icon}</span> {label}
-                </Label>
-                <div
-                  className={`relative aspect-[3/4] rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-colors ${
-                    (localSrc || hasExisting) ? "border-foreground/20 bg-foreground/5" : "border-border hover:border-foreground/50 bg-muted/30"
-                  }`}
-                  onClick={() => fileRefs.current[key]?.click()}
-                >
-                  {localSrc ? (
-                    <>
-                      <img src={localSrc} alt={label} className="w-full h-full object-cover" />
-                      {(img?.file || canDeleteExisting) && (
-                        <button
-                          className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
-                          onClick={(e) => { e.stopPropagation(); removeImage(key); }}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                      <div className="absolute bottom-1 left-1">
-                        <CheckCircle2 className="w-4 h-4 text-foreground" />
+              return (
+                <div key={key} className="space-y-2">
+                  <Label className="text-sm font-body flex items-center gap-1">
+                    <span>{icon}</span> {label}
+                  </Label>
+                  <div
+                    className={`relative aspect-[3/4] rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-colors ${
+                      (localSrc || hasExisting) ? "border-foreground/20 bg-foreground/5" : "border-border hover:border-foreground/50 bg-muted/30"
+                    }`}
+                    onClick={() => fileRefs.current[key]?.click()}
+                  >
+                    {localSrc ? (
+                      <>
+                        <img src={localSrc} alt={label} className="w-full h-full object-cover" />
+                        {(img?.file || canDeleteExisting) && (
+                          <button
+                            className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                            onClick={(e) => { e.stopPropagation(); removeImage(key); }}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                        <div className="absolute bottom-1 left-1">
+                          <CheckCircle2 className="w-4 h-4 text-foreground" />
+                        </div>
+                      </>
+                    ) : hasExisting ? (
+                      <>
+                        <SignedImage
+                          bucket="body-images"
+                          storagePath={img?.storagePath}
+                          publicUrl={img?.url}
+                          alt={label}
+                          className="w-full h-full object-cover"
+                          fallback={
+                            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                              <Upload className="w-6 h-6" />
+                              <span className="text-xs">Substituir</span>
+                            </div>
+                          }
+                        />
+                        {(img?.file || canDeleteExisting) && (
+                          <button
+                            className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                            onClick={(e) => { e.stopPropagation(); removeImage(key); }}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                        <div className="absolute bottom-1 left-1">
+                          <CheckCircle2 className="w-4 h-4 text-foreground" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                        <Upload className="w-6 h-6" />
+                        <span className="text-xs">Enviar</span>
                       </div>
-                    </>
-                  ) : hasExisting ? (
-                    <>
-                      <SignedImage
-                        bucket="body-images"
-                        storagePath={img?.storagePath}
-                        publicUrl={img?.url}
-                        alt={label}
-                        className="w-full h-full object-cover"
-                        fallback={
-                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                            <Upload className="w-6 h-6" />
-                            <span className="text-xs">Substituir</span>
-                          </div>
-                        }
-                      />
-                      {(img?.file || canDeleteExisting) && (
-                        <button
-                          className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
-                          onClick={(e) => { e.stopPropagation(); removeImage(key); }}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                      <div className="absolute bottom-1 left-1">
-                        <CheckCircle2 className="w-4 h-4 text-foreground" />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                      <Upload className="w-6 h-6" />
-                      <span className="text-xs">Enviar</span>
-                    </div>
-                  )}
-                  <input
-                    ref={(el) => { fileRefs.current[key] = el; }}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileSelect(key, e)}
-                  />
+                    )}
+                    <input
+                      ref={(el) => { fileRefs.current[key] = el; }}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleFileSelect(key, e)}
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
 
-        <p className="text-xs text-muted-foreground mt-3 text-center">
-          📂 As imagens anteriores são sempre preservadas no histórico.
-        </p>
-        <Button className="w-full mt-2" onClick={handleUpload} disabled={uploading || (required && !allUploaded) || (!required && !hasAnyNew)}>
-          {uploading ? "Enviando..." : "Salvar Imagens"}
-        </Button>
-      </CardContent>
-    </Card>
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            📂 As imagens anteriores são sempre preservadas no histórico.
+          </p>
+          <Button className="w-full mt-2" onClick={handleUploadClick} disabled={uploading || (required && !allUploaded) || (!required && !hasAnyNew)}>
+            {uploading ? "Enviando..." : uploadButtonLabel}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Revisar</AlertDialogCancel>
+            <AlertDialogAction onClick={performUpload}>Confirmar e salvar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
