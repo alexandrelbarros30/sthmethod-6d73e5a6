@@ -874,6 +874,7 @@ const AdminTrainingPrograms = () => {
           </DialogContent>
         </Dialog>
       </div>
+      <ErrorDetailsDialog open={!!coverError} onOpenChange={(v) => !v && setCoverError(null)} details={coverError} />
     </DashboardLayout>
   );
 };
