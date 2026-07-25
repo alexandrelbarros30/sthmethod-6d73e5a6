@@ -174,7 +174,21 @@ async function uploadCover(params: {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: responseHeaders });
   try {
-    const authHeader = req.headers.get('Authorization');
+    const contentType = req.headers.get('content-type') || '';
+    const rawBody = await req.text().catch(() => '');
+    let parsedBody: any = {};
+    if (rawBody) {
+      try {
+        parsedBody = JSON.parse(rawBody);
+      } catch {
+        if (contentType.includes('application/x-www-form-urlencoded')) {
+          parsedBody = Object.fromEntries(new URLSearchParams(rawBody));
+        }
+      }
+    }
+
+    const accessToken = String(parsedBody?.accessToken || '').trim();
+    const authHeader = req.headers.get('Authorization') || (accessToken ? `Bearer ${accessToken}` : '');
     if (!authHeader?.startsWith('Bearer ')) {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
@@ -205,7 +219,7 @@ Deno.serve(async (req) => {
     const isAdmin = (roles || []).some((r: any) => ['admin', 'consultor'].includes(r.role));
     if (!isAdmin) return jsonResponse({ error: 'Forbidden' }, 403);
 
-    const { programId, gender: genderIn, studentId, provider: providerIn, async: asyncIn } = await req.json().catch(() => ({}));
+    const { programId, gender: genderIn, studentId, provider: providerIn, async: asyncIn } = parsedBody || {};
     if (!programId) return jsonResponse({ error: 'programId obrigatório' }, 400);
 
     const { data: prog, error: progErr } = await admin.from('training_programs').select('id, title, details').eq('id', programId).maybeSingle();

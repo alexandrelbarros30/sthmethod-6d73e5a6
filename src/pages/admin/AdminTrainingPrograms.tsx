@@ -415,6 +415,24 @@ const AdminTrainingPrograms = () => {
         }
       }
 
+      // Fallback final: chamada simples sem headers customizados.
+      // Evita preflight CORS quando o navegador/rede bloqueia a chamada normal da função.
+      if (error && !body) {
+        try {
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-program-cover`;
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: JSON.stringify({ accessToken: token, programId: program.id, provider, async: true }),
+          });
+          const text = await resp.text();
+          try { body = JSON.parse(text); } catch { body = { raw: text }; }
+          if (resp.ok) error = null;
+        } catch (simpleFetchErr: any) {
+          error = simpleFetchErr;
+        }
+      }
+
       if (error || body?.error) {
         return {
           ...body,
