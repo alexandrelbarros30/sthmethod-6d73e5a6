@@ -290,6 +290,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
 
   const autoSyncProgram = async () => {
     const list = (workouts || []) as any[];
+    await invokeSyncProgram(programId).catch((e) => console.warn("[auto-sync ST Coach program]", e));
     for (const w of list) autoSyncTemplate(w.id);
   };
 
@@ -386,6 +387,46 @@ const ProgramWorkouts = ({ programId }: Props) => {
     }
   };
 
+  const invokeSyncProgram = async (targetProgramId: string): Promise<{ data: any; error: any }> => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    const payload = { programId: targetProgramId };
+    try {
+      const r = await supabase.functions.invoke("supercoach-sync-program", { body: payload });
+      if (!r.error) return r as any;
+    } catch {}
+
+    try {
+      const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-sync-program`;
+      const key = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${token || key}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
+    } catch {}
+
+    try {
+      if (!token) throw new Error("Sessão administrativa expirada. Entre novamente antes de sincronizar.");
+      const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-sync-program`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify({ ...payload, accessToken: token }),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { data = { error: text }; }
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
+    } catch (e: any) {
+      return { data: null, error: e };
+    }
+  };
+
   const fetchExerciseCounts = async (templateIds: string[]) => {
     if (!templateIds.length) return {} as Record<string, number>;
     const { data, error } = await supabase
@@ -428,6 +469,16 @@ const ProgramWorkouts = ({ programId }: Props) => {
     const list = (workouts || []) as any[];
     if (!list.length) { toast.error("Nenhum treino para espelhar"); return; }
     setPushingAll(true);
+    let programSynced = false;
+    try {
+      const { data, error } = await invokeSyncProgram(programId);
+      if (error || data?.ok === false) throw new Error(error?.message || data?.error || "Falha ao sincronizar o programa");
+      programSynced = true;
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível sincronizar o programa no ST Coach.");
+      setPushingAll(false);
+      return;
+    }
     let counts: Record<string, number> = {};
     let countsChecked = false;
     try {
@@ -438,7 +489,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     }
     const eligible = list.filter((w: any) => (templateExercisesMap?.[w.id]?.length ?? 0) > 0 || (counts[w.id] || 0) > 0);
     if (countsChecked && !eligible.length) {
-      toast.error("Nenhum treino com exercícios para espelhar. Abra o treino e adicione ao menos 1 exercício antes de sincronizar.");
+      toast.success("Programa sincronizado no ST Coach. Nenhum treino com exercícios foi enviado; adicione exercícios ao treino para espelhar o conteúdo.");
       setPushingAll(false);
       return;
     }
@@ -471,7 +522,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
     else {
       const visibleFailures = failures.slice(0, 3).join(" | ");
       const extra = failures.length > 3 ? ` +${failures.length - 3} detalhe(s)` : "";
-      toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${visibleFailures}${extra}`);
+      const prefix = programSynced ? "Programa criado/atualizado. " : "";
+      toast.warning(`${prefix}Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${visibleFailures}${extra}`);
     }
     queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
     queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
