@@ -448,12 +448,14 @@ const ProgramWorkouts = ({ programId }: Props) => {
         const counts = await fetchExerciseCounts([templateId]);
         exCount = counts[templateId] || 0;
       }
-      if (!exCount) throw new Error("Treino sem exercícios. Adicione ao menos um exercício antes de espelhar.");
+      if (!exCount) toast.warning("Treino sem exercícios: vou sincronizar a estrutura do treino no ST Coach mesmo assim.");
       const { data, error } = await invokePushTemplate({ templateId, programId });
       if (error) throw error;
       if (data?.ok === false) throw new Error(data?.error || "Falha ao espelhar");
       if (Array.isArray(data?.unmatched) && data.unmatched.length) {
         toast.warning(`Treino espelhado parcialmente: ${data?.patched ?? 0} exercícios sincronizados, ${data.unmatched.length} pendente(s).`);
+      } else if (data?.emptyTemplate) {
+        toast.success("Treino sincronizado no ST Coach. Estrutura criada sem exercícios.");
       } else {
         toast.success(`Treino espelhado no ST Coach (${data?.patched ?? 0} exercícios sincronizados).`);
       }
@@ -489,9 +491,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     }
     const eligible = list.filter((w: any) => (templateExercisesMap?.[w.id]?.length ?? 0) > 0 || (counts[w.id] || 0) > 0);
     if (countsChecked && !eligible.length) {
-      toast.success("Programa sincronizado no ST Coach. Nenhum treino com exercícios foi enviado; adicione exercícios ao treino para espelhar o conteúdo.");
-      setPushingAll(false);
-      return;
+      toast.warning("Nenhum treino tem exercícios ainda. Vou sincronizar a estrutura do programa/treinos no ST Coach mesmo assim.");
     }
     const finalList = eligible.length ? eligible : list;
     const skipped = eligible.length ? list.length - eligible.length : 0;

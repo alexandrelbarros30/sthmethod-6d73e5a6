@@ -292,9 +292,7 @@ Deno.serve(async (req) => {
     }
 
     const exercises = await loadTemplateExercises(admin, templateId);
-    if (!exercises.length) {
-      throw new Error(`Template sem exercícios para espelhar (${tpl.title || templateId}). Abra o treino e salve ao menos um exercício antes de espelhar.`);
-    }
+    const templateHasNoExercises = exercises.length === 0;
 
     const token = await getSuperCoachToken();
 
@@ -665,6 +663,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       ok: true, scProgramId, scTrainingId, copied, patched, removed, assignmentsSynced,
       exercises: exercises.length,
+      emptyTemplate: templateHasNoExercises,
       unmatched,
       groups: groupCounter,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
