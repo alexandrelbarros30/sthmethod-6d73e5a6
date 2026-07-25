@@ -8,6 +8,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login'
 const INDEX_URL = 'https://supertreinosapp.com/api/v2/adm/customer/index'
 const ACCOUNT_URL = 'https://supertreinosapp.com/api/v2/adm/customer/account'
+const ACCOUNT_PROGRAM_URL = 'https://supertreinosapp.com/api/v2/adm/customer/account/program'
 const PROGRAMS_URL = 'https://supertreinosapp.com/api/v2/programs?pid='
 
 const COMMON_HEADERS = {
@@ -120,6 +121,54 @@ async function verifyAssignment(params: {
   return false
 }
 
+function customerHasProgram(customer: any, scProgramId: number): boolean {
+  const programs: any[] = Array.isArray(customer?.programs) ? customer.programs : []
+  return programs
+    .map(getProgramId)
+    .some((id): id is number => typeof id === 'number' && id === scProgramId)
+}
+
+function extractCustomersFromToggleResponse(payload: any): any[] {
+  if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload?.customers)) return payload.customers
+  if (Array.isArray(payload?.data)) return payload.data
+  if (Array.isArray(payload?.customer)) return payload.customer
+  return []
+}
+
+async function toggleProgramAssignment(params: {
+  headers: Record<string, string>
+  customerId: number
+  scProgramId: number
+  email?: string | null
+  name?: string | null
+  shouldHave: boolean
+}) {
+  const toggle = await fetch(ACCOUNT_PROGRAM_URL, {
+    method: 'POST',
+    headers: params.headers,
+    body: JSON.stringify({ cid: params.customerId, pid: params.scProgramId }),
+  })
+  const toggleText = await toggle.text()
+  if (!toggle.ok) {
+    throw new Error(`Toggle programa ST Coach falhou (${toggle.status}): ${toggleText.slice(0, 220)}`)
+  }
+
+  let toggleJson: any = null
+  try { toggleJson = JSON.parse(toggleText) } catch { /* response can be empty/text */ }
+  const returnedCustomers = extractCustomersFromToggleResponse(toggleJson)
+  const returnedCustomer = findCustomer(returnedCustomers, params.email, params.name)
+  if (returnedCustomer && customerHasProgram(returnedCustomer, params.scProgramId) === params.shouldHave) return true
+
+  return await verifyAssignment({
+    headers: params.headers,
+    email: params.email,
+    name: params.name,
+    scProgramId: params.scProgramId,
+    shouldHave: params.shouldHave,
+  })
+}
+
 async function scLogin(): Promise<string> {
   const email = Deno.env.get('SUPERCOACH_EMAIL')
   const password = Deno.env.get('SUPERCOACH_PASSWORD')
@@ -223,43 +272,62 @@ Deno.serve(async (req) => {
     const currentPrograms: any[] = Array.isArray(customer.programs) ? customer.programs : []
     const currentIds = new Set(currentPrograms.map(getProgramId).filter((id): id is number => typeof id === 'number'))
 
-    let programVariants: any[][] = []
+    const shouldHave = action === 'assign'
     if (action === 'assign') {
       if (currentIds.has(scProgramId)) {
         return new Response(JSON.stringify({ ok: true, status: 'already_assigned', scProgramId }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
-      programVariants = await buildAssignProgramVariants(scHdr, currentPrograms, scProgramId)
     } else {
       if (!currentIds.has(scProgramId)) {
         return new Response(JSON.stringify({ ok: true, status: 'not_assigned', scProgramId }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
-      programVariants = [currentPrograms.filter((p: any) => getProgramId(p) !== scProgramId)]
     }
 
     let confirmed = false
     let lastError = ''
-    for (let index = 0; index < programVariants.length; index++) {
-      const programs = dedupePrograms(programVariants[index])
-      const payload = [{ ...customer, programs }]
-      const upd = await fetch(ACCOUNT_URL, { method: 'PUT', headers: scHdr, body: JSON.stringify(payload) })
-      const updText = await upd.text()
-      if (!upd.ok) {
-        lastError = `PUT customer falhou (${upd.status}): ${updText.slice(0, 220)}`
-        console.error('[supercoach-assign-program]', lastError)
-        continue
-      }
-
-      confirmed = await verifyAssignment({
+    try {
+      confirmed = await toggleProgramAssignment({
         headers: scHdr,
+        customerId: Number(customer.id),
         email: profile.email,
         name: profile.full_name,
         scProgramId,
-        shouldHave: action === 'assign',
+        shouldHave,
       })
-      console.log('[supercoach-assign-program] tentativa', JSON.stringify({ action, scProgramId, customerId: customer.id, variant: index + 1, confirmed }))
-      if (confirmed) break
+      console.log('[supercoach-assign-program] toggle-program', JSON.stringify({ action, scProgramId, customerId: customer.id, confirmed }))
+    } catch (error) {
+      lastError = (error as any)?.message || String(error)
+      console.error('[supercoach-assign-program]', lastError)
+    }
+
+    // Fallback legado: mantém compatibilidade caso o endpoint oficial mude ou não responda.
+    if (!confirmed) {
+      const programVariants = action === 'assign'
+        ? await buildAssignProgramVariants(scHdr, currentPrograms, scProgramId)
+        : [currentPrograms.filter((p: any) => getProgramId(p) !== scProgramId)]
+      for (let index = 0; index < programVariants.length; index++) {
+        const programs = dedupePrograms(programVariants[index])
+        const payload = [{ ...customer, programs }]
+        const upd = await fetch(ACCOUNT_URL, { method: 'PUT', headers: scHdr, body: JSON.stringify(payload) })
+        const updText = await upd.text()
+        if (!upd.ok) {
+          lastError = `PUT customer falhou (${upd.status}): ${updText.slice(0, 220)}`
+          console.error('[supercoach-assign-program]', lastError)
+          continue
+        }
+
+        confirmed = await verifyAssignment({
+          headers: scHdr,
+          email: profile.email,
+          name: profile.full_name,
+          scProgramId,
+          shouldHave,
+        })
+        console.log('[supercoach-assign-program] fallback-put', JSON.stringify({ action, scProgramId, customerId: customer.id, variant: index + 1, confirmed }))
+        if (confirmed) break
+      }
     }
 
     if (!confirmed) {
