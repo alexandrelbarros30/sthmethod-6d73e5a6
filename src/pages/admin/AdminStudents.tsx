@@ -47,6 +47,7 @@ import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import StudentImageConsentCard from "@/components/admin/StudentImageConsentCard";
 import StudentImageAuthSummary from "@/components/admin/StudentImageAuthSummary";
+import SendPushDialog from "@/components/admin/SendPushDialog";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import { normalizePhone } from "@/lib/phone";
 import { useAdminReauth, logAdminAccess } from "@/hooks/useAdminReauth";
@@ -98,6 +99,7 @@ const AdminStudents = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [pushOpen, setPushOpen] = useState(false);
   const [notesHistoryOpen, setNotesHistoryOpen] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(true);
   const [imagesOpen, setImagesOpen] = useState(false);
