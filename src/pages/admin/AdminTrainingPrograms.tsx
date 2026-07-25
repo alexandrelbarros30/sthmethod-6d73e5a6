@@ -698,10 +698,19 @@ const AdminTrainingPrograms = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-7"
+                        disabled={generatingCoverId === p.id}
+                        onClick={async () => {
+                        const toastId = `cover-${p.id}`;
+                        setGeneratingCoverId(p.id);
+                        toast.loading("Gerando capa com IA… pode levar 20–60s", { id: toastId });
                         try {
-                          toast.info("Gerando capa com IA...");
-                          const body: any = await generateCoverWithAi(p);
+                          const body: any = await generateCoverWithAi(p, (sec) => {
+                            toast.loading(`Gerando capa com IA… ${sec}s`, { id: toastId });
+                          });
                           if (body?.error) {
                             setCoverError({
                               title: "Falha ao gerar capa",
@@ -711,10 +720,10 @@ const AdminTrainingPrograms = () => {
                               raw: JSON.stringify(body, null, 2),
                               when: body.when,
                             });
-                            toast.error("Falha ao gerar capa — veja detalhes");
+                            toast.error("Falha ao gerar capa — veja detalhes", { id: toastId });
                             return;
                           }
-                          toast.success(`Capa gerada com IA! (${body.model || "IA"})`);
+                          toast.success(`Capa gerada com IA! (${body.model || "IA"})`, { id: toastId });
                           queryClient.invalidateQueries({ queryKey: ["training-programs"] });
                         } catch (e: any) {
                           setCoverError({
@@ -725,10 +734,15 @@ const AdminTrainingPrograms = () => {
                             raw: String(e?.stack || e),
                             when: new Date().toISOString(),
                           });
-                          toast.error("Falha ao gerar capa — veja detalhes");
+                          toast.error("Falha ao gerar capa — veja detalhes", { id: toastId });
+                        } finally {
+                          setGeneratingCoverId((cur) => (cur === p.id ? null : cur));
                         }
                       }}>
-                        <ImageIcon className="w-3 h-3 mr-1" /> {p.poster_url ? "Regerar capa" : "Gerar capa"}
+                        <ImageIcon className="w-3 h-3 mr-1" />
+                        {generatingCoverId === p.id
+                          ? "Gerando…"
+                          : p.poster_url ? "Regerar capa" : "Gerar capa"}
                       </Button>
                       <Button
                         size="sm"
