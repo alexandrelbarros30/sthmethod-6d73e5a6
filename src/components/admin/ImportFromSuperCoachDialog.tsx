@@ -112,6 +112,55 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     onImported();
   };
 
+  const importTrainingViaEdge = async (p: Program, t: Training) => {
+    const data = await invokeImportEdge({
+      action: "import-training",
+      programId: p.id,
+      program: p,
+      training: t,
+      localProgramId: programId,
+    });
+    if (data?.ok === false) throw new Error(data?.failures?.[0]?.error || data?.error || "Importação falhou");
+    return { count: Number(data?.exercises || 0), matched: Number(data?.exercises || 0) };
+  };
+
+  const loadTrainingsForImport = async (p: Program, visibleTrainings?: Training[]) => {
+    if (visibleTrainings?.length) return visibleTrainings;
+    const data = await invokeImportEdge({ action: "list-trainings", programId: p.id });
+    return (data?.trainings || []) as Training[];
+  };
+
+  const importProgramTrainingByTraining = async (
+    p: Program,
+    visibleTrainings?: Training[],
+    onProgress?: (done: number, total: number, label?: string) => void,
+  ) => {
+    const list = await loadTrainingsForImport(p, visibleTrainings);
+    if (!list.length) throw new Error(`Nenhum treino retornado pelo ST Coach para ${p.name}`);
+
+    let ok = 0;
+    let fail = 0;
+    let totalEx = 0;
+    const failures: { training: string; error: string }[] = [];
+
+    onProgress?.(0, list.length, p.name);
+    for (let i = 0; i < list.length; i++) {
+      const t = list[i];
+      try {
+        const result = await importTrainingViaEdge(p, t);
+        ok++;
+        totalEx += result.count;
+      } catch (err: any) {
+        fail++;
+        failures.push({ training: t.name || `Treino ${t.id}`, error: err?.message || String(err) });
+        console.error("[ST Coach import] treino falhou", p.name, t.name, err);
+      }
+      onProgress?.(i + 1, list.length, t.name || p.name);
+    }
+
+    return { ok, fail, totalEx, total: list.length, failures };
+  };
+
   const ensureLocalProgram = async (p: Program): Promise<string> => {
     const basePatch = {
       title: p.name,
@@ -278,15 +327,7 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     mutationFn: async (t: Training) => {
       if (!user) throw new Error("Sem sessão");
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
-      const data = await invokeImportEdge({
-        action: "import-training",
-        programId: selectedProgram.id,
-        program: selectedProgram,
-        training: t,
-        localProgramId: programId,
-      });
-      if (data?.ok === false) throw new Error(data?.failures?.[0]?.error || "Importação falhou");
-      return { count: data?.exercises || 0, matched: data?.exercises || 0 };
+      return importTrainingViaEdge(selectedProgram, t);
     },
     onSuccess: (r) => {
       toast.success(`Importado! ${r.count} exercícios (${r.matched} com vídeo do SuperCoach)`);
@@ -300,20 +341,17 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
   const importAllMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sem sessão");
-      const list = filteredTrainings.length > 0 ? filteredTrainings : trainings;
-      let ok = 0, fail = 0, totalEx = 0;
+      const list = search.trim() ? filteredTrainings : trainings;
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
-      setBulkProgress({ done: 0, total: list.length });
-      const data = await invokeImportEdge({ action: "import-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId });
-      ok = data?.trainings || 0;
-      fail = (data?.failures || []).length;
-      totalEx = data?.exercises || 0;
-      const totalImported = Math.max(list.length, ok + fail);
-      setBulkProgress({ done: totalImported, total: totalImported });
-      return { ok, fail, totalEx, total: totalImported };
+      return importProgramTrainingByTraining(selectedProgram, list, (done, total) => setBulkProgress({ done, total }));
     },
     onSuccess: (r) => {
-      toast.success(`Importados ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
+      if (r.fail) {
+        const first = r.failures?.[0];
+        toast.warning(`Importação parcial: ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios • ${r.fail} falha(s)${first ? ` — ${first.training}: ${first.error}` : ""}`);
+      } else {
+        toast.success(`Importados ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios`);
+      }
       invalidateImportedData();
       setBulkProgress(null);
     },
@@ -324,17 +362,16 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     mutationFn: async () => {
       if (!user) throw new Error("Sem sessão");
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
-      setBulkProgress({ done: 0, total: Math.max(filteredTrainings.length, trainings.length, 1) });
-      const data = await invokeImportEdge({ action: "repair-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId });
-      const ok = data?.trainings || 0;
-      const fail = (data?.failures || []).length;
-      const totalEx = data?.exercises || 0;
-      const totalImported = Math.max(ok + fail, 1);
-      setBulkProgress({ done: totalImported, total: totalImported });
-      return { ok, fail, totalEx };
+      const list = search.trim() ? filteredTrainings : trainings;
+      return importProgramTrainingByTraining(selectedProgram, list, (done, total) => setBulkProgress({ done, total }));
     },
     onSuccess: (r) => {
-      toast.success(`Programa reparado: ${r.ok} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
+      if (r.fail) {
+        const first = r.failures?.[0];
+        toast.warning(`Programa reparado parcialmente: ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios • ${r.fail} falha(s)${first ? ` — ${first.training}: ${first.error}` : ""}`);
+      } else {
+        toast.success(`Programa reparado: ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios`);
+      }
       invalidateImportedData();
       setBulkProgress(null);
     },
@@ -345,18 +382,27 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
   const importEverythingMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sem sessão");
-      const list = filteredPrograms.length > 0 ? filteredPrograms : programs;
+      const list = search.trim() ? filteredPrograms : programs;
       let totalOk = 0, totalFail = 0, totalEx = 0;
       setMegaProgress({ prog: 0, totalProg: list.length, label: "", ok: 0, fail: 0, totalEx: 0 });
       for (let pi = 0; pi < list.length; pi++) {
         const p = list[pi];
         setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         try {
-          const data = await invokeImportEdge({ action: "import-program", programId: p.id, program: p, localProgramId: programId });
-          totalOk += data?.trainings || 0;
-          totalEx += data?.exercises || 0;
-          totalFail += (data?.failures || []).length;
-          setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
+          const result = await importProgramTrainingByTraining(p, undefined, (done, total, label) => {
+            setMegaProgress({
+              prog: pi,
+              totalProg: list.length,
+              label: `${p.name}${total ? ` • ${done}/${total}` : ""}${label && label !== p.name ? ` • ${label}` : ""}`,
+              ok: totalOk,
+              fail: totalFail,
+              totalEx,
+            });
+          });
+          totalOk += result.ok;
+          totalEx += result.totalEx;
+          totalFail += result.fail;
+          setMegaProgress({ prog: pi + 1, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         } catch (err: any) {
           console.error("[import-everything] programa falhou", p.name, err);
           totalFail++;
