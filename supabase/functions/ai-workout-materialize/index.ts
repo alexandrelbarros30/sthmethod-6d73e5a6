@@ -32,7 +32,11 @@ async function generateProgramCover(opts: {
 
   const resp = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    headers: {
+      'Content-Type': 'application/json',
+      'Lovable-API-Key': apiKey,
+      'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
+    },
     body: JSON.stringify({
       model: 'openai/gpt-image-2',
       prompt,
@@ -142,7 +146,11 @@ Regras:
     const model = 'google/gemini-3-flash-preview';
     const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'Lovable-API-Key': apiKey,
+        'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
+      },
       body: JSON.stringify({
         model,
         response_format: { type: 'json_object' },
@@ -172,7 +180,11 @@ Regras:
       const genPrompt = `Você recebe um BRIEFING/estratégia de programa de treino (pode conter periodização, objetivos, fase, sem lista final de exercícios). Sua tarefa: GERAR o programa COMPLETO em JSON estrito no MESMO schema já descrito, criando os treinos (A/B/C/...) com exercícios reais, séries, reps, descanso e agrupamento (biset/triset quando fizer sentido). Use nomes de exercícios usuais em português do Brasil. Nunca retorne workouts vazios.`;
       const resp2 = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Lovable-API-Key': apiKey,
+          'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
+        },
         body: JSON.stringify({
           model,
           response_format: { type: 'json_object' },
