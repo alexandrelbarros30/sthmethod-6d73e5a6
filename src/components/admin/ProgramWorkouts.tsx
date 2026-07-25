@@ -349,7 +349,9 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const pushToSuperCoach = async (templateId: string) => {
     setPushingId(templateId);
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId, programId } });
+      const exCount = (templateExercisesMap?.[templateId]?.length ?? 0);
+      if (!exCount) throw new Error("Treino sem exercícios. Adicione ao menos um exercício antes de espelhar.");
+      const { data, error } = await invokePushTemplate({ templateId, programId });
       if (error) throw error;
       if (data?.ok === false) throw new Error(data?.error || "Falha ao espelhar");
       if (Array.isArray(data?.unmatched) && data.unmatched.length) {
@@ -368,14 +370,20 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const pushAllToSuperCoach = async () => {
     const list = (workouts || []) as any[];
     if (!list.length) { toast.error("Nenhum treino para espelhar"); return; }
+    const eligible = list.filter((w: any) => (templateExercisesMap?.[w.id]?.length ?? 0) > 0);
+    const skipped = list.length - eligible.length;
+    if (!eligible.length) {
+      toast.error("Nenhum treino com exercícios para espelhar. Adicione exercícios antes.");
+      return;
+    }
     setPushingAll(true);
     let ok = 0, fail = 0;
     const failures: string[] = [];
-    const toastId = toast.loading(`Espelhando 0/${list.length} treinos no ST Coach...`);
-    for (let i = 0; i < list.length; i++) {
-      const w = list[i];
+    const toastId = toast.loading(`Espelhando 0/${eligible.length} treinos no ST Coach...`);
+    for (let i = 0; i < eligible.length; i++) {
+      const w = eligible[i];
       try {
-        const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId: w.id, programId } });
+        const { data, error } = await invokePushTemplate({ templateId: w.id, programId });
         if (error || data?.ok === false) throw new Error(error?.message || data?.error || "falha");
         if (Array.isArray(data?.unmatched) && data.unmatched.length) failures.push(`${w.title || "Treino"}: ${data.unmatched.length} exercício(s) pendente(s)`);
         ok++;
@@ -385,11 +393,12 @@ const ProgramWorkouts = ({ programId }: Props) => {
         failures.push(`${w.title || "Treino"}: ${reason}`);
         console.error("[push-all] fail", w.title, reason);
       }
-      toast.loading(`Espelhando ${i + 1}/${list.length} treinos no ST Coach...`, { id: toastId });
+      toast.loading(`Espelhando ${i + 1}/${eligible.length} treinos no ST Coach...`, { id: toastId });
     }
     toast.dismiss(toastId);
-    if (fail === 0 && failures.length === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${list.length}).`);
-    else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam. ${failures[0] || ""}`);
+    const skipNote = skipped > 0 ? ` (${skipped} sem exercícios ignorado${skipped > 1 ? "s" : ""})` : "";
+    if (fail === 0 && failures.length === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${eligible.length})${skipNote}.`);
+    else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${failures[0] || ""}`);
     queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
     setPushingAll(false);
   };
