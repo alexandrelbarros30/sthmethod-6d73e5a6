@@ -1963,6 +1963,7 @@ Gere a mensagem final agora.`;
         });
         autoReply = {
           sent: false,
+          engine: 'nutri_block_silent',
           reason: 'nutri_block_already_sent',
           transfer: 'nutri->comercial',
           rule: 'nutri_channel_active_only',
