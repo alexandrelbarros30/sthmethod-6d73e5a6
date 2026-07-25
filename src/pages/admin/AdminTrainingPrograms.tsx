@@ -366,10 +366,10 @@ const AdminTrainingPrograms = () => {
   const getObjectiveLabel = (v: string) => OBJECTIVES.find(o => o.value === v)?.label || v;
   const getDifficultyInfo = (v: string) => DIFFICULTIES.find(d => d.value === v) || DIFFICULTIES[1];
 
-  const generateCoverWithAi = async (program: any) => {
-    const invokePromise = supabase.functions.invoke("generate-program-cover", { body: { programId: program.id } });
+  const generateCoverAttempt = async (program: any, provider: "openai" | "gemini") => {
+    const invokePromise = supabase.functions.invoke("generate-program-cover", { body: { programId: program.id, provider } });
     const timeoutPromise = new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error("TIMEOUT_AI_COVER_GENERATION_180S")), 180000);
+      window.setTimeout(() => reject(new Error(`TIMEOUT_AI_COVER_GENERATION_${provider.toUpperCase()}_55S`)), 55000);
     });
     const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
     const body: any = data || {};
@@ -382,6 +382,22 @@ const AdminTrainingPrograms = () => {
       };
     }
     return body;
+  };
+
+  const generateCoverWithAi = async (program: any) => {
+    const first = await generateCoverAttempt(program, "openai");
+    if (!first?.error) return first;
+
+    const second = await generateCoverAttempt(program, "gemini");
+    if (!second?.error) return second;
+
+    return {
+      error: second.error || first.error || "Falha ao gerar capa.",
+      code: second.code || first.code || "AI_IMAGE_FAILED",
+      model: `${first.model || "openai/gpt-image-2"} → ${second.model || "google/gemini-3.1-flash-image"}`,
+      attempts: [first, second],
+      when: second.when || first.when || new Date().toISOString(),
+    };
   };
 
   const selectedProgram = (programs || []).find((p: any) => p.id === selectedProgramId);
