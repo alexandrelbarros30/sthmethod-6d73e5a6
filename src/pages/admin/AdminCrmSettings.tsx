@@ -56,9 +56,9 @@ export default function AdminCrmSettings() {
   const [flowTpls, setFlowTpls] = useState<Record<string, FlowTpl>>({});
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
-  const wapiComercialWebhook = INBOUND_WEBHOOK_BASE;
-  const wapiWebhook = INBOUND_WEBHOOK_BASE;
-  const wapiSucessoWebhook = INBOUND_WEBHOOK_BASE;
+  const wapiComercialWebhook = `${INBOUND_WEBHOOK_BASE}?provider=zapi`;
+  const wapiWebhook = `${INBOUND_WEBHOOK_BASE}?provider=wapi`;
+  const wapiSucessoWebhook = `${INBOUND_WEBHOOK_BASE}?provider=wapi_sucesso`;
 
   useEffect(() => {
     (async () => {
@@ -222,7 +222,7 @@ export default function AdminCrmSettings() {
                 {copied === "wapi-com-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground">O canal é identificado automaticamente pelo <b>Instance ID</b> salvo acima.</p>
+            <p className="text-[11px] text-muted-foreground">Use exatamente este URL no evento de mensagens recebidas da W-API Comercial. Ele força o roteamento para o canal Comercial mesmo quando a W-API não envia Instance ID no callback.</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => save("wapi_comercial", wapiComercial)} disabled={saving === "wapi_comercial"}>{saving === "wapi_comercial" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
@@ -263,7 +263,7 @@ export default function AdminCrmSettings() {
                 {copied === "wapi-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground">Use este mesmo link no painel W-API. O canal é identificado automaticamente pelo <b>Instance ID</b> salvo acima.</p>
+            <p className="text-[11px] text-muted-foreground">Use exatamente este URL no evento de mensagens recebidas da W-API Nutri.</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => save("wapi", wapi)} disabled={saving === "wapi"}>{saving === "wapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
