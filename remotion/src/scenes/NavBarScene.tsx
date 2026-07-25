@@ -2,8 +2,9 @@ import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } fr
 
 const TABS = [
   { label: "Início", icon: "🏠" },
-  { label: "Treino", icon: "💪" },
+  { label: "Protocolo", icon: "💊" },
   { label: "Dieta", icon: "🥗" },
+  { label: "Treino", icon: "💪" },
   { label: "Atualização", icon: "📈" },
   { label: "Perfil", icon: "👤" },
 ];
@@ -19,15 +20,15 @@ export const NavBarScene = () => {
   const pulse = 0.55 + 0.45 * Math.sin((frame / fps) * 4);
   const outFade = interpolate(frame, [95, 110], [1, 0], { extrapolateLeft: "clamp" });
 
-  const activeIdx = 3;
+  const activeIdx = 4;
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: 60, opacity: outFade }}>
       <div style={{ fontSize: 44, color: "rgba(255,255,255,0.6)", opacity: titleOpacity, marginBottom: 24, textAlign: "center", fontWeight: 600 }}>
         Passo 1
       </div>
-      <div style={{ fontSize: 72, fontWeight: 800, color: "#fff", textAlign: "center", opacity: titleOpacity, letterSpacing: -2, lineHeight: 1.05, maxWidth: 900 }}>
-        Toque em <span style={{ color: "hsl(145 70% 55%)" }}>Atualização</span><br/>na barra inferior
+      <div style={{ fontSize: 68, fontWeight: 800, color: "#fff", textAlign: "center", opacity: titleOpacity, letterSpacing: -2, lineHeight: 1.05, maxWidth: 900 }}>
+        Toque em <span style={{ color: "hsl(145 70% 55%)" }}>Atualização</span><br/>entre Treino e Perfil
       </div>
 
       {/* Phone mock */}
@@ -113,7 +114,7 @@ export const NavBarScene = () => {
           style={{
             position: "absolute",
             bottom: 180,
-            left: `${20 + activeIdx * 20 - 4}%`,
+            left: `${(100 / TABS.length) * (activeIdx + 0.5)}%`,
             transform: `translateX(-50%) translateY(${arrowY}px)`,
             fontSize: 72,
             filter: "drop-shadow(0 0 20px hsl(145 70% 55%))",
