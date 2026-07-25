@@ -126,6 +126,7 @@ import StudentFeedbackHistory from "./pages/student/StudentFeedbackHistory";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
+import AdminPushHistory from "./pages/admin/AdminPushHistory";
 import AdminSthia from "./pages/admin/AdminSthia";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminCrm from "./pages/admin/AdminCrm";
@@ -348,6 +349,7 @@ const App = () => (
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
+            <Route path="/admin/push-history" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPushHistory /></ProtectedRoute>} />
             <Route path="/admin/sthia" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSthia /></ProtectedRoute>} />
             <Route path="/admin/emails" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEmails /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrm /></ProtectedRoute>} />

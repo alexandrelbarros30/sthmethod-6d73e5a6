@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Bell, Loader2, Send } from "lucide-react";
+import { Bell, Loader2, Send, Clock } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { normalizeSearch } from "@/lib/utils";
@@ -21,25 +22,25 @@ type TemplateKey = "renovacao" | "promocao" | "novo_conteudo" | "lembrete_evoluc
 const TEMPLATES: Record<Exclude<TemplateKey, "custom">, { label: string; title: string; body: string; url: string }> = {
   renovacao: {
     label: "Renovação de plano",
-    title: "Hora de renovar seu plano ⚡",
-    body: "Continue sua evolução sem pausas. Renove agora e mantenha seu acesso ativo.",
+    title: "{{nome}}, hora de renovar seu {{plano}} ⚡",
+    body: "Seu acesso vence em {{vencimento}}. Renove agora e mantenha sua evolução sem pausas.",
     url: "/dashboard/renovar",
   },
   promocao: {
     label: "Promoção especial",
-    title: "Oferta STH METHOD por tempo limitado 🔥",
+    title: "{{nome}}, oferta STH METHOD por tempo limitado 🔥",
     body: "Aproveite condições exclusivas para acelerar seus resultados. Confira agora.",
     url: "/dashboard",
   },
   novo_conteudo: {
     label: "Novo conteúdo disponível",
-    title: "Novo conteúdo liberado ✨",
+    title: "{{nome}}, novo conteúdo liberado ✨",
     body: "Abra o app para conferir as novidades preparadas para você.",
     url: "/dashboard",
   },
   lembrete_evolucao: {
     label: "Lembrete de evolução",
-    title: "Bora atualizar sua evolução? 📸",
+    title: "{{nome}}, bora atualizar sua evolução? 📸",
     body: "Registre peso e fotos para acompanharmos sua jornada de perto.",
     url: "/dashboard/atualizacao",
   },
@@ -60,6 +61,11 @@ export default function SendPushDialog({ open, onOpenChange, students }: Props) 
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState(false);
+  const [useVars, setUseVars] = useState(true);
+  const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
+  const [scheduledAt, setScheduledAt] = useState<string>("");
+  const [previewSample, setPreviewSample] = useState<{ nome: string; plano: string; vencimento: string } | null>(null);
+  const [loadingSample, setLoadingSample] = useState(false);
 
   const activeIds = useMemo(() => students.filter((s) => s.status === "active").map((s) => s.user_id), [students]);
   const inactiveIds = useMemo(() => students.filter((s) => s.status !== "active").map((s) => s.user_id), [students]);
@@ -96,35 +102,82 @@ export default function SendPushDialog({ open, onOpenChange, students }: Props) 
     });
   }
 
+  async function loadPreviewSample() {
+    if (targetIds.length === 0) {
+      toast.error("Selecione ao menos um destinatário para pré-visualizar.");
+      return;
+    }
+    setLoadingSample(true);
+    try {
+      const sampleId = targetIds[0];
+      const [{ data: prof }, { data: subs }] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("user_id", sampleId).maybeSingle(),
+        supabase
+          .from("subscriptions")
+          .select("end_date, plans:plan_id(name)")
+          .eq("user_id", sampleId)
+          .order("end_date", { ascending: false })
+          .limit(1),
+      ]);
+      const s = subs?.[0] as any;
+      const first = String(prof?.full_name || "").trim().split(/\s+/)[0] || "aluno(a)";
+      setPreviewSample({
+        nome: first,
+        plano: s?.plans?.name || "seu plano",
+        vencimento: s?.end_date ? new Date(s.end_date).toLocaleDateString("pt-BR") : "em breve",
+      });
+    } catch (e: any) {
+      toast.error("Não foi possível carregar exemplo real.");
+    } finally {
+      setLoadingSample(false);
+    }
+  }
+
+  function applyVars(str: string, vars: { nome: string; plano: string; vencimento: string }) {
+    return str
+      .replace(/\{\{\s*nome\s*\}\}/gi, vars.nome)
+      .replace(/\{\{\s*plano\s*\}\}/gi, vars.plano)
+      .replace(/\{\{\s*vencimento\s*\}\}/gi, vars.vencimento);
+  }
+
+  const previewVars = previewSample || { nome: "Maria", plano: "Plano Turbo 30D", vencimento: "15/08/2026" };
+  const previewTitle = useVars ? applyVars(title, previewVars) : title;
+  const previewBody = useVars ? applyVars(body, previewVars) : body;
+
   async function send() {
     if (!title.trim()) { toast.error("Informe um título."); return; }
     if (targetIds.length === 0) { toast.error("Nenhum destinatário selecionado."); return; }
+    if (scheduleMode === "later") {
+      if (!scheduledAt) { toast.error("Informe a data/hora do agendamento."); return; }
+      if (new Date(scheduledAt).getTime() <= Date.now() + 30_000) {
+        toast.error("Agende para pelo menos 1 minuto no futuro.");
+        return;
+      }
+    }
     setSending(true);
     try {
-      // dispara em lotes de 200 user_ids para evitar payloads gigantes
-      const CHUNK = 200;
-      let sent = 0, failed = 0, total = 0;
-      for (let i = 0; i < targetIds.length; i += CHUNK) {
-        const chunk = targetIds.slice(i, i + CHUNK);
-        const { data, error } = await supabase.functions.invoke("send-push", {
-          body: {
-            user_ids: chunk,
-            payload: {
-              title: title.trim(),
-              body: body.trim() || undefined,
-              url: url.trim() || "/dashboard",
-              tag: `admin-broadcast-${Date.now()}`,
-            },
-          },
-        });
-        if (error) throw error;
-        sent += Number(data?.sent || 0);
-        failed += Number(data?.failed || 0);
-        total += Number(data?.total || 0);
-      }
-      toast.success(`Push enviado`, {
-        description: `${sent} entregues · ${failed} falhas · ${total} inscrições alcançadas (de ${targetIds.length} alunos alvo).`,
+      const { data, error } = await supabase.functions.invoke("create-push-campaign", {
+        body: {
+          title: title.trim(),
+          body: body.trim() || undefined,
+          url: url.trim() || "/dashboard",
+          audience_type: audience,
+          audience_user_ids: audience === "custom" ? targetIds : undefined,
+          use_variables: useVars,
+          scheduled_at: scheduleMode === "later" ? new Date(scheduledAt).toISOString() : null,
+        },
       });
+      if (error) throw error;
+      if (data?.ok === false) throw new Error(data.error || "Falha no envio");
+      if (data?.scheduled) {
+        toast.success("Campanha agendada", {
+          description: `Envio programado para ${new Date(scheduledAt).toLocaleString("pt-BR")} · ${targetIds.length} alvo(s).`,
+        });
+      } else {
+        toast.success("Push enviado", {
+          description: `${data?.sent || 0} entregues · ${data?.failed || 0} falhas · ${data?.total || 0} inscrições alcançadas (de ${targetIds.length} alvo).`,
+        });
+      }
       onOpenChange(false);
     } catch (e: any) {
       toast.error("Falha ao enviar push", { description: e?.message || String(e) });
@@ -205,21 +258,64 @@ export default function SendPushDialog({ open, onOpenChange, students }: Props) 
             <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="/dashboard" />
           </div>
 
-          <div className="rounded-md border bg-muted/30 p-3 text-xs">
-            <p><b>Prévia:</b></p>
-            <p className="font-semibold mt-1">{title || "Título"}</p>
-            <p className="text-muted-foreground">{body || "Mensagem…"}</p>
-            <p className="mt-2 text-[11px] text-muted-foreground">
+          <div className="rounded-md border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-xs uppercase text-muted-foreground">Personalizar por aluno</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Use <code>{"{{nome}}"}</code>, <code>{"{{plano}}"}</code> e <code>{"{{vencimento}}"}</code> — resolvidos por destinatário.
+                </p>
+              </div>
+              <Switch checked={useVars} onCheckedChange={setUseVars} />
+            </div>
+          </div>
+
+          <div className="rounded-md border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase text-muted-foreground">Quando enviar</Label>
+              <div className="flex gap-1">
+                <Button size="sm" variant={scheduleMode === "now" ? "default" : "outline"} className="h-7 text-[11px]" onClick={() => setScheduleMode("now")}>Agora</Button>
+                <Button size="sm" variant={scheduleMode === "later" ? "default" : "outline"} className="h-7 text-[11px]" onClick={() => setScheduleMode("later")}>
+                  <Clock className="w-3 h-3 mr-1" /> Agendar
+                </Button>
+              </div>
+            </div>
+            {scheduleMode === "later" && (
+              <Input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                className="h-9 text-xs"
+              />
+            )}
+          </div>
+
+          <div className="rounded-md border bg-muted/30 p-3 text-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <p><b>Prévia</b> {useVars && <span className="text-[10px] text-muted-foreground">(exemplo: {previewVars.nome} · {previewVars.plano} · {previewVars.vencimento})</span>}</p>
+              {useVars && (
+                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={loadPreviewSample} disabled={loadingSample || targetIds.length === 0}>
+                  {loadingSample ? <Loader2 className="w-3 h-3 animate-spin" /> : "Usar aluno real"}
+                </Button>
+              )}
+            </div>
+            <div className="rounded border bg-background p-2">
+              <p className="font-semibold">{previewTitle || "Título"}</p>
+              <p className="text-muted-foreground">{previewBody || "Mensagem…"}</p>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
               Alvo: <b>{targetIds.length}</b> aluno(s). Apenas alunos com push ativado receberão a notificação.
+              {targetIds.length > 5000 && <span className="text-red-400"> · Máximo permitido: 5000.</span>}
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>Cancelar</Button>
-          <Button onClick={send} disabled={sending || targetIds.length === 0}>
+          <Button onClick={send} disabled={sending || targetIds.length === 0 || targetIds.length > 5000}>
             {sending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Send className="w-4 h-4 mr-1" />}
-            Enviar para {targetIds.length}
+            {scheduleMode === "later" ? `Agendar para ${targetIds.length}` : `Enviar para ${targetIds.length}`}
           </Button>
         </DialogFooter>
       </DialogContent>
