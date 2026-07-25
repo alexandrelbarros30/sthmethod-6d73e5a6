@@ -178,10 +178,11 @@ Deno.serve(async (req) => {
       else if (g.startsWith('m')) gender = 'M';
     }
 
-    console.info('generate-program-cover local render start', { programId, gender, title: prog.title });
+    console.info('generate-program-cover AI render start', { programId, gender, title: prog.title });
 
-    // 1) Tenta gerar capa fotográfica via Lovable AI Gateway.
-    //    Prioridade: Gemini 3.1 Flash Image (rápido) → GPT Image 2 (qualidade) → SVG local (fallback).
+    // Tenta gerar capa fotográfica via Lovable AI Gateway.
+    // Prioridade: GPT Image 2 → Gemini. Sem renderização SVG automática: se a IA falhar,
+    // a função retorna o erro real para o painel exibir o modelo/código da falha.
     const lovableKey = Deno.env.get('LOVABLE_API_KEY') || '';
     const prompt = buildProgramCoverPrompt(prog.title, gender);
     let uploadBytes: Uint8Array | null = null;
@@ -203,11 +204,13 @@ Deno.serve(async (req) => {
           headers: {
             'Content-Type': 'application/json',
             'Lovable-API-Key': lovableKey,
+            'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
           },
           body: JSON.stringify({
             model,
-            messages: [{ role: 'user', content: prompt }],
-            modalities: ['image', 'text'],
+            prompt,
+            size: '1024x1024',
+            n: 1,
           }),
         });
         const txt = await r.text();
@@ -237,6 +240,7 @@ Deno.serve(async (req) => {
           headers: {
             'Content-Type': 'application/json',
             'Lovable-API-Key': lovableKey,
+            'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
           },
           body: JSON.stringify({
             model,
@@ -262,27 +266,34 @@ Deno.serve(async (req) => {
       } finally { clearTimeout(t); }
     }
 
+    if (!lovableKey) {
+      return jsonResponse({
+        error: 'Chave Lovable AI ausente no backend.',
+        code: 'AI_KEY_MISSING',
+        model: 'none',
+        when: new Date().toISOString(),
+      }, 500);
+    }
+
     if (lovableKey) {
-      uploadBytes = await tryGemini();
-      if (!uploadBytes) uploadBytes = await tryOpenAI();
+      uploadBytes = await tryOpenAI();
+      if (!uploadBytes) uploadBytes = await tryGemini();
     }
 
     if (!uploadBytes) {
-      // Fallback local (nunca falha)
-      const svg = buildSafeCoverSvg(prog.title, gender);
-      uploadBytes = new TextEncoder().encode(svg);
-      contentType = 'image/svg+xml; charset=utf-8';
-      fileExtension = 'svg';
-      usedModel = attempts.length ? `${attempts.map((a) => a.model).join(' → ')} → safe-svg-fallback` : 'safe-svg-fallback';
-      fallback = true;
-      fallbackDetails = {
-        code: 'LOCAL_COVER_RENDERED',
-        details: `IA indisponível. Tentativas: ${JSON.stringify(attempts).slice(0, 400)}`,
-      };
-      console.warn('generate-program-cover using local SVG fallback', attempts);
-    } else {
-      console.info('generate-program-cover AI success', { model: usedModel });
+      const modelChain = attempts.length ? attempts.map((a) => a.model).join(' → ') : 'none';
+      console.error('generate-program-cover AI failed without fallback', attempts);
+      return jsonResponse({
+        error: 'A IA não retornou uma imagem fotográfica. Nenhuma capa segura foi aplicada.',
+        code: 'AI_IMAGE_FAILED',
+        model: modelChain,
+        fallback: false,
+        attempts,
+        when: new Date().toISOString(),
+      }, 502);
     }
+
+    console.info('generate-program-cover AI success', { model: usedModel });
 
     const path = `program-covers/${programId}.${fileExtension}`;
     const { error: upErr } = await admin.storage.from('ai-training-media').upload(path, uploadBytes, { contentType, upsert: true });
