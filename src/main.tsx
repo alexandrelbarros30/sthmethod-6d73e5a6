@@ -4,6 +4,8 @@ import App from "./App.tsx";
 import "./index.css";
 import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "./lib/app-version";
 import { enableNativeFullscreen } from "./lib/native-fullscreen";
+import { friendlyMessage } from "./lib/friendly-errors";
+import { toast as sonnerToast } from "sonner";
 
 const MAX_BOOT_RELOADS = 2;
 const getBootReloadKey = (version: string) => `sth-boot-update-attempts:${version}`;
@@ -120,3 +122,35 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </HelmetProvider>
 );
+
+// -----------------------------------------------------------------------------
+// Handler global: NUNCA vazar erros técnicos (Supabase / Lovable / stack) para
+// alunos ou público. Converte tudo para código STH-XXX e mostra via toast.
+// Rotas administrativas continuam vendo o erro no console para diagnóstico.
+// -----------------------------------------------------------------------------
+if (typeof window !== "undefined") {
+  const isAdminRoute = () =>
+    window.location.pathname.startsWith("/admin") ||
+    window.location.pathname.startsWith("/consultor");
+
+  const showFriendly = (err: unknown) => {
+    try {
+      if (isAdminRoute()) return; // admin já tem telas técnicas próprias
+      sonnerToast.error(friendlyMessage(err));
+    } catch (_) {}
+  };
+
+  window.addEventListener("unhandledrejection", (ev) => {
+    // eslint-disable-next-line no-console
+    console.warn("[unhandledrejection]", ev.reason);
+    showFriendly(ev.reason);
+  });
+
+  window.addEventListener("error", (ev) => {
+    // Ignora erros de assets (imagem, script externo) que já têm fallback próprio
+    if ((ev.target as any)?.tagName) return;
+    // eslint-disable-next-line no-console
+    console.warn("[window.error]", ev.error || ev.message);
+    showFriendly(ev.error || ev.message);
+  });
+}
