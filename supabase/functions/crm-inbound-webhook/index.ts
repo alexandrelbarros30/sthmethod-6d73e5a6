@@ -513,11 +513,20 @@ Deno.serve(async (req) => {
     };
 
     let provider = normalizeRequestedProvider(requestedProvider) || 'wapi';
+    let matchedProviderByInstance = false;
     if (payloadInstance) {
-      if (payloadInstance === configuredInstances.zapi) provider = 'zapi';
-      else if (payloadInstance === configuredInstances.wapi_sucesso) provider = 'wapi_sucesso';
-      else if (payloadInstance === configuredInstances.wapi) provider = 'wapi';
-    } else if (phoneBelongsTo(connectedPhoneFromPayload, commercialPhones)) {
+      if (payloadInstance === configuredInstances.zapi) {
+        provider = 'zapi';
+        matchedProviderByInstance = true;
+      } else if (payloadInstance === configuredInstances.wapi_sucesso) {
+        provider = 'wapi_sucesso';
+        matchedProviderByInstance = true;
+      } else if (payloadInstance === configuredInstances.wapi) {
+        provider = 'wapi';
+        matchedProviderByInstance = true;
+      }
+    }
+    if (!matchedProviderByInstance && phoneBelongsTo(connectedPhoneFromPayload, commercialPhones)) {
       provider = 'zapi';
     } else if (phoneBelongsTo(connectedPhoneFromPayload, nutriPhones)) {
       provider = 'wapi';
