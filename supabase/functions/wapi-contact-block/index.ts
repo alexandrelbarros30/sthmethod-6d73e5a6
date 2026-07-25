@@ -10,9 +10,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { phone, action, reason, metadata } = await req.json();
-    if (!phone || !['block', 'unblock'].includes(action)) {
-      return new Response(JSON.stringify({ ok: false, error: 'phone and action=block|unblock required' }), {
+    const { phone, phones, action, reason, metadata } = await req.json();
+    const phoneList = Array.isArray(phones) ? phones : (phone ? [phone] : []);
+    if (phoneList.length === 0 || !['block', 'unblock'].includes(action)) {
+      return new Response(JSON.stringify({ ok: false, error: 'phone/phones and action=block|unblock required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
       return `55${digits}`;
     };
 
-    const fullPhone = normalizeWhatsappPhone(phone);
+    const normalizedPhones = Array.from(new Set(phoneList.map(normalizeWhatsappPhone).filter(Boolean)));
     const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
     const value = action === 'block';
 
@@ -57,34 +58,43 @@ Deno.serve(async (req) => {
     if (CLIENT_TOKEN) headers['Client-Token'] = CLIENT_TOKEN;
 
     const endpoint = `${serverUrl}/v1/contacts/block-contact?instanceId=${INSTANCE_ID}`;
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ phoneNumber: fullPhone, value }),
-    });
-    const data = await resp.json().catch(() => ({}));
-    const ok = resp.ok && !(data as any)?.error;
+    const results = [];
 
-    // Auditoria detalhada
-    try {
-      await admin.from('automation_logs').insert({
-        contact_phone: fullPhone,
-        event_type: value ? 'wapi_contact_blocked' : 'wapi_contact_unblocked',
-        queue_type: 'nutri',
-        action_taken: ok ? (value ? 'blocked_wapi' : 'unblocked_wapi') : 'wapi_block_failed',
-        severity: ok ? 'info' : 'warning',
-        reason: reason || (value ? 'nutri_channel_active_only' : 'contact_reactivated'),
-        metadata: {
-          ...(metadata || {}),
-          wapi_response: data,
-          http_status: resp.status,
-        },
+    for (const fullPhone of normalizedPhones) {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ phoneNumber: fullPhone, value }),
       });
-    } catch (e) {
-      console.error('wapi-contact-block: audit log failed', e);
+      const data = await resp.json().catch(() => ({}));
+      const ok = resp.ok && !(data as any)?.error;
+      results.push({ ok, phone: fullPhone, data, status: resp.status });
+
+      // Auditoria detalhada
+      try {
+        await admin.from('automation_logs').insert({
+          contact_phone: fullPhone,
+          event_type: value ? 'wapi_contact_blocked' : 'wapi_contact_unblocked',
+          queue_type: 'nutri',
+          action_taken: ok ? (value ? 'blocked_wapi' : 'unblocked_wapi') : 'wapi_block_failed',
+          severity: ok ? 'info' : 'warning',
+          reason: reason || (value ? 'nutri_channel_active_only' : 'contact_reactivated'),
+          metadata: {
+            ...(metadata || {}),
+            wapi_response: data,
+            http_status: resp.status,
+            bulk: normalizedPhones.length > 1,
+          },
+        });
+      } catch (e) {
+        console.error('wapi-contact-block: audit log failed', e);
+      }
     }
 
-    return new Response(JSON.stringify({ ok, action, phone: fullPhone, data, status: resp.status }), {
+    const ok = results.every((item) => item.ok);
+    const first = results[0] || null;
+
+    return new Response(JSON.stringify({ ok, action, phone: first?.phone || null, results, count: results.length }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
