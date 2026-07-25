@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       try {
         console.info('generate-program-cover model attempt', model);
         const ctrl = new AbortController();
-        const id = setTimeout(() => ctrl.abort(), 18000);
+        const id = setTimeout(() => ctrl.abort(), 12000);
         const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST', signal: ctrl.signal,
           headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': apiKey, 'X-Lovable-AIG-SDK': 'edge-function' },
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
         const b = parseDataUrl(dataUrl);
         return b ? { ok: true, b64: b, model } : { ok: false, err: 'empty image response from Gemini image endpoint', status: 502, model };
       } catch (e: any) {
-        return { ok: false, err: e?.name === 'AbortError' ? 'timeout 18s' : (e?.message || 'network error'), status: 504, model };
+        return { ok: false, err: e?.name === 'AbortError' ? 'timeout 12s' : (e?.message || 'network error'), status: 504, model };
       }
     }
 
@@ -198,7 +198,14 @@ Deno.serve(async (req) => {
     if (!gen.ok) {
       geminiErr = { status: gen.status, err: gen.err };
       console.error('gemini image gen failed', gen.status, (gen.err || '').slice(0, 400));
-      gen = await tryOpenAI();
+      // Não chamamos um segundo provedor de imagem quando a primeira tentativa atrasa/falha:
+      // isso ultrapassava o tempo da chamada do app e virava "Failed to send a request".
+      gen = {
+        ok: false,
+        status: 504,
+        err: 'safe fallback acionado; OpenAI não foi chamado para evitar timeout do app',
+        model: 'openai/gpt-image-2',
+      };
     }
 
     let uploadBytes: Uint8Array;
