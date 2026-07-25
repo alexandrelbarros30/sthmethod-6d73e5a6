@@ -60,6 +60,12 @@ interface ProgramForm {
 
 const emptyForm: ProgramForm = { title: "", details: "", objective: "general", difficulty: "intermediate", status: "published", poster_url: "", video_url: "", expires_at: "" };
 
+const chunk = <T,>(items: T[], size: number) => {
+  const result: T[][] = [];
+  for (let index = 0; index < items.length; index += size) result.push(items.slice(index, index + size));
+  return result;
+};
+
 const AdminTrainingPrograms = () => {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
@@ -126,21 +132,27 @@ const AdminTrainingPrograms = () => {
   const { data: assignedCounts } = useQuery({
     queryKey: ["program-assigned-counts"],
     queryFn: async () => {
-      const { data: tpls } = await supabase
+      const { data: tpls, error: tplError } = await supabase
         .from("workout_templates")
         .select("id, program_id")
         .not("program_id", "is", null);
+      if (tplError) throw tplError;
       const tplToProgram: Record<string, string> = {};
       (tpls || []).forEach((t: any) => { tplToProgram[t.id] = t.program_id; });
       const tIds = Object.keys(tplToProgram);
       if (!tIds.length) return {} as Record<string, number>;
-      const { data: assigns } = await supabase
-        .from("student_workout_assignments")
-        .select("user_id, template_id, active")
-        .in("template_id", tIds)
-        .eq("active", true);
+      const assigns: any[] = [];
+      for (const ids of chunk(tIds, 150)) {
+        const { data, error } = await supabase
+          .from("student_workout_assignments")
+          .select("user_id, template_id")
+          .in("template_id", ids)
+          .eq("active", true);
+        if (error) throw error;
+        assigns.push(...(data || []));
+      }
       const map: Record<string, Set<string>> = {};
-      (assigns || []).forEach((a: any) => {
+      assigns.forEach((a: any) => {
         const pid = tplToProgram[a.template_id];
         if (!pid) return;
         (map[pid] ||= new Set()).add(a.user_id);
@@ -171,7 +183,8 @@ const AdminTrainingPrograms = () => {
       const { data: assigns } = await supabase
         .from("student_workout_assignments")
         .select("user_id, template_id, active")
-        .in("template_id", tIds);
+        .in("template_id", tIds)
+        .eq("active", true);
       const userIds = Array.from(new Set((assigns || []).map((a: any) => a.user_id)));
       if (!userIds.length) return [];
       const { data: profiles } = await supabase
@@ -180,8 +193,7 @@ const AdminTrainingPrograms = () => {
         .in("user_id", userIds);
       return (profiles || []).map((p: any) => {
         const userAssigns = (assigns || []).filter((a: any) => a.user_id === p.user_id);
-        const totalActive = userAssigns.filter((a: any) => a.active).length;
-        return { ...p, total: userAssigns.length, active: totalActive, templateIds: tIds };
+        return { ...p, total: userAssigns.length, active: userAssigns.length, templateIds: tIds };
       });
     },
     enabled: !!assignedDialog,
@@ -395,13 +407,23 @@ const AdminTrainingPrograms = () => {
         .from("student_workout_assignments")
         .upsert(rows as any, { onConflict: "user_id,template_id" });
       if (error) throw error;
+      const syncFailures: string[] = [];
       for (const uid of userIds) {
-        await invokeEdgeWithSimpleFallback("supercoach-assign-program", { userId: uid, programId, action: "assign" });
+        try {
+          await invokeEdgeWithSimpleFallback("supercoach-assign-program", { userId: uid, programId, action: "assign" });
+        } catch (error: any) {
+          const student = (students || []).find((item: any) => item.user_id === uid);
+          syncFailures.push(`${student?.full_name || student?.email || uid}: ${error?.message || "falha"}`);
+        }
       }
-      return { count: rows.length, students: userIds.length };
+      return { count: rows.length, students: userIds.length, syncFailures };
     },
-    onSuccess: ({ count, students }) => {
-      toast.success(`Programa compartilhado e sincronizado no ST Coach! ${count} atribuição(ões), ${students} aluno(s).`);
+    onSuccess: ({ count, students, syncFailures }) => {
+      if (syncFailures.length) {
+        toast.warning(`Atribuído no STH METHOD, mas ${syncFailures.length} sincronização(ões) no ST Coach precisam de revisão.`);
+      } else {
+        toast.success(`Programa compartilhado e sincronizado no ST Coach! ${count} atribuição(ões), ${students} aluno(s).`);
+      }
       setAssignDialog(null);
       setSelectedStudents([]);
       setStudentSearch("");
@@ -409,6 +431,10 @@ const AdminTrainingPrograms = () => {
       queryClient.invalidateQueries({ queryKey: ["program-assigned-counts"] });
     },
     onError: (e: any) => toast.error(e.message || "Erro ao atribuir."),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["program-assigned-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["program-assigned-students"] });
+    },
   });
 
   const closeProgramDialog = () => {
@@ -604,6 +630,7 @@ const AdminTrainingPrograms = () => {
               {filteredPrograms.map((p: any) => {
                 const active = p.id === selectedProgramId;
                 const wCount = workoutCounts?.[p.id] || 0;
+                const assigned = assignedCounts?.[p.id] || 0;
                 return (
                   <button
                     key={p.id}
@@ -619,7 +646,7 @@ const AdminTrainingPrograms = () => {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className={`text-xs font-medium truncate ${active ? "text-primary" : ""}`}>{p.title}</p>
-                      <p className="text-[10px] text-muted-foreground">{wCount} treino(s)</p>
+                      <p className="text-[10px] text-muted-foreground">{wCount} treino(s) · {assigned} aluno(s)</p>
                     </div>
                     {active && <ChevronRight className="w-3.5 h-3.5 text-primary shrink-0" />}
                   </button>
@@ -805,6 +832,11 @@ const AdminTrainingPrograms = () => {
                     )}
                     {p.status === "draft" && (
                       <Badge variant="secondary" className="absolute top-2 left-2 text-[10px]">Rascunho</Badge>
+                    )}
+                    {assigned > 0 && (
+                      <Badge className="absolute bottom-2 left-2 text-[10px] bg-primary text-primary-foreground shadow-lg">
+                        <Users className="w-3 h-3 mr-1" /> {assigned} aluno(s)
+                      </Badge>
                     )}
                     {/* Overflow menu */}
                     <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
