@@ -18,6 +18,7 @@ import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import AccessibilityThemeCard from "@/components/student/AccessibilityThemeCard";
 import DocumentUpload from "@/components/shared/DocumentUpload";
+import PushNotificationsCard from "@/components/student/PushNotificationsCard";
 import ImageConsentChoice from "@/components/legal/ImageConsentChoice";
 import type { ImageConsent } from "@/components/legal/LegalAcceptanceBlock";
 import AuthorizationHistoryCard from "@/components/legal/AuthorizationHistoryCard";
@@ -368,6 +369,8 @@ const StudentProfile = () => {
           </CardContent>
         </Card>
       )}
+
+      {user?.id && <PushNotificationsCard userId={user.id} />}
 
       {/* ===== ÚLTIMA EVOLUÇÃO ===== */}
       {(p?.weight || latestWeightLog || (bodyImages && bodyImages.length > 0)) && (

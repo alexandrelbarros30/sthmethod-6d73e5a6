@@ -1,6 +1,24 @@
 import { supabase } from "@/integrations/supabase/client";
 import { sendSystemTemplate, type SystemTemplateKey } from "@/lib/system-templates";
 
+// Dispara Web Push em paralelo ao WhatsApp — falha silenciosa.
+const PUSH_MESSAGES: Record<StudentUpdateType, { title: string; body: string; url: string }> = {
+  diet:     { title: "🥗 Nova dieta liberada", body: "Sua dieta foi atualizada. Toque para abrir.", url: "/dashboard/diet" },
+  training: { title: "🏋️ Novo treino liberado", body: "Seu treino foi atualizado. Toque para abrir.", url: "/dashboard/training" },
+  protocol: { title: "💊 Novo protocolo liberado", body: "Seu protocolo foi atualizado. Toque para abrir.", url: "/dashboard/protocol" },
+  plan:     { title: "📋 Plano atualizado", body: "Houve uma atualização no seu plano. Toque para ver.", url: "/dashboard" },
+};
+
+const sendPush = async (userId: string, type: StudentUpdateType) => {
+  try {
+    await supabase.functions.invoke("send-push", {
+      body: { user_id: userId, payload: { ...PUSH_MESSAGES[type], tag: `sth-${type}` } },
+    });
+  } catch (err) {
+    console.warn(`[notifyStudentContentUpdate:push:${type}]`, err);
+  }
+};
+
 export type StudentUpdateType = "diet" | "training" | "protocol" | "plan";
 
 const KEY_MAP: Record<StudentUpdateType, SystemTemplateKey> = {
@@ -95,6 +113,7 @@ export const notifyStudentContentUpdate = async (
   try {
     if (type === "plan") {
       await sendIndividual(userId, type);
+      sendPush(userId, type);
       return;
     }
 
@@ -172,6 +191,18 @@ export const notifyStudentContentUpdate = async (
             batch_started_at: null,
           })
           .eq("user_id", userId);
+        // Push combinado
+        supabase.functions.invoke("send-push", {
+          body: {
+            user_id: userId,
+            payload: {
+              title: "✨ Tudo pronto!",
+              body: "Dieta, treino e protocolo foram liberados. Toque para acessar.",
+              url: "/dashboard",
+              tag: "sth-all-ready",
+            },
+          },
+        }).catch(() => {});
         return;
       }
     }
@@ -185,6 +216,7 @@ export const notifyStudentContentUpdate = async (
         .from("student_content_batches")
         .update({ last_individual_sent: nextMap })
         .eq("user_id", userId);
+      sendPush(userId, type);
     }
   } catch (err) {
     console.warn(`[notifyStudentContentUpdate:${type}] failed`, err);
