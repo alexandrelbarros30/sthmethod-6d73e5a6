@@ -2,6 +2,7 @@
 // Faixa rosa (feminino) / azul (masculino). Upload em ai-training-media.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { buildProgramCoverPrompt } from '../_shared/program-cover-prompt.ts';
 
 function inferGenderFromText(text: string): 'F' | 'M' {
   const t = (text || '').toLowerCase();
@@ -179,17 +180,109 @@ Deno.serve(async (req) => {
 
     console.info('generate-program-cover local render start', { programId, gender, title: prog.title });
 
-    // Caminho estável: gera capa local imediatamente. A chamada de IA estava
-    // estourando o tempo da borda antes de responder ao app.
-    const svg = buildSafeCoverSvg(prog.title, gender);
-    const uploadBytes = new TextEncoder().encode(svg);
-    const contentType = 'image/svg+xml; charset=utf-8';
-    const fileExtension = 'svg';
-    const usedModel = 'safe-svg-fallback';
-    const fallbackDetails = {
-      code: 'LOCAL_COVER_RENDERED',
-      details: 'Capa local aplicada para evitar timeout/falha de rede na geração por IA.',
-    };
+    // 1) Tenta gerar capa fotográfica via Lovable AI Gateway.
+    //    Prioridade: Gemini 3.1 Flash Image (rápido) → GPT Image 2 (qualidade) → SVG local (fallback).
+    const lovableKey = Deno.env.get('LOVABLE_API_KEY') || '';
+    const prompt = buildProgramCoverPrompt(prog.title, gender);
+    let uploadBytes: Uint8Array | null = null;
+    let contentType = 'image/png';
+    let fileExtension: 'png' | 'svg' = 'png';
+    let usedModel = 'none';
+    let fallback = false;
+    let fallbackDetails: { code: string; details: string } | undefined;
+    const attempts: Array<{ model: string; status: number; error?: string }> = [];
+
+    async function tryGemini(): Promise<Uint8Array | null> {
+      const model = 'google/gemini-3.1-flash-image';
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 40000);
+      try {
+        const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+          method: 'POST',
+          signal: ctrl.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'Lovable-API-Key': lovableKey,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            modalities: ['image', 'text'],
+          }),
+        });
+        const txt = await r.text();
+        if (!r.ok) {
+          attempts.push({ model, status: r.status, error: txt.slice(0, 200) });
+          return null;
+        }
+        const data = JSON.parse(txt);
+        const b64 = data?.data?.[0]?.b64_json;
+        if (!b64) { attempts.push({ model, status: r.status, error: 'no_image' }); return null; }
+        usedModel = model;
+        return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      } catch (e) {
+        attempts.push({ model, status: 0, error: String((e as Error)?.message || e) });
+        return null;
+      } finally { clearTimeout(t); }
+    }
+
+    async function tryOpenAI(): Promise<Uint8Array | null> {
+      const model = 'openai/gpt-image-2';
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 45000);
+      try {
+        const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+          method: 'POST',
+          signal: ctrl.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'Lovable-API-Key': lovableKey,
+          },
+          body: JSON.stringify({
+            model,
+            prompt,
+            size: '1024x1024',
+            quality: 'low',
+            n: 1,
+          }),
+        });
+        const txt = await r.text();
+        if (!r.ok) {
+          attempts.push({ model, status: r.status, error: txt.slice(0, 200) });
+          return null;
+        }
+        const data = JSON.parse(txt);
+        const b64 = data?.data?.[0]?.b64_json;
+        if (!b64) { attempts.push({ model, status: r.status, error: 'no_image' }); return null; }
+        usedModel = model;
+        return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      } catch (e) {
+        attempts.push({ model, status: 0, error: String((e as Error)?.message || e) });
+        return null;
+      } finally { clearTimeout(t); }
+    }
+
+    if (lovableKey) {
+      uploadBytes = await tryGemini();
+      if (!uploadBytes) uploadBytes = await tryOpenAI();
+    }
+
+    if (!uploadBytes) {
+      // Fallback local (nunca falha)
+      const svg = buildSafeCoverSvg(prog.title, gender);
+      uploadBytes = new TextEncoder().encode(svg);
+      contentType = 'image/svg+xml; charset=utf-8';
+      fileExtension = 'svg';
+      usedModel = attempts.length ? `${attempts.map((a) => a.model).join(' → ')} → safe-svg-fallback` : 'safe-svg-fallback';
+      fallback = true;
+      fallbackDetails = {
+        code: 'LOCAL_COVER_RENDERED',
+        details: `IA indisponível. Tentativas: ${JSON.stringify(attempts).slice(0, 400)}`,
+      };
+      console.warn('generate-program-cover using local SVG fallback', attempts);
+    } else {
+      console.info('generate-program-cover AI success', { model: usedModel });
+    }
 
     const path = `program-covers/${programId}.${fileExtension}`;
     const { error: upErr } = await admin.storage.from('ai-training-media').upload(path, uploadBytes, { contentType, upsert: true });
@@ -203,7 +296,7 @@ Deno.serve(async (req) => {
     const posterUrl = `${base}?v=${Date.now()}`;
     await admin.from('training_programs').update({ poster_url: posterUrl }).eq('id', programId);
 
-    return jsonResponse({ ok: true, posterUrl, gender, model: usedModel, fallback: true, fallbackDetails });
+    return jsonResponse({ ok: true, posterUrl, gender, model: usedModel, fallback, fallbackDetails, attempts });
   } catch (e: any) {
     console.error('generate-program-cover error', e);
     return jsonResponse({ error: e?.message || 'erro', code: 500, model: 'unknown', when: new Date().toISOString() }, 500);
