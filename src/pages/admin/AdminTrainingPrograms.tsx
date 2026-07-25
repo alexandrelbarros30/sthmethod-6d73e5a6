@@ -72,6 +72,7 @@ const AdminTrainingPrograms = () => {
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [coverError, setCoverError] = useState<ErrorDetails | null>(null);
+  const [generatingCoverId, setGeneratingCoverId] = useState<string | null>(null);
 
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
@@ -407,7 +408,10 @@ const AdminTrainingPrograms = () => {
     }
   };
 
-  const generateCoverWithAi = async (program: any) => {
+  const generateCoverWithAi = async (
+    program: any,
+    onProgress?: (elapsedSec: number) => void,
+  ) => {
     const first = await generateCoverAttempt(program, "openai");
     if (first?.error || !first?.accepted) {
       return first;
@@ -417,6 +421,7 @@ const AdminTrainingPrograms = () => {
     const initialPosterUrl = String(program.poster_url || "");
     for (let attempt = 1; attempt <= 45; attempt++) {
       await new Promise((resolve) => window.setTimeout(resolve, attempt <= 5 ? 2000 : 3000));
+      onProgress?.(Math.round((Date.now() - startedAt) / 1000));
       const { data, error } = await supabase
         .from("training_programs")
         .select("poster_url")
