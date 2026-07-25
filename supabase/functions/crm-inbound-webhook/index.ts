@@ -702,23 +702,13 @@ Deno.serve(async (req) => {
 
       try {
         if (targetProvider === 'zapi') {
-          const c = (zapiCfgRow?.value as any) || {};
-          const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-          const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-          const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-          if (!INSTANCE_ID || !INSTANCE_TOKEN) {
-            error = 'Z-API credentials missing';
-          } else {
-            const resp = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-              body: JSON.stringify({ phone, message }),
-            });
-            data = await resp.json().catch(() => ({}));
-            sent = resp.ok && !data?.error;
-            messageId = data?.messageId || data?.id || data?.zaapId || null;
-            if (!sent) error = data?.error || `Z-API status ${resp.status}`;
-          }
+          // Comercial usa W-API. O provider interno continua "zapi" apenas
+          // para preservar filas/histórico; o envio real sai por send-whatsapp.
+          const result = await admin.functions.invoke('send-whatsapp', { body: { phone, message } });
+          data = result.data;
+          error = result.error || data?.error || data?.data?.error || null;
+          sent = !result.error && (data?.ok || data?.messageId || data?.id);
+          messageId = data?.messageId || data?.id || data?.data?.messageId || null;
         } else {
           const fnName = targetProvider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
           const result = await admin.functions.invoke(fnName, { body: { phone, message } });
