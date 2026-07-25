@@ -14,8 +14,8 @@ export const IntroScene = () => {
       <div style={{ fontSize: 96, fontWeight: 800, color: "#fff", textAlign: "center", transform: `translateY(${interpolate(titleY, [0, 1], [40, 0])}px)`, opacity: titleY, letterSpacing: -3, lineHeight: 1 }}>
         Missão<br /><span style={{ color: "hsl(145 70% 55%)" }}>Evolução</span>
       </div>
-      <div style={{ fontSize: 40, color: "rgba(255,255,255,0.75)", marginTop: 40, textAlign: "center", opacity: subOpacity, maxWidth: 800 }}>
-        3 etapas gamificadas para acompanhar sua evolução
+      <div style={{ fontSize: 38, color: "rgba(255,255,255,0.78)", marginTop: 40, textAlign: "center", opacity: subOpacity, maxWidth: 850, lineHeight: 1.25 }}>
+        3 etapas independentes<br/>Cada uma salva sozinha · +50 XP
       </div>
       <div style={{ display: "flex", gap: 20, marginTop: 60, opacity: badgesOpacity }}>
         {["1", "2", "3"].map((n, i) => (
