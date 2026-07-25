@@ -474,6 +474,8 @@ Deno.serve(async (req) => {
     }
     
     const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || payload?.data?.instanceId || '').trim();
+    const payloadConnectedPhoneRaw = payload?.connectedPhone || payload?.data?.connectedPhone || payload?.owner || payload?.data?.owner || payload?.me?.id || payload?.data?.me?.id || '';
+    const connectedPhoneFromPayload = normalizePhone(payloadConnectedPhoneRaw);
     const [{ data: wapiCfgRow }, { data: wapiSucessoCfgRow }, { data: zapiCfgRow }, { data: wapiComCfgRow }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
@@ -496,11 +498,38 @@ Deno.serve(async (req) => {
       wapi_sucesso: String((wapiSucessoCfgRow?.value as any)?.instance_id || '').trim(),
     };
 
-    let provider = requestedProvider || 'wapi';
+    const normalizeRequestedProvider = (value: string): 'zapi' | 'wapi' | 'wapi_sucesso' | '' => {
+      const normalized = String(value || '').trim().toLowerCase();
+      if (['zapi', 'comercial', 'wapi_comercial', 'commercial'].includes(normalized)) return 'zapi';
+      if (['wapi_sucesso', 'sucesso', 'success'].includes(normalized)) return 'wapi_sucesso';
+      if (['wapi', 'nutri', 'nutricao', 'nutrição'].includes(normalized)) return 'wapi';
+      return '';
+    };
+    const commercialPhones = new Set(['5521998496289', '21998496289', '2198496289']);
+    const nutriPhones = new Set(['5521998984153', '21998984153', '2198984153']);
+    const phoneBelongsTo = (phoneValue: string, knownPhones: Set<string>) => {
+      if (!phoneValue) return false;
+      return phoneCandidates(phoneValue).some((candidate) => knownPhones.has(candidate));
+    };
+
+    let provider = normalizeRequestedProvider(requestedProvider) || 'wapi';
+    let matchedProviderByInstance = false;
     if (payloadInstance) {
-      if (payloadInstance === configuredInstances.zapi) provider = 'zapi';
-      else if (payloadInstance === configuredInstances.wapi_sucesso) provider = 'wapi_sucesso';
-      else if (payloadInstance === configuredInstances.wapi) provider = 'wapi';
+      if (payloadInstance === configuredInstances.zapi) {
+        provider = 'zapi';
+        matchedProviderByInstance = true;
+      } else if (payloadInstance === configuredInstances.wapi_sucesso) {
+        provider = 'wapi_sucesso';
+        matchedProviderByInstance = true;
+      } else if (payloadInstance === configuredInstances.wapi) {
+        provider = 'wapi';
+        matchedProviderByInstance = true;
+      }
+    }
+    if (!matchedProviderByInstance && phoneBelongsTo(connectedPhoneFromPayload, commercialPhones)) {
+      provider = 'zapi';
+    } else if (phoneBelongsTo(connectedPhoneFromPayload, nutriPhones)) {
+      provider = 'wapi';
     }
 
     console.log(`Incoming webhook from ${provider}:`, JSON.stringify(payload));
@@ -519,7 +548,7 @@ Deno.serve(async (req) => {
     const phone = normalizePhone(phoneRaw);
     const waId = String(phoneRaw || '').split('@')[0]; // Usamos o ID puramente numérico como waId
     
-    const connectedPhone = normalizePhone(payload?.connectedPhone || payload?.data?.connectedPhone || '');
+    const connectedPhone = connectedPhoneFromPayload;
     // Detecta áudio em múltiplos formatos: Z-API (payload.audio.audioUrl),
     // W-API/Baileys (payload.msgContent.audioMessage.URL) e fallbacks.
     const audioMsg = payload?.msgContent?.audioMessage || payload?.message?.audioMessage || null;
@@ -1409,6 +1438,12 @@ Deno.serve(async (req) => {
         upd.pipeline_stage = identifiedAs === 'lead' ? 'lead_nutri_bloqueado' : 'renovacao_pendente';
       }
       
+      const channelChanged = conv.provider && conv.provider !== storedProvider;
+      const flowState = String(conv.flow_state || '');
+      const staleNutriFlowOnCommercial = storedProvider === 'zapi' && (flowState === 'nutri_main' || flowState.startsWith('nutri_'));
+      const staleCommercialFlowOnNutri = storedProvider === 'wapi' && (flowState === 'lead_main_menu' || flowState.startsWith('comercial_') || flowState.startsWith('com_'));
+      const staleSucessoFlowOnOtherChannel = storedProvider !== 'wapi_sucesso' && flowState === 'sucesso_main_menu';
+
       if (isNewSession) { 
 
         upd.session_started_at = now.toISOString(); 
@@ -1426,6 +1461,11 @@ Deno.serve(async (req) => {
       } else if (isHumanActive) {
         // Se humano está ativo, garantimos que human_handoff permaneça true mesmo se houver nova mensagem
         upd.human_handoff = true;
+      } else if (channelChanged && (staleNutriFlowOnCommercial || staleCommercialFlowOnNutri || staleSucessoFlowOnOtherChannel)) {
+        // Recupera conversas que foram roteadas pelo canal errado antes da correção:
+        // quando o WhatsApp conectado muda de canal, o fluxo antigo não pode continuar.
+        upd.flow_state = null;
+        upd.flow_context = {};
       }
 
       if (displayName) upd.display_name = displayName;
