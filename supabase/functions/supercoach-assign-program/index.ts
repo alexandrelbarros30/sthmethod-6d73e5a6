@@ -40,6 +40,27 @@ async function fetchCustomers(headers: Record<string, string>): Promise<any[]> {
   return Array.isArray(listJson) ? listJson : (listJson?.data || listJson?.customers || [])
 }
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function verifyAssignment(params: {
+  headers: Record<string, string>
+  email?: string | null
+  name?: string | null
+  scProgramId: number
+  shouldHave: boolean
+}) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await wait(700)
+    const verifyList = await fetchCustomers(params.headers)
+    const verified = findCustomer(verifyList, params.email, params.name)
+    const verifiedPrograms: any[] = Array.isArray(verified?.programs) ? verified.programs : []
+    const verifiedIds = new Set(verifiedPrograms.map((p: any) => Number(p?.program_id ?? p?.id)).filter(Number.isFinite))
+    const confirmed = verifiedIds.has(params.scProgramId)
+    if (confirmed === params.shouldHave) return true
+  }
+  return false
+}
+
 async function scLogin(): Promise<string> {
   const email = Deno.env.get('SUPERCOACH_EMAIL')
   const password = Deno.env.get('SUPERCOACH_PASSWORD')
@@ -163,13 +184,18 @@ Deno.serve(async (req) => {
     const updText = await upd.text()
     if (!upd.ok) throw new Error(`PUT customer falhou (${upd.status}): ${updText.slice(0, 220)}`)
 
-    const verifyList = await fetchCustomers(scHdr)
-    const verified = findCustomer(verifyList, profile.email, profile.full_name)
-    const verifiedPrograms: any[] = Array.isArray(verified?.programs) ? verified.programs : []
-    const verifiedIds = new Set(verifiedPrograms.map((p: any) => Number(p?.program_id ?? p?.id)).filter(Number.isFinite))
-    const confirmed = verifiedIds.has(scProgramId)
-    if (action === 'assign' && !confirmed) throw new Error('ST Coach não confirmou a atribuição do programa')
-    if (action === 'unassign' && confirmed) throw new Error('ST Coach não confirmou a remoção do programa')
+    const confirmed = await verifyAssignment({
+      headers: scHdr,
+      email: profile.email,
+      name: profile.full_name,
+      scProgramId,
+      shouldHave: action === 'assign',
+    })
+    if (!confirmed) {
+      throw new Error(action === 'assign'
+        ? 'ST Coach não confirmou a atribuição do programa'
+        : 'ST Coach não confirmou a remoção do programa')
+    }
 
     return new Response(JSON.stringify({
       ok: true, status: action === 'assign' ? 'assigned' : 'unassigned',
