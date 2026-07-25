@@ -347,6 +347,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
   };
 
   const pushToSuperCoach = async (templateId: string) => {
+    // helper: invoke edge fn with transport fallback (raw fetch) to bypass CORS/network flakes
     setPushingId(templateId);
     try {
       const exCount = (templateExercisesMap?.[templateId]?.length ?? 0);
