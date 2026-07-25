@@ -4597,6 +4597,78 @@ export type Database = {
         }
         Relationships: []
       }
+      push_campaigns: {
+        Row: {
+          audience_type: string
+          audience_user_ids: string[]
+          body: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          error_message: string | null
+          failed_count: number
+          id: string
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          subscriptions_reached: number
+          tag: string | null
+          target_count: number
+          title: string
+          updated_at: string
+          url: string | null
+          use_variables: boolean
+        }
+        Insert: {
+          audience_type: string
+          audience_user_ids?: string[]
+          body?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          created_by_name?: string | null
+          error_message?: string | null
+          failed_count?: number
+          id?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          subscriptions_reached?: number
+          tag?: string | null
+          target_count?: number
+          title: string
+          updated_at?: string
+          url?: string | null
+          use_variables?: boolean
+        }
+        Update: {
+          audience_type?: string
+          audience_user_ids?: string[]
+          body?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          error_message?: string | null
+          failed_count?: number
+          id?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          subscriptions_reached?: number
+          tag?: string | null
+          target_count?: number
+          title?: string
+          updated_at?: string
+          url?: string | null
+          use_variables?: boolean
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
