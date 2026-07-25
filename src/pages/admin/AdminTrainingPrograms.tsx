@@ -58,116 +58,6 @@ interface ProgramForm {
 
 const emptyForm: ProgramForm = { title: "", details: "", objective: "general", difficulty: "intermediate", status: "published", poster_url: "", video_url: "", expires_at: "" };
 
-function escapeSvgText(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function inferCoverGender(program: { title?: string | null; details?: string | null }) {
-  const text = `${program.title || ""} ${program.details || ""}`.toLowerCase();
-  const femaleTerms = ["femin", "mulher", "glute", "glúte", "posterior", "lower body", "booty", "curves"];
-  return femaleTerms.some((term) => text.includes(term)) ? "F" : "M";
-}
-
-function buildTitleTspans(title: string) {
-  const words = (title || "STH METHOD TRAINING").toUpperCase().split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let current = "";
-  for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
-    if (next.length > 24 && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = next;
-    }
-  }
-  if (current) lines.push(current);
-  return lines.slice(0, 2).map((line, index) => (
-    `<tspan x="204" dy="${index === 0 ? 0 : 42}">${escapeSvgText(line)}</tspan>`
-  )).join("");
-}
-
-function buildLocalProgramCoverDataUrl(program: { title?: string | null; details?: string | null }) {
-  const gender = inferCoverGender(program);
-  const isFemale = gender === "F";
-  const accent = isFemale ? "#ff5fa2" : "#2388ff";
-  const secondary = isFemale ? "#ffb7d6" : "#5eead4";
-  const skin = isFemale ? "#f0b08f" : "#c98558";
-  const apparel = isFemale ? "#ff5fa2" : "#1b72ff";
-  const muscle = isFemale ? "#f7c3a8" : "#d99a6d";
-  const title = buildTitleTspans(program.title || "STH METHOD TRAINING");
-  const athlete = isFemale
-    ? `
-  <g transform="translate(0 6)">
-    <ellipse cx="512" cy="612" rx="245" ry="46" fill="#000000" opacity="0.42" filter="url(#soft)"/>
-    <path d="M271 625 C356 528 476 492 594 518 C681 538 744 585 795 662" fill="none" stroke="${secondary}" stroke-width="20" stroke-linecap="round" opacity="0.28"/>
-    <path d="M326 657 L421 574 L543 620 L493 684 L377 710 Z" fill="${apparel}" opacity="0.98" stroke="#ffffff" stroke-opacity="0.18" stroke-width="4"/>
-    <path d="M420 574 C454 520 514 492 577 508 C630 522 661 558 670 602" fill="none" stroke="${muscle}" stroke-width="62" stroke-linecap="round"/>
-    <path d="M566 507 C635 481 698 505 736 560" fill="none" stroke="${skin}" stroke-width="44" stroke-linecap="round"/>
-    <path d="M329 657 C270 682 220 674 174 631" fill="none" stroke="${skin}" stroke-width="46" stroke-linecap="round"/>
-    <path d="M493 684 C572 742 638 762 731 735" fill="none" stroke="${skin}" stroke-width="52" stroke-linecap="round"/>
-    <path d="M731 735 L831 774" fill="none" stroke="${skin}" stroke-width="42" stroke-linecap="round"/>
-    <path d="M176 631 L116 603" fill="none" stroke="${skin}" stroke-width="38" stroke-linecap="round"/>
-    <circle cx="756" cy="569" r="55" fill="${skin}" stroke="${secondary}" stroke-width="7"/>
-    <path d="M726 526 C767 486 832 511 828 574 C807 547 781 537 743 545 Z" fill="#151515"/>
-    <path d="M309 669 L515 572 L806 690" fill="none" stroke="${accent}" stroke-width="11" stroke-linecap="round" opacity="0.9"/>
-    <circle cx="111" cy="603" r="20" fill="#101010" stroke="${accent}" stroke-width="8"/>
-    <circle cx="838" cy="777" r="20" fill="#101010" stroke="${accent}" stroke-width="8"/>
-  </g>`
-    : `
-  <g transform="translate(0 -4)">
-    <ellipse cx="512" cy="662" rx="238" ry="50" fill="#000000" opacity="0.44" filter="url(#soft)"/>
-    <path d="M262 506 L371 556 M762 506 L653 556" stroke="${secondary}" stroke-width="36" stroke-linecap="round" opacity="0.9"/>
-    <circle cx="244" cy="498" r="34" fill="#0b0b0b" stroke="${accent}" stroke-width="11"/>
-    <circle cx="780" cy="498" r="34" fill="#0b0b0b" stroke="${accent}" stroke-width="11"/>
-    <circle cx="512" cy="260" r="70" fill="${skin}" stroke="${secondary}" stroke-width="8"/>
-    <path d="M455 220 C490 171 564 179 588 236 C550 222 505 225 459 251 Z" fill="#161616"/>
-    <path d="M409 350 C459 313 566 313 616 350 L664 577 C602 632 423 632 360 577 Z" fill="${apparel}" stroke="#ffffff" stroke-opacity="0.16" stroke-width="5"/>
-    <path d="M401 370 C326 394 283 443 262 506" fill="none" stroke="${muscle}" stroke-width="58" stroke-linecap="round"/>
-    <path d="M623 370 C698 394 741 443 762 506" fill="none" stroke="${muscle}" stroke-width="58" stroke-linecap="round"/>
-    <path d="M430 594 L374 756" stroke="${skin}" stroke-width="56" stroke-linecap="round"/>
-    <path d="M594 594 L650 756" stroke="${skin}" stroke-width="56" stroke-linecap="round"/>
-    <path d="M374 756 L313 790" stroke="${accent}" stroke-width="36" stroke-linecap="round"/>
-    <path d="M650 756 L711 790" stroke="${accent}" stroke-width="36" stroke-linecap="round"/>
-    <path d="M349 468 C427 417 597 417 675 468" fill="none" stroke="${secondary}" stroke-width="10" stroke-linecap="round" opacity="0.74"/>
-  </g>`;
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <radialGradient id="glow" cx="50%" cy="34%" r="62%">
-      <stop offset="0%" stop-color="${accent}" stop-opacity="0.5"/>
-      <stop offset="44%" stop-color="${secondary}" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="band" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#000000" stop-opacity="0.98"/>
-      <stop offset="70%" stop-color="#050505" stop-opacity="0.94"/>
-      <stop offset="100%" stop-color="${accent}" stop-opacity="0.58"/>
-    </linearGradient>
-    <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
-    <filter id="hardGlow"><feGaussianBlur stdDeviation="7"/></filter>
-  </defs>
-  <rect width="1024" height="1024" fill="#000000"/>
-  <rect width="1024" height="1024" fill="url(#glow)"/>
-  <ellipse cx="512" cy="444" rx="285" ry="335" fill="${accent}" opacity="0.14" filter="url(#soft)"/>
-  <path d="M176 232 C294 136 725 128 854 252" fill="none" stroke="${accent}" stroke-width="12" stroke-linecap="round" opacity="0.3" filter="url(#hardGlow)"/>
-  <text x="512" y="116" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="900" fill="${secondary}" letter-spacing="6">${isFemale ? "FEMALE PERFORMANCE" : "MALE PERFORMANCE"}</text>
-  ${athlete}
-  <rect y="852" width="1024" height="172" fill="url(#band)"/>
-  <rect y="852" width="1024" height="8" fill="${accent}" opacity="0.88"/>
-  <path d="M80 886 L126 868 L172 886 L164 948 L126 970 L88 948 Z" fill="#050505" stroke="#22c26a" stroke-width="8"/>
-  <text x="126" y="930" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="900" fill="#22c26a">STH</text>
-  <text x="204" y="912" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="900" fill="#ffffff" letter-spacing="3">METHOD</text>
-  <text x="204" y="954" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="900" fill="#ffffff">${title}</text>
-</svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
-
 const AdminTrainingPrograms = () => {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
@@ -476,43 +366,22 @@ const AdminTrainingPrograms = () => {
   const getObjectiveLabel = (v: string) => OBJECTIVES.find(o => o.value === v)?.label || v;
   const getDifficultyInfo = (v: string) => DIFFICULTIES.find(d => d.value === v) || DIFFICULTIES[1];
 
-  const applyLocalProgramCover = async (program: any) => {
-    const posterUrl = buildLocalProgramCoverDataUrl(program);
-    const { error } = await supabase
-      .from("training_programs")
-      .update({ poster_url: posterUrl, updated_at: new Date().toISOString() })
-      .eq("id", program.id);
-    if (error) throw error;
-    return posterUrl;
-  };
-
-  const generateCoverWithLocalFallback = async (program: any) => {
-    try {
-      const invokePromise = supabase.functions.invoke("generate-program-cover", { body: { programId: program.id } });
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        // IA (Gemini + OpenAI) pode levar até ~90s; damos folga para 120s
-        window.setTimeout(() => reject(new Error("TIMEOUT_EDGE_FUNCTION")), 120000);
-      });
-      const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
-      const body: any = data || {};
-      if (error || body?.error) throw error || new Error(body.error);
-      return { data: body, usedLocalFallback: false };
-    } catch (edgeError: any) {
-      const posterUrl = await applyLocalProgramCover(program);
+  const generateCoverWithAi = async (program: any) => {
+    const invokePromise = supabase.functions.invoke("generate-program-cover", { body: { programId: program.id } });
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      window.setTimeout(() => reject(new Error("TIMEOUT_AI_COVER_GENERATION_180S")), 180000);
+    });
+    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
+    const body: any = data || {};
+    if (error) {
       return {
-        data: {
-          ok: true,
-          posterUrl,
-          model: "safe-svg-fallback",
-          fallback: true,
-          fallbackDetails: {
-            code: "CLIENT_LOCAL_COVER_RENDERED",
-            edgeError: edgeError?.message || String(edgeError),
-          },
-        },
-        usedLocalFallback: true,
+        error: error.message || "Falha ao chamar a função de capa.",
+        code: "EDGE_INVOKE_FAILED",
+        model: body?.model || "edge-function",
+        details: error,
       };
     }
+    return body;
   };
 
   const selectedProgram = (programs || []).find((p: any) => p.id === selectedProgramId);
@@ -609,7 +478,7 @@ const AdminTrainingPrograms = () => {
                   for (let i = 0; i < list.length; i++) {
                     const p = list[i];
                     try {
-                      const { data } = await generateCoverWithLocalFallback(p);
+                      const data = await generateCoverWithAi(p);
                       if ((data as any)?.error) throw new Error((data as any)?.error);
                       ok++;
                     } catch (e) {
@@ -710,9 +579,8 @@ const AdminTrainingPrograms = () => {
                       </AlertDialog>
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
                         try {
-                          toast.info("Gerando capa...");
-                          const { data, usedLocalFallback } = await generateCoverWithLocalFallback(p);
-                          const body: any = data || {};
+                          toast.info("Gerando capa com IA...");
+                          const body: any = await generateCoverWithAi(p);
                           if (body?.error) {
                             setCoverError({
                               title: "Falha ao gerar capa",
@@ -725,7 +593,7 @@ const AdminTrainingPrograms = () => {
                             toast.error("Falha ao gerar capa — veja detalhes");
                             return;
                           }
-                          toast.success(usedLocalFallback ? "Capa aplicada em modo seguro." : `Capa gerada! (${body.model || "IA"})`);
+                          toast.success(`Capa gerada com IA! (${body.model || "IA"})`);
                           queryClient.invalidateQueries({ queryKey: ["training-programs"] });
                         } catch (e: any) {
                           setCoverError({
