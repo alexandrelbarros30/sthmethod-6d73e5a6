@@ -382,9 +382,38 @@ const AdminTrainingPrograms = () => {
     }
 
     try {
-      const { data: body, error } = await supabase.functions.invoke("generate-program-cover", {
-        body: { programId: program.id, provider, async: true },
-      });
+      let body: any = null;
+      let error: any = null;
+      try {
+        const res = await supabase.functions.invoke("generate-program-cover", {
+          body: { programId: program.id, provider, async: true },
+        });
+        body = res.data;
+        error = res.error;
+      } catch (invokeErr: any) {
+        error = invokeErr;
+      }
+
+      // Fallback: direct fetch se invoke falhar no transporte (FunctionsFetchError)
+      if (error && !body) {
+        try {
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-program-cover`;
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({ programId: program.id, provider, async: true }),
+          });
+          const text = await resp.text();
+          try { body = JSON.parse(text); } catch { body = { raw: text }; }
+          if (resp.ok) error = null;
+        } catch (fetchErr: any) {
+          error = fetchErr;
+        }
+      }
 
       if (error || body?.error) {
         return {
