@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { normalizeSearch } from "@/lib/utils";
+import { invokeSuperCoachEdge } from "@/lib/supercoach-edge";
 import { toast } from "sonner";
 
 const AdminTraining = () => {
@@ -134,13 +135,11 @@ const AdminTraining = () => {
         .eq("user_id", userId)
         .in("template_id", tIds);
       if (error) throw error;
-      // Espelha remoção no ST Coach (best-effort)
+      // Espelha remoção no ST Coach com transporte resiliente.
       try {
-        await supabase.functions.invoke("supercoach-assign-program", {
-          body: { userId, programId, action: "unassign" },
-        });
+        await invokeSuperCoachEdge("supercoach-assign-program", { userId, programId, action: "unassign" });
       } catch (e) {
-        console.warn("[unassign ST Coach]", e);
+        toast.warning("Removido no STH; ST Coach falhou: " + asError(e));
       }
     },
     onSuccess: () => {
@@ -452,5 +451,8 @@ const AdminTraining = () => {
     </DashboardLayout>
   );
 };
+
+const asError = (error: unknown) =>
+  error instanceof Error ? error.message : String(error || "erro");
 
 export default AdminTraining;

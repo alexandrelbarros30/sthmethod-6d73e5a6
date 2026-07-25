@@ -17,6 +17,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 import { normalizeSearch } from "@/lib/utils";
+import { invokeSuperCoachEdge } from "@/lib/supercoach-edge";
 import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
 import ImportFromSuperCoachDialog from "@/components/admin/ImportFromSuperCoachDialog";
 
@@ -161,12 +162,10 @@ const AdminWorkoutTemplates = () => {
           .eq("id", templateId)
           .maybeSingle();
         if (tpl?.program_id) {
-          await supabase.functions.invoke("supercoach-assign-program", {
-            body: { userId, programId: tpl.program_id, action: "assign" },
-          });
+          await invokeSuperCoachEdge("supercoach-assign-program", { userId, programId: tpl.program_id, action: "assign" });
         }
       } catch (e) {
-        console.warn("[assign ST Coach]", e);
+        toast.warning("Atribuído no STH; ST Coach falhou: " + (e instanceof Error ? e.message : "erro"));
       }
     },
     onSuccess: () => {
