@@ -47,6 +47,7 @@ import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import StudentImageConsentCard from "@/components/admin/StudentImageConsentCard";
 import StudentImageAuthSummary from "@/components/admin/StudentImageAuthSummary";
+import SendPushDialog from "@/components/admin/SendPushDialog";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import { normalizePhone } from "@/lib/phone";
 import { useAdminReauth, logAdminAccess } from "@/hooks/useAdminReauth";
@@ -98,6 +99,7 @@ const AdminStudents = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [pushOpen, setPushOpen] = useState(false);
   const [notesHistoryOpen, setNotesHistoryOpen] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(true);
   const [imagesOpen, setImagesOpen] = useState(false);
@@ -1394,6 +1396,16 @@ const AdminStudents = () => {
                 {renderStudentFormFields(true)}
               </DialogContent>
             </Dialog>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => setPushOpen(true)}>
+              <Sparkles className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Enviar push</span>
+              <span className="sm:hidden">Push</span>
+            </Button>
+            <SendPushDialog
+              open={pushOpen}
+              onOpenChange={setPushOpen}
+              students={(students || []).map((s: any) => ({ user_id: s.user_id, full_name: s.full_name, status: s.status }))}
+            />
             </div>
           </div>
           {/* Search Filter */}
