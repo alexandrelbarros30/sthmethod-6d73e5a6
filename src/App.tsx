@@ -7,6 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { AdminReauthProvider } from "@/hooks/useAdminReauth";
+import FriendlyErrorBoundary from "@/components/system/FriendlyErrorBoundary";
+import { friendlyMessage } from "@/lib/friendly-errors";
+import { toast as sonnerToast } from "sonner";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -211,6 +214,7 @@ const App = () => (
           <PullToRefresh />
           <NativeUpdateBanner />
           <LaunchAppPopup scope="site" />
+          <FriendlyErrorBoundary>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
