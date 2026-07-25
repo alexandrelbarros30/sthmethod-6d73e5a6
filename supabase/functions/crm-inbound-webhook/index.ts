@@ -1063,25 +1063,9 @@ Deno.serve(async (req) => {
           originalMessage: `[${blockedMediaKind} bloqueado]`,
           messageSent: !recentBlock,
         });
-        // Bloqueio REAL no WhatsApp Nutri (W-API) — mídia de inativo.
-        try {
-          await admin.functions.invoke('wapi-contact-block', {
-            body: {
-              phone,
-              action: 'block',
-              reason: nutriBlockTemplate?.reason || `nutri_block:${mediaIdentifiedAs}:media`,
-              metadata: {
-                identified_as: mediaIdentifiedAs,
-                entry: 'media',
-                media_kind: blockedMediaKind,
-                commercial_conversation_id: convRow.id,
-                rule: 'nutri_channel_active_only',
-              },
-            },
-          });
-        } catch (e) {
-          console.error('wapi-contact-block block (media) failed', e);
-        }
+          // Não bloquear o contato diretamente na W-API. O bloqueio real impede
+          // novas mensagens de chegarem ao webhook e deixa a STHIA silenciosa.
+          // A restrição do Nutri continua aplicada pelo redirecionamento ao Comercial.
       }
 
       return await finish({ ok: true, blocked: true, reason: 'media_not_allowed', media_kind: blockedMediaKind });
@@ -1110,17 +1094,7 @@ Deno.serve(async (req) => {
           
           // Enviar mensagem de despedida
           if (provider === 'zapi') {
-            const c = (zapiCfgRow?.value as any) || {};
-            const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-            const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-            const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-            if (INSTANCE_ID && INSTANCE_TOKEN) {
-              await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-                body: JSON.stringify({ phone, message: farewellMsg }),
-              });
-            }
+            await admin.functions.invoke('send-whatsapp', { body: { phone, message: farewellMsg } });
           } else {
             const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
             await admin.functions.invoke(fnName, { body: { phone, message: farewellMsg } });
@@ -1148,17 +1122,7 @@ Deno.serve(async (req) => {
         const { data: conv } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
 
         if (provider === 'zapi') {
-          const c = (zapiCfgRow?.value as any) || {};
-          const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-          const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-          const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-          if (INSTANCE_ID && INSTANCE_TOKEN) {
-            await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-              body: JSON.stringify({ phone, message: optOutMsg }),
-            });
-          }
+          await admin.functions.invoke('send-whatsapp', { body: { phone, message: optOutMsg } });
         } else {
           const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
           await admin.functions.invoke(fnName, { body: { phone, message: optOutMsg } });
@@ -1929,26 +1893,8 @@ Gere a mensagem final agora.`;
           },
         });
 
-        // Bloqueio REAL do contato no WhatsApp da linha "Fale com o Nutri" (W-API).
-        // Impede que futuras mensagens do inativo cheguem até o dispositivo.
-        // Auto-desbloqueio ocorre quando ele voltar a ser aluno ativo.
-        try {
-          await admin.functions.invoke('wapi-contact-block', {
-            body: {
-              phone,
-              action: 'block',
-              reason: nutriBlockTpl.reason,
-              metadata: {
-                identified_as: identifiedAs,
-                entry: 'text',
-                commercial_conversation_id: conv.id,
-                rule: 'nutri_channel_active_only',
-              },
-            },
-          });
-        } catch (e) {
-          console.error('wapi-contact-block block failed', e);
-        }
+        // Não bloquear o contato diretamente na W-API. O redirecionamento para
+        // Comercial continua ativo, mas futuras mensagens ainda chegam ao webhook.
 
         autoReply = {
           sent: r.sent,
