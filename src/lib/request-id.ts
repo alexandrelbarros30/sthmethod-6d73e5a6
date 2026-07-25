@@ -70,8 +70,15 @@ export function installRequestIdInterceptor() {
         const rid = newRequestId();
         setLastRequestId(rid);
         const headers = new Headers(init?.headers || (input as Request).headers);
-        if (!headers.has("X-Request-Id")) headers.set("X-Request-Id", rid);
-        if (!headers.has("X-Client-Session")) headers.set("X-Client-Session", getSessionId());
+        const contentType = headers.get("Content-Type") || "";
+        const isSimpleCoverFallback =
+          /\/functions\/v1\/generate-program-cover/i.test(url) &&
+          /^text\/plain/i.test(contentType);
+
+        if (!isSimpleCoverFallback) {
+          if (!headers.has("X-Request-Id")) headers.set("X-Request-Id", rid);
+          if (!headers.has("X-Client-Session")) headers.set("X-Client-Session", getSessionId());
+        }
         init = { ...(init || {}), headers };
       }
     } catch {
