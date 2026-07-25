@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TrendingUp, Scale, Camera, ChevronDown, ChevronUp, Sparkles, Trophy, CheckCircle2, Activity, MessageCircle, HelpCircle } from "lucide-react";
+import { Target, Info, Zap } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
