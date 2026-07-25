@@ -43,13 +43,41 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [search, setSearch] = useState("");
 
+  const invokeImportEdge = async (payload: Record<string, unknown>) => {
+    let lastError: any = null;
+    try {
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: payload });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as any;
+    } catch (err) {
+      lastError = err;
+    }
+
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supercoach-import-workout`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify(token ? { ...payload, accessToken: token } : payload),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { data = { error: text }; }
+      if (!res.ok || data?.error || data?.ok === false) throw new Error(data?.error || `Falha HTTP ${res.status}`);
+      return data;
+    } catch (err) {
+      throw err || lastError || new Error("Falha ao enviar requisição para a função de importação");
+    }
+  };
+
   const loadPrograms = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-programs" } });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      setPrograms((data as any)?.programs || []);
+      const data = await invokeImportEdge({ action: "list-programs" });
+      setPrograms(data?.programs || []);
       setStep("programs");
     } catch (e: any) {
       toast.error(e.message || "Erro ao carregar programas");
@@ -60,10 +88,8 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     setLoading(true);
     setSelectedProgram(p);
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-trainings", programId: p.id } });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      setTrainings((data as any)?.trainings || []);
+      const data = await invokeImportEdge({ action: "list-trainings", programId: p.id });
+      setTrainings(data?.trainings || []);
       setStep("trainings");
     } catch (e: any) {
       toast.error(e.message || "Erro ao carregar treinos");
@@ -153,12 +179,8 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
   };
 
   const fetchTrainingExercises = async (p: Program, t: Training): Promise<any[]> => {
-    const { data: det, error: detailsError } = await supabase.functions.invoke("supercoach-import-workout", {
-      body: { action: "get-training-details", programId: p.id, trainingId: t.id },
-    });
-    if (detailsError) throw detailsError;
-    if ((det as any)?.error) throw new Error((det as any).error);
-    const fullExercises: any[] = (det as any)?.exercises || [];
+    const det = await invokeImportEdge({ action: "get-training-details", programId: p.id, trainingId: t.id });
+    const fullExercises: any[] = det?.exercises || [];
     const source = fullExercises.length > 0 ? fullExercises : (t.exercises || []);
     if (!source.length) throw new Error(`Sem exercícios retornados para ${t.name}`);
     return source;
@@ -256,19 +278,15 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     mutationFn: async (t: Training) => {
       if (!user) throw new Error("Sem sessão");
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
-        body: {
-          action: "import-training",
-          programId: selectedProgram.id,
-          program: selectedProgram,
-          training: t,
-          localProgramId: programId,
-        },
+      const data = await invokeImportEdge({
+        action: "import-training",
+        programId: selectedProgram.id,
+        program: selectedProgram,
+        training: t,
+        localProgramId: programId,
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      if ((data as any)?.ok === false) throw new Error((data as any)?.failures?.[0]?.error || "Importação falhou");
-      return { count: (data as any)?.exercises || 0, matched: (data as any)?.exercises || 0 };
+      if (data?.ok === false) throw new Error(data?.failures?.[0]?.error || "Importação falhou");
+      return { count: data?.exercises || 0, matched: data?.exercises || 0 };
     },
     onSuccess: (r) => {
       toast.success(`Importado! ${r.count} exercícios (${r.matched} com vídeo do SuperCoach)`);
@@ -286,14 +304,10 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
       let ok = 0, fail = 0, totalEx = 0;
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
       setBulkProgress({ done: 0, total: list.length });
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
-        body: { action: "import-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      ok = (data as any)?.trainings || 0;
-      fail = ((data as any)?.failures || []).length;
-      totalEx = (data as any)?.exercises || 0;
+      const data = await invokeImportEdge({ action: "import-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId });
+      ok = data?.trainings || 0;
+      fail = (data?.failures || []).length;
+      totalEx = data?.exercises || 0;
       const totalImported = Math.max(list.length, ok + fail);
       setBulkProgress({ done: totalImported, total: totalImported });
       return { ok, fail, totalEx, total: totalImported };
@@ -311,14 +325,10 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
       if (!user) throw new Error("Sem sessão");
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
       setBulkProgress({ done: 0, total: Math.max(filteredTrainings.length, trainings.length, 1) });
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
-        body: { action: "repair-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const ok = (data as any)?.trainings || 0;
-      const fail = ((data as any)?.failures || []).length;
-      const totalEx = (data as any)?.exercises || 0;
+      const data = await invokeImportEdge({ action: "repair-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId });
+      const ok = data?.trainings || 0;
+      const fail = (data?.failures || []).length;
+      const totalEx = data?.exercises || 0;
       const totalImported = Math.max(ok + fail, 1);
       setBulkProgress({ done: totalImported, total: totalImported });
       return { ok, fail, totalEx };
@@ -342,14 +352,10 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
         const p = list[pi];
         setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         try {
-          const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
-            body: { action: "import-program", programId: p.id, program: p, localProgramId: programId },
-          });
-          if (error) throw error;
-          if ((data as any)?.error) throw new Error((data as any).error);
-          totalOk += (data as any)?.trainings || 0;
-          totalEx += (data as any)?.exercises || 0;
-          totalFail += ((data as any)?.failures || []).length;
+          const data = await invokeImportEdge({ action: "import-program", programId: p.id, program: p, localProgramId: programId });
+          totalOk += data?.trainings || 0;
+          totalEx += data?.exercises || 0;
+          totalFail += (data?.failures || []).length;
           setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         } catch (err: any) {
           console.error("[import-everything] programa falhou", p.name, err);

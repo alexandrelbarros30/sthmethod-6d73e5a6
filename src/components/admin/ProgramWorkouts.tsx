@@ -173,7 +173,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
               </div>
               {exs.map((ex: any, i: number) => {
                 const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
-                const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: lib?.image_url });
+                const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: ex.image_url || lib?.image_url });
                 const prev = i > 0 ? exs[i - 1] : null;
                 const next = i < exs.length - 1 ? exs[i + 1] : null;
                 const linkedTop = prev && ex.group_id && prev.group_id === ex.group_id;
@@ -205,7 +205,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-foreground truncate">{ex.custom_name || lib?.name || "Sem nome"}</span>
-                        {(ex.video_url || lib?.video_url || lib?.image_url) && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+                        {(ex.video_url || ex.image_url || lib?.video_url || lib?.image_url) && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
                         {ex.group_name && (
                           <Badge
                             variant="outline"
@@ -226,7 +226,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                     {media && (
                       <ExerciseMediaPreview
                         videoUrl={ex.video_url || lib?.video_url}
-                        imageUrl={lib?.image_url}
+                        imageUrl={ex.image_url || lib?.image_url}
                         alt={ex.custom_name || lib?.name || "Exercício"}
                         mode="player"
                         className="col-span-3 w-full aspect-video sm:col-span-1"
@@ -608,7 +608,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
             exercise_id: r.exercise_id || null,
             custom_name: r.custom_name, custom_description: r.custom_description,
             sets: r.sets, reps: r.reps, rest_interval: r.rest_interval,
-            load_suggestion: r.load_suggestion, video_url: r.video_url, sort_order: i,
+            load_suggestion: r.load_suggestion, video_url: r.video_url, image_url: r.image_url || null, sort_order: i,
             group_id: r.group_id || null,
             group_name: r.group_name || "",
             group_color: r.group_color || "",
@@ -663,7 +663,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
             template_id: newW.id, exercise_id: e.exercise_id,
             custom_name: e.custom_name, custom_description: e.custom_description,
             sets: e.sets, reps: e.reps, rest_interval: e.rest_interval,
-            load_suggestion: e.load_suggestion, video_url: e.video_url, sort_order: e.sort_order,
+            load_suggestion: e.load_suggestion, video_url: e.video_url, image_url: e.image_url || null, sort_order: e.sort_order,
             group_id: e.group_id || null, group_name: e.group_name || "", group_color: e.group_color || "",
           }))
         );
@@ -723,7 +723,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
       id: e.id, exercise_id: e.exercise_id, custom_name: e.custom_name || "",
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
       rest_interval: e.rest_interval || "", load_suggestion: e.load_suggestion || "",
-      video_url: e.video_url || "", sort_order: e.sort_order, _uid: e.id || crypto.randomUUID(),
+      video_url: e.video_url || "", image_url: e.image_url || "", sort_order: e.sort_order, _uid: e.id || crypto.randomUUID(),
       group_id: e.group_id || null, group_name: e.group_name || "", group_color: e.group_color || "",
     }));
     setExerciseRows(exs);
@@ -734,7 +734,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const addExerciseRow = () => {
     setExerciseRows(prev => [...prev, {
       exercise_id: null, custom_name: "", custom_description: "",
-      sets: "", reps: "", rest_interval: "", load_suggestion: "", video_url: "",
+      sets: "", reps: "", rest_interval: "", load_suggestion: "", video_url: "", image_url: "",
       sort_order: prev.length, _uid: crypto.randomUUID(),
       group_id: null, group_name: "", group_color: "",
     }]);
@@ -748,7 +748,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
         custom_name: lib.name,
         custom_description: lib.description || "",
         sets: "", reps: "", rest_interval: "", load_suggestion: "",
-        video_url: lib.video_url || lib.image_url || "",
+        video_url: lib.video_url || "",
+        image_url: lib.image_url || "",
         sort_order: prev.length + i,
         _uid: crypto.randomUUID(),
         group_id: null, group_name: "", group_color: "",
@@ -769,6 +770,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
         rest_interval: sc.rest_interval || "",
         load_suggestion: sc.load_suggestion || "",
         video_url: sc.video_url || "",
+        image_url: sc.image_url || "",
         sort_order: prev.length + i,
         _uid: crypto.randomUUID(),
         group_id: null, group_name: "", group_color: "",
@@ -861,7 +863,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     if (!lib) return;
     setExerciseRows(prev => prev.map((r, i) => i === idx ? {
       ...r, exercise_id: exerciseId, custom_name: lib.name,
-      custom_description: lib.description || "", video_url: lib.video_url || lib.image_url || "",
+      custom_description: lib.description || "", video_url: lib.video_url || "", image_url: lib.image_url || "",
     } : r));
   };
 

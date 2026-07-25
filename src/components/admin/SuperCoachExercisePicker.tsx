@@ -25,6 +25,7 @@ export interface PickedScExercise {
   name: string;
   description: string;
   video_url: string;
+  image_url: string;
   sets: string;
   reps: string;
   rest_interval: string;
@@ -74,11 +75,40 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
     return url;
   };
 
+  const invokeImportEdge = async (payload: Record<string, unknown>) => {
+    let lastError: any = null;
+    try {
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: payload });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as any;
+    } catch (err) {
+      lastError = err;
+    }
+
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supercoach-import-workout`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify(token ? { ...payload, accessToken: token } : payload),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { data = { error: text }; }
+      if (!res.ok || data?.error || data?.ok === false) throw new Error(data?.error || `Falha HTTP ${res.status}`);
+      return data;
+    } catch (err) {
+      throw err || lastError || new Error("Falha ao enviar requisição para o ST Coach");
+    }
+  };
+
   const loadLibrary = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-library" } });
-      if (error) throw error;
+      const data = await invokeImportEdge({ action: "list-library" });
       setLibrary(data?.exercises || []);
     } catch (e: any) {
       toast.error(`Falha ao carregar biblioteca: ${e?.message || e}`);
@@ -90,8 +120,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
   const loadPrograms = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-programs" } });
-      if (error) throw error;
+      const data = await invokeImportEdge({ action: "list-programs" });
       setPrograms(data?.programs || []);
     } catch (e: any) {
       toast.error(`Falha ao listar programas: ${e?.message || e}`);
@@ -105,8 +134,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
     setStep("trainings");
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-trainings", programId: p.id } });
-      if (error) throw error;
+      const data = await invokeImportEdge({ action: "list-trainings", programId: p.id });
       setTrainings(data?.trainings || []);
     } catch (e: any) {
       toast.error(`Falha ao listar treinos: ${e?.message || e}`);
@@ -122,10 +150,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
     setLoading(true);
     setPicked(new Set());
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
-        body: { action: "get-training-details", programId: selectedProgram.id, trainingId: t.id },
-      });
-      if (error) throw error;
+      const data = await invokeImportEdge({ action: "get-training-details", programId: selectedProgram.id, trainingId: t.id });
       setExercises(data?.exercises || []);
     } catch (e: any) {
       toast.error(`Falha ao carregar exercícios: ${e?.message || e}`);
@@ -202,6 +227,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
         name: e.name || "",
         description: e.description || "",
         video_url: e.video_url || (e as any).video_url_thumb || e.cover_url || "",
+        image_url: e.cover_url || "",
         sets: sr.sets,
         reps: sr.reps,
         rest_interval: String(interval || ""),
