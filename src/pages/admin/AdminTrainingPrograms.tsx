@@ -58,9 +58,6 @@ interface ProgramForm {
 
 const emptyForm: ProgramForm = { title: "", details: "", objective: "general", difficulty: "intermediate", status: "published", poster_url: "", video_url: "", expires_at: "" };
 
-const COVER_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-program-cover`;
-const COVER_FUNCTION_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
 const AdminTrainingPrograms = () => {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
@@ -381,56 +378,32 @@ const AdminTrainingPrograms = () => {
       };
     }
 
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 56000);
     try {
-      const response = await fetch(COVER_FUNCTION_URL, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          apikey: COVER_FUNCTION_KEY,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ programId: program.id, provider, async: true }),
+      const { data: body, error } = await supabase.functions.invoke("generate-program-cover", {
+        body: { programId: program.id, provider, async: true },
       });
 
-      const raw = await response.text();
-      let body: any = {};
-      try {
-        body = raw ? JSON.parse(raw) : {};
-      } catch {
-        body = { raw };
-      }
-
-      if (!response.ok || body?.error) {
+      if (error || body?.error) {
         return {
           ...body,
-          error: body?.error || `Falha HTTP ${response.status} ao chamar a geração de capa.`,
-          code: body?.code || `HTTP_${response.status}`,
+          error: body?.error || error?.message || "Falha ao iniciar a geração de capa.",
+          code: body?.code || "EDGE_INVOKE_FAILED",
           model: body?.model || (provider === "openai" ? "openai/gpt-image-2" : "google/gemini-3.1-flash-image"),
-          status: response.status,
-          raw: raw || undefined,
+          details: error ? { name: error.name, message: error.message, context: (error as any).context } : undefined,
           when: body?.when || new Date().toISOString(),
         };
       }
 
       return body;
     } catch (error: any) {
-      const isAbort = error?.name === "AbortError";
       return {
-        error: isAbort
-          ? `Tempo limite atingido na tentativa ${provider.toUpperCase()}.`
-          : (error?.message || "Falha de rede ao chamar a função de capa."),
-        code: isAbort ? `TIMEOUT_AI_COVER_GENERATION_${provider.toUpperCase()}_56S` : "EDGE_FETCH_FAILED",
+        error: error?.message || "Falha de rede ao iniciar a função de capa.",
+        code: "EDGE_INVOKE_EXCEPTION",
         model: "edge-function",
         details: { name: error?.name, message: error?.message },
-        retryable: !isAbort,
+        retryable: true,
         when: new Date().toISOString(),
       };
-    } finally {
-      window.clearTimeout(timeoutId);
     }
   };
 
