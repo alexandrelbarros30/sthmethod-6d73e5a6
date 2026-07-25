@@ -25,6 +25,8 @@ import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
 import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 import EvolutionTour from "@/components/student/EvolutionTour";
 import EvolutionTutorialVideoDialog from "@/components/student/EvolutionTutorialVideoDialog";
+import StageStatusBlock from "@/components/student/StageStatusBlock";
+import { toFriendlyError, withRef, type FriendlyError } from "@/lib/friendly-errors";
 
 interface EvolutionUpdateCardProps {
   userId: string;
@@ -47,6 +49,14 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
   const [savingStage, setSavingStage] = useState<0 | 1 | 2 | 3>(0);
   const [confirmStage, setConfirmStage] = useState<0 | 1 | 2 | 3>(0);
+  const [stageErrors, setStageErrors] = useState<Record<1 | 2 | 3, FriendlyError | null>>({
+    1: null,
+    2: null,
+    3: null,
+  });
+
+  const setStageError = (n: 1 | 2 | 3, err: FriendlyError | null) =>
+    setStageErrors((s) => ({ ...s, [n]: err }));
 
   const [draftReady, setDraftReady] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
@@ -107,6 +117,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
   const handleSaveStage1 = async () => {
     setSavingStage(1);
+    setStageError(1, null);
     try {
       const hasNewWeight = Boolean(weight);
       const currentStoredWeight = profile?.weight ? Number(profile.weight) : null;
@@ -184,7 +195,9 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       onComplete();
     } catch (err: any) {
       console.error(err);
-      toast.error("Erro ao salvar: " + (err.message || "Tente novamente."));
+      const f = withRef(toFriendlyError(err));
+      setStageError(1, f);
+      toast.error(`[${f.code}] ${f.title}`);
     }
     setSavingStage(0);
     setConfirmStage(0);
@@ -196,6 +209,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   const handleSaveStage3 = async () => {
     if (!activityChange) return;
     setSavingStage(3);
+    setStageError(3, null);
     try {
       const currentStoredWeight = profile?.weight ? Number(profile.weight) : (currentWeight ? Number(currentWeight) : null);
       let macroUpdate: Record<string, any> = {
@@ -266,7 +280,9 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       onComplete();
     } catch (err: any) {
       console.error(err);
-      toast.error("Erro ao salvar: " + (err.message || "Tente novamente."));
+      const f = withRef(toFriendlyError(err));
+      setStageError(3, f);
+      toast.error(`[${f.code}] ${f.title}`);
     }
     setSavingStage(0);
     setConfirmStage(0);
@@ -275,6 +291,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   // ────────────────────────── Etapa 2: fotos corporais ──────────────────────────
   const handleStage2Complete = async () => {
     const note = `📊 ETAPA 2 — FOTOS CORPORAIS (${timestampBR()})\n\n📸 Novas fotos de evolução enviadas pelo aluno.\n`;
+    setStageError(2, null);
     try {
       await supabase.from("anamnesis_entries").insert({ user_id: userId, notes: note });
       await createEvolutionSnapshot(userId, "student", note);
