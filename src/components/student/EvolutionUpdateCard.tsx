@@ -345,22 +345,22 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
     <>
       <Card className="border-foreground/15 bg-foreground/[0.03] overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <Trophy className="w-4 h-4" style={{ color: `hsl(${GREEN})` }} />
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="text-base font-display flex items-center gap-2 whitespace-nowrap">
+              <Trophy className="w-4 h-4 flex-shrink-0" style={{ color: `hsl(${GREEN})` }} />
               Missão Evolução
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setTourOpen(true)}
-                className="text-[11px] font-medium inline-flex items-center gap-1 px-2 py-1 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                className="text-[11px] font-medium inline-flex items-center gap-1 px-2 py-1 rounded-full hover:bg-foreground/[0.06] transition-colors whitespace-nowrap"
                 style={{ color: `hsl(${GREEN})`, border: `1px solid hsl(${GREEN} / 0.35)` }}
               >
                 <HelpCircle className="w-3 h-3" />
                 Como funciona?
               </button>
-              <span className="text-xs font-medium" style={{ color: `hsl(${GREEN})` }}>
+              <span className="text-xs font-medium whitespace-nowrap tabular-nums" style={{ color: `hsl(${GREEN})` }}>
                 {completedCount}/3
               </span>
             </div>
