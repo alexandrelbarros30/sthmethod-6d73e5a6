@@ -612,6 +612,7 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
           <p className="text-[10px] text-muted-foreground text-right">Ctrl/⌘ + Enter para enviar</p>
         </div>
       </DialogContent>
+      <ErrorDetailsDialog open={!!aiError} onOpenChange={(v) => !v && setAiError(null)} details={aiError} />
     </Dialog>
   );
 }
