@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
     if (!apiKey) return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY ausente' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const prompt = buildProgramCoverPrompt(prog.title, gender);
+    console.info('generate-program-cover start', { programId, gender, title: prog.title });
 
     type GenerationResult = {
       ok: boolean;
@@ -81,6 +82,7 @@ Deno.serve(async (req) => {
     async function tryOpenAI(): Promise<GenerationResult> {
       const model = 'openai/gpt-image-2';
       try {
+        console.info('generate-program-cover model attempt', model);
         const ctrl = new AbortController();
         const id = setTimeout(() => ctrl.abort(), 45000);
         const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
@@ -107,6 +109,7 @@ Deno.serve(async (req) => {
     async function tryGemini(): Promise<GenerationResult> {
       const model = 'google/gemini-3.1-flash-image';
       try {
+        console.info('generate-program-cover model attempt', model);
         const ctrl = new AbortController();
         const id = setTimeout(() => ctrl.abort(), 45000);
         const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
