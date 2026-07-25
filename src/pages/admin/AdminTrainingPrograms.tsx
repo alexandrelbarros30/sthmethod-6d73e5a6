@@ -72,6 +72,7 @@ const AdminTrainingPrograms = () => {
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [coverError, setCoverError] = useState<ErrorDetails | null>(null);
+  const [generatingCoverId, setGeneratingCoverId] = useState<string | null>(null);
 
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
@@ -407,7 +408,10 @@ const AdminTrainingPrograms = () => {
     }
   };
 
-  const generateCoverWithAi = async (program: any) => {
+  const generateCoverWithAi = async (
+    program: any,
+    onProgress?: (elapsedSec: number) => void,
+  ) => {
     const first = await generateCoverAttempt(program, "openai");
     if (first?.error || !first?.accepted) {
       return first;
@@ -417,6 +421,7 @@ const AdminTrainingPrograms = () => {
     const initialPosterUrl = String(program.poster_url || "");
     for (let attempt = 1; attempt <= 45; attempt++) {
       await new Promise((resolve) => window.setTimeout(resolve, attempt <= 5 ? 2000 : 3000));
+      onProgress?.(Math.round((Date.now() - startedAt) / 1000));
       const { data, error } = await supabase
         .from("training_programs")
         .select("poster_url")
@@ -693,10 +698,19 @@ const AdminTrainingPrograms = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-7"
+                        disabled={generatingCoverId === p.id}
+                        onClick={async () => {
+                        const toastId = `cover-${p.id}`;
+                        setGeneratingCoverId(p.id);
+                        toast.loading("Gerando capa com IA… pode levar 20–60s", { id: toastId });
                         try {
-                          toast.info("Gerando capa com IA...");
-                          const body: any = await generateCoverWithAi(p);
+                          const body: any = await generateCoverWithAi(p, (sec) => {
+                            toast.loading(`Gerando capa com IA… ${sec}s`, { id: toastId });
+                          });
                           if (body?.error) {
                             setCoverError({
                               title: "Falha ao gerar capa",
@@ -706,10 +720,10 @@ const AdminTrainingPrograms = () => {
                               raw: JSON.stringify(body, null, 2),
                               when: body.when,
                             });
-                            toast.error("Falha ao gerar capa — veja detalhes");
+                            toast.error("Falha ao gerar capa — veja detalhes", { id: toastId });
                             return;
                           }
-                          toast.success(`Capa gerada com IA! (${body.model || "IA"})`);
+                          toast.success(`Capa gerada com IA! (${body.model || "IA"})`, { id: toastId });
                           queryClient.invalidateQueries({ queryKey: ["training-programs"] });
                         } catch (e: any) {
                           setCoverError({
@@ -720,10 +734,15 @@ const AdminTrainingPrograms = () => {
                             raw: String(e?.stack || e),
                             when: new Date().toISOString(),
                           });
-                          toast.error("Falha ao gerar capa — veja detalhes");
+                          toast.error("Falha ao gerar capa — veja detalhes", { id: toastId });
+                        } finally {
+                          setGeneratingCoverId((cur) => (cur === p.id ? null : cur));
                         }
                       }}>
-                        <ImageIcon className="w-3 h-3 mr-1" /> {p.poster_url ? "Regerar capa" : "Gerar capa"}
+                        <ImageIcon className="w-3 h-3 mr-1" />
+                        {generatingCoverId === p.id
+                          ? "Gerando…"
+                          : p.poster_url ? "Regerar capa" : "Gerar capa"}
                       </Button>
                       <Button
                         size="sm"
