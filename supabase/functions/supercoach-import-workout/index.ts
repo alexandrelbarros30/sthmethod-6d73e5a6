@@ -54,8 +54,9 @@ async function getToken(): Promise<string> {
   return token
 }
 
-async function requireWriter(req: Request) {
-  const auth = req.headers.get('Authorization') || ''
+async function requireWriter(req: Request, body?: any) {
+  const bodyToken = typeof body?.accessToken === 'string' ? body.accessToken.trim() : ''
+  const auth = req.headers.get('Authorization') || (bodyToken ? `Bearer ${bodyToken}` : '')
   if (!auth.startsWith('Bearer ')) throw new Error('Não autenticado')
   const url = Deno.env.get('SUPABASE_URL')!
   const anon = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -384,7 +385,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'import-training') {
-      const { admin, userId } = await requireWriter(req)
+      const { admin, userId } = await requireWriter(req, body)
       const p = await resolveProgram(token, programId!, (body as any).program)
       const t = (body as any).training
       if (!p?.id) throw new Error('programId obrigatório')
@@ -398,7 +399,7 @@ Deno.serve(async (req) => {
 
     if (action === 'import-program') {
       if (!programId) throw new Error('programId obrigatório')
-      const { admin, userId } = await requireWriter(req)
+      const { admin, userId } = await requireWriter(req, body)
       const p = await resolveProgram(token, programId, (body as any).program)
       const localProgramId = await ensureLocalProgram(admin, p, userId, (body as any).localProgramId)
       await removeEmptyPlaceholders(admin, localProgramId, programId)
@@ -422,7 +423,7 @@ Deno.serve(async (req) => {
 
     if (action === 'repair-program') {
       if (!programId) throw new Error('programId obrigatório')
-      const { admin, userId } = await requireWriter(req)
+      const { admin, userId } = await requireWriter(req, body)
       const p = await resolveProgram(token, programId, (body as any).program)
       const localProgramId = await ensureLocalProgram(admin, p, userId, (body as any).localProgramId)
       await removeEmptyPlaceholders(admin, localProgramId, programId)

@@ -34,6 +34,7 @@ export interface ExerciseRow {
   rest_interval: string;
   load_suggestion: string;
   video_url: string;
+  image_url?: string;
   sort_order: number;
   _uid: string;
   group_id?: string | null;
@@ -83,7 +84,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
 
   const mediaSource = getExerciseMediaSource({
     videoUrl: row.video_url || selectedExercise?.video_url,
-    imageUrl: selectedExercise?.image_url,
+    imageUrl: row.image_url || selectedExercise?.image_url,
   });
 
   const displayName = row.custom_name || selectedExercise?.name || "Sem nome";
@@ -281,7 +282,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
         {mediaSource && (
           <ExerciseMediaPreview
             videoUrl={row.video_url || selectedExercise?.video_url}
-            imageUrl={selectedExercise?.image_url}
+            imageUrl={row.image_url || selectedExercise?.image_url}
             alt={selectedExercise?.name || row.custom_name || "Exercício"}
             mode="player"
             className="w-full aspect-video"
