@@ -88,13 +88,32 @@ function getExerciseName(ex: any, fallbackIndex = 0): string {
   return String(ex?.custom_name || ex?.exercise_library?.name || `Exercício ${fallbackIndex + 1}`).trim();
 }
 
+function cleanHttpUrl(value?: string | null): string {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? raw : '';
+  } catch {
+    return '';
+  }
+}
+
+function firstValidUrl(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const url = cleanHttpUrl(value);
+    if (url) return url;
+  }
+  return '';
+}
+
 function buildWorkoutPayload(ex: any, wid: number | null, scTrainingId: number | null, sort: number, supersetGroup: number, patch = true) {
   const name = getExerciseName(ex, sort);
   const seriesRepetitions = combineSetsReps(ex.sets, ex.reps);
   const intervals = parseInterval(ex.rest_interval);
   const description = ex.custom_description || '';
-  const videoUrl = ex.video_url || ex.exercise_library?.video_url || '';
-  const coverUrl = ex.image_url || ex.exercise_library?.image_url || '';
+  const videoUrl = firstValidUrl(ex.video_url, ex.exercise_library?.video_url);
+  const coverUrl = firstValidUrl(ex.image_url, ex.exercise_library?.image_url);
   const payload: Record<string, any> = {
     ...(wid ? { id: Number(wid) } : {}),
     name,
@@ -148,6 +167,7 @@ function extractTrainingList(payload: any): any[] {
 }
 
 function buildProgramPayload(scProgramId: number | null, prog: any, tpl: any) {
+  const coverUrl = firstValidUrl(prog.poster_url, tpl.image_url, 'https://supertreinosapp.com/img/PROGRAMA-BANNER-PADRAO.jpg');
   return {
     id: scProgramId || 0,
     cover_path: true,
@@ -166,7 +186,7 @@ function buildProgramPayload(scProgramId: number | null, prog: any, tpl: any) {
     days_per_week: tpl.days_per_week || '',
     minutes_per_day: tpl.minutes_per_day || '',
     sort: 0, pay: 0, published: 1, premium: 0,
-    cover_url: prog.poster_url || 'https://supertreinosapp.com/img/PROGRAMA-BANNER-PADRAO.jpg',
+    cover_url: coverUrl,
     translations: '',
     clone: 'original',
   };
@@ -309,7 +329,7 @@ Deno.serve(async (req) => {
           method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             id: scProgramId,
-            ...(prog.poster_url ? { cover_url: prog.poster_url, cover_path: true } : {}),
+            ...(cleanHttpUrl(prog.poster_url) ? { cover_url: cleanHttpUrl(prog.poster_url), cover_path: true } : {}),
             name: prog.title || 'Programa STH METHOD',
             subtitle: prog.subtitle || '',
             published: 1, pay: 0, premium: 0,
@@ -368,7 +388,7 @@ Deno.serve(async (req) => {
         program_id: scProgramId,
         sort: 0, pay: 0, published: 1, premium: 0,
         goal: 0, points: 2, translations: '',
-        cover_url: tpl.image_url || 'https://www.api.homolog.supertreinosapp.com/img/TREINO-BANNER-PADRAO.jpg',
+        cover_url: firstValidUrl(tpl.image_url, prog.poster_url, 'https://www.api.homolog.supertreinosapp.com/img/TREINO-BANNER-PADRAO.jpg'),
         cover_path: true,
       };
       const trCreated = await scFetch(token, '/trainings/', {
@@ -381,13 +401,14 @@ Deno.serve(async (req) => {
     }
 
     // 2.1) Sempre sincroniza a CAPA do training no ST Coach com a image_url atual
-    if (scTrainingId && tpl.image_url) {
+    const trainingCoverUrl = firstValidUrl(tpl.image_url, prog.poster_url);
+    if (scTrainingId && trainingCoverUrl) {
       try {
         await scFetch(token, `/trainings/${scTrainingId}`, {
           method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             id: scTrainingId,
-            cover_url: tpl.image_url,
+            cover_url: trainingCoverUrl,
             cover_path: true,
             name: tpl.title || 'Treino',
             subtitle: tpl.subtitle || '',

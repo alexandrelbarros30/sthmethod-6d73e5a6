@@ -444,7 +444,11 @@ const ProgramWorkouts = ({ programId }: Props) => {
     toast.dismiss(toastId);
     const skipNote = skipped > 0 ? ` (${skipped} sem exercícios ignorado${skipped > 1 ? "s" : ""})` : "";
     if (fail === 0 && failures.length === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${finalList.length})${skipNote}.`);
-    else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${failures[0] || ""}`);
+    else {
+      const visibleFailures = failures.slice(0, 3).join(" | ");
+      const extra = failures.length > 3 ? ` +${failures.length - 3} detalhe(s)` : "";
+      toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${visibleFailures}${extra}`);
+    }
     queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
     queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
     setPushingAll(false);
