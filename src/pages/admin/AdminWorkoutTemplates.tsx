@@ -153,6 +153,21 @@ const AdminWorkoutTemplates = () => {
         user_id: userId, template_id: templateId, assigned_by: user!.id, active: true, seen_by_student: false,
       } as any, { onConflict: "user_id,template_id" });
       if (error) throw error;
+      // Espelha atribuição no ST Coach (best-effort) — busca program_id do template
+      try {
+        const { data: tpl } = await supabase
+          .from("workout_templates")
+          .select("program_id")
+          .eq("id", templateId)
+          .maybeSingle();
+        if (tpl?.program_id) {
+          await supabase.functions.invoke("supercoach-assign-program", {
+            body: { userId, programId: tpl.program_id, action: "assign" },
+          });
+        }
+      } catch (e) {
+        console.warn("[assign ST Coach]", e);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workout-assignments-all"] });

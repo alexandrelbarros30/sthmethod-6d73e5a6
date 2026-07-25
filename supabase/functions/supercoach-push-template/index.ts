@@ -302,15 +302,14 @@ Deno.serve(async (req) => {
       await admin.from('workout_templates').update({ supercoach_program_id: scProgramId }).eq('id', templateId);
     }
 
-    // 1.1) Sempre sincroniza a CAPA do programa no ST Coach com a poster_url atual do STH METHOD
-    if (scProgramId && prog.poster_url) {
+    // 1.1) Sempre sincroniza nome/subtítulo/capa do programa no ST Coach com os dados atuais do STH METHOD
+    if (scProgramId) {
       try {
         await scFetch(token, `/programs/${scProgramId}`, {
           method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             id: scProgramId,
-            cover_url: prog.poster_url,
-            cover_path: true,
+            ...(prog.poster_url ? { cover_url: prog.poster_url, cover_path: true } : {}),
             name: prog.title || 'Programa STH METHOD',
             subtitle: prog.subtitle || '',
             published: 1, pay: 0, premium: 0,
@@ -319,7 +318,7 @@ Deno.serve(async (req) => {
         });
       } catch (e) {
         if (isNotFoundError(e)) {
-          console.warn('programa ST Coach não encontrado ao sincronizar capa; recriando', scProgramId);
+          console.warn('programa ST Coach não encontrado ao sincronizar metadados; recriando', scProgramId);
           scProgramId = await createScProgram(token, prog, tpl);
           programRecreated = true;
           tpl.supercoach_training_id = null;
@@ -334,7 +333,7 @@ Deno.serve(async (req) => {
               .eq('id', templateId);
           }
         } else {
-          console.warn('sync program cover falhou', (e as any)?.message);
+          console.warn('sync program metadata falhou', (e as any)?.message);
         }
       }
     }
