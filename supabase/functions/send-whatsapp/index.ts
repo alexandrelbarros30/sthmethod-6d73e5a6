@@ -29,22 +29,31 @@ Deno.serve(async (req) => {
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     } catch (_) { /* não bloqueia em caso de falha do RPC */ }
+    // Canal Comercial (linha 21998496289) migrado de Z-API para W-API.
+    // Credenciais oficiais: crm_settings.key = 'wapi_comercial'.
+    // Fallback legado: crm_settings.key = 'zapi' (para não quebrar deploys em transição).
     const { data: cfgRow } = await admin
-      .from('crm_settings').select('value').eq('key', 'zapi').maybeSingle();
-    const cfg: any = cfgRow?.value || {};
+      .from('crm_settings').select('value').eq('key', 'wapi_comercial').maybeSingle();
+    let cfg: any = cfgRow?.value || {};
+    if (!cfg?.instance_id && !cfg?.enabled) {
+      const { data: legacy } = await admin
+        .from('crm_settings').select('value').eq('key', 'zapi').maybeSingle();
+      if (legacy?.value) cfg = legacy.value;
+    }
     if (cfg.enabled !== true) {
       return new Response(JSON.stringify({
         ok: false,
         blocked: true,
-        error: 'Canal Z-API está INATIVO em CRM → Configurações. Envio bloqueado.',
+        error: 'Canal Comercial (W-API) está INATIVO em CRM → Configurações. Envio bloqueado.',
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const INSTANCE_ID = (cfg.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
-    const INSTANCE_TOKEN = (cfg.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
-    const CLIENT_TOKEN = (cfg.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
-    if (!INSTANCE_ID || !INSTANCE_TOKEN || !CLIENT_TOKEN) {
-      return new Response(JSON.stringify({ ok: false, error: 'Z-API credentials missing' }), {
+    const SERVER_URL = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
+    const INSTANCE_ID = (cfg.instance_id || '').trim() || Deno.env.get('WAPI_COMERCIAL_INSTANCE_ID');
+    const TOKEN = (cfg.token || cfg.instance_token || '').trim() || Deno.env.get('WAPI_COMERCIAL_TOKEN');
+    const CLIENT_TOKEN = (cfg.client_token || '').trim() || Deno.env.get('WAPI_COMERCIAL_CLIENT_TOKEN') || '';
+    if (!INSTANCE_ID || !TOKEN) {
+      return new Response(JSON.stringify({ ok: false, error: 'Credenciais W-API Comercial ausentes.' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -62,31 +71,21 @@ Deno.serve(async (req) => {
 
     const fullPhone = normalizeWhatsappPhone(phone);
 
-    const base = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}`;
-    const statusResp = await fetch(`${base}/status`, { headers: { 'Client-Token': CLIENT_TOKEN } });
-    const statusData = await statusResp.json().catch(() => ({}));
-    const statusErr = typeof (statusData as any)?.error === 'string' ? (statusData as any).error.toLowerCase() : '';
-    const statusOk = statusResp.ok && (((statusData as any)?.connected === true) || statusErr.includes('you are already connected'));
-    if (!statusOk) {
-      return new Response(JSON.stringify({ ok: false, error: 'Instância Z-API não conectada', status: statusData }), {
-        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const headers = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Client-Token': CLIENT_TOKEN,
+      Authorization: `Bearer ${TOKEN}`,
     };
+    if (CLIENT_TOKEN) headers['Client-Token'] = CLIENT_TOKEN;
 
-    let endpoint = `${base}/send-text`;
+    let endpoint = `${SERVER_URL}/v1/message/send-text?instanceId=${INSTANCE_ID}`;
     let body: Record<string, unknown> = { phone: fullPhone, message };
 
     if (image_url) {
-      endpoint = `${base}/send-image`;
+      endpoint = `${SERVER_URL}/v1/message/send-image?instanceId=${INSTANCE_ID}`;
       body = { phone: fullPhone, image: image_url, caption: message };
     } else if (document_url) {
-      // Z-API: /send-document/{extension}
+      endpoint = `${SERVER_URL}/v1/message/send-document?instanceId=${INSTANCE_ID}`;
       const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
-      endpoint = `${base}/send-document/${ext}`;
       body = {
         phone: fullPhone,
         document: document_url,
@@ -98,15 +97,14 @@ Deno.serve(async (req) => {
     const resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
     const data = await resp.json().catch(() => ({}));
 
-    if (!resp.ok) {
-      console.error('Z-API error', resp.status, data);
-      return new Response(JSON.stringify({ ok: false, status: resp.status, data }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (!resp.ok || (data as any)?.error) {
+      console.error('W-API Comercial error', resp.status, data);
+      return new Response(JSON.stringify({ ok: false, status: resp.status, data, error: (data as any)?.error }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Z-API returns: { zaapId, messageId, id } depending on endpoint
-    const messageId = (data as any)?.messageId || (data as any)?.id || (data as any)?.zaapId || null;
+    const messageId = (data as any)?.messageId || (data as any)?.id || (data as any)?.idMessage || null;
     return new Response(JSON.stringify({ ok: true, data, messageId, phone: fullPhone }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
