@@ -252,6 +252,11 @@ const AdminTrainingPrograms = () => {
       // Auto-sync ST Coach: espelha metadados do programa republicando os templates
       if (programId) {
         try {
+          // 1) Sincroniza metadados do programa (nome/subtítulo/capa) mesmo sem templates
+          supabase.functions
+            .invoke("supercoach-sync-program", { body: { programId } })
+            .catch((e) => console.warn("[auto-sync ST Coach program meta]", e));
+          // 2) Re-publica templates para propagar mudanças (nome do treino, capa, etc.)
           const { data: tpls } = await supabase
             .from("workout_templates")
             .select("id")
