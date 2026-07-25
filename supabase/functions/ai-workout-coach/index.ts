@@ -61,12 +61,30 @@ Deno.serve(async (req) => {
 
     // Dossiê do aluno (se informado)
     let dossier = '';
+    // Gênero explícito do aluno (para direcionar a prescrição corretamente)
+    let studentGenderDirective = '';
     // Imagens corporais do aluno (atuais + históricas para comparação evolutiva)
     const studentImageUrls: string[] = [];
     let imagesSummary = '';
     if (body.studentId) {
       try {
         dossier = await buildStudentContext(admin, body.studentId);
+      } catch (_) { /* silencioso */ }
+      try {
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('gender, full_name')
+          .eq('id', body.studentId)
+          .maybeSingle();
+        const g = String(prof?.gender || '').toLowerCase();
+        const nome = String(prof?.full_name || '').split(' ')[0] || 'o(a) aluno(a)';
+        if (g.startsWith('f') || g.includes('fem') || g.includes('mulher')) {
+          studentGenderDirective = `ATENÇÃO — GÊNERO DO(A) ALUNO(A): FEMININO (${nome}). Toda a prescrição deve priorizar objetivos e ênfases femininas típicas (glúteos, posterior de coxa, abdutores, membros inferiores, redução de cintura, postura, ombros com ênfase estética), seleção de exercícios, volume e linguagem no feminino. NÃO monte um treino masculinizado.`;
+        } else if (g.startsWith('m') || g.includes('masc') || g.includes('homem')) {
+          studentGenderDirective = `ATENÇÃO — GÊNERO DO(A) ALUNO(A): MASCULINO (${nome}). Prescrição com ênfase em hipertrofia global, membros superiores, densidade e força, linguagem no masculino.`;
+        } else {
+          studentGenderDirective = `ATENÇÃO — GÊNERO DO(A) ALUNO(A) NÃO INFORMADO. Pergunte antes de assumir; se precisar seguir, mantenha linguagem neutra.`;
+        }
       } catch (_) { /* silencioso */ }
       try {
         const { data: imgs } = await admin
@@ -158,10 +176,12 @@ Deno.serve(async (req) => {
     const reinforcedSystem = [
       systemPrompt,
       '',
+      studentGenderDirective,
+      '',
       'FONTE DE EXERCÍCIOS: banco de dados oficial do ST Coach (injetado a cada turno).',
       'Você NUNCA prescreve exercício que não venha desse banco. Sempre anexe `[SC:<id>]` após o nome do exercício no plano final para permitir vinculação automática com vídeo/gif oficial.',
       libraryCount ? `Catálogo desta sessão contém ${libraryCount} exercícios do ST Coach.` : 'ATENÇÃO: catálogo do ST Coach indisponível nesta chamada — avise o treinador e não invente exercícios.',
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 
     const userText = [
       dossier,
