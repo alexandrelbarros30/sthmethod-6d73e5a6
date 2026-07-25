@@ -470,18 +470,66 @@ const AdminTrainingPrograms = () => {
   if (selectedProgram) {
     return (
       <DashboardLayout role={(role as any) || "admin"} title={selectedProgram.title} subtitle="Gerencie os treinos deste programa.">
-        <div className="max-w-5xl">
-          <Button variant="ghost" size="sm" className="mb-4" onClick={() => setSelectedProgramId(null)}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar aos programas
-          </Button>
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Badge variant="outline">{getObjectiveLabel(selectedProgram.objective || "general")}</Badge>
-            <Badge variant="outline" className={getDifficultyInfo(selectedProgram.difficulty || "intermediate").color}>
-              {getDifficultyInfo(selectedProgram.difficulty || "intermediate").label}
-            </Badge>
-            {selectedProgram.status === "draft" && <Badge variant="secondary">Rascunho</Badge>}
+        <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+          {/* LEFT: sticky programs list */}
+          <aside className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Programas</p>
+              <Button size="icon" variant="ghost" className="h-7 w-7" title="Novo programa" onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="relative mb-2">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-7 h-8 text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              {filteredPrograms.map((p: any) => {
+                const active = p.id === selectedProgramId;
+                const wCount = workoutCounts?.[p.id] || 0;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedProgramId(p.id)}
+                    className={`w-full text-left rounded-lg border p-2 transition-all flex items-center gap-2 ${active ? "border-primary bg-primary/10 shadow-sm" : "border-border/60 hover:border-primary/40 hover:bg-muted/40"}`}
+                  >
+                    {p.poster_url ? (
+                      <img src={p.poster_url} alt="" className="w-9 h-9 rounded-md object-cover shrink-0" loading="lazy" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                        <Layers className="w-4 h-4 text-primary" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-xs font-medium truncate ${active ? "text-primary" : ""}`}>{p.title}</p>
+                      <p className="text-[10px] text-muted-foreground">{wCount} treino(s)</p>
+                    </div>
+                    {active && <ChevronRight className="w-3.5 h-3.5 text-primary shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          {/* RIGHT: workouts + inline exercises pane */}
+          <div className="min-w-0">
+            <Button variant="ghost" size="sm" className="mb-3" onClick={() => setSelectedProgramId(null)}>
+              <ArrowLeft className="w-4 h-4 mr-1" /> Todos os programas
+            </Button>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Badge variant="outline">{getObjectiveLabel(selectedProgram.objective || "general")}</Badge>
+              <Badge variant="outline" className={getDifficultyInfo(selectedProgram.difficulty || "intermediate").color}>
+                {getDifficultyInfo(selectedProgram.difficulty || "intermediate").label}
+              </Badge>
+              {selectedProgram.status === "draft" && <Badge variant="secondary">Rascunho</Badge>}
+            </div>
+            <ProgramWorkouts programId={selectedProgram.id} />
           </div>
-          <ProgramWorkouts programId={selectedProgram.id} />
         </div>
       </DashboardLayout>
     );
