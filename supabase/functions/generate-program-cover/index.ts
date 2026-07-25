@@ -48,6 +48,20 @@ async function fetchAiImage(params: {
 }): Promise<Uint8Array | null> {
   const ctrl = new AbortController();
   const timeout = setTimeout(() => ctrl.abort(`AI_IMAGE_TIMEOUT_${params.model}_${params.timeoutMs}MS`), params.timeoutMs);
+  const isGemini = params.model.startsWith('google/gemini-');
+  const body = isGemini
+    ? {
+        model: params.model,
+        messages: [{ role: 'user', content: params.prompt }],
+        modalities: ['image', 'text'],
+      }
+    : {
+        model: params.model,
+        prompt: params.prompt,
+        size: '1024x1024',
+        n: 1,
+        ...(params.bodyExtras || {}),
+      };
   try {
     const response = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
       method: 'POST',
@@ -57,13 +71,7 @@ async function fetchAiImage(params: {
         'Lovable-API-Key': params.lovableKey,
         'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
       },
-      body: JSON.stringify({
-        model: params.model,
-        prompt: params.prompt,
-        size: '1024x1024',
-        n: 1,
-        ...(params.bodyExtras || {}),
-      }),
+      body: JSON.stringify(body),
     });
     const text = await response.text();
     if (!response.ok) {
