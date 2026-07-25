@@ -474,14 +474,24 @@ Deno.serve(async (req) => {
     }
     
     const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || payload?.data?.instanceId || '').trim();
-    const [{ data: wapiCfgRow }, { data: wapiSucessoCfgRow }, { data: zapiCfgRow }] = await Promise.all([
+    const [{ data: wapiCfgRow }, { data: wapiSucessoCfgRow }, { data: zapiCfgRow }, { data: wapiComCfgRow }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'wapi_comercial').maybeSingle(),
     ]);
 
+    // Comercial agora usa W-API (chave 'wapi_comercial'). Mantém match legado por 'zapi'
+    // e por env ZAPI_INSTANCE_ID enquanto a transição não é finalizada.
+    const comercialInstance = String(
+      (wapiComCfgRow?.value as any)?.instance_id
+        || (zapiCfgRow?.value as any)?.instance_id
+        || Deno.env.get('WAPI_COMERCIAL_INSTANCE_ID')
+        || Deno.env.get('ZAPI_INSTANCE_ID')
+        || ''
+    ).trim();
     const configuredInstances = {
-      zapi: String((zapiCfgRow?.value as any)?.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim(),
+      zapi: comercialInstance,
       wapi: String((wapiCfgRow?.value as any)?.instance_id || Deno.env.get('WAPI_INSTANCE_ID') || '').trim(),
       wapi_sucesso: String((wapiSucessoCfgRow?.value as any)?.instance_id || '').trim(),
     };
