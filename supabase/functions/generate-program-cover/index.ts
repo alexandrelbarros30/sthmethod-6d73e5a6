@@ -78,14 +78,25 @@ Deno.serve(async (req) => {
       return b ? { ok: true, b64: b } : { ok: false, err: 'empty response', status: 502 };
     }
 
+    let usedModel = 'openai/gpt-image-2';
+    let openaiErr: { status?: number; err?: string } | null = null;
     let gen = await tryOpenAI();
     if (!gen.ok) {
+      openaiErr = { status: gen.status, err: gen.err };
       console.error('openai image gen failed', gen.status, (gen.err || '').slice(0, 400));
+      usedModel = 'google/gemini-3.1-flash-image';
       gen = await tryGemini();
     }
     if (!gen.ok || !gen.b64) {
       console.error('gemini fallback failed', gen.status, (gen.err || '').slice(0, 400));
-      return new Response(JSON.stringify({ error: 'Não foi possível gerar a capa agora. Tente novamente em instantes.', details: (gen.err || '').slice(0, 300) }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({
+        error: 'Não foi possível gerar a capa agora. Tente novamente em instantes.',
+        code: gen.status || 502,
+        model: usedModel,
+        openai: openaiErr ? { status: openaiErr.status, details: (openaiErr.err || '').slice(0, 400) } : null,
+        gemini: { status: gen.status, details: (gen.err || '').slice(0, 400) },
+        when: new Date().toISOString(),
+      }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const b64 = gen.b64;
 
@@ -104,9 +115,9 @@ Deno.serve(async (req) => {
     const posterUrl = `${base}?v=${Date.now()}`;
     await admin.from('training_programs').update({ poster_url: posterUrl }).eq('id', programId);
 
-    return new Response(JSON.stringify({ ok: true, posterUrl, gender }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ ok: true, posterUrl, gender, model: usedModel }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e: any) {
     console.error('generate-program-cover error', e);
-    return new Response(JSON.stringify({ error: e?.message || 'erro' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: e?.message || 'erro', code: 500, model: 'unknown', when: new Date().toISOString() }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
