@@ -1,0 +1,1 @@
+UPDATE public.training_programs SET poster_url = NULL WHERE id = 'c2c4be91-ed6c-46b6-96cf-3d5e77fe44c3';
