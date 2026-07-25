@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     let gender: 'F' | 'M' = inferGenderFromText(`${prog.title || ''} ${prog.details || ''}`);
     if (genderIn === 'F' || genderIn === 'M') gender = genderIn;
     else if (studentId) {
-      const { data: prof } = await admin.from('profiles').select('gender').eq('id', studentId).maybeSingle();
+      const { data: prof } = await admin.from('profiles').select('gender').eq('user_id', studentId).maybeSingle();
       const g = String(prof?.gender || '').toLowerCase();
       if (g.startsWith('f') || g.includes('fem') || g.includes('mulher')) gender = 'F';
       else if (g.startsWith('m')) gender = 'M';
