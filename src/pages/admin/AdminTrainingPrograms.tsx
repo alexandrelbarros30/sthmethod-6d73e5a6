@@ -227,14 +227,15 @@ const AdminTrainingPrograms = () => {
           });
           throw error;
         }
+        return editingProgram;
       } else {
-        const { error } = await supabase.from("training_programs").insert({
+        const { data: inserted, error } = await supabase.from("training_programs").insert({
           title: form.title, details: form.details,
           objective: form.objective, difficulty: form.difficulty, status: form.status,
           poster_url: form.poster_url, video_url: form.video_url,
           expires_at: form.expires_at || null,
           created_by: user!.id,
-        } as any);
+          } as any).select("id").single();
         if (error) {
           const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
           await handleLibraryWriteError(error, {
@@ -242,11 +243,28 @@ const AdminTrainingPrograms = () => {
           });
           throw error;
         }
+        return inserted?.id as string | undefined;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (programId) => {
       queryClient.invalidateQueries({ queryKey: ["training-programs"] });
       toast.success(editingProgram ? "Programa atualizado!" : "Programa criado!");
+      // Auto-sync ST Coach: espelha metadados do programa republicando os templates
+      if (programId) {
+        try {
+          const { data: tpls } = await supabase
+            .from("workout_templates")
+            .select("id")
+            .eq("program_id", programId);
+          (tpls || []).forEach((t: any) => {
+            supabase.functions
+              .invoke("supercoach-push-template", { body: { templateId: t.id, programId } })
+              .catch((e) => console.warn("[auto-sync ST Coach]", e));
+          });
+        } catch (e) {
+          console.warn("[auto-sync ST Coach program]", e);
+        }
+      }
       closeProgramDialog();
     },
     onError: () => {},
