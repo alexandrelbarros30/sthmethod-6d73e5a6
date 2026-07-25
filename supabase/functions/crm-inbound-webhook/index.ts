@@ -1438,6 +1438,12 @@ Deno.serve(async (req) => {
         upd.pipeline_stage = identifiedAs === 'lead' ? 'lead_nutri_bloqueado' : 'renovacao_pendente';
       }
       
+      const channelChanged = conv.provider && conv.provider !== storedProvider;
+      const flowState = String(conv.flow_state || '');
+      const staleNutriFlowOnCommercial = storedProvider === 'zapi' && (flowState === 'nutri_main' || flowState.startsWith('nutri_'));
+      const staleCommercialFlowOnNutri = storedProvider === 'wapi' && (flowState === 'lead_main_menu' || flowState.startsWith('comercial_') || flowState.startsWith('com_'));
+      const staleSucessoFlowOnOtherChannel = storedProvider !== 'wapi_sucesso' && flowState === 'sucesso_main_menu';
+
       if (isNewSession) { 
 
         upd.session_started_at = now.toISOString(); 
@@ -1455,6 +1461,11 @@ Deno.serve(async (req) => {
       } else if (isHumanActive) {
         // Se humano está ativo, garantimos que human_handoff permaneça true mesmo se houver nova mensagem
         upd.human_handoff = true;
+      } else if (channelChanged && (staleNutriFlowOnCommercial || staleCommercialFlowOnNutri || staleSucessoFlowOnOtherChannel)) {
+        // Recupera conversas que foram roteadas pelo canal errado antes da correção:
+        // quando o WhatsApp conectado muda de canal, o fluxo antigo não pode continuar.
+        upd.flow_state = null;
+        upd.flow_context = {};
       }
 
       if (displayName) upd.display_name = displayName;
