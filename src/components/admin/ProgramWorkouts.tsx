@@ -369,10 +369,27 @@ const ProgramWorkouts = ({ programId }: Props) => {
     }
   };
 
+  const fetchExerciseCounts = async (templateIds: string[]) => {
+    if (!templateIds.length) return {} as Record<string, number>;
+    const { data, error } = await supabase
+      .from("workout_template_exercises")
+      .select("template_id")
+      .in("template_id", templateIds);
+    if (error) throw error;
+    return (data || []).reduce((acc: Record<string, number>, row: any) => {
+      acc[row.template_id] = (acc[row.template_id] || 0) + 1;
+      return acc;
+    }, {});
+  };
+
   const pushToSuperCoach = async (templateId: string) => {
     setPushingId(templateId);
     try {
-      const exCount = (templateExercisesMap?.[templateId]?.length ?? 0);
+      let exCount = (templateExercisesMap?.[templateId]?.length ?? 0);
+      if (!exCount) {
+        const counts = await fetchExerciseCounts([templateId]);
+        exCount = counts[templateId] || 0;
+      }
       if (!exCount) throw new Error("Treino sem exercícios. Adicione ao menos um exercício antes de espelhar.");
       const { data, error } = await invokePushTemplate({ templateId, programId });
       if (error) throw error;
@@ -393,18 +410,24 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const pushAllToSuperCoach = async () => {
     const list = (workouts || []) as any[];
     if (!list.length) { toast.error("Nenhum treino para espelhar"); return; }
-    const eligible = list.filter((w: any) => (templateExercisesMap?.[w.id]?.length ?? 0) > 0);
-    const skipped = list.length - eligible.length;
-    if (!eligible.length) {
-      toast.error("Nenhum treino com exercícios para espelhar. Adicione exercícios antes.");
-      return;
-    }
     setPushingAll(true);
+    let counts: Record<string, number> = {};
+    try {
+      counts = await fetchExerciseCounts(list.map((w: any) => w.id));
+    } catch (e) {
+      console.warn("[push-all] não foi possível conferir contagem de exercícios; tentando espelhar todos", e);
+    }
+    const eligible = list.filter((w: any) => (templateExercisesMap?.[w.id]?.length ?? 0) > 0 || (counts[w.id] || 0) > 0);
+    const finalList = eligible.length ? eligible : list;
+    const skipped = eligible.length ? list.length - eligible.length : 0;
+    if (!eligible.length) {
+      toast.warning("Não consegui confirmar os exercícios pela tela. Vou tentar espelhar direto pelo servidor.");
+    }
     let ok = 0, fail = 0;
     const failures: string[] = [];
-    const toastId = toast.loading(`Espelhando 0/${eligible.length} treinos no ST Coach...`);
-    for (let i = 0; i < eligible.length; i++) {
-      const w = eligible[i];
+    const toastId = toast.loading(`Espelhando 0/${finalList.length} treinos no ST Coach...`);
+    for (let i = 0; i < finalList.length; i++) {
+      const w = finalList[i];
       try {
         const { data, error } = await invokePushTemplate({ templateId: w.id, programId });
         if (error || data?.ok === false) throw new Error(error?.message || data?.error || "falha");
@@ -416,13 +439,14 @@ const ProgramWorkouts = ({ programId }: Props) => {
         failures.push(`${w.title || "Treino"}: ${reason}`);
         console.error("[push-all] fail", w.title, reason);
       }
-      toast.loading(`Espelhando ${i + 1}/${eligible.length} treinos no ST Coach...`, { id: toastId });
+      toast.loading(`Espelhando ${i + 1}/${finalList.length} treinos no ST Coach...`, { id: toastId });
     }
     toast.dismiss(toastId);
     const skipNote = skipped > 0 ? ` (${skipped} sem exercícios ignorado${skipped > 1 ? "s" : ""})` : "";
-    if (fail === 0 && failures.length === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${eligible.length})${skipNote}.`);
+    if (fail === 0 && failures.length === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${finalList.length})${skipNote}.`);
     else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${failures[0] || ""}`);
     queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
+    queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
     setPushingAll(false);
   };
 
@@ -453,7 +477,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
     queryFn: async () => {
       const ids = (workouts || []).map((w: any) => w.id);
       if (!ids.length) return {};
-      const { data } = await supabase.from("workout_template_exercises").select("*").in("template_id", ids).order("sort_order");
+      const { data, error } = await supabase.from("workout_template_exercises").select("*").in("template_id", ids).order("sort_order");
+      if (error) throw error;
       return (data || []).reduce((acc: Record<string, any[]>, ex: any) => {
         (acc[ex.template_id] = acc[ex.template_id] || []).push(ex);
         return acc;
