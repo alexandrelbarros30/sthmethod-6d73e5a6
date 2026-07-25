@@ -75,13 +75,6 @@ Deno.serve(async (req) => {
           // 404/410 = assinatura expirou/foi cancelada — desativar.
           if (status === 404 || status === 410) {
             await admin.from('push_subscriptions').update({ enabled: false }).eq('id', s.id);
-          } else {
-            await admin
-              .from('push_subscriptions')
-              .update({ failure_count: (Number.MAX_SAFE_INTEGER > 0 ? undefined : 0) })
-              .eq('id', s.id);
-            // increment via rpc-less approach:
-            await admin.rpc('increment_push_failure', { p_id: s.id }).catch(() => {});
           }
           console.warn('send-push failed', { endpoint: s.endpoint, status, msg: err?.message });
         }
