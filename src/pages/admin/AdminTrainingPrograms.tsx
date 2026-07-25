@@ -205,7 +205,10 @@ const AdminTrainingPrograms = () => {
 
     try {
       const r = await supabase.functions.invoke(functionName, { body: payload });
-      if (!r.error) return r.data;
+      if (!r.error) {
+        if ((r.data as any)?.ok === false) throw new Error((r.data as any)?.error || "Falha na sincronização");
+        return r.data;
+      }
     } catch {}
 
     try {
@@ -220,7 +223,10 @@ const AdminTrainingPrograms = () => {
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) return data;
+      if (res.ok) {
+        if ((data as any)?.ok === false) throw new Error((data as any)?.error || "Falha na sincronização");
+        return data;
+      }
     } catch {}
 
     if (!token) throw new Error("Sessão administrativa expirada. Entre novamente antes de sincronizar.");
