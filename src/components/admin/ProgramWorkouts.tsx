@@ -279,8 +279,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
   // Qualquer criação/edição/duplicação/agrupamento espelha o treino no ST Coach.
   const autoSyncTemplate = (templateId: string) => {
     if (!templateId) return;
-    supabase.functions
-      .invoke("supercoach-push-template", { body: { templateId, programId } })
+    invokePushTemplate({ templateId, programId })
       .then(({ data, error }) => {
         if (error || data?.ok === false) {
           console.warn("[auto-sync ST Coach]", error?.message || data?.error);
@@ -291,6 +290,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
 
   const autoSyncProgram = async () => {
     const list = (workouts || []) as any[];
+    await invokeSyncProgram(programId).catch((e) => console.warn("[auto-sync ST Coach program]", e));
     for (const w of list) autoSyncTemplate(w.id);
   };
 
@@ -347,6 +347,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
   };
 
   const invokePushTemplate = async (payload: { templateId: string; programId?: string }): Promise<{ data: any; error: any }> => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
     try {
       const r = await supabase.functions.invoke("supercoach-push-template", { body: payload });
       if (!r.error) return r as any;
@@ -355,15 +357,71 @@ const ProgramWorkouts = ({ programId }: Props) => {
     try {
       const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-push-template`;
       const key = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token || key;
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${token || key}` },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      return { data, error: null };
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
+    } catch {}
+
+    // Última rota: requisição "simples" sem headers customizados.
+    // Evita bloqueio de preflight/CORS do navegador que aparece como "Failed to fetch".
+    try {
+      if (!token) throw new Error("Sessão administrativa expirada. Entre novamente antes de sincronizar.");
+      const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-push-template`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify({ ...payload, accessToken: token }),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { data = { error: text }; }
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
+    } catch (e: any) {
+      return { data: null, error: e };
+    }
+  };
+
+  const invokeSyncProgram = async (targetProgramId: string): Promise<{ data: any; error: any }> => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    const payload = { programId: targetProgramId };
+    try {
+      const r = await supabase.functions.invoke("supercoach-sync-program", { body: payload });
+      if (!r.error) return r as any;
+    } catch {}
+
+    try {
+      const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-sync-program`;
+      const key = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${token || key}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
+    } catch {}
+
+    try {
+      if (!token) throw new Error("Sessão administrativa expirada. Entre novamente antes de sincronizar.");
+      const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/supercoach-sync-program`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify({ ...payload, accessToken: token }),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { data = { error: text }; }
+      if (res.ok) return { data, error: null };
+      return { data, error: new Error(data?.error || `Falha HTTP ${res.status}`) };
     } catch (e: any) {
       return { data: null, error: e };
     }
@@ -390,12 +448,14 @@ const ProgramWorkouts = ({ programId }: Props) => {
         const counts = await fetchExerciseCounts([templateId]);
         exCount = counts[templateId] || 0;
       }
-      if (!exCount) throw new Error("Treino sem exercícios. Adicione ao menos um exercício antes de espelhar.");
+      if (!exCount) toast.warning("Treino sem exercícios: vou sincronizar a estrutura do treino no ST Coach mesmo assim.");
       const { data, error } = await invokePushTemplate({ templateId, programId });
       if (error) throw error;
       if (data?.ok === false) throw new Error(data?.error || "Falha ao espelhar");
       if (Array.isArray(data?.unmatched) && data.unmatched.length) {
         toast.warning(`Treino espelhado parcialmente: ${data?.patched ?? 0} exercícios sincronizados, ${data.unmatched.length} pendente(s).`);
+      } else if (data?.emptyTemplate) {
+        toast.success("Treino sincronizado no ST Coach. Estrutura criada sem exercícios.");
       } else {
         toast.success(`Treino espelhado no ST Coach (${data?.patched ?? 0} exercícios sincronizados).`);
       }
@@ -411,13 +471,28 @@ const ProgramWorkouts = ({ programId }: Props) => {
     const list = (workouts || []) as any[];
     if (!list.length) { toast.error("Nenhum treino para espelhar"); return; }
     setPushingAll(true);
+    let programSynced = false;
+    try {
+      const { data, error } = await invokeSyncProgram(programId);
+      if (error || data?.ok === false) throw new Error(error?.message || data?.error || "Falha ao sincronizar o programa");
+      programSynced = true;
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível sincronizar o programa no ST Coach.");
+      setPushingAll(false);
+      return;
+    }
     let counts: Record<string, number> = {};
+    let countsChecked = false;
     try {
       counts = await fetchExerciseCounts(list.map((w: any) => w.id));
+      countsChecked = true;
     } catch (e) {
       console.warn("[push-all] não foi possível conferir contagem de exercícios; tentando espelhar todos", e);
     }
     const eligible = list.filter((w: any) => (templateExercisesMap?.[w.id]?.length ?? 0) > 0 || (counts[w.id] || 0) > 0);
+    if (countsChecked && !eligible.length) {
+      toast.warning("Nenhum treino tem exercícios ainda. Vou sincronizar a estrutura do programa/treinos no ST Coach mesmo assim.");
+    }
     const finalList = eligible.length ? eligible : list;
     const skipped = eligible.length ? list.length - eligible.length : 0;
     if (!eligible.length) {
@@ -447,7 +522,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
     else {
       const visibleFailures = failures.slice(0, 3).join(" | ");
       const extra = failures.length > 3 ? ` +${failures.length - 3} detalhe(s)` : "";
-      toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${visibleFailures}${extra}`);
+      const prefix = programSynced ? "Programa criado/atualizado. " : "";
+      toast.warning(`${prefix}Espelhamento parcial: ${ok} ok, ${fail} falharam${skipNote}. ${visibleFailures}${extra}`);
     }
     queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
     queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });

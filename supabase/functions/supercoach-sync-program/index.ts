@@ -6,6 +6,8 @@ import { getSuperCoachToken, SC_COMMON_HEADERS } from '../_shared/supercoach-lib
 
 const SC = 'https://supertreinosapp.com/api/v2';
 
+interface Body { programId?: string; accessToken?: string }
+
 async function scFetch(token: string, path: string, init: RequestInit = {}) {
   const res = await fetch(`${SC}${path}`, {
     ...init,
@@ -21,7 +23,14 @@ async function scFetch(token: string, path: string, init: RequestInit = {}) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const auth = req.headers.get('Authorization') || '';
+    const body = (await req.json().catch(() => ({}))) as Body;
+    const bodyToken = String(body.accessToken || '').trim();
+    const headerAuth = req.headers.get('Authorization') || '';
+    const auth = headerAuth.startsWith('Bearer ')
+      ? headerAuth
+      : bodyToken
+        ? `Bearer ${bodyToken}`
+        : '';
     if (!auth.startsWith('Bearer ')) throw new Error('Não autenticado');
     const url = Deno.env.get('SUPABASE_URL')!;
     const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -33,7 +42,7 @@ Deno.serve(async (req) => {
     const { data: roles } = await admin.from('user_roles').select('role').eq('user_id', userRes.user.id).in('role', ['admin', 'consultor']);
     if (!roles?.length) throw new Error('Apenas admin/consultor podem sincronizar');
 
-    const { programId } = await req.json();
+    const { programId } = body;
     if (!programId) throw new Error('programId obrigatório');
 
     const { data: prog, error } = await admin

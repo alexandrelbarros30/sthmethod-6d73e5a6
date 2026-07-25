@@ -187,6 +187,44 @@ const AdminTrainingPrograms = () => {
     enabled: !!assignedDialog,
   });
 
+  const invokeEdgeWithSimpleFallback = async (functionName: string, payload: Record<string, unknown>) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+
+    try {
+      const r = await supabase.functions.invoke(functionName, { body: payload });
+      if (!r.error) return r.data;
+    } catch {}
+
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) return data;
+    } catch {}
+
+    if (!token) throw new Error("Sessão administrativa expirada. Entre novamente antes de sincronizar.");
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({ ...payload, accessToken: token }),
+    });
+    const text = await res.text();
+    let data: any = {};
+    try { data = JSON.parse(text); } catch { data = { error: text }; }
+    if (!res.ok || data?.ok === false) throw new Error(data?.error || `Falha HTTP ${res.status}`);
+    return data;
+  };
+
   const unassignMutation = useMutation({
     mutationFn: async ({ programId, userId }: { programId: string; userId: string }) => {
       const { data: tpls } = await supabase.from("workout_templates").select("id").eq("program_id", programId);
@@ -198,6 +236,7 @@ const AdminTrainingPrograms = () => {
         .eq("user_id", userId)
         .in("template_id", tIds);
       if (error) throw error;
+      await invokeEdgeWithSimpleFallback("supercoach-assign-program", { userId, programId, action: "unassign" });
     },
     onSuccess: () => {
       toast.success("Programa desatribuído.");
@@ -253,8 +292,7 @@ const AdminTrainingPrograms = () => {
       if (programId) {
         try {
           // 1) Sincroniza metadados do programa (nome/subtítulo/capa) mesmo sem templates
-          supabase.functions
-            .invoke("supercoach-sync-program", { body: { programId } })
+          invokeEdgeWithSimpleFallback("supercoach-sync-program", { programId })
             .catch((e) => console.warn("[auto-sync ST Coach program meta]", e));
           // 2) Re-publica templates para propagar mudanças (nome do treino, capa, etc.)
           const { data: tpls } = await supabase
@@ -262,8 +300,7 @@ const AdminTrainingPrograms = () => {
             .select("id")
             .eq("program_id", programId);
           (tpls || []).forEach((t: any) => {
-            supabase.functions
-              .invoke("supercoach-push-template", { body: { templateId: t.id, programId } })
+            invokeEdgeWithSimpleFallback("supercoach-push-template", { templateId: t.id, programId })
               .catch((e) => console.warn("[auto-sync ST Coach]", e));
           });
         } catch (e) {
@@ -358,10 +395,13 @@ const AdminTrainingPrograms = () => {
         .from("student_workout_assignments")
         .upsert(rows as any, { onConflict: "user_id,template_id" });
       if (error) throw error;
-      return { count: rows.length };
+      for (const uid of userIds) {
+        await invokeEdgeWithSimpleFallback("supercoach-assign-program", { userId: uid, programId, action: "assign" });
+      }
+      return { count: rows.length, students: userIds.length };
     },
-    onSuccess: ({ count }) => {
-      toast.success(`Programa compartilhado! ${count} atribuição(ões) criada(s).`);
+    onSuccess: ({ count, students }) => {
+      toast.success(`Programa compartilhado e sincronizado no ST Coach! ${count} atribuição(ões), ${students} aluno(s).`);
       setAssignDialog(null);
       setSelectedStudents([]);
       setStudentSearch("");
