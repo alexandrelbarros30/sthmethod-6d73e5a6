@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import ErrorDetailsDialog, { type ErrorDetails } from "@/components/shared/ErrorDetailsDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon, Download, RefreshCw } from "lucide-react";
@@ -70,6 +71,7 @@ const AdminTrainingPrograms = () => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [coverError, setCoverError] = useState<ErrorDetails | null>(null);
 
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
@@ -561,12 +563,46 @@ const AdminTrainingPrograms = () => {
                         try {
                           toast.info("Gerando capa...");
                           const { data, error } = await supabase.functions.invoke("generate-program-cover", { body: { programId: p.id } });
-                          if (error) throw error;
-                          if ((data as any)?.error) throw new Error((data as any).error);
-                          toast.success("Capa gerada!");
+                          const body: any = data || {};
+                          if (error) {
+                            // supabase-js coloca o body real em error.context
+                            let parsed: any = null;
+                            try { parsed = await (error as any)?.context?.json?.(); } catch {}
+                            setCoverError({
+                              title: "Falha ao gerar capa",
+                              code: parsed?.code ?? (error as any)?.context?.status ?? "ERR",
+                              model: parsed?.model || "openai/gpt-image-2 → google/gemini-3.1-flash-image",
+                              message: parsed?.error || error.message,
+                              raw: parsed ? JSON.stringify(parsed, null, 2) : String(error.message || error),
+                              when: parsed?.when || new Date().toISOString(),
+                            });
+                            toast.error("Falha ao gerar capa — veja detalhes");
+                            return;
+                          }
+                          if (body?.error) {
+                            setCoverError({
+                              title: "Falha ao gerar capa",
+                              code: body.code || "ERR",
+                              model: body.model || "—",
+                              message: body.error,
+                              raw: JSON.stringify(body, null, 2),
+                              when: body.when,
+                            });
+                            toast.error("Falha ao gerar capa — veja detalhes");
+                            return;
+                          }
+                          toast.success(`Capa gerada! (${body.model || "IA"})`);
                           queryClient.invalidateQueries({ queryKey: ["training-programs"] });
                         } catch (e: any) {
-                          toast.error(e?.message || "Falha ao gerar capa");
+                          setCoverError({
+                            title: "Falha ao gerar capa",
+                            code: "NET",
+                            model: "—",
+                            message: e?.message || "Erro desconhecido",
+                            raw: String(e?.stack || e),
+                            when: new Date().toISOString(),
+                          });
+                          toast.error("Falha ao gerar capa — veja detalhes");
                         }
                       }}>
                         <ImageIcon className="w-3 h-3 mr-1" /> {p.poster_url ? "Regerar capa" : "Gerar capa"}
@@ -838,6 +874,7 @@ const AdminTrainingPrograms = () => {
           </DialogContent>
         </Dialog>
       </div>
+      <ErrorDetailsDialog open={!!coverError} onOpenChange={(v) => !v && setCoverError(null)} details={coverError} />
     </DashboardLayout>
   );
 };

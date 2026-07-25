@@ -17,6 +17,7 @@ import ReactMarkdown from "react-markdown";
 import { normalizeSearch } from "@/lib/utils";
 import AICreditUsage from "@/components/shared/AICreditUsage";
 import AICreditBalanceBadge from "@/components/shared/AICreditBalanceBadge";
+import ErrorDetailsDialog, { type ErrorDetails } from "@/components/shared/ErrorDetailsDialog";
 import { Link } from "react-router-dom";
 
 type Mode = "generate" | "copilot" | "analyze";
@@ -48,6 +49,7 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   const [streamText, setStreamText] = useState("");
   const [usage, setUsage] = useState<any>(null);
   const [usedModel, setUsedModel] = useState<string | undefined>();
+  const [aiError, setAiError] = useState<ErrorDetails | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [materializing, setMaterializing] = useState(false);
@@ -210,11 +212,20 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
 
       if (!resp.ok || !resp.body) {
         const errText = await resp.text().catch(() => "");
-        let msg = "Erro ao chamar IA";
-        try { msg = JSON.parse(errText).error || msg; } catch {}
-        throw new Error(msg);
+        let parsed: any = null;
+        try { parsed = JSON.parse(errText); } catch {}
+        const model = resp.headers.get("X-Model") || parsed?.model || "google/gemini-3.6-flash";
+        setAiError({
+          title: "Falha ao gerar programa de treino",
+          code: parsed?.code ?? resp.status,
+          model,
+          message: parsed?.error || `HTTP ${resp.status}`,
+          raw: parsed ? JSON.stringify(parsed, null, 2) : (errText || "").slice(0, 1500),
+          when: parsed?.when || new Date().toISOString(),
+        });
+        throw new Error(parsed?.error || `HTTP ${resp.status}`);
       }
-      setUsedModel(resp.headers.get("X-Model") || "google/gemini-3-flash-preview");
+      setUsedModel(resp.headers.get("X-Model") || "google/gemini-3.6-flash");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -266,7 +277,17 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
         if (acc) setMessages(prev => [...prev, { role: "assistant", content: acc + "\n\n_Interrompido._" }]);
         setStreamText("");
       } else {
-        toast.error(e?.message || "Erro na IA");
+        toast.error("Falha na IA — veja detalhes");
+        if (!aiError) {
+          setAiError({
+            title: "Falha ao gerar programa de treino",
+            code: "NET",
+            model: usedModel || "google/gemini-3.6-flash",
+            message: e?.message || "Erro desconhecido",
+            raw: String(e?.stack || e),
+            when: new Date().toISOString(),
+          });
+        }
       }
     } finally {
       setStreaming(false);
@@ -591,6 +612,7 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
           <p className="text-[10px] text-muted-foreground text-right">Ctrl/⌘ + Enter para enviar</p>
         </div>
       </DialogContent>
+      <ErrorDetailsDialog open={!!aiError} onOpenChange={(v) => !v && setAiError(null)} details={aiError} />
     </Dialog>
   );
 }

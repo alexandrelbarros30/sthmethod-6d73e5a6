@@ -213,17 +213,17 @@ Deno.serve(async (req) => {
         });
       } catch (e) {
         console.error('upstream fetch failed', e);
-        return new Response(JSON.stringify({ error: 'Falha ao conectar com o provedor de IA. Tente novamente.' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Falha ao conectar com o provedor de IA. Tente novamente.', code: 502, model, details: String((e as any)?.message || e), when: new Date().toISOString() }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
       }
       if (upstream.status === 429) {
-        return new Response(JSON.stringify({ error: 'Limite de uso da IA atingido. Aguarde alguns instantes e tente novamente.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Limite de uso da IA atingido. Aguarde alguns instantes e tente novamente.', code: 429, model }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
       }
       if (upstream.status === 402) {
-        return new Response(JSON.stringify({ error: 'Créditos de IA esgotados no workspace. Adicione créditos para continuar.' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Créditos de IA esgotados no workspace. Adicione créditos para continuar.', code: 402, model }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
       }
       if (!upstream.ok || !upstream.body) {
         const t = await upstream.text().catch(() => '');
-        return new Response(JSON.stringify({ error: `AI gateway error: ${t}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Falha no provedor de IA. Tente novamente em instantes.', code: upstream.status || 500, model, details: (t || '').slice(0, 800), when: new Date().toISOString() }), { status: upstream.status || 500, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
       }
       return new Response(upstream.body, {
         status: 200,
@@ -244,12 +244,14 @@ Deno.serve(async (req) => {
     });
     const data = await resp.json().catch(() => ({}));
     if (resp.status === 429) {
-      return new Response(JSON.stringify({ error: 'Limite de uso da IA atingido. Aguarde alguns instantes e tente novamente.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Limite de uso da IA atingido. Aguarde alguns instantes e tente novamente.', code: 429, model }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
     }
     if (resp.status === 402) {
-      return new Response(JSON.stringify({ error: 'Créditos de IA esgotados no workspace. Adicione créditos para continuar.' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Créditos de IA esgotados no workspace. Adicione créditos para continuar.', code: 402, model }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
     }
-    if (!resp.ok) throw new Error(`AI gateway error: ${JSON.stringify(data)}`);
+    if (!resp.ok) {
+      return new Response(JSON.stringify({ error: 'Falha no provedor de IA.', code: resp.status, model, details: JSON.stringify(data).slice(0, 800), when: new Date().toISOString() }), { status: resp.status, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
+    }
     const response = (data as any)?.choices?.[0]?.message?.content || '';
     const usage = (data as any)?.usage || null;
 
@@ -263,9 +265,9 @@ Deno.serve(async (req) => {
       });
     } catch (_) { /* ignore */ }
 
-    return new Response(JSON.stringify({ response, model, mode, usage }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ response, model, mode, usage }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Model': model } });
   } catch (err) {
     console.error('ai-workout-coach', err);
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: String((err as any)?.message || err), code: 500, model: 'google/gemini-3.6-flash', when: new Date().toISOString() }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
