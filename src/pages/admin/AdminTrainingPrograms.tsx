@@ -508,18 +508,31 @@ const AdminTrainingPrograms = () => {
           <Button
             variant="outline"
             onClick={async () => {
-              const toastId = toast.loading("Sincronizando capas no ST Coach...");
-              try {
-                const { data, error } = await supabase.functions.invoke("supercoach-sync-covers", { body: {} });
-                if (error) throw error;
-                toast.success(
-                  `Capas sincronizadas · ${data?.programs_synced || 0} programas / ${data?.trainings_synced || 0} treinos` +
-                    (data?.programs_failed || data?.trainings_failed ? ` · falhas: ${(data?.programs_failed || 0) + (data?.trainings_failed || 0)}` : ""),
-                  { id: toastId }
-                );
-              } catch (e: any) {
-                toast.error(`Falha ao sincronizar capas: ${e?.message || e}`, { id: toastId });
+              const ids = (programs || [])
+                .filter((p: any) => p.supercoach_program_id && p.poster_url)
+                .map((p: any) => p.id);
+              if (!ids.length) { toast.info("Nenhum programa elegível para sincronizar."); return; }
+              const toastId = toast.loading(`Sincronizando capas (0/${ids.length})...`);
+              let progOk = 0, progFail = 0, trOk = 0, trFail = 0, done = 0;
+              for (const id of ids) {
+                try {
+                  const { data, error } = await supabase.functions.invoke("supercoach-sync-covers", { body: { programIds: [id] } });
+                  if (error) throw error;
+                  progOk += data?.programs_synced || 0;
+                  progFail += data?.programs_failed || 0;
+                  trOk += data?.trainings_synced || 0;
+                  trFail += data?.trainings_failed || 0;
+                } catch (e: any) {
+                  progFail++;
+                }
+                done++;
+                toast.loading(`Sincronizando capas (${done}/${ids.length})...`, { id: toastId });
               }
+              toast.success(
+                `Capas sincronizadas · ${progOk} programas / ${trOk} treinos` +
+                  (progFail || trFail ? ` · falhas: ${progFail + trFail}` : ""),
+                { id: toastId }
+              );
             }}
           >
             <RefreshCw className="w-4 h-4 mr-1" /> Sincronizar capas ST Coach
@@ -527,20 +540,32 @@ const AdminTrainingPrograms = () => {
           <Button
             variant="outline"
             onClick={async () => {
-              const toastId = toast.loading("Importando capas do ST Coach...");
-              try {
-                const { data, error } = await supabase.functions.invoke("supercoach-import-covers", { body: { overwrite: true } });
-                if (error) throw error;
-                queryClient.invalidateQueries({ queryKey: ["training-programs"] });
-                queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
-                toast.success(
-                  `Capas importadas · ${data?.programs_updated || 0} programas / ${data?.templates_updated || 0} treinos` +
-                    (data?.failures?.length ? ` · falhas: ${data.failures.length}` : ""),
-                  { id: toastId }
-                );
-              } catch (e: any) {
-                toast.error(`Falha ao importar capas: ${e?.message || e}`, { id: toastId });
+              const ids = (programs || [])
+                .filter((p: any) => p.supercoach_program_id)
+                .map((p: any) => p.id);
+              if (!ids.length) { toast.info("Nenhum programa vinculado ao ST Coach."); return; }
+              const toastId = toast.loading(`Importando capas (0/${ids.length})...`);
+              let progUpd = 0, tplUpd = 0, fails = 0, done = 0;
+              for (const id of ids) {
+                try {
+                  const { data, error } = await supabase.functions.invoke("supercoach-import-covers", { body: { programIds: [id], overwrite: true } });
+                  if (error) throw error;
+                  progUpd += data?.programs_updated || 0;
+                  tplUpd += data?.templates_updated || 0;
+                  fails += data?.failures?.length || 0;
+                } catch (e: any) {
+                  fails++;
+                }
+                done++;
+                toast.loading(`Importando capas (${done}/${ids.length})...`, { id: toastId });
               }
+              queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+              queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
+              toast.success(
+                `Capas importadas · ${progUpd} programas / ${tplUpd} treinos` +
+                  (fails ? ` · falhas: ${fails}` : ""),
+                { id: toastId }
+              );
             }}
           >
             <ImageIcon className="w-4 h-4 mr-1" /> Importar capas do ST Coach
