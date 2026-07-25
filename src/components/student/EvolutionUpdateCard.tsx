@@ -486,6 +486,10 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
                   canDeleteExisting={false}
                   required={false}
                   draftKey={imageDraftKey}
+                  uploadButtonLabel="Confirmar & salvar etapa 2"
+                  confirmBeforeUpload
+                  confirmTitle="Confirmar envio da etapa 2?"
+                  confirmDescription="Vamos salvar as novas fotos corporais no seu histórico. As imagens anteriores permanecem guardadas para comparação da sua evolução."
                   onComplete={handleStage2Complete}
                 />
               </div>
