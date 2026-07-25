@@ -58,6 +58,60 @@ interface ProgramForm {
 
 const emptyForm: ProgramForm = { title: "", details: "", objective: "general", difficulty: "intermediate", status: "published", poster_url: "", video_url: "", expires_at: "" };
 
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function inferCoverGender(program: { title?: string | null; details?: string | null }) {
+  const text = `${program.title || ""} ${program.details || ""}`.toLowerCase();
+  const femaleTerms = ["femin", "mulher", "glute", "glúte", "posterior", "lower body", "booty", "curves"];
+  return femaleTerms.some((term) => text.includes(term)) ? "F" : "M";
+}
+
+function buildLocalProgramCoverDataUrl(program: { title?: string | null; details?: string | null }) {
+  const gender = inferCoverGender(program);
+  const isFemale = gender === "F";
+  const accent = isFemale ? "#ff5fa2" : "#2388ff";
+  const secondary = isFemale ? "#ffb7d6" : "#5eead4";
+  const title = escapeSvgText((program.title || "STH METHOD TRAINING").toUpperCase());
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="34%" r="62%">
+      <stop offset="0%" stop-color="${accent}" stop-opacity="0.5"/>
+      <stop offset="44%" stop-color="${secondary}" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.98"/>
+      <stop offset="70%" stop-color="#050505" stop-opacity="0.94"/>
+      <stop offset="100%" stop-color="${accent}" stop-opacity="0.58"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+  <rect width="1024" height="1024" fill="#000000"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+  <ellipse cx="512" cy="414" rx="270" ry="330" fill="${accent}" opacity="0.15" filter="url(#soft)"/>
+  <path d="M512 132 C386 134 310 266 323 403 C335 545 424 613 376 755 L648 755 C600 613 689 545 701 403 C714 266 638 134 512 132Z" fill="#111111" stroke="${accent}" stroke-width="10"/>
+  <circle cx="512" cy="218" r="88" fill="#151515" stroke="${secondary}" stroke-width="8"/>
+  <path d="M307 508 C228 548 194 622 177 728" fill="none" stroke="${secondary}" stroke-width="31" stroke-linecap="round" opacity="0.72"/>
+  <path d="M717 508 C796 548 830 622 847 728" fill="none" stroke="${secondary}" stroke-width="31" stroke-linecap="round" opacity="0.72"/>
+  <path d="M415 750 L344 910" stroke="${accent}" stroke-width="35" stroke-linecap="round" opacity="0.88"/>
+  <path d="M609 750 L680 910" stroke="${accent}" stroke-width="35" stroke-linecap="round" opacity="0.88"/>
+  <rect y="852" width="1024" height="172" fill="url(#band)"/>
+  <path d="M80 886 L126 868 L172 886 L164 948 L126 970 L88 948 Z" fill="#050505" stroke="#22c26a" stroke-width="8"/>
+  <text x="126" y="930" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="900" fill="#22c26a">STH</text>
+  <text x="204" y="912" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="900" fill="#ffffff" letter-spacing="3">METHOD</text>
+  <text x="204" y="964" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="900" fill="#ffffff">${title}</text>
+</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 const AdminTrainingPrograms = () => {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
@@ -366,6 +420,44 @@ const AdminTrainingPrograms = () => {
   const getObjectiveLabel = (v: string) => OBJECTIVES.find(o => o.value === v)?.label || v;
   const getDifficultyInfo = (v: string) => DIFFICULTIES.find(d => d.value === v) || DIFFICULTIES[1];
 
+  const applyLocalProgramCover = async (program: any) => {
+    const posterUrl = buildLocalProgramCoverDataUrl(program);
+    const { error } = await supabase
+      .from("training_programs")
+      .update({ poster_url: posterUrl, updated_at: new Date().toISOString() })
+      .eq("id", program.id);
+    if (error) throw error;
+    return posterUrl;
+  };
+
+  const generateCoverWithLocalFallback = async (program: any) => {
+    try {
+      const invokePromise = supabase.functions.invoke("generate-program-cover", { body: { programId: program.id } });
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("TIMEOUT_EDGE_FUNCTION")), 15000);
+      });
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
+      const body: any = data || {};
+      if (error || body?.error) throw error || new Error(body.error);
+      return { data: body, usedLocalFallback: false };
+    } catch (edgeError: any) {
+      const posterUrl = await applyLocalProgramCover(program);
+      return {
+        data: {
+          ok: true,
+          posterUrl,
+          model: "safe-svg-fallback",
+          fallback: true,
+          fallbackDetails: {
+            code: "CLIENT_LOCAL_COVER_RENDERED",
+            edgeError: edgeError?.message || String(edgeError),
+          },
+        },
+        usedLocalFallback: true,
+      };
+    }
+  };
+
   const selectedProgram = (programs || []).find((p: any) => p.id === selectedProgramId);
 
   const filteredPrograms = (programs || []).filter((p: any) => {
@@ -460,8 +552,8 @@ const AdminTrainingPrograms = () => {
                   for (let i = 0; i < list.length; i++) {
                     const p = list[i];
                     try {
-                      const { data, error } = await supabase.functions.invoke("generate-program-cover", { body: { programId: p.id } });
-                      if (error || (data as any)?.error) throw new Error((error as any)?.message || (data as any)?.error);
+                      const { data } = await generateCoverWithLocalFallback(p);
+                      if ((data as any)?.error) throw new Error((data as any)?.error);
                       ok++;
                     } catch (e) {
                       fail++;
@@ -562,23 +654,8 @@ const AdminTrainingPrograms = () => {
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
                         try {
                           toast.info("Gerando capa...");
-                          const { data, error } = await supabase.functions.invoke("generate-program-cover", { body: { programId: p.id } });
+                          const { data, usedLocalFallback } = await generateCoverWithLocalFallback(p);
                           const body: any = data || {};
-                          if (error) {
-                            // supabase-js coloca o body real em error.context
-                            let parsed: any = null;
-                            try { parsed = await (error as any)?.context?.json?.(); } catch {}
-                            setCoverError({
-                              title: "Falha ao gerar capa",
-                              code: parsed?.code ?? (error as any)?.context?.status ?? "ERR",
-                              model: parsed?.model || "openai/gpt-image-2 → google/gemini-3.1-flash-image",
-                              message: parsed?.error || error.message,
-                              raw: parsed ? JSON.stringify(parsed, null, 2) : String(error.message || error),
-                              when: parsed?.when || new Date().toISOString(),
-                            });
-                            toast.error("Falha ao gerar capa — veja detalhes");
-                            return;
-                          }
                           if (body?.error) {
                             setCoverError({
                               title: "Falha ao gerar capa",
@@ -591,7 +668,7 @@ const AdminTrainingPrograms = () => {
                             toast.error("Falha ao gerar capa — veja detalhes");
                             return;
                           }
-                          toast.success(`Capa gerada! (${body.model || "IA"})`);
+                          toast.success(usedLocalFallback ? "Capa aplicada em modo seguro." : `Capa gerada! (${body.model || "IA"})`);
                           queryClient.invalidateQueries({ queryKey: ["training-programs"] });
                         } catch (e: any) {
                           setCoverError({

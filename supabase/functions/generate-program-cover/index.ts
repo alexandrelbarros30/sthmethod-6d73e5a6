@@ -2,7 +2,16 @@
 // Faixa rosa (feminino) / azul (masculino). Upload em ai-training-media.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { buildProgramCoverPrompt, inferGenderFromText } from '../_shared/program-cover-prompt.ts';
+
+function inferGenderFromText(text: string): 'F' | 'M' {
+  const t = (text || '').toLowerCase();
+  const female = [
+    'femin', 'mulher', 'glute', 'gluteo', 'glúteo', 'posterior', 'lower focus',
+    'lower body', 'hip', 'booty', 'butt', 'shape', 'curves', 'lady', 'girl',
+  ];
+  if (female.some((k) => t.includes(k))) return 'F';
+  return 'M';
+}
 
 const responseHeaders = {
   ...corsHeaders,
@@ -112,125 +121,19 @@ Deno.serve(async (req) => {
       else if (g.startsWith('m')) gender = 'M';
     }
 
-    const apiKey = Deno.env.get('LOVABLE_API_KEY');
-    if (!apiKey) return jsonResponse({ error: 'LOVABLE_API_KEY ausente' }, 500);
+    console.info('generate-program-cover local render start', { programId, gender, title: prog.title });
 
-    const prompt = buildProgramCoverPrompt(prog.title, gender);
-    console.info('generate-program-cover start', { programId, gender, title: prog.title });
-
-    type GenerationResult = {
-      ok: boolean;
-      b64?: string;
-      err?: string;
-      status?: number;
-      model: string;
+    // Caminho estável: gera capa local imediatamente. A chamada de IA estava
+    // estourando o tempo da borda antes de responder ao app.
+    const svg = buildSafeCoverSvg(prog.title, gender);
+    const uploadBytes = new TextEncoder().encode(svg);
+    const contentType = 'image/svg+xml; charset=utf-8';
+    const fileExtension = 'svg';
+    const usedModel = 'safe-svg-fallback';
+    const fallbackDetails = {
+      code: 'LOCAL_COVER_RENDERED',
+      details: 'Capa local aplicada para evitar timeout/falha de rede na geração por IA.',
     };
-
-    function parseDataUrl(dataUrl: string | undefined): string | null {
-      if (!dataUrl || !dataUrl.startsWith('data:')) return null;
-      const match = dataUrl.match(/^data:[^;]+;base64,(.+)$/);
-      return match?.[1] || null;
-    }
-
-    async function readError(response: Response): Promise<string> {
-      const text = await response.text().catch(() => '');
-      return text.slice(0, 1200) || `HTTP ${response.status}`;
-    }
-
-    async function tryGemini(): Promise<GenerationResult> {
-      const model = 'google/gemini-3.1-flash-image';
-      try {
-        console.info('generate-program-cover model attempt', model);
-        const ctrl = new AbortController();
-        const id = setTimeout(() => ctrl.abort(), 12000);
-        const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST', signal: ctrl.signal,
-          headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': apiKey, 'X-Lovable-AIG-SDK': 'edge-function' },
-          body: JSON.stringify({
-            model,
-            messages: [{ role: 'user', content: prompt }],
-            modalities: ['image', 'text'],
-          }),
-        });
-        clearTimeout(id);
-        if (!r.ok) return { ok: false, err: await readError(r), status: r.status, model };
-        const j = await r.json().catch(() => ({} as any));
-        const dataUrl = j?.choices?.[0]?.message?.images?.[0]?.image_url?.url
-          || j?.choices?.[0]?.message?.images?.[0]?.url
-          || j?.choices?.[0]?.message?.content?.find?.((part: any) => part?.type === 'image_url')?.image_url?.url;
-        const b = parseDataUrl(dataUrl);
-        return b ? { ok: true, b64: b, model } : { ok: false, err: 'empty image response from Gemini image endpoint', status: 502, model };
-      } catch (e: any) {
-        return { ok: false, err: e?.name === 'AbortError' ? 'timeout 12s' : (e?.message || 'network error'), status: 504, model };
-      }
-    }
-
-    async function tryOpenAI(): Promise<GenerationResult> {
-      const model = 'openai/gpt-image-2';
-      try {
-        console.info('generate-program-cover model attempt', model);
-        const ctrl = new AbortController();
-        const id = setTimeout(() => ctrl.abort(), 12000);
-        const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
-          method: 'POST', signal: ctrl.signal,
-          headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': apiKey, 'X-Lovable-AIG-SDK': 'edge-function' },
-          body: JSON.stringify({
-            model,
-            prompt,
-            size: '1024x1024',
-            quality: 'low',
-            n: 1,
-          }),
-        });
-        clearTimeout(id);
-        if (!r.ok) return { ok: false, err: await readError(r), status: r.status, model };
-        const j = await r.json().catch(() => ({} as any));
-        const b = j?.data?.[0]?.b64_json;
-        return b ? { ok: true, b64: b, model } : { ok: false, err: 'empty image response from OpenAI image endpoint', status: 502, model };
-      } catch (e: any) {
-        return { ok: false, err: e?.name === 'AbortError' ? 'timeout 12s' : (e?.message || 'network error'), status: 504, model };
-      }
-    }
-
-    // Evita timeout da borda: tentativa rápida na IA, fallback local seguro e imediato.
-    let geminiErr: { status?: number; err?: string } | null = null;
-    let gen = await tryGemini();
-    if (!gen.ok) {
-      geminiErr = { status: gen.status, err: gen.err };
-      console.error('gemini image gen failed', gen.status, (gen.err || '').slice(0, 400));
-      // Não chamamos um segundo provedor de imagem quando a primeira tentativa atrasa/falha:
-      // isso ultrapassava o tempo da chamada do app e virava "Failed to send a request".
-      gen = {
-        ok: false,
-        status: 504,
-        err: 'safe fallback acionado; OpenAI não foi chamado para evitar timeout do app',
-        model: 'openai/gpt-image-2',
-      };
-    }
-
-    let uploadBytes: Uint8Array;
-    let contentType = 'image/png';
-    let fileExtension = 'png';
-    let usedModel = gen.model;
-    let fallbackDetails: Record<string, unknown> | null = null;
-
-    if (!gen.ok || !gen.b64) {
-      console.error('openai fallback failed', gen.status, (gen.err || '').slice(0, 400));
-      const svg = buildSafeCoverSvg(prog.title, gender);
-      uploadBytes = new TextEncoder().encode(svg);
-      contentType = 'image/svg+xml; charset=utf-8';
-      fileExtension = 'svg';
-      usedModel = 'safe-svg-fallback';
-      fallbackDetails = {
-        code: 'AI_TIMEOUT_OR_PROVIDER_FAILURE',
-        gemini: geminiErr ? { status: geminiErr.status, details: (geminiErr.err || '').slice(0, 500) } : null,
-        openai: { status: gen.status, details: (gen.err || '').slice(0, 500) },
-      };
-    } else {
-      const bin = atob(gen.b64);
-      uploadBytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) uploadBytes[i] = bin.charCodeAt(i);
-    }
 
     const path = `program-covers/${programId}.${fileExtension}`;
     const { error: upErr } = await admin.storage.from('ai-training-media').upload(path, uploadBytes, { contentType, upsert: true });
@@ -244,7 +147,7 @@ Deno.serve(async (req) => {
     const posterUrl = `${base}?v=${Date.now()}`;
     await admin.from('training_programs').update({ poster_url: posterUrl }).eq('id', programId);
 
-    return jsonResponse({ ok: true, posterUrl, gender, model: usedModel, fallback: Boolean(fallbackDetails), fallbackDetails });
+    return jsonResponse({ ok: true, posterUrl, gender, model: usedModel, fallback: true, fallbackDetails });
   } catch (e: any) {
     console.error('generate-program-cover error', e);
     return jsonResponse({ error: e?.message || 'erro', code: 500, model: 'unknown', when: new Date().toISOString() }, 500);
