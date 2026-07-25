@@ -524,6 +524,27 @@ const AdminTrainingPrograms = () => {
           >
             <RefreshCw className="w-4 h-4 mr-1" /> Sincronizar capas ST Coach
           </Button>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const toastId = toast.loading("Importando capas do ST Coach...");
+              try {
+                const { data, error } = await supabase.functions.invoke("supercoach-import-covers", { body: { overwrite: true } });
+                if (error) throw error;
+                queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
+                toast.success(
+                  `Capas importadas · ${data?.programs_updated || 0} programas / ${data?.templates_updated || 0} treinos` +
+                    (data?.failures?.length ? ` · falhas: ${data.failures.length}` : ""),
+                  { id: toastId }
+                );
+              } catch (e: any) {
+                toast.error(`Falha ao importar capas: ${e?.message || e}`, { id: toastId });
+              }
+            }}
+          >
+            <ImageIcon className="w-4 h-4 mr-1" /> Importar capas do ST Coach
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline">
