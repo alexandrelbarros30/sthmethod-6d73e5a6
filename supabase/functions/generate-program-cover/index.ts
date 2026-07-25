@@ -50,19 +50,44 @@ Deno.serve(async (req) => {
 
     const prompt = buildProgramCoverPrompt(prog.title, gender);
 
-    const resp = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'openai/gpt-image-2', prompt, size: '1024x1024', quality: 'low', n: 1 }),
-    });
-    if (!resp.ok) {
-      const t = await resp.text().catch(() => '');
-      console.error('image gen failed', resp.status, t);
-      return new Response(JSON.stringify({ error: 'Falha na geração da imagem', details: t.slice(0, 300) }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Tenta OpenAI primeiro; se falhar (moderação/erro), faz fallback para Gemini.
+    async function tryOpenAI(): Promise<{ ok: boolean; b64?: string; err?: string; status?: number }> {
+      const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: 'openai/gpt-image-2', prompt, size: '1024x1024', quality: 'low', n: 1 }),
+      });
+      if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, err: t, status: r.status }; }
+      const j = await r.json().catch(() => ({} as any));
+      const b = j?.data?.[0]?.b64_json;
+      return b ? { ok: true, b64: b } : { ok: false, err: 'empty response', status: 502 };
     }
-    const data = await resp.json().catch(() => ({} as any));
-    const b64 = data?.data?.[0]?.b64_json;
-    if (!b64) return new Response(JSON.stringify({ error: 'Resposta vazia da IA' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    async function tryGemini(): Promise<{ ok: boolean; b64?: string; err?: string; status?: number }> {
+      const r = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: 'google/gemini-3.1-flash-image',
+          messages: [{ role: 'user', content: prompt }],
+          modalities: ['image', 'text'],
+        }),
+      });
+      if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, err: t, status: r.status }; }
+      const j = await r.json().catch(() => ({} as any));
+      const b = j?.data?.[0]?.b64_json;
+      return b ? { ok: true, b64: b } : { ok: false, err: 'empty response', status: 502 };
+    }
+
+    let gen = await tryOpenAI();
+    if (!gen.ok) {
+      console.error('openai image gen failed', gen.status, (gen.err || '').slice(0, 400));
+      gen = await tryGemini();
+    }
+    if (!gen.ok || !gen.b64) {
+      console.error('gemini fallback failed', gen.status, (gen.err || '').slice(0, 400));
+      return new Response(JSON.stringify({ error: 'Não foi possível gerar a capa agora. Tente novamente em instantes.', details: (gen.err || '').slice(0, 300) }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const b64 = gen.b64;
 
     const bin = atob(b64);
     const bytes = new Uint8Array(bin.length);
