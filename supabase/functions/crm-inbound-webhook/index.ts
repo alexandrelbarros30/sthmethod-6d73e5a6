@@ -1496,63 +1496,36 @@ Deno.serve(async (req) => {
       const activeProvider = targetProvider || provider;
       
       if (activeProvider === 'zapi') {
-        const c = (zapiCfg?.value as any) || {};
-        const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-        const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-        const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-        
-        if (INSTANCE_ID && INSTANCE_TOKEN) {
-          const isPdf = String(imageUrl || '').toLowerCase().includes('.pdf');
-          let endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-${imageUrl ? (isPdf ? 'document' : 'image') : 'text'}`;
-          let bodyPayload: any = { phone, message: tplMessage };
-
-          // Suporte a Menus Interativos no Z-API
-          if (flowStep?.display_format === 'buttons' && flowStep.actions?.length > 0) {
-            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-button-list`;
-            bodyPayload = {
-              phone,
-              message: tplMessage,
-              buttonList: {
-                buttons: flowStep.actions.slice(0, 3).map((a: any) => ({
-                  id: a.label,
-                  label: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label
-                }))
-              }
-            };
-          } else if (flowStep?.display_format === 'list' && flowStep.actions?.length > 0) {
-            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-option-list`;
-            bodyPayload = {
-              phone,
-              message: tplMessage,
-              optionList: {
-                title: 'Opções',
-                buttonLabel: 'Ver Opções',
-                options: flowStep.actions.slice(0, 10).map((a: any, i: number) => ({
-                  id: a.label,
-                  title: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label,
-                  description: `Opção ${i + 1}`
-                }))
-              }
-            };
-          } else if (imageUrl) {
-            if (isPdf) { 
-              bodyPayload.document = imageUrl; 
-              bodyPayload.fileName = 'documento.pdf'; 
-              bodyPayload.caption = tplMessage; 
-            } else { 
-              bodyPayload.image = imageUrl; 
-              bodyPayload.caption = tplMessage; 
-            }
-          }
-
-          const r = await fetch(endpoint, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) }, 
-            body: JSON.stringify(bodyPayload) 
-          });
-          const j = await r.json().catch(() => ({})); 
-          sent = r.ok; 
-          messageId = j?.messageId || j?.id || null;
+        // Canal Comercial (21998496289) migrado de Z-API para W-API.
+        // Encaminha pelo edge send-whatsapp, que usa crm_settings.key='wapi_comercial'.
+        console.log(`Invoking send-whatsapp (W-API Comercial) for phone ${phone}`);
+        let buttons: any = null;
+        let list: any = null;
+        if (flowStep?.display_format === 'buttons' && flowStep.actions?.length > 0) {
+          buttons = flowStep.actions.slice(0, 3).map((a: any) => ({
+            id: a.label,
+            label: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label,
+          }));
+        } else if (flowStep?.display_format === 'list' && flowStep.actions?.length > 0) {
+          list = {
+            title: 'Opções',
+            buttonLabel: 'Ver Opções',
+            sections: [{
+              title: 'Escolha uma opção',
+              rows: flowStep.actions.slice(0, 10).map((a: any) => ({
+                id: a.label,
+                title: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label,
+              })),
+            }],
+          };
+        }
+        const { data, error } = await admin.functions.invoke('send-whatsapp', {
+          body: { phone, message: tplMessage, image_url: imageUrl, buttons, list },
+        });
+        console.log('Response from send-whatsapp:', { data, error });
+        if (!error && (data?.ok || data?.messageId)) {
+          sent = true;
+          messageId = data?.messageId || data?.id || null;
         }
       } else {
         const fnName = activeProvider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
