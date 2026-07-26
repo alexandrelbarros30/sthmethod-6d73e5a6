@@ -340,12 +340,41 @@ function AddFoodDialog({
     if (!search.trim() || tab !== "alimento") { setFoods([]); return; }
     const t = setTimeout(() => {
       setLoading(true);
-      try {
-        setFoods(searchFoodBank(search.trim(), 40));
-      } finally {
-        setLoading(false);
-      }
-    }, 150);
+      const q = search.trim();
+      (async () => {
+        try {
+          // Consulta paralela: base local (rápida) + tabela foods (TACO/TBCA) + FatSecret
+          const norm = q.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          const local = searchFoodBank(q, 20);
+          const [dbRes, fsRes] = await Promise.allSettled([
+            supabase
+              .from("foods")
+              .select("*")
+              .or(`name.ilike.%${q}%,name.ilike.%${norm}%`)
+              .limit(40),
+            supabase.functions.invoke("fatsecret-search", { body: { query: q, maxResults: 30 } }),
+          ]);
+          const dbFoods: any[] = dbRes.status === "fulfilled" ? (dbRes.value.data || []) : [];
+          const fsFoods: any[] = fsRes.status === "fulfilled" ? ((fsRes.value.data as any)?.foods || []) : [];
+          const seen = new Set<string>();
+          const merged: any[] = [];
+          const push = (f: any) => {
+            const key = (f.name || "").toLowerCase().trim();
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            merged.push(f);
+          };
+          dbFoods.forEach(push);
+          fsFoods.forEach(push);
+          local.forEach(push);
+          setFoods(merged.slice(0, 60));
+        } catch (e) {
+          setFoods(searchFoodBank(q, 40));
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 250);
     return () => clearTimeout(t);
   }, [search, tab]);
 
@@ -555,6 +584,11 @@ function AddFoodDialog({
                       >
                         <button onClick={() => openEditor(f)} className="flex-1 min-w-0 text-left">
                           <p className="text-sm font-medium truncate text-[#1C1C1E]">{f.name}</p>
+                          {f.source && (
+                            <Badge variant="outline" className="text-[9px] mt-0.5 border-[#E5E5EA] text-[#6E6E73] py-0 px-1.5 h-4">
+                              {f.source}{f.category ? ` · ${f.category}` : ""}
+                            </Badge>
+                          )}
                           <p className="text-[11px] text-[#34C759]">
                             {sel ? `${sel.quantity}${sel.unit}` : `100${f.serving_unit || "g"}`}
                             <span className="text-[#6E6E73]"> · {Math.round(f.energy_kcal * ((sel?.quantity ?? 100) / 100))} kcal · P:{(f.protein_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g C:{(f.carbs_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g G:{(f.fat_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g</span>
