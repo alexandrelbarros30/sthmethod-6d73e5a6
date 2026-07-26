@@ -111,9 +111,35 @@ serve(async (req) => {
     // Mercado Pago rejeita unit_price=0 e travava o checkout em tela branca.
     // ==========================================================
     if (finalAmount <= 0 && validCouponId) {
+      // Cupom "PRIMEIRO" (gratuidade) redireciona a ativação para o plano
+      // interno SELECT FREE — invisível ao público, exclusivo p/ testers.
+      const SELECT_FREE_PLAN_ID = "f9e00000-0000-4000-8000-00000000f9e0";
+      let activationPlanId = plan_id;
+      let activationDurationDays = plan.duration_days || 30;
+      try {
+        const { data: couponRow } = await supabaseAdmin
+          .from("coupons")
+          .select("code")
+          .eq("id", validCouponId)
+          .maybeSingle();
+        if ((couponRow?.code || "").toUpperCase() === "PRIMEIRO") {
+          const { data: freePlan } = await supabaseAdmin
+            .from("plans")
+            .select("id, duration_days")
+            .eq("id", SELECT_FREE_PLAN_ID)
+            .maybeSingle();
+          if (freePlan?.id) {
+            activationPlanId = freePlan.id;
+            activationDurationDays = freePlan.duration_days || 30;
+          }
+        }
+      } catch (e) {
+        console.error("[create-payment] SELECT FREE swap failed", e);
+      }
+
       const freePayload: any = {
         user_id: userId,
-        plan_id,
+        plan_id: activationPlanId,
         amount: 0,
         original_amount: originalAmount,
         method: "free",
@@ -129,7 +155,7 @@ serve(async (req) => {
         .from("payments")
         .select("id")
         .eq("user_id", userId)
-        .eq("plan_id", plan_id)
+        .in("plan_id", [plan_id, activationPlanId])
         .eq("status", "pending")
         .gt("created_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false })
@@ -160,7 +186,7 @@ serve(async (req) => {
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const durationDays = plan.duration_days || 30;
+      const durationDays = activationDurationDays;
       const startDate = new Date();
       const { data: existingSub } = await supabaseAdmin
         .from("subscriptions")
@@ -186,7 +212,7 @@ serve(async (req) => {
 
       const subPayload = {
         user_id: userId,
-        plan_id,
+        plan_id: activationPlanId,
         status: "active",
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
