@@ -32,8 +32,7 @@ const STHIA_LAYERS = `# 12 CAMADAS OPERACIONAIS
 11. Personalização por sexo, idade, experiência, stack, exames, sono, patologias.
 12. Segurança primeiro: red flags sinalizados, evidência antes de opinião, transparência.`;
 
-const FORMAT_SPEC = `FORMATO DE SAÍDA — HTML PURO (sem markdown, sem code fences). Use apenas
-<p>, <strong>, <em>, <br>, <table>, <tr>, <td>, <th>. Estruture o parecer nesta ordem:
+const FORMAT_SPEC = `FORMATO DE SAÍDA — HTML PURO, LIMPO, SEM MARKDOWN, SEM CODE FENCES (\`\`\`), SEM ATRIBUTO style=, SEM class=, SEM font=, SEM <html>/<head>/<body>. Nunca escape as tags (não use &lt;p&gt;). Use apenas as tags <p>, <strong>, <em>, <br>, <ul>, <li>, <table>, <thead>, <tbody>, <tr>, <td>, <th>. Sempre separe parágrafos com <p>...</p> reais (nada de linhas soltas). Estruture o parecer EXATAMENTE nesta ordem:
 
 <p><strong>🧠 PARECER GERAL</strong></p>
 <p>Diagnóstico integrado (5-8 linhas) cruzando exames + composição corporal + protocolo atual + queixas.</p>
