@@ -456,6 +456,47 @@ const AdminProtocolAI = () => {
                 </CardContent>
               </Card>
 
+              <Card className="border-amber-500/30 bg-amber-500/5">
+                <CardHeader>
+                  <CardTitle className="font-display text-base flex items-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-amber-500" /> Correções / informações complementares
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Aponte erros da IA, ajustes de dose, ativos a trocar, timing, exames adicionais ou qualquer refinamento. A STHIA aplicará essas correções na versão revisada.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Textarea
+                    rows={5}
+                    value={reviewNotes}
+                    onChange={(e) => setReviewNotes(e.target.value)}
+                    placeholder={`Ex:\n- Trocar Trembolona por Masteron nas semanas 5-8\n- Reduzir GH para 3UI/dia\n- Aluno relatou insônia com Clenbuterol pré-treino\n- Adicionar TUDCA 500mg 2x/dia\n- Consolidar aplicações de segunda e quinta`}
+                    className="bg-background"
+                  />
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setReviewNotes("")}
+                      disabled={!reviewNotes || reviewMut.isPending}
+                    >
+                      Limpar
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => reviewMut.mutate()}
+                      disabled={reviewMut.isPending}
+                    >
+                      {reviewMut.isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Revisando...</>
+                      ) : (
+                        <><Wand2 className="w-4 h-4 mr-1" /> {reviewNotes.trim() ? "Revisar com correções" : "Revisar com IA"}</>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               {review && (
                 <Card>
                   <CardHeader>
