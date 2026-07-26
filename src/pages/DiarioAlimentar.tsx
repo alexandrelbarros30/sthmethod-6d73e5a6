@@ -340,12 +340,41 @@ function AddFoodDialog({
     if (!search.trim() || tab !== "alimento") { setFoods([]); return; }
     const t = setTimeout(() => {
       setLoading(true);
-      try {
-        setFoods(searchFoodBank(search.trim(), 40));
-      } finally {
-        setLoading(false);
-      }
-    }, 150);
+      const q = search.trim();
+      (async () => {
+        try {
+          // Consulta paralela: base local (rápida) + tabela foods (TACO/TBCA) + FatSecret
+          const norm = q.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          const local = searchFoodBank(q, 20);
+          const [dbRes, fsRes] = await Promise.allSettled([
+            supabase
+              .from("foods")
+              .select("*")
+              .or(`name.ilike.%${q}%,name.ilike.%${norm}%`)
+              .limit(40),
+            supabase.functions.invoke("fatsecret-search", { body: { query: q, maxResults: 30 } }),
+          ]);
+          const dbFoods: any[] = dbRes.status === "fulfilled" ? (dbRes.value.data || []) : [];
+          const fsFoods: any[] = fsRes.status === "fulfilled" ? ((fsRes.value.data as any)?.foods || []) : [];
+          const seen = new Set<string>();
+          const merged: any[] = [];
+          const push = (f: any) => {
+            const key = (f.name || "").toLowerCase().trim();
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            merged.push(f);
+          };
+          dbFoods.forEach(push);
+          fsFoods.forEach(push);
+          local.forEach(push);
+          setFoods(merged.slice(0, 60));
+        } catch (e) {
+          setFoods(searchFoodBank(q, 40));
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 250);
     return () => clearTimeout(t);
   }, [search, tab]);
 
