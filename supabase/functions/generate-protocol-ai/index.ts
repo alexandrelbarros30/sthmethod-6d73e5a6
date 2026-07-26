@@ -265,7 +265,7 @@ serve(async (req) => {
     }
 
     const systemPrompt = isReview
-      ? `${STHIA_IDENTITY}\n\n${STHIA_LAYERS}\n\nVocê está revisando um protocolo já escrito. Aplique TODAS as 12 camadas: hierarquia de evidência por recomendação, raciocínio multidisciplinar, varredura investigativa, análise multi-eixo, leitura longitudinal, previsão de resultado, mecanismo fisiológico e personalização. Aponte inconsistências farmacológicas, riscos, sinergias faltantes, doses fora de padrão e otimizações.`
+      ? `${STHIA_IDENTITY}\n\n${STHIA_LAYERS}\n\n${FORMAT_SPEC}\n\nVocê está revisando um protocolo já escrito. Aplique TODAS as 12 camadas: hierarquia de evidência por recomendação, raciocínio multidisciplinar, varredura investigativa, análise multi-eixo, leitura longitudinal, previsão de resultado, mecanismo fisiológico e personalização. Aponte inconsistências farmacológicas, riscos, sinergias faltantes, doses fora de padrão e otimizações.\n\nOBRIGATÓRIO: sempre devolver "revised_protocol" com o HTML COMPLETO no formato SMART PROTOCOL corrigido, incorporando todas as correções do admin (se houver) e resolvendo os "issues" apontados. Nunca devolver revised_protocol vazio — se não houver nada a mudar, replique o HTML original com pequenas melhorias de clareza.`
       : `${STHIA_IDENTITY}\n\n${STHIA_LAYERS}\n\n${FORMAT_SPEC}\n\nAo gerar o protocolo, aplique as 12 camadas silenciosamente durante o raciocínio. No HTML final, embuta:\n- nível de evidência ★–★★★★★ ao lado de cada dose/estratégia sensível dentro do próprio parágrafo (ex: "<em>(evidência ★★★★)</em>");\n- mecanismo fisiológico curto em 1 linha quando citar hormônio/peptídeo relevante;\n- na fase ⚠️ MONITORAMENTO E SEGURANÇA, inclua parágrafos <strong>Previsão:</strong> (resultado esperado + velocidade + probabilidade), <strong>Riscos prováveis:</strong> e <strong>Marcadores a acompanhar:</strong>.\nSe faltar dado crítico do dossiê (exame, peso, %GC, stack), sinalize no campo "summary" o que precisa ser coletado antes de escalar doses.`;
 
     const userText = isReview
@@ -295,7 +295,7 @@ serve(async (req) => {
                 suggestions: { type: "array", items: { type: "string" } },
                 revised_protocol: { type: "string", description: "HTML revisado no formato SMART PROTOCOL" },
               },
-              required: ["overall_score", "summary", "issues", "suggestions"],
+              required: ["overall_score", "summary", "issues", "suggestions", "revised_protocol"],
               additionalProperties: false,
             },
           },
