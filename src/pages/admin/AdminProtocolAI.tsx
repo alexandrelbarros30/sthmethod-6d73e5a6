@@ -55,6 +55,7 @@ const AdminProtocolAI = () => {
 
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [pullingAnalysis, setPullingAnalysis] = useState(false);
 
@@ -177,13 +178,20 @@ const AdminProtocolAI = () => {
     mutationFn: async () => {
       if (!result?.protocol_html) throw new Error("Gere um protocolo primeiro");
       const { data, error } = await supabase.functions.invoke("generate-protocol-ai", {
-        body: { mode: "review", protocolContent: result.protocol_html },
+        body: { mode: "review", protocolContent: result.protocol_html, reviewNotes },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       return data as ReviewResult;
     },
-    onSuccess: (data) => setReview(data),
+    onSuccess: (data) => {
+      setReview(data);
+      toast.success(
+        reviewNotes.trim()
+          ? "Revisão concluída com suas correções aplicadas"
+          : "Revisão da IA concluída"
+      );
+    },
     onError: (e: any) => toast.error(e?.message || "Falha ao revisar"),
   });
 
