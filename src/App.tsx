@@ -127,6 +127,8 @@ import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminPushHistory from "./pages/admin/AdminPushHistory";
+import AdminFoodAI from "./pages/admin/AdminFoodAI";
+import AdminFoodAILogs from "./pages/admin/AdminFoodAILogs";
 import AdminSthia from "./pages/admin/AdminSthia";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminCrm from "./pages/admin/AdminCrm";
