@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Download, Copy, Sparkles, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeClinicalHtml } from "@/lib/clinical-html";
 import { toast } from "sonner";
 
 type Section = { id: string; title: string; html: string };
@@ -53,7 +54,8 @@ export default function ClinicalExportDialog({
   createdAt,
   onSaved,
 }: Props) {
-  const sections = useMemo(() => splitSections(reportHtml), [reportHtml]);
+  const normalizedReport = useMemo(() => normalizeClinicalHtml(reportHtml), [reportHtml]);
+  const sections = useMemo(() => splitSections(normalizedReport), [normalizedReport]);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [includeSummary, setIncludeSummary] = useState(true);
   const [summaryHtml, setSummaryHtml] = useState<string>("");
@@ -96,7 +98,7 @@ export default function ClinicalExportDialog({
     for (const s of sections) if (checked[s.id]) parts.push(s.html);
     if (includeSummary && summaryHtml) {
       parts.push('<hr style="margin:24px 0;border:none;border-top:1px solid #ddd" />');
-      parts.push(summaryHtml);
+      parts.push(normalizeClinicalHtml(summaryHtml));
     }
     const body = parts.join("\n");
     const when = createdAt ? new Date(createdAt).toLocaleString("pt-BR") : new Date().toLocaleString("pt-BR");
