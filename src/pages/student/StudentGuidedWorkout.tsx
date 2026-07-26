@@ -628,14 +628,22 @@ const StudentGuidedWorkout = () => {
             const groupKind = groupSize === 3 ? "TRISET" : groupSize === 2 ? "BISET" : "CONJUGADO";
             const posLabel = inGroup ? `A${groupIndex}` : "";
             return (
-              <div key={ex.id} className="space-y-3">
+              <div
+                key={ex.id}
+                className="space-y-3"
+                style={
+                  inGroup && !isGroupStart
+                    ? { marginTop: -24 } // colapsa o space-y-6 entre exercícios do mesmo grupo
+                    : undefined
+                }
+              >
                 {isGroupStart && (
                   <div
-                    className="relative rounded-2xl px-4 py-2.5 flex items-center gap-2 border"
+                    className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2 border-2 border-b-0 -mb-1"
                     style={{
-                      background: "linear-gradient(90deg, rgba(57,255,20,0.15), rgba(57,255,20,0.02))",
+                      background: "linear-gradient(90deg, rgba(57,255,20,0.22), rgba(57,255,20,0.06))",
                       borderColor: "#39FF14",
-                      boxShadow: "0 0 20px rgba(57,255,20,0.35), inset 0 0 12px rgba(57,255,20,0.15)",
+                      boxShadow: "0 0 26px rgba(57,255,20,0.55), inset 0 0 14px rgba(57,255,20,0.2)",
                     }}
                   >
                     <span
@@ -654,16 +662,22 @@ const StudentGuidedWorkout = () => {
                   </div>
                 )}
                 <div
-                  className={inGroup ? "relative space-y-3 rounded-2xl p-3 pl-5 -mx-1" : "space-y-3"}
+                  className={inGroup ? "relative space-y-3 p-3 pl-5 -mx-1" : "space-y-3"}
                   style={
                     inGroup
                       ? {
-                          borderLeft: "6px solid #39FF14",
-                          borderTopLeftRadius: isGroupStart ? 16 : 0,
+                          borderLeft: "3px solid #39FF14",
+                          borderRight: "3px solid #39FF14",
+                          borderTop: isGroupStart ? "3px solid #39FF14" : "none",
+                          borderBottom: isGroupEnd ? "3px solid #39FF14" : "none",
+                          borderTopLeftRadius: 0,
+                          borderTopRightRadius: 0,
                           borderBottomLeftRadius: isGroupEnd ? 16 : 0,
+                          borderBottomRightRadius: isGroupEnd ? 16 : 0,
                           background:
-                            "linear-gradient(90deg, rgba(57,255,20,0.10), rgba(57,255,20,0.02))",
-                          boxShadow: "inset 0 0 14px rgba(57,255,20,0.12), -2px 0 12px rgba(57,255,20,0.35)",
+                            "linear-gradient(180deg, rgba(57,255,20,0.10), rgba(57,255,20,0.03))",
+                          boxShadow:
+                            "inset 0 0 18px rgba(57,255,20,0.18), 0 0 22px rgba(57,255,20,0.4)",
                         }
                       : undefined
                   }
@@ -846,8 +860,14 @@ const StudentGuidedWorkout = () => {
                 </div>
                 {isGroupEnd && (
                   <div
-                    className="text-center text-[10px] uppercase tracking-[0.3em] py-1"
-                    style={{ color: "#39FF14", textShadow: "0 0 6px rgba(57,255,20,0.6)" }}
+                    className="relative rounded-b-2xl px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.3em] border-2 border-t-0 -mt-1"
+                    style={{
+                      color: "#39FF14",
+                      borderColor: "#39FF14",
+                      background: "linear-gradient(90deg, rgba(57,255,20,0.06), rgba(57,255,20,0.22))",
+                      textShadow: "0 0 8px rgba(57,255,20,0.7)",
+                      boxShadow: "0 0 26px rgba(57,255,20,0.55), inset 0 0 14px rgba(57,255,20,0.2)",
+                    }}
                   >
                     ▲ fim do {groupKind.toLowerCase()} — descanse ▲
                   </div>
