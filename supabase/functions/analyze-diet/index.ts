@@ -34,10 +34,12 @@ function fsParseDescription(desc: string) {
   const perMatch = desc.match(/Per\s+([\d.,]+)\s*(g|ml|oz|fl oz|cup|piece|unit|tbsp|tsp|serving)/i);
   let servingSize = 100;
   let servingUnit: "g" | "ml" = "g";
+  let unitIsMass = false;
   if (perMatch) {
     servingSize = parseFloat(perMatch[1].replace(",", ".")) || 100;
     const u = perMatch[2].toLowerCase();
     servingUnit = u.includes("ml") || u.includes("fl") ? "ml" : "g";
+    unitIsMass = u === "g" || u === "ml";
   }
   const num = (re: RegExp) => {
     const r = desc.match(re);
@@ -47,16 +49,18 @@ function fsParseDescription(desc: string) {
   const fat = num(/Fat:\s*([\d.,]+)\s*g/i);
   const carbs = num(/Carbs:\s*([\d.,]+)\s*g/i);
   const protein = num(/Protein:\s*([\d.,]+)\s*g/i);
+  // Reject non-mass units (cup/piece/serving/tbsp/oz) and absurd sizes — cannot scale safely to 100g.
+  if (!unitIsMass || servingSize < 5) return null;
   const factor = servingSize > 0 ? 100 / servingSize : 1;
-  return {
-    per100: {
-      energy_kcal: kcal * factor,
-      protein_g: protein * factor,
-      carbs_g: carbs * factor,
-      fat_g: fat * factor,
-    },
-    serving_unit: servingUnit,
+  const per100 = {
+    energy_kcal: kcal * factor,
+    protein_g: protein * factor,
+    carbs_g: carbs * factor,
+    fat_g: fat * factor,
   };
+  // Sanity ceiling — pure fat is ~884 kcal/100g. Anything above = parse error.
+  if (per100.energy_kcal > 900 || per100.protein_g > 100 || per100.carbs_g > 100 || per100.fat_g > 100) return null;
+  return { per100, serving_unit: servingUnit };
 }
 
 const fsMemCache = new Map<string, { per100: { energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number }; serving_unit: "g" | "ml"; label: string } | null>();
