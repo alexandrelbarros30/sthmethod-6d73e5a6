@@ -85,7 +85,9 @@ const AdminTrainingPrograms = () => {
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
     const pid = searchParams.get("program");
-    if (pid && pid !== selectedProgramId) setSelectedProgramId(pid);
+    if (pid) {
+      setSelectedProgramId((prev) => (prev === pid ? prev : pid));
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -663,7 +665,19 @@ const AdminTrainingPrograms = () => {
 
           {/* RIGHT: workouts + inline exercises pane */}
           <div className="min-w-0">
-            <Button variant="ghost" size="sm" className="mb-3" onClick={() => setSelectedProgramId(null)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-3"
+              onClick={() => {
+                setSelectedProgramId(null);
+                if (searchParams.get("program")) {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete("program");
+                  setSearchParams(next, { replace: true });
+                }
+              }}
+            >
               <ArrowLeft className="w-4 h-4 mr-1" /> Todos os programas
             </Button>
             <div className="flex flex-wrap gap-2 mb-4">
