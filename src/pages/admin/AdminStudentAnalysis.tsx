@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera, Save, Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import ClinicalExportDialog from "@/components/admin/ClinicalExportDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,7 @@ export default function AdminStudentAnalysis() {
   const [selectedBodyIds, setSelectedBodyIds] = useState<string[]>([]);
   const [extraImagePaths, setExtraImagePaths] = useState<{ path: string; name: string }[]>([]);
   const [extraExamPaths, setExtraExamPaths] = useState<{ path: string; name: string }[]>([]);
+  const [includeExistingExams, setIncludeExistingExams] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const examInputRef = useRef<HTMLInputElement | null>(null);
@@ -93,6 +95,22 @@ export default function AdminStudentAnalysis() {
         .eq("user_id", studentId!)
         .order("uploaded_at", { ascending: false })
         .limit(40);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: existingExams = [] } = useQuery({
+    queryKey: ["clinical-docs-for-analysis", studentId],
+    enabled: !!studentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clinical_documents")
+        .select("id, type, storage_path, file_url, uploaded_at")
+        .eq("user_id", studentId!)
+        .eq("type", "lab_exam")
+        .order("uploaded_at", { ascending: false })
+        .limit(10);
       if (error) throw error;
       return data ?? [];
     },
@@ -187,6 +205,12 @@ export default function AdminStudentAnalysis() {
   const generate = useMutation({
     mutationFn: async () => {
       if (!studentId) throw new Error("Selecione um aluno");
+      const existingPaths = includeExistingExams
+        ? (existingExams as any[]).map((d) => d.storage_path).filter(Boolean)
+        : [];
+      const mergedExamPaths = Array.from(
+        new Set([...existingPaths, ...extraExamPaths.map((f) => f.path)])
+      );
       const { data, error } = await supabase.functions.invoke("sthia-clinical-analysis", {
         body: {
           studentId,
@@ -196,7 +220,7 @@ export default function AdminStudentAnalysis() {
           save: true,
           bodyImageIds: selectedBodyIds.length ? selectedBodyIds : null,
           extraImagePaths: extraImagePaths.map((f) => f.path),
-          extraExamPaths: extraExamPaths.map((f) => f.path),
+          extraExamPaths: mergedExamPaths,
         },
       });
       if (error) throw error;
@@ -396,6 +420,43 @@ export default function AdminStudentAnalysis() {
                       onChange={(e) => uploadExamFiles(e.target.files)}
                     />
                   </div>
+                  {(existingExams as any[]).length > 0 && (
+                    <div className="rounded-md bg-primary/5 border border-primary/20 p-2 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px] font-medium flex items-center gap-1.5">
+                          <FileText className="w-3 h-3 text-primary" />
+                          Aluno já possui {(existingExams as any[]).length} exame(s) no sistema
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Switch
+                            id="use-existing-exams"
+                            checked={includeExistingExams}
+                            onCheckedChange={setIncludeExistingExams}
+                          />
+                          <Label htmlFor="use-existing-exams" className="text-[10px] cursor-pointer">
+                            {includeExistingExams ? "Incluir na análise" : "Ignorar"}
+                          </Label>
+                        </div>
+                      </div>
+                      <ul className="space-y-0.5">
+                        {(existingExams as any[]).slice(0, 5).map((d) => (
+                          <li key={d.id} className="text-[10px] text-muted-foreground flex items-center justify-between gap-2">
+                            <span className="truncate">
+                              {d.storage_path?.split("/").pop() || "exame.pdf"}
+                            </span>
+                            <span className="opacity-70 shrink-0">
+                              {new Date(d.uploaded_at).toLocaleDateString("pt-BR")}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-[9px] text-muted-foreground">
+                        {includeExistingExams
+                          ? "STHIA fará OCR desses arquivos automaticamente."
+                          : "Estes exames não serão considerados nesta análise."}
+                      </p>
+                    </div>
+                  )}
                   {extraExamPaths.length === 0 ? (
                     <p className="text-[10px] text-muted-foreground">Envie laudos/PDFs — a STHIA fará OCR e integrará todos os marcadores encontrados.</p>
                   ) : (
