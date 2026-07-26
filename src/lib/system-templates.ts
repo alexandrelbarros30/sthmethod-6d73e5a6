@@ -272,21 +272,21 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Dieta atualizada (automático)",
     description: "Disparado automaticamente quando o admin salva/edita uma dieta para o aluno (se notificações estiverem ativas no perfil).",
     defaultContent:
-      "🥗 Dieta pronta 👊\n\nAcesse a plataforma e siga conforme planejado em sthmethod.com.br",
+      "Olá, {nome}! 🥗\n\nSua dieta já está liberada 👊\n\n🌐 Acesse em https://sthmethod.com.br\n   (funciona como WebApp no Android e iOS)\n\n🤖 Android: baixe o app oficial em https://sthmethod.com.br/baixar-app\n🍏 iPhone/iPad: Safari → Compartilhar → Adicionar à Tela de Início\n\n🔐 Login: {email}\nSenha: 123456 (padrão) ou a senha cadastrada\n\nBora pra cima 🚀",
   },
   {
     key: "training_updated",
     label: "Treino atualizado (automático)",
     description: "Disparado automaticamente quando o admin define/atualiza o treino ativo do aluno.",
     defaultContent:
-      "Olá, {nome}!\n\nSeu treino de musculação já está liberado 💪\n\n📲 *App STH METHOD* — acompanhe seu treino, dieta, protocolo e evolução direto no seu celular:\n🤖 Android (APK): https://sthmethod.com.br/baixar-app\n🍏 iPhone: instale como *WebApp* pelo Safari em https://sthmethod.com.br/baixar-app (toque em *Compartilhar → Adicionar à Tela de Início*)\n\n🏋️ Para executar o treino com vídeos e cronômetro, use também o *App ST Coach*:\n📱 Android: https://play.google.com/store/apps/details?id=com.appsupercoach.app\n🍏 Apple: https://apps.apple.com/us/app/st-coach/id1537125272\n\n🔐 Acesso (todos):\nLogin: {email}\nSenha: 123456 ou a senha cadastrada\n\nConte Comigo!\nBora pra cima 🚀",
+      "Olá, {nome}! 💪\n\nSeu treino já está liberado 👊\n\n🌐 Acesse em https://sthmethod.com.br\n   (funciona como WebApp no Android e iOS)\n\n🤖 Android: baixe o app oficial em https://sthmethod.com.br/baixar-app\n🍏 iPhone/iPad: Safari → Compartilhar → Adicionar à Tela de Início\n\n🔐 Login: {email}\nSenha: 123456 (padrão) ou a senha cadastrada\n\nBora pra cima 🚀",
   },
   {
     key: "protocol_updated",
     label: "Protocolo atualizado (automático)",
     description: "Disparado automaticamente quando o admin salva/edita um protocolo para o aluno.",
     defaultContent:
-      "🔥 Seu protocolo liberado 👊\n\n📲 Já pode acessar e iniciar sua execução em sthmethod.com.br",
+      "Olá, {nome}! 🔥\n\nSeu protocolo já está liberado 👊\n\n🌐 Acesse em https://sthmethod.com.br\n   (funciona como WebApp no Android e iOS)\n\n🤖 Android: baixe o app oficial em https://sthmethod.com.br/baixar-app\n🍏 iPhone/iPad: Safari → Compartilhar → Adicionar à Tela de Início\n\n🔐 Login: {email}\nSenha: 123456 (padrão) ou a senha cadastrada\n\nBora pra cima 🚀",
   },
   {
     key: "plan_updated",
@@ -300,7 +300,7 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Dieta + Treino + Protocolo prontos (automático)",
     description: "Mensagem combinada quando dieta, treino e protocolo são liberados juntos.",
     defaultContent:
-      "🔥 Dieta, treino e protocolo prontos 👊\n\n📲 Acesse a plataforma e o app para iniciar sua execução em sthmethod.com.br\n\nBaixe App ST Coach (Treino)\nAndroid: https://play.google.com/store/apps/details?id=com.appsupercoach.app\niPhone: https://apps.apple.com/us/app/st-coach/id1537125272#?platform=iphone\n\n🔐 Login: seu e-mail\nSenha: 123456 ou a cadastrada 👊",
+      "Olá, {nome}! 🔥\n\nDieta, treino e protocolo prontos 👊\n\n🌐 Acesse em https://sthmethod.com.br\n   (funciona como WebApp no Android e iOS)\n\n🤖 Android: baixe o app oficial em https://sthmethod.com.br/baixar-app\n🍏 iPhone/iPad: Safari → Compartilhar → Adicionar à Tela de Início\n\n🔐 Login: {email}\nSenha: 123456 (padrão) ou a senha cadastrada\n\nBora pra cima 🚀",
   },
   {
     key: "lab_analysis_ready",
