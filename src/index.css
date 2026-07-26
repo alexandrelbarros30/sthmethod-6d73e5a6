@@ -1249,6 +1249,12 @@ html, body {
   letter-spacing: 0.005em;
   text-align: left;
 }
+/* Força padrão Apple puro: neutraliza qualquer font-family/size inline que a IA tenha injetado */
+.clinical-report * {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 .clinical-report h1,
 .clinical-report h2,
 .clinical-report h3,
