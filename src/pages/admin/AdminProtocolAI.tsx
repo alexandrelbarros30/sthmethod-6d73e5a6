@@ -418,7 +418,7 @@ const AdminProtocolAI = () => {
                       <Button size="sm" variant="outline" onClick={saveToLibrary} disabled={saving}>
                         <BookOpen className="w-4 h-4 mr-1" /> Biblioteca
                       </Button>
-                      <Button size="sm" onClick={saveToStudent} disabled={saving || !selectedStudent}>
+                      <Button size="sm" onClick={() => saveToStudent({ visible: true })} disabled={saving || !selectedStudent}>
                         <Save className="w-4 h-4 mr-1" /> {saving ? "Salvando..." : "Salvar p/ aluno"}
                       </Button>
                     </div>
@@ -541,6 +541,48 @@ const AdminProtocolAI = () => {
                   </CardContent>
                 </Card>
               )}
+
+              <Card className="border-primary/40 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="font-display text-base flex items-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-primary" /> Ações finais
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Escolha o destino do protocolo. Os registros internos ficam disponíveis apenas para admin e consultor; a disponibilização entrega o protocolo na seção Protocolo do aluno.
+                  </p>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => saveToStudent({ visible: false })}
+                    disabled={saving || !selectedStudent}
+                    className="justify-start"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    {saving ? "Salvando..." : "Salvar nos registros (interno)"}
+                  </Button>
+                  <Button
+                    onClick={() => saveToStudent({ visible: true })}
+                    disabled={saving || !selectedStudent}
+                    className="justify-start"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {saving ? "Enviando..." : "Disponibilizar ao aluno"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => reviewMut.mutate()}
+                    disabled={reviewMut.isPending}
+                    className="justify-start"
+                  >
+                    {reviewMut.isPending ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Revisando...</>
+                    ) : (
+                      <><RefreshCw className="w-4 h-4 mr-2" /> Revisar novamente</>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>
