@@ -860,8 +860,14 @@ const StudentGuidedWorkout = () => {
                 </div>
                 {isGroupEnd && (
                   <div
-                    className="text-center text-[10px] uppercase tracking-[0.3em] py-1"
-                    style={{ color: "#39FF14", textShadow: "0 0 6px rgba(57,255,20,0.6)" }}
+                    className="relative rounded-b-2xl px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.3em] border-2 border-t-0 -mt-1"
+                    style={{
+                      color: "#39FF14",
+                      borderColor: "#39FF14",
+                      background: "linear-gradient(90deg, rgba(57,255,20,0.06), rgba(57,255,20,0.22))",
+                      textShadow: "0 0 8px rgba(57,255,20,0.7)",
+                      boxShadow: "0 0 26px rgba(57,255,20,0.55), inset 0 0 14px rgba(57,255,20,0.2)",
+                    }}
                   >
                     ▲ fim do {groupKind.toLowerCase()} — descanse ▲
                   </div>
