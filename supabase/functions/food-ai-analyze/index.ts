@@ -276,6 +276,7 @@ Deno.serve(async (req) => {
     const auditSource: string = typeof body?.audit_source === 'string' ? body.audit_source : 'edge';
     const studentId: string | null = typeof body?.student_id === 'string' ? body.student_id : null;
     const adminId: string | null = typeof body?.admin_id === 'string' ? body.admin_id : null;
+    const skipServerLog: boolean = body?.skip_server_log === true;
 
     if (mode !== 'text' && !imageBase64) {
       return new Response(JSON.stringify({ error: 'image required for photo/label mode' }), {
@@ -324,7 +325,7 @@ Deno.serve(async (req) => {
     };
 
     // Fire-and-forget audit log (never blocks the response).
-    if (admin) {
+    if (admin && !skipServerLog) {
       admin.from('food_ai_logs').insert({
         student_id: studentId,
         admin_id: adminId,
