@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check, Camera, Sparkles, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -126,6 +126,188 @@ function LeadGate({ onDone }: { onDone: () => void }) {
 }
 
 /* ---------------- Add Food Dialog ---------------- */
+function FoodAITab({ mealType, mealLabel, onAdd }: {
+  mealType: string;
+  mealLabel: string;
+  onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
+}) {
+  const [mode, setMode] = useState<"photo" | "text" | "label">("photo");
+  const [text, setText] = useState("");
+  const [imgB64, setImgB64] = useState<string | null>(null);
+  const [imgMime, setImgMime] = useState<string>("image/jpeg");
+  const [imgPreview, setImgPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  const reset = () => { setText(""); setImgB64(null); setImgPreview(null); setResult(null); };
+
+  const onFile = async (file: File | null) => {
+    if (!file) return;
+    setImgMime(file.type || "image/jpeg");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      setImgPreview(dataUrl);
+      const b64 = dataUrl.split(",")[1] || "";
+      setImgB64(b64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const analyze = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("food-ai-analyze", {
+        body: {
+          mode,
+          text: mode === "text" ? text.trim() : undefined,
+          image: mode !== "text" ? imgB64 : undefined,
+          mime: imgMime,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).details || (data as any).error);
+      setResult(data);
+    } catch (e: any) {
+      toast.error("Não consegui analisar", { description: String(e?.message || e).slice(0, 160) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveAll = () => {
+    if (!result?.foods?.length) return;
+    const entries = (result.foods as any[]).map((f) => {
+      const qty = Number(f.estimated_weight_g) || 0;
+      const unit = (f.unit === "ml" ? "ml" : "g") as "g" | "ml";
+      return {
+        meal_type: mealType,
+        meal_label: mealLabel,
+        food_id: null,
+        item_name: String(f.name || "Alimento"),
+        quantity: qty,
+        unit,
+        energy_kcal: +Number(f.calories || 0).toFixed(1),
+        protein_g: +Number(f.protein_g || 0).toFixed(2),
+        carbs_g: +Number(f.carbs_g || 0).toFixed(2),
+        fat_g: +Number(f.fat_g || 0).toFixed(2),
+        fiber_g: +Number(f.fiber_g || 0).toFixed(2),
+        sodium_mg: +Number(f.sodium_mg || 0).toFixed(1),
+        sort_order: 0,
+      };
+    });
+    onAdd(entries);
+  };
+
+  const canAnalyze = (mode === "text" && text.trim().length >= 3) || (mode !== "text" && !!imgB64);
+  const confidencePct = Math.round((result?.confidence || 0) * 100);
+  const chipCls = "flex-1 flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors";
+  const activeCls = "bg-[#34C759] border-[#34C759] text-white";
+  const idleCls = "bg-white border-[#E5E5EA] text-[#1C1C1E] hover:border-[#34C759]";
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0 mt-3 space-y-3 overflow-y-auto">
+      <div className="flex gap-2">
+        <button type="button" className={cn(chipCls, mode === "photo" ? activeCls : idleCls)} onClick={() => { setMode("photo"); setResult(null); }}>
+          <Camera className="w-3.5 h-3.5" /> Foto do prato
+        </button>
+        <button type="button" className={cn(chipCls, mode === "label" ? activeCls : idleCls)} onClick={() => { setMode("label"); setResult(null); }}>
+          <Tag className="w-3.5 h-3.5" /> Rótulo
+        </button>
+        <button type="button" className={cn(chipCls, mode === "text" ? activeCls : idleCls)} onClick={() => { setMode("text"); setResult(null); }}>
+          <Sparkles className="w-3.5 h-3.5" /> Descrever
+        </button>
+      </div>
+
+      {mode === "text" ? (
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder='Ex.: "2 ovos mexidos, 1 pão francês, café com leite"'
+          rows={3}
+          className="w-full rounded-lg border border-[#E5E5EA] bg-white text-[#1C1C1E] p-3 text-sm focus:outline-none focus:border-[#34C759]"
+        />
+      ) : (
+        <div className="space-y-2">
+          <label className="block rounded-xl border-2 border-dashed border-[#D1D1D6] bg-[#F2F2F7] p-4 text-center cursor-pointer hover:border-[#34C759] transition-colors">
+            <input
+              type="file"
+              accept="image/*"
+              capture={mode === "photo" ? "environment" : undefined}
+              className="hidden"
+              onChange={(e) => onFile(e.target.files?.[0] || null)}
+            />
+            {imgPreview ? (
+              <img src={imgPreview} alt="preview" className="max-h-48 mx-auto rounded-lg object-contain" />
+            ) : (
+              <div className="text-sm text-[#6E6E73] py-6">
+                <Camera className="w-6 h-6 mx-auto mb-2 text-[#34C759]" />
+                Toque para {mode === "photo" ? "fotografar o prato" : "fotografar o rótulo"}
+              </div>
+            )}
+          </label>
+          {imgPreview && (
+            <Button variant="ghost" size="sm" className="text-[#FF3B30]" onClick={() => { setImgB64(null); setImgPreview(null); }}>
+              <X className="w-3.5 h-3.5 mr-1" /> Remover foto
+            </Button>
+          )}
+        </div>
+      )}
+
+      <Button onClick={analyze} disabled={!canAnalyze || loading} className="w-full bg-[#34C759] hover:bg-[#30B350] text-white font-semibold">
+        {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analisando com STHIA...</> : <><Sparkles className="w-4 h-4 mr-2" />Analisar</>}
+      </Button>
+
+      {result && (
+        <div className="space-y-3 border border-[#E5E5EA] rounded-xl p-3 bg-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-[#6E6E73]">Confiança: <span className={cn("font-semibold", confidencePct >= 85 ? "text-[#34C759]" : confidencePct >= 60 ? "text-[#FF9500]" : "text-[#FF3B30]")}>{confidencePct}%</span></p>
+              <p className="text-[10px] text-[#8E8E93]">Fonte: {String(result.source || "ia")} · {result.classification}</p>
+            </div>
+            <Badge variant="outline" className="text-[10px]">{Math.round(result.totals?.calories || 0)} kcal</Badge>
+          </div>
+
+          {result.notes && <p className="text-[11px] text-[#6E6E73] italic">{result.notes}</p>}
+
+          <div className="divide-y divide-[#F2F2F7]">
+            {(result.foods || []).map((f: any, i: number) => (
+              <div key={i} className="py-2 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#1C1C1E] truncate">{f.name}</p>
+                  <p className="text-[11px] text-[#6E6E73]">
+                    {Math.round(f.estimated_weight_g || 0)}{f.unit || "g"} · {Math.round(f.calories || 0)} kcal · P {Number(f.protein_g || 0).toFixed(1)}g · C {Number(f.carbs_g || 0).toFixed(1)}g · G {Number(f.fat_g || 0).toFixed(1)}g
+                  </p>
+                </div>
+                <Badge variant="outline" className={cn("shrink-0 text-[10px]", (f.confidence || 0) >= 0.85 ? "border-[#34C759] text-[#34C759]" : (f.confidence || 0) >= 0.6 ? "border-[#FF9500] text-[#FF9500]" : "border-[#FF3B30] text-[#FF3B30]")}>
+                  {Math.round((f.confidence || 0) * 100)}%
+                </Badge>
+              </div>
+            ))}
+          </div>
+
+          {Array.isArray(result.alerts) && result.alerts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {result.alerts.map((a: string) => (
+                <Badge key={a} variant="outline" className="text-[10px] border-[#FF9500] text-[#FF9500]">⚠ {a.replace(/_/g, " ")}</Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" variant="ghost" onClick={reset} className="flex-1">Recomeçar</Button>
+            <Button size="sm" onClick={saveAll} className="flex-1 bg-[#34C759] hover:bg-[#30B350] text-white font-semibold">
+              <Check className="w-4 h-4 mr-1" /> Adicionar {result.foods?.length || 0}
+            </Button>
+          </div>
+          <p className="text-[10px] text-[#8E8E93] text-center">Análise por IA — confirme antes de salvar. Não substitui orientação do consultor.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AddFoodDialog({
   open, onOpenChange, mealType, mealLabel, dateISO, onAdd,
 }: {
@@ -136,7 +318,7 @@ function AddFoodDialog({
   dateISO: string;
   onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
 }) {
-  const [tab, setTab] = useState<"alimento" | "salvas">("alimento");
+  const [tab, setTab] = useState<"alimento" | "salvas" | "sthia">("alimento");
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -267,9 +449,12 @@ function AddFoodDialog({
           </div>
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-2 bg-[#F2F2F7] border border-[#E5E5EA]">
+          <TabsList className="grid grid-cols-3 bg-[#F2F2F7] border border-[#E5E5EA]">
             <TabsTrigger value="alimento" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Alimento</TabsTrigger>
-            <TabsTrigger value="salvas" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Refeições Salvas</TabsTrigger>
+            <TabsTrigger value="sthia" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">
+              <Sparkles className="w-3 h-3 mr-1 inline" />STHIA
+            </TabsTrigger>
+            <TabsTrigger value="salvas" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Salvas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="alimento" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
@@ -396,6 +581,10 @@ function AddFoodDialog({
                 )}
               </>
             )}
+          </TabsContent>
+
+          <TabsContent value="sthia" className="flex-1 flex flex-col min-h-0 mt-3">
+            <FoodAITab mealType={mealType} mealLabel={mealLabel} onAdd={(entries) => { onAdd(entries); onOpenChange(false); }} />
           </TabsContent>
 
           <TabsContent value="salvas" className="flex-1 overflow-y-auto mt-3 border border-[#E5E5EA] rounded-xl divide-y divide-[#E5E5EA] min-h-[200px] bg-white">
