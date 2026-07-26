@@ -31,10 +31,12 @@ function fsParseDescription(desc: string) {
   const perMatch = desc.match(/Per\s+([\d.,]+)\s*(g|ml|oz|fl oz|cup|piece|unit|tbsp|tsp|serving)/i);
   let servingSize = 100;
   let servingUnit: 'g' | 'ml' = 'g';
+  let unitIsMass = false; // only g/ml are safe for per-100 scaling
   if (perMatch) {
     servingSize = parseFloat(perMatch[1].replace(',', '.')) || 100;
     const u = perMatch[2].toLowerCase();
     servingUnit = u.includes('ml') || u.includes('fl') ? 'ml' : 'g';
+    unitIsMass = /^(g|ml|fl\s*oz)$/i.test(u.trim()) || u === 'g' || u === 'ml';
   }
   const num = (re: RegExp) => {
     const r = desc.match(re);
@@ -44,16 +46,25 @@ function fsParseDescription(desc: string) {
   const fat = num(/Fat:\s*([\d.,]+)\s*g/i);
   const carbs = num(/Carbs:\s*([\d.,]+)\s*g/i);
   const protein = num(/Protein:\s*([\d.,]+)\s*g/i);
+  // Guard: if the serving unit is not g/ml (cup, piece, serving, tbsp, oz, tsp...),
+  // we cannot safely convert to per-100g — different portions have unpredictable weights.
+  // Example bug: "Per 1 cup - Calories: 15 kcal" would scale to 1500 kcal/100g. Reject.
+  if (!unitIsMass) return null;
+  // Guard: absurd serving sizes (e.g. "Per 0.1 serving") would blow up the factor.
+  if (servingSize < 5) return null;
   const factor = servingSize > 0 ? 100 / servingSize : 1;
-  return {
-    per100: {
-      energy_kcal: kcal * factor,
-      protein_g: protein * factor,
-      carbs_g: carbs * factor,
-      fat_g: fat * factor,
-    },
-    serving_unit: servingUnit,
+  const per100 = {
+    energy_kcal: kcal * factor,
+    protein_g: protein * factor,
+    carbs_g: carbs * factor,
+    fat_g: fat * factor,
   };
+  // Sanity ceiling: no real food exceeds ~900 kcal/100g (pure fat = 884).
+  // Anything above indicates a parse/unit mismatch and MUST be rejected.
+  if (per100.energy_kcal > 900 || per100.protein_g > 100 || per100.carbs_g > 100 || per100.fat_g > 100) {
+    return null;
+  }
+  return { per100, serving_unit: servingUnit };
 }
 
 const fsCache = new Map<string, any>();
