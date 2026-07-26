@@ -159,6 +159,11 @@ const AdminFoodAI = () => {
         payload.image = base64;
         payload.mime = mime;
       }
+      payload.audit_source = "admin_console";
+      payload.student_id = selectedStudent.user_id;
+      payload.admin_id = user?.id ?? null;
+      // Admin console writes its own richer log (meal_type, log_date, meal_label).
+      payload.skip_server_log = true;
 
       const { data, error } = await supabase.functions.invoke("food-ai-analyze", { body: payload });
 
