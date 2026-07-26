@@ -1,6 +1,7 @@
 // STH METHOD FOOD AI — analyze a plate photo, a free-text description or a label image.
 // Combines Gemini multimodal via Lovable AI Gateway with FatSecret reconciliation.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import { FOOD_AI_SYSTEM_PROMPT } from '../_shared/food-ai-prompt.ts';
 
 // ============= FatSecret integration (reused pattern from analyze-diet) =============
@@ -192,20 +193,44 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
   let reconciled = 0;
   const out: FoodItem[] = [];
   for (const f of foods) {
+    // Sanity clamp on weight: a single food item rarely exceeds ~1500g.
+    // Anything beyond is almost certainly a hallucinated portion estimate.
+    const rawWeight = Number(f.estimated_weight_g) || 0;
+    const weightSuspect = rawWeight <= 0 || rawWeight > 1500;
+    const safeWeight = weightSuspect ? Math.min(Math.max(rawWeight || 100, 1), 300) : rawWeight;
+
     const hit = await fsLookup(f.name);
-    if (hit && f.estimated_weight_g > 0) {
-      const factor = f.estimated_weight_g / 100;
+    if (hit && rawWeight > 0 && !weightSuspect) {
+      const factor = safeWeight / 100;
+      // Blend AI confidence with FatSecret trust; never blindly inflate to 0.9.
+      const blended = Math.min(0.9, Math.max(0.6, (Number(f.confidence) || 0.5) * 0.5 + 0.45));
       out.push({
         ...f,
+        estimated_weight_g: safeWeight,
         calories: +(hit.per100.energy_kcal * factor).toFixed(1),
         protein_g: +(hit.per100.protein_g * factor).toFixed(2),
         carbs_g: +(hit.per100.carbs_g * factor).toFixed(2),
         fat_g: +(hit.per100.fat_g * factor).toFixed(2),
-        confidence: Math.max(f.confidence, 0.9),
+        confidence: blended,
       });
       reconciled++;
     } else {
-      out.push(f);
+      // Kcal/g sanity guard: no real food exceeds ~9.5 kcal/g (pure fat).
+      const kcalPerG = safeWeight > 0 ? (Number(f.calories) || 0) / safeWeight : 0;
+      const kcalSuspect = kcalPerG > 9.5;
+      let adj = { ...f, estimated_weight_g: safeWeight };
+      if (weightSuspect || kcalSuspect) {
+        // Rescale kcal/macros to the clamped weight to prevent absurd totals.
+        if (rawWeight > 0) {
+          const rescale = safeWeight / rawWeight;
+          adj.calories = +(((Number(f.calories) || 0) * rescale)).toFixed(1);
+          adj.protein_g = +(((Number(f.protein_g) || 0) * rescale)).toFixed(2);
+          adj.carbs_g = +(((Number(f.carbs_g) || 0) * rescale)).toFixed(2);
+          adj.fat_g = +(((Number(f.fat_g) || 0) * rescale)).toFixed(2);
+        }
+        adj.confidence = Math.min(Number(f.confidence) || 0.4, 0.4);
+      }
+      out.push(adj);
     }
   }
   return { foods: out, reconciledCount: reconciled };
@@ -233,6 +258,12 @@ function recomputeTotals(foods: FoodItem[]) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const started = Date.now();
+  const admin = (() => {
+    const url = Deno.env.get('SUPABASE_URL');
+    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    return url && key ? createClient(url, key) : null;
+  })();
   try {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('missing_lovable_api_key');
@@ -242,6 +273,9 @@ Deno.serve(async (req) => {
     const text: string | undefined = typeof body?.text === 'string' ? body.text : undefined;
     const imageBase64: string | undefined = typeof body?.image === 'string' ? body.image : undefined;
     const mime: string = typeof body?.mime === 'string' ? body.mime : 'image/jpeg';
+    const auditSource: string = typeof body?.audit_source === 'string' ? body.audit_source : 'edge';
+    const studentId: string | null = typeof body?.student_id === 'string' ? body.student_id : null;
+    const adminId: string | null = typeof body?.admin_id === 'string' ? body.admin_id : null;
 
     if (mode !== 'text' && !imageBase64) {
       return new Response(JSON.stringify({ error: 'image required for photo/label mode' }), {
@@ -268,24 +302,68 @@ Deno.serve(async (req) => {
       ? 'fatsecret'
       : reconciledCount > 0 ? 'fatsecret+ia' : (aiResult?.source || 'ia_estimativa');
 
-    return new Response(JSON.stringify({
+    // Global confidence = min(item confidences) so a single suspect item lowers the whole batch.
+    const itemConfs = reconciledFoods.map((f) => Number(f.confidence) || 0);
+    const minItemConf = itemConfs.length ? Math.min(...itemConfs) : 0.5;
+    const globalConfidence = Math.min(Number(aiResult?.confidence) || 0.7, minItemConf);
+    const extraAlerts: string[] = [];
+    if (reconciledFoods.some((f) => (Number(f.confidence) || 0) <= 0.4)) extraAlerts.push('peso_suspeito');
+
+    const payload = {
       analysis_type: aiResult?.analysis_type || mode,
-      confidence: aiResult?.confidence ?? 0.7,
+      confidence: globalConfidence,
       foods: reconciledFoods,
       totals,
       quality_score: aiResult?.quality_score ?? 6,
       classification: aiResult?.classification || 'Moderado',
-      alerts: Array.isArray(aiResult?.alerts) ? aiResult.alerts : [],
+      alerts: [...(Array.isArray(aiResult?.alerts) ? aiResult.alerts : []), ...extraAlerts],
       notes: aiResult?.notes || '',
       source,
       reconciled_count: reconciledCount,
       total_count: reconciledFoods.length,
-    }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    };
+
+    // Fire-and-forget audit log (never blocks the response).
+    if (admin) {
+      admin.from('food_ai_logs').insert({
+        student_id: studentId,
+        admin_id: adminId,
+        source: auditSource,
+        mode,
+        input_text: mode === 'text' ? (text || null) : null,
+        input_image_meta: imageBase64 ? { size_b64: imageBase64.length, mime } : null,
+        confidence: payload.confidence,
+        quality_score: payload.quality_score,
+        classification: payload.classification,
+        foods: payload.foods as any,
+        totals: payload.totals as any,
+        alerts: payload.alerts as any,
+        notes: payload.notes,
+        ai_source: payload.source,
+        reconciled_count: payload.reconciled_count,
+        total_count: payload.total_count,
+        status: 'analyzed',
+        needs_review: payload.confidence < 0.7,
+        duration_ms: Date.now() - started,
+      }).then(({ error }) => { if (error) console.error('food_ai_logs edge insert', error); });
+    }
+
+    return new Response(JSON.stringify(payload), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     console.error('food-ai-analyze error', err);
     const msg = err instanceof Error ? err.message : String(err);
     const isRate = msg.includes('ai_gateway_429');
     const isCredit = msg.includes('ai_gateway_402');
+    if (admin) {
+      admin.from('food_ai_logs').insert({
+        source: 'edge',
+        mode: 'text',
+        status: 'error',
+        error_code: isRate ? 'STH-429' : isCredit ? 'STH-402' : 'STH-500',
+        error_details: String(msg).slice(0, 2000),
+        duration_ms: Date.now() - started,
+      }).then(({ error }) => { if (error) console.error('food_ai_logs error insert', error); });
+    }
     return new Response(JSON.stringify({
       error: isRate ? 'rate_limited' : isCredit ? 'credits_exhausted' : 'analysis_failed',
       details: msg,
