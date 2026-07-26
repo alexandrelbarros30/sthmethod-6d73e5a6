@@ -515,7 +515,9 @@ function AddFoodDialog({
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
                     <p className="font-medium truncate text-[#1C1C1E]">{editingFood.name}</p>
-                    <Badge variant="outline" className="text-[10px] mt-1 border-[#E5E5EA] text-[#6E6E73]">{editingFood.source} · {editingFood.category}</Badge>
+                    {editingFood.category && (
+                      <Badge variant="outline" className="text-[10px] mt-1 border-[#E5E5EA] text-[#6E6E73]">{editingFood.category}</Badge>
+                    )}
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setEditingFood(null)} className="text-[#34C759] hover:text-[#30B350]">Voltar</Button>
                 </div>
@@ -604,9 +606,9 @@ function AddFoodDialog({
                       >
                         <button onClick={() => openEditor(f)} className="flex-1 min-w-0 text-left">
                           <p className="text-sm font-medium truncate text-[#1C1C1E]">{f.name}</p>
-                          {f.source && (
+                          {f.category && (
                             <Badge variant="outline" className="text-[9px] mt-0.5 border-[#E5E5EA] text-[#6E6E73] py-0 px-1.5 h-4">
-                              {f.source}{f.category ? ` · ${f.category}` : ""}
+                              {f.category}
                             </Badge>
                           )}
                           <p className="text-[11px] text-[#34C759]">
