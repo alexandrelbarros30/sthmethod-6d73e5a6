@@ -622,14 +622,27 @@ export default function AdminStudentAnalysis() {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-sm">Parecer completo</CardTitle>
-                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setExportOpen(true)}>
-                      <Save className="w-3.5 h-3.5" /> Salvar / Exportar
-                    </Button>
+                    <div className="flex items-center gap-2 no-print">
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => window.print()}>
+                        🖨️ Imprimir
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setExportOpen(true)}>
+                        <Save className="w-3.5 h-3.5" /> Salvar / Exportar
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="overflow-x-auto">
+                <CardContent className="overflow-x-auto clinical-report-print">
+                  <div className="mb-4 pb-3 border-b border-border no-print-hide">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground">STHIA · Parecer Clínico</p>
+                    <h1 className="text-lg font-semibold mt-1">{current.title}</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {selectedStudent?.full_name ? `Paciente: ${selectedStudent.full_name} · ` : ""}
+                      Emitido em {new Date(current.created_at).toLocaleString("pt-BR")}
+                    </p>
+                  </div>
                   <div
-                    className="prose prose-sm dark:prose-invert max-w-none break-words [&_*]:max-w-full [&_img]:h-auto [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_table]:w-full [&_table]:text-xs [&_th]:border [&_th]:border-border [&_th]:p-1.5 [&_th]:bg-muted [&_td]:border [&_td]:border-border [&_td]:p-1.5"
+                    className="clinical-report"
                     dangerouslySetInnerHTML={{ __html: current.report_html }}
                   />
                 </CardContent>
