@@ -295,7 +295,7 @@ serve(async (req) => {
                 suggestions: { type: "array", items: { type: "string" } },
                 revised_protocol: { type: "string", description: "HTML revisado no formato SMART PROTOCOL" },
               },
-              required: ["overall_score", "summary", "issues", "suggestions"],
+              required: ["overall_score", "summary", "issues", "suggestions", "revised_protocol"],
               additionalProperties: false,
             },
           },
