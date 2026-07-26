@@ -929,7 +929,7 @@ Deno.serve(async (req) => {
       // Garante conversa
       let { data: convRow } = await admin
         .from('crm_conversations')
-        .select('id')
+        .select('id, user_id')
         .eq('phone', phone)
         .maybeSingle();
       if (!convRow) {
