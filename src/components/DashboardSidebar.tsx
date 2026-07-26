@@ -101,6 +101,8 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
         { to: "/admin/dieta-ia", icon: Sparkles, label: "Cardápio IA (beta)" },
         { to: "/admin/dieta-auditoria", icon: ClipboardList, label: "Auditoria FatSecret" },
+        { to: "/admin/food-ai", icon: Sparkles, label: "Food AI (STHIA)" },
+        { to: "/admin/food-ai/logs", icon: History, label: "Food AI · Logs" },
       ],
     },
     {
