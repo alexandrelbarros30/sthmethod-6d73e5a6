@@ -85,7 +85,9 @@ const AdminTrainingPrograms = () => {
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
     const pid = searchParams.get("program");
-    if (pid && pid !== selectedProgramId) setSelectedProgramId(pid);
+    if (pid) {
+      setSelectedProgramId((prev) => (prev === pid ? prev : pid));
+    }
   }, [searchParams]);
 
   useEffect(() => {
