@@ -13,6 +13,7 @@ import ClinicalExportDialog from "@/components/admin/ClinicalExportDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/utils";
+import { normalizeClinicalHtml } from "@/lib/clinical-html";
 import { toast } from "sonner";
 
 type Student = { user_id: string; full_name: string | null; email: string | null };
@@ -643,7 +644,7 @@ export default function AdminStudentAnalysis() {
                   </div>
                   <div
                     className="clinical-report"
-                    dangerouslySetInnerHTML={{ __html: current.report_html }}
+                    dangerouslySetInnerHTML={{ __html: normalizeClinicalHtml(current.report_html) }}
                   />
                 </CardContent>
               </Card>
