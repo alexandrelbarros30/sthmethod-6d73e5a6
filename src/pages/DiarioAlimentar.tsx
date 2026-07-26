@@ -584,6 +584,11 @@ function AddFoodDialog({
                       >
                         <button onClick={() => openEditor(f)} className="flex-1 min-w-0 text-left">
                           <p className="text-sm font-medium truncate text-[#1C1C1E]">{f.name}</p>
+                          {f.source && (
+                            <Badge variant="outline" className="text-[9px] mt-0.5 border-[#E5E5EA] text-[#6E6E73] py-0 px-1.5 h-4">
+                              {f.source}{f.category ? ` · ${f.category}` : ""}
+                            </Badge>
+                          )}
                           <p className="text-[11px] text-[#34C759]">
                             {sel ? `${sel.quantity}${sel.unit}` : `100${f.serving_unit || "g"}`}
                             <span className="text-[#6E6E73]"> · {Math.round(f.energy_kcal * ((sel?.quantity ?? 100) / 100))} kcal · P:{(f.protein_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g C:{(f.carbs_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g G:{(f.fat_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g</span>
