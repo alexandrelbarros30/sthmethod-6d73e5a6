@@ -367,7 +367,27 @@ function AddFoodDialog({
           dbFoods.forEach(push);
           fsFoods.forEach(push);
           local.forEach(push);
-          setFoods(merged.slice(0, 60));
+          // Prioriza correspondência: exato > começa com > token exato > começa token > contém
+          const scoreOf = (name: string) => {
+            const n = (name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const primary = n.split(",")[0].split("(")[0].trim();
+            const tokens = n.split(/[\s,\-\/()]+/).filter(Boolean);
+            if (n === norm) return 0;
+            if (primary === norm) return 1;
+            if (tokens[0] === norm) return 2;
+            if (primary.startsWith(norm + " ") || primary === norm) return 3;
+            if (primary.startsWith(norm)) return 4;
+            if (n.startsWith(norm)) return 5;
+            if (tokens.includes(norm)) return 6;
+            if (tokens.some((t) => t.startsWith(norm))) return 7;
+            if (n.includes(norm)) return 8;
+            return 99;
+          };
+          const ranked = merged
+            .map((f) => ({ f, s: scoreOf(f.name || ""), len: (f.name || "").length }))
+            .sort((a, b) => (a.s - b.s) || (a.len - b.len) || a.f.name.localeCompare(b.f.name))
+            .map((x) => x.f);
+          setFoods(ranked.slice(0, 60));
         } catch (e) {
           setFoods(searchFoodBank(q, 40));
         } finally {
