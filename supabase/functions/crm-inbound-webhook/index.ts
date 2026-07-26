@@ -102,6 +102,39 @@ function detectIncomingMediaKind(payload: any): 'image' | 'video' | 'document' |
   return null;
 }
 
+// Extrai URL direta da mídia recebida (imagem/vídeo/documento) em múltiplos
+// formatos de webhook (Z-API, W-API, Baileys). Retorna null se não achar.
+function extractIncomingMediaUrl(payload: any, kind: 'image' | 'video' | 'document' | 'sticker' | null): string | null {
+  if (!payload || !kind) return null;
+  const d = payload?.data || {};
+  const candidates: any[] = [];
+  if (kind === 'image') {
+    candidates.push(
+      payload?.image?.imageUrl, payload?.image?.url, payload?.image?.link,
+      d?.image?.imageUrl, d?.image?.url,
+      payload?.msgContent?.imageMessage?.url, d?.msgContent?.imageMessage?.url,
+      payload?.message?.imageMessage?.url, d?.message?.imageMessage?.url,
+    );
+  }
+  if (kind === 'video') {
+    candidates.push(payload?.video?.videoUrl, payload?.video?.url, d?.video?.videoUrl,
+      payload?.msgContent?.videoMessage?.url, d?.msgContent?.videoMessage?.url);
+  }
+  if (kind === 'document') {
+    candidates.push(payload?.document?.documentUrl, payload?.document?.url, d?.document?.documentUrl,
+      payload?.msgContent?.documentMessage?.url, d?.msgContent?.documentMessage?.url);
+  }
+  if (kind === 'sticker') {
+    candidates.push(payload?.sticker?.stickerUrl, payload?.sticker?.url,
+      payload?.msgContent?.stickerMessage?.url);
+  }
+  candidates.push(payload?.mediaUrl, d?.mediaUrl, payload?.fileUrl, d?.fileUrl);
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.startsWith('http')) return c;
+  }
+  return null;
+}
+
 async function generateAiReply({
   admin,
   conversationId,
