@@ -2858,6 +2858,99 @@ export type Database = {
         }
         Relationships: []
       }
+      food_ai_logs: {
+        Row: {
+          admin_id: string | null
+          ai_source: string | null
+          alerts: Json
+          classification: string | null
+          confidence: number | null
+          created_at: string
+          diary_entry_ids: Json
+          duration_ms: number | null
+          error_code: string | null
+          error_details: string | null
+          foods: Json
+          id: string
+          input_image_meta: Json | null
+          input_text: string | null
+          log_date: string | null
+          meal_label: string | null
+          meal_type: string | null
+          mode: string
+          needs_review: boolean
+          notes: string | null
+          quality_score: number | null
+          reconciled_count: number
+          source: string
+          status: string
+          student_id: string | null
+          total_count: number
+          totals: Json
+          updated_at: string
+        }
+        Insert: {
+          admin_id?: string | null
+          ai_source?: string | null
+          alerts?: Json
+          classification?: string | null
+          confidence?: number | null
+          created_at?: string
+          diary_entry_ids?: Json
+          duration_ms?: number | null
+          error_code?: string | null
+          error_details?: string | null
+          foods?: Json
+          id?: string
+          input_image_meta?: Json | null
+          input_text?: string | null
+          log_date?: string | null
+          meal_label?: string | null
+          meal_type?: string | null
+          mode?: string
+          needs_review?: boolean
+          notes?: string | null
+          quality_score?: number | null
+          reconciled_count?: number
+          source?: string
+          status?: string
+          student_id?: string | null
+          total_count?: number
+          totals?: Json
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string | null
+          ai_source?: string | null
+          alerts?: Json
+          classification?: string | null
+          confidence?: number | null
+          created_at?: string
+          diary_entry_ids?: Json
+          duration_ms?: number | null
+          error_code?: string | null
+          error_details?: string | null
+          foods?: Json
+          id?: string
+          input_image_meta?: Json | null
+          input_text?: string | null
+          log_date?: string | null
+          meal_label?: string | null
+          meal_type?: string | null
+          mode?: string
+          needs_review?: boolean
+          notes?: string | null
+          quality_score?: number | null
+          reconciled_count?: number
+          source?: string
+          status?: string
+          student_id?: string | null
+          total_count?: number
+          totals?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       food_diary_entries: {
         Row: {
           carbs_g: number
