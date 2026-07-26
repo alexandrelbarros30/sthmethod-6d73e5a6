@@ -131,6 +131,7 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
   mealLabel: string;
   onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
 }) {
+  const { user } = useAuth();
   const [mode, setMode] = useState<"photo" | "text" | "label">("photo");
   const [text, setText] = useState("");
   const [imgB64, setImgB64] = useState<string | null>(null);
@@ -164,6 +165,8 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
           text: mode === "text" ? text.trim() : undefined,
           image: mode !== "text" ? imgB64 : undefined,
           mime: imgMime,
+          audit_source: "student_diary",
+          student_id: user?.id ?? null,
         },
       });
       if (error) throw error;

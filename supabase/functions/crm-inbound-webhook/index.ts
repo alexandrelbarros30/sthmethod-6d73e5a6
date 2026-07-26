@@ -929,7 +929,7 @@ Deno.serve(async (req) => {
       // Garante conversa
       let { data: convRow } = await admin
         .from('crm_conversations')
-        .select('id')
+        .select('id, user_id')
         .eq('phone', phone)
         .maybeSingle();
       if (!convRow) {
@@ -974,7 +974,13 @@ Deno.serve(async (req) => {
             const b64 = btoa(bin);
             const mime = dl.headers.get('content-type') || 'image/jpeg';
             const { data: aiData, error: aiErr } = await admin.functions.invoke('food-ai-analyze', {
-              body: { mode: 'photo', image: b64, mime },
+              body: {
+                mode: 'photo',
+                image: b64,
+                mime,
+                audit_source: 'whatsapp_sucesso',
+                student_id: (convRow as any)?.user_id ?? null,
+              },
             });
             if (!aiErr && aiData && !(aiData as any).error) {
               const totals = (aiData as any).totals || {};
