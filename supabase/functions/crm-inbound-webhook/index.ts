@@ -921,7 +921,147 @@ Deno.serve(async (req) => {
     // vinculado ao prontuário. Áudio continua sendo transcrito.
     // Dedup: 1 aviso a cada 4h por conversa (evita spam se o usuário
     // disparar várias fotos em sequência).
+    // EXCEÇÃO: canal Sucesso do Aluno (wapi_sucesso) aceita TODAS as
+    // mídias. Se for imagem, roda STH METHOD FOOD AI (food-ai-analyze)
+    // e devolve a análise nutricional no próprio WhatsApp.
     // ============================================================
+    if (hasBlockedMedia && provider === 'wapi_sucesso') {
+      // Garante conversa
+      let { data: convRow } = await admin
+        .from('crm_conversations')
+        .select('id')
+        .eq('phone', phone)
+        .maybeSingle();
+      if (!convRow) {
+        const ins = await admin.from('crm_conversations').insert({
+          phone, wa_id: waId, display_name: name || null, channel: 'whatsapp',
+          status: 'open', provider: 'wapi_sucesso', queue_type: 'sucesso',
+          session_started_at: new Date().toISOString(),
+        }).select('id').single();
+        convRow = ins.data as any;
+      }
+
+      const mediaUrl = extractIncomingMediaUrl(payload, blockedMediaKind);
+
+      // Registra a mídia recebida no histórico
+      try {
+        await admin.from('crm_messages').insert({
+          conversation_id: convRow!.id,
+          direction: 'in',
+          source: 'wapi_sucesso',
+          status: 'received',
+          body: `[${blockedMediaKind} recebido]`,
+          external_id: externalId,
+          media_url: mediaUrl || null,
+          media_type: blockedMediaKind,
+          metadata: { media_kind: blockedMediaKind, sucesso_media_allowed: true },
+        });
+      } catch (e) {
+        console.error('sucesso_media inbound insert error', e);
+      }
+
+      if (blockedMediaKind === 'image' && mediaUrl) {
+        let handled = false;
+        try {
+          const dl = await fetch(mediaUrl);
+          if (dl.ok) {
+            const buf = new Uint8Array(await dl.arrayBuffer());
+            let bin = '';
+            const chunk = 0x8000;
+            for (let i = 0; i < buf.length; i += chunk) {
+              bin += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + chunk)) as any);
+            }
+            const b64 = btoa(bin);
+            const mime = dl.headers.get('content-type') || 'image/jpeg';
+            const { data: aiData, error: aiErr } = await admin.functions.invoke('food-ai-analyze', {
+              body: { mode: 'photo', image: b64, mime },
+            });
+            if (!aiErr && aiData && !(aiData as any).error) {
+              const totals = (aiData as any).totals || {};
+              const foods = Array.isArray((aiData as any).foods) ? (aiData as any).foods : [];
+              const cls = (aiData as any).classification || 'Moderado';
+              const emoji = /excel|otim|bom/i.test(cls) ? '🟢' : /ruim|baix|frac/i.test(cls) ? '🔴' : '🟡';
+              const foodLines = foods.slice(0, 8).map((f: any) =>
+                `• ${f.name} — ${Math.round(Number(f.estimated_weight_g) || 0)}${f.unit || 'g'} · ${Math.round(Number(f.calories) || 0)} kcal · P${(Number(f.protein_g)||0).toFixed(1)} C${(Number(f.carbs_g)||0).toFixed(1)} G${(Number(f.fat_g)||0).toFixed(1)}`
+              ).join('\n');
+              const alerts = Array.isArray((aiData as any).alerts) && (aiData as any).alerts.length
+                ? `\n\n⚠️ ${(aiData as any).alerts.slice(0, 3).join(' | ')}` : '';
+              const reply =
+                `🍽️ *STHIA — Análise da sua refeição* ${emoji}\n` +
+                (foodLines ? `\n${foodLines}\n` : '\n_Não consegui identificar itens claros na foto._\n') +
+                `\n📊 *Totais estimados*\n` +
+                `• ${Math.round(Number(totals.calories) || 0)} kcal\n` +
+                `• Proteína ${(Number(totals.protein_g)||0).toFixed(1)} g\n` +
+                `• Carbo ${(Number(totals.carbs_g)||0).toFixed(1)} g\n` +
+                `• Gordura ${(Number(totals.fat_g)||0).toFixed(1)} g` +
+                (totals.fiber_g ? `\n• Fibra ${Number(totals.fiber_g).toFixed(1)} g` : '') +
+                `\n\n📈 Qualidade: *${cls}*` + alerts +
+                `\n\n_Estimativa por visão + FatSecret. Para registro oficial use o Diário no portal STH METHOD._`;
+              const send = await sendImmediateText('wapi_sucesso', reply);
+              await admin.from('crm_messages').insert({
+                conversation_id: convRow!.id,
+                direction: 'out',
+                source: 'wapi_sucesso',
+                status: send.sent ? 'sent' : 'failed',
+                body: reply,
+                external_id: send.messageId,
+                metadata: { type: 'food_ai_analysis', totals, classification: cls, foods_count: foods.length },
+              });
+              await admin.from('automation_logs').insert({
+                contact_phone: phone,
+                event_type: 'food_ai_analysis',
+                queue_type: 'sucesso',
+                severity: 'info',
+                metadata: { conversation_id: convRow!.id, foods_count: foods.length, classification: cls },
+              });
+              handled = true;
+            } else {
+              console.error('food-ai-analyze error', aiErr, (aiData as any)?.error);
+            }
+          } else {
+            console.error('food_ai media download failed', dl.status);
+          }
+        } catch (e) {
+          console.error('food_ai pipeline error', e);
+        }
+
+        if (!handled) {
+          const fallback =
+            '📷 Recebi sua foto! Não consegui identificar o prato com precisão agora. ' +
+            'Se puder, escreve rapidinho o que tem no prato (ex.: "150g arroz, 120g frango, salada") que eu calculo pra você. 🙌';
+          const send = await sendImmediateText('wapi_sucesso', fallback);
+          await admin.from('crm_messages').insert({
+            conversation_id: convRow!.id,
+            direction: 'out',
+            source: 'wapi_sucesso',
+            status: send.sent ? 'sent' : 'failed',
+            body: fallback,
+            external_id: send.messageId,
+            metadata: { type: 'food_ai_fallback' },
+          });
+        }
+        return await finish({ ok: true, sucesso_food_ai: true, handled });
+      }
+
+      // Vídeo / documento / sticker — apenas confirma e libera fluxo normal
+      const ack = blockedMediaKind === 'document'
+        ? '📎 Recebi seu documento! A equipe Sucesso vai avaliar e te retornar por aqui. 🙏'
+        : blockedMediaKind === 'video'
+          ? '🎬 Vídeo recebido! Vou olhar com carinho e te respondo em seguida. 🙌'
+          : '👍 Recebido! Me conta rapidinho o que precisa que já te ajudo.';
+      const send = await sendImmediateText('wapi_sucesso', ack);
+      await admin.from('crm_messages').insert({
+        conversation_id: convRow!.id,
+        direction: 'out',
+        source: 'wapi_sucesso',
+        status: send.sent ? 'sent' : 'failed',
+        body: ack,
+        external_id: send.messageId,
+        metadata: { type: 'sucesso_media_ack', media_kind: blockedMediaKind },
+      });
+      return await finish({ ok: true, sucesso_media_ack: true, media_kind: blockedMediaKind });
+    }
+
     if (hasBlockedMedia) {
       // Para o canal Fale com o Nutri (wapi), inativos/leads NÃO devem ser
       // atendidos aqui — devem ser encaminhados imediatamente ao Comercial.
