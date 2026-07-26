@@ -184,6 +184,7 @@ serve(async (req) => {
       freeText = "",
       protocolContent = "",
       studentId = null,
+      reviewNotes = "",
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -268,7 +269,11 @@ serve(async (req) => {
       : `${STHIA_IDENTITY}\n\n${STHIA_LAYERS}\n\n${FORMAT_SPEC}\n\nAo gerar o protocolo, aplique as 12 camadas silenciosamente durante o raciocínio. No HTML final, embuta:\n- nível de evidência ★–★★★★★ ao lado de cada dose/estratégia sensível dentro do próprio parágrafo (ex: "<em>(evidência ★★★★)</em>");\n- mecanismo fisiológico curto em 1 linha quando citar hormônio/peptídeo relevante;\n- na fase ⚠️ MONITORAMENTO E SEGURANÇA, inclua parágrafos <strong>Previsão:</strong> (resultado esperado + velocidade + probabilidade), <strong>Riscos prováveis:</strong> e <strong>Marcadores a acompanhar:</strong>.\nSe faltar dado crítico do dossiê (exame, peso, %GC, stack), sinalize no campo "summary" o que precisa ser coletado antes de escalar doses.`;
 
     const userText = isReview
-      ? `Revise este protocolo (HTML) e devolva análise + versão revisada:\n\n${protocolContent}`
+      ? `Revise este protocolo (HTML) e devolva análise + versão revisada.\n\n${
+          reviewNotes && reviewNotes.trim()
+            ? `CORREÇÕES / INFORMAÇÕES COMPLEMENTARES DO ADMIN (obrigatório incorporar na "revised_protocol", corrigindo erros da IA, ajustando doses, ativos, timing, exames ou qualquer ponto indicado):\n${reviewNotes.trim()}\n\n`
+            : ""
+        }PROTOCOLO ATUAL (HTML):\n${protocolContent}`
       : `BRIEFING DO ADMIN/CONSULTOR:\n${JSON.stringify(brief, null, 2)}\n\n${dossier}${imagesMeta}\n\nObservações livres:\n${freeText || "(nenhuma)"}\n\nMonte o protocolo agora, HTML puro no formato SMART PROTOCOL.`;
 
     const userMessage = (!isReview && bodyImageParts.length)
