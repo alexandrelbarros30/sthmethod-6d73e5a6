@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, BookOpen, ShieldAlert, Activity } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, BookOpen, ShieldAlert, Activity, Lock, Send } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -186,11 +186,16 @@ const AdminProtocolAI = () => {
     },
     onSuccess: (data) => {
       setReview(data);
+      // Auto-aplica o protocolo revisado no card principal para que o admin veja imediatamente a versão corrigida
+      if (data?.revised_protocol) {
+        setResult((r) => (r ? { ...r, protocol_html: data.revised_protocol! } : r));
+      }
       toast.success(
         reviewNotes.trim()
-          ? "Revisão concluída com suas correções aplicadas"
-          : "Revisão da IA concluída"
+          ? "Revisão aplicada com suas correções"
+          : "Revisão da IA aplicada ao protocolo"
       );
+      setReviewNotes("");
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao revisar"),
   });
@@ -201,7 +206,7 @@ const AdminProtocolAI = () => {
     toast.success("Versão revisada aplicada");
   };
 
-  const saveToStudent = async () => {
+  const saveToStudent = async (opts: { visible: boolean }) => {
     if (!selectedStudent || !result) return;
     setSaving(true);
     try {
@@ -210,9 +215,14 @@ const AdminProtocolAI = () => {
         title: result.title || "Protocolo STHIA",
         content: result.protocol_html,
         release_date: new Date().toISOString(),
+        visible: opts.visible,
       } as any);
       if (error) throw error;
-      toast.success("Protocolo salvo como rascunho para o aluno");
+      toast.success(
+        opts.visible
+          ? "Protocolo disponibilizado ao aluno na seção Protocolo"
+          : "Protocolo salvo nos registros internos (visível apenas para admin/consultor)"
+      );
     } catch (e: any) {
       toast.error(e?.message || "Falha ao salvar");
     } finally {
