@@ -86,6 +86,7 @@ import StudentProfile from "./pages/student/StudentProfile";
 import StudentMetabolic from "./pages/student/StudentMetabolic";
 import StudentAds from "./pages/student/StudentAds";
 import StudentAssistant from "./pages/student/StudentAssistant";
+import StudentSthiaFood from "./pages/student/StudentSthiaFood";
 import DiarioAlimentar from "./pages/DiarioAlimentar";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminNutriMetrics from "./pages/admin/AdminNutriMetrics";
@@ -307,6 +308,7 @@ const App = () => (
             <Route path="/dashboard/bioimpedance" element={<ProtectedRoute allowedRoles={["student"]}><StudentBioimpedance /></ProtectedRoute>} />
             <Route path="/dashboard/profile" element={<ProtectedRoute allowedRoles={["student"]}><StudentProfile /></ProtectedRoute>} />
             <Route path="/dashboard/metabolic" element={<ProtectedRoute allowedRoles={["student"]}><StudentMetabolic /></ProtectedRoute>} />
+            <Route path="/dashboard/sthia-food" element={<ProtectedRoute allowedRoles={["student"]}><StudentSthiaFood /></ProtectedRoute>} />
             <Route path="/dashboard/ads" element={<ProtectedRoute allowedRoles={["student"]}><StudentAds /></ProtectedRoute>} />
             <Route path="/dashboard/consultas" element={<ProtectedRoute allowedRoles={["student"]}><StudentConsultas /></ProtectedRoute>} />
             <Route path="/dashboard/assistente" element={<ProtectedRoute allowedRoles={["student"]}><StudentAssistant /></ProtectedRoute>} />
