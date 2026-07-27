@@ -653,7 +653,7 @@ function formatFoodAiReply(
   } else {
     missing.push('nova_summary');
     // Fallback amigável para o WhatsApp — nunca deixamos o campo em branco.
-    novaLine = `\n🏷️ NOVA — mas o canal suceso do aluno irá interpretar o audio e analisart o alimento e entregar a respota nutricional?`;
+    novaLine = `\n🏷️ NOVA — onde esta o arro em interpretar o audio enviado ao cxanal sucesso do aluno ?`;
   }
   let goalsLine = '';
   if (goals && Number(goals.daily_kcal) > 0) {
