@@ -208,7 +208,7 @@ async function callGemini(apiKey: string, mode: Mode, text?: string, imageDataUr
 
 interface Correction {
   item: string;
-  rule: 'weight_clamp' | 'kcal_per_g_clamp' | 'atwater_rewrite' | 'atwater_fill' | 'hard_ceiling' | 'db_reconcile';
+  rule: 'weight_clamp' | 'kcal_per_g_clamp' | 'atwater_rewrite' | 'atwater_fill' | 'hard_ceiling' | 'db_reconcile' | 'basis_unknown';
   field: 'calories' | 'weight' | 'macros';
   before: number;
   after: number;
