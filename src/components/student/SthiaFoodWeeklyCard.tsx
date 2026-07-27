@@ -39,13 +39,13 @@ const SthiaFoodWeeklyCard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("food_ai_logs")
-        .select("quality_score, alerts, foods, created_at, suggestions")
+        .select("quality_score, alerts, foods, notes, created_at")
         .eq("student_id", user!.id)
         .gte("created_at", from)
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
-      return (data ?? []) as (Row & { suggestions?: any })[];
+      return (data ?? []) as (Row & { notes?: string | null })[];
     },
   });
 
@@ -83,16 +83,31 @@ const SthiaFoodWeeklyCard = () => {
       .slice(0, 3)
       .map(([k]) => ALERT_LABELS[k] || k.replace(/_/g, " "));
 
-    // Pick up to 3 unique AI suggestions from the most recent analyses
+    // Suggestions: pull from AI-generated notes (most recent, unique, short)
     const suggestionSet = new Set<string>();
     for (const r of rows) {
-      const arr = Array.isArray((r as any).suggestions) ? (r as any).suggestions : [];
-      for (const s of arr) {
-        const str = String(s || "").trim();
-        if (str && str.length <= 140) suggestionSet.add(str);
-        if (suggestionSet.size >= 3) break;
-      }
+      const note = String((r as any).notes || "").trim();
+      if (note && note.length <= 160) suggestionSet.add(note);
       if (suggestionSet.size >= 3) break;
+    }
+    // Fallback heuristics based on dominant alerts
+    if (suggestionSet.size < 3) {
+      const HINTS: Record<string, string> = {
+        muito_sodio: "Reduza embutidos e temperos prontos; prefira ervas frescas.",
+        muito_acucar: "Troque bebidas açucaradas por água ou fruta in natura.",
+        gordura_trans: "Evite margarinas e produtos com gordura vegetal hidrogenada.",
+        ultraprocessado: "Aumente a proporção de alimentos in natura na próxima refeição.",
+        pouca_proteina: "Adicione uma fonte proteica (ovo, frango, whey) na próxima refeição.",
+        pouca_fibra: "Inclua vegetais folhosos ou uma fruta com casca.",
+        excesso_gordura_saturada: "Prefira gorduras boas (azeite, castanhas, abacate).",
+        alcool: "Hidrate-se mais nos próximos dias e priorize proteína magra.",
+      };
+      Array.from(alertCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([k]) => {
+          const h = HINTS[k];
+          if (h && suggestionSet.size < 3) suggestionSet.add(h);
+        });
     }
 
     return {
