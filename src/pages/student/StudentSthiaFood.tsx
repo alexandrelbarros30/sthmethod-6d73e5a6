@@ -214,8 +214,24 @@ function Analyzer({ onAnalyzed }: { onAnalyzed: () => void }) {
         sodium_mg: +Number(f.sodium_mg || 0).toFixed(1),
         sort_order: 0,
       }));
-      const { error } = await supabase.from("food_diary_entries").insert(rows);
+      const { data: inserted, error } = await supabase
+        .from("food_diary_entries")
+        .insert(rows)
+        .select("id");
       if (error) throw error;
+      // Link back to the STHIA Food analysis log so the diary can show the origin badge.
+      const logId = (result as any)?.log_id as string | undefined;
+      if (logId && inserted?.length) {
+        await supabase
+          .from("food_ai_logs")
+          .update({
+            diary_entry_ids: inserted.map((r: any) => r.id),
+            meal_type: addMeal,
+            meal_label: meal?.label || addMeal,
+            log_date: addDate,
+          })
+          .eq("id", logId);
+      }
       toast.success(`Adicionado ao Diário — ${meal?.label || addMeal}`);
       setAddOpen(false);
     } catch (e: any) {

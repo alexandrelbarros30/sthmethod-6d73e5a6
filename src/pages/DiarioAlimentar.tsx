@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check, Camera, Sparkles, Tag, Mic, Square } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check, Camera, Sparkles, Tag, Mic, Square, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -1172,6 +1172,7 @@ export default function DiarioAlimentar() {
   const [leadOk, setLeadOk] = useState(() => !!localDiary.getLead());
   const [date, setDate] = useState<string>(todayISO());
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
+  const [sthiaEntryIds, setSthiaEntryIds] = useState<Set<string>>(new Set());
   const [water, setWater] = useState(0);
   const [goals, setGoals] = useState<Goals>(DEFAULT_GOALS);
   const [addOpen, setAddOpen] = useState(false);
@@ -1218,18 +1219,26 @@ export default function DiarioAlimentar() {
   // Load data
   const refresh = async () => {
     if (isAuth && user) {
-      const [{ data: e }, { data: w }, { data: g }] = await Promise.all([
+      const [{ data: e }, { data: w }, { data: g }, { data: logs }] = await Promise.all([
         supabase.from("food_diary_entries").select("*").eq("user_id", user.id).eq("log_date", date).order("created_at"),
         supabase.from("food_diary_water").select("ml").eq("user_id", user.id).eq("log_date", date).maybeSingle(),
         supabase.from("food_diary_goals").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("food_ai_logs").select("diary_entry_ids").eq("student_id", user.id).eq("log_date", date),
       ]);
       setEntries((e || []) as DiaryEntry[]);
       setWater(w?.ml || 0);
       setGoals(g ? { daily_kcal: g.daily_kcal, protein_g: g.protein_g, carbs_g: g.carbs_g, fat_g: g.fat_g, water_ml: g.water_ml } : DEFAULT_GOALS);
+      const ids = new Set<string>();
+      (logs || []).forEach((row: any) => {
+        const arr = Array.isArray(row?.diary_entry_ids) ? row.diary_entry_ids : [];
+        arr.forEach((id: any) => { if (typeof id === "string") ids.add(id); });
+      });
+      setSthiaEntryIds(ids);
     } else {
       setEntries(localDiary.getEntries(date));
       setWater(localDiary.getWater(date));
       setGoals(localDiary.getGoals());
+      setSthiaEntryIds(new Set());
     }
   };
 
@@ -1438,6 +1447,22 @@ export default function DiarioAlimentar() {
         </div>
 
         {/* Meals */}
+        {isAuth && (
+          <Link
+            to="/dashboard/sthia-food"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-[#34C759]/25 bg-[#F0FAF3] px-4 py-3 shadow-apple-sm hover:bg-[#E6F7EC] transition-colors"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Wand2 className="w-4 h-4 text-[#0F7B3B] shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#0F7B3B] leading-tight">Analisar com STHIA Food</p>
+                <p className="text-[11px] text-[#0F7B3B]/70 leading-tight">Foto, rótulo, texto ou áudio — adiciona direto no diário.</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#0F7B3B] shrink-0" />
+          </Link>
+        )}
+
         {allMeals.map((m) => {
           const items = groupByMeal(m.key);
           const mealKcal = items.reduce((a, i) => a + Number(i.energy_kcal), 0);
@@ -1492,7 +1517,17 @@ export default function DiarioAlimentar() {
                             className="min-w-0 flex-1 text-left"
                             title="Editar quantidade"
                           >
-                            <p className="text-sm font-medium truncate text-[#1C1C1E]">{it.item_name}</p>
+                            <p className="text-sm font-medium truncate text-[#1C1C1E] flex items-center gap-1.5">
+                              <span className="truncate">{it.item_name}</span>
+                              {sthiaEntryIds.has(it.id) && (
+                                <span
+                                  title="Análise STHIA Food"
+                                  className="inline-flex items-center gap-0.5 shrink-0 rounded-full bg-[#F0FAF3] text-[#0F7B3B] border border-[#34C759]/25 px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-wider"
+                                >
+                                  <Wand2 className="w-2.5 h-2.5" /> STHIA
+                                </span>
+                              )}
+                            </p>
                             <p className="text-[11px] text-[#6E6E73]">
                               {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
                             </p>
