@@ -173,6 +173,7 @@ const AdminDietAudit = lazy(() => import("./pages/admin/AdminDietAudit"));
 const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
 const AdminProtocolAI = lazy(() => import("./pages/admin/AdminProtocolAI"));
 const AdminStudentAnalysis = lazy(() => import("./pages/admin/AdminStudentAnalysis"));
+const AdminAIHistory = lazy(() => import("./pages/admin/AdminAIHistory"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
