@@ -1323,8 +1323,7 @@ Deno.serve(async (req) => {
 
         if (!handled) {
           const fallback =
-            '📷 Recebi sua foto! Não consegui identificar o prato com precisão agora. ' +
-            'Se puder, escreve rapidinho o que tem no prato (ex.: "150g arroz, 120g frango, salada") que eu calculo pra você. 🙌';
+            'o canal de sucesso do aluno que tem o sth food AI ,ele esta fucnionado para imagens , maS PARA O audio nao respodena a interpretacao e anailise do audio e entrega a seguinte mesnagem: Olá! Recebi seus áudios adicionais. O Nutri Alexandre vai ouvi-los e analisar o contexto completo.\n\nPara que a orientação seja precisa, continuamos aguardando o documento em PDF ou imagem que você mencionou.';
           const send = await sendImmediateText('wapi_sucesso', fallback);
           await admin.from('crm_messages').insert({
             conversation_id: convRow!.id,
