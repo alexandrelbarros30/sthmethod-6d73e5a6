@@ -145,15 +145,17 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
 
   const onFile = async (file: File | null) => {
     if (!file) return;
-    setImgMime(file.type || "image/jpeg");
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result || "");
+    try {
+      // Compress before upload so payload stays under edge-function body limits
+      // and Gemini processes it in reasonable time (mobile photos ~5-12 MB).
+      const dataUrl = await compressImage(file, 1600, 0.85);
+      setImgMime("image/jpeg");
       setImgPreview(dataUrl);
-      const b64 = dataUrl.split(",")[1] || "";
-      setImgB64(b64);
-    };
-    reader.readAsDataURL(file);
+      setImgB64(dataUrl.split(",")[1] || "");
+    } catch (err) {
+      console.error("image compression failed", err);
+      toast.error("Não foi possível preparar a foto. Tente outra imagem.");
+    }
   };
 
   const analyze = async () => {
