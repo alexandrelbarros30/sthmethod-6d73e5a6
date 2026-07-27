@@ -745,11 +745,8 @@ function AddFoodDialog({
           </div>
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-3 bg-[#F2F2F7] border border-[#E5E5EA]">
+          <TabsList className="grid grid-cols-2 bg-[#F2F2F7] border border-[#E5E5EA]">
             <TabsTrigger value="alimento" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Alimento</TabsTrigger>
-            <TabsTrigger value="sthia" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">
-              <Sparkles className="w-3 h-3 mr-1 inline" />STHIA
-            </TabsTrigger>
             <TabsTrigger value="salvas" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Salvas</TabsTrigger>
           </TabsList>
 
@@ -886,9 +883,6 @@ function AddFoodDialog({
             )}
           </TabsContent>
 
-          <TabsContent value="sthia" className="flex-1 flex flex-col min-h-0 mt-3">
-            <FoodAITab mealType={mealType} mealLabel={mealLabel} onAdd={(entries) => { onAdd(entries); onOpenChange(false); }} />
-          </TabsContent>
 
           <TabsContent value="salvas" className="flex-1 overflow-y-auto mt-3 border border-[#E5E5EA] rounded-xl divide-y divide-[#E5E5EA] min-h-[200px] bg-white">
             {savedMeals.length === 0 ? (
