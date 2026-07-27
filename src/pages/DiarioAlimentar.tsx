@@ -27,6 +27,33 @@ const DOW = ["D", "S", "T", "Q", "Q", "S", "S"];
 const normalizeFoodText = (s: string) =>
   (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
+// Downscale + JPEG-encode a picked file so the base64 payload stays small
+// enough for the edge function invoke (mobile photos are often 5-12 MB raw).
+async function compressImage(file: File, maxSide = 1600, quality = 0.85): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const blob = new Blob([buf], { type: file.type || "image/jpeg" });
+  const bitmap = await createImageBitmap(blob).catch(() => null);
+  if (!bitmap) {
+    // Fallback: return as-is if the browser can't decode
+    return await new Promise<string>((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result || ""));
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas.toDataURL("image/jpeg", quality);
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
 const getPrimaryFoodName = (name: string) =>
   normalizeFoodText(name)
     .split(",")[0]
@@ -145,15 +172,17 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
 
   const onFile = async (file: File | null) => {
     if (!file) return;
-    setImgMime(file.type || "image/jpeg");
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result || "");
+    try {
+      // Compress before upload so payload stays under edge-function body limits
+      // and Gemini processes it in reasonable time (mobile photos ~5-12 MB).
+      const dataUrl = await compressImage(file, 1600, 0.85);
+      setImgMime("image/jpeg");
       setImgPreview(dataUrl);
-      const b64 = dataUrl.split(",")[1] || "";
-      setImgB64(b64);
-    };
-    reader.readAsDataURL(file);
+      setImgB64(dataUrl.split(",")[1] || "");
+    } catch (err) {
+      console.error("image compression failed", err);
+      toast.error("Não foi possível preparar a foto. Tente outra imagem.");
+    }
   };
 
   const analyze = async () => {
