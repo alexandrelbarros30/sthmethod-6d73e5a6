@@ -862,7 +862,9 @@ Deno.serve(async (req) => {
             console.error('[audio] falha ao resolver mídia criptografada W-API', { provider, hasMeta: !!meta, mimetype: audioMime || meta?.mimetype || null });
           }
         }
-        const transcript = await transcribeAudioFromUrl(transcriptionUrl, audioMime);
+        const transcript = (!needsWapiAudioDownload || transcriptionUrl !== audioUrl)
+          ? await transcribeAudioFromUrl(transcriptionUrl, audioMime)
+          : null;
         if (transcript) {
           rawText = `[Áudio do aluno] ${transcript}`;
           isTranscribedAudio = true;
