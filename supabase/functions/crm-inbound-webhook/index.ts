@@ -12,7 +12,7 @@ import { buildNutriBlockPayload, type NutriBlockIdentity } from './nutri-block-t
 // Aplica-se a TODOS os canais IA (Comercial, Nutri, Sucesso do Aluno) —
 // o áudio passa a ser tratado como mensagem de texto para que a IA
 // responda normalmente e a ausência fora do expediente também dispare.
-async function transcribeAudioFromUrl(url: string): Promise<string | null> {
+async function transcribeAudioFromUrl(url: string, declaredMime = ''): Promise<string | null> {
   try {
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!apiKey || !url) return null;
@@ -28,7 +28,7 @@ async function transcribeAudioFromUrl(url: string): Promise<string | null> {
       return null;
     }
 
-    const ct = (audioBlob.type || '').toLowerCase();
+    const ct = (declaredMime || audioBlob.type || '').toLowerCase();
     const isOggOpus = ct.includes('ogg') || ct.includes('opus');
     const ext = ct.includes('mp4') || ct.includes('m4a') ? 'm4a'
       : ct.includes('webm') ? 'webm'
@@ -54,6 +54,7 @@ async function transcribeAudioFromUrl(url: string): Promise<string | null> {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
+          'Lovable-API-Key': apiKey,
           'Content-Type': 'application/json',
         },
         signal: ctrlG.signal,
@@ -187,7 +188,7 @@ function extractIncomingMediaUrl(payload: any, kind: 'image' | 'video' | 'docume
 // para chamar o endpoint download-media, que devolve um link temporário já
 // descriptografado. URLs mmg.whatsapp.net vêm com payload .enc e NÃO podem
 // ser baixadas direto — precisam passar pelo download-media.
-function extractWapiMediaMeta(payload: any, kind: 'image' | 'video' | 'document' | 'sticker' | null):
+function extractWapiMediaMeta(payload: any, kind: 'image' | 'video' | 'document' | 'sticker' | 'audio' | null):
   { mediaKey: string; directPath: string; mimetype: string; type: string } | null {
   if (!payload || !kind) return null;
   const d = payload?.data || {};
@@ -195,6 +196,7 @@ function extractWapiMediaMeta(payload: any, kind: 'image' | 'video' | 'document'
   const keyName = kind === 'image' ? 'imageMessage'
     : kind === 'video' ? 'videoMessage'
     : kind === 'document' ? 'documentMessage'
+    : kind === 'audio' ? 'audioMessage'
     : 'stickerMessage';
   for (const c of containers) {
     const m = (c as any)?.[keyName] || (c as any)?.documentWithCaptionMessage?.message?.documentMessage;
@@ -202,7 +204,7 @@ function extractWapiMediaMeta(payload: any, kind: 'image' | 'video' | 'document'
       return {
         mediaKey: String(m.mediaKey || m.MediaKey),
         directPath: String(m.directPath || m.DirectPath),
-        mimetype: String(m.mimetype || m.mimeType || 'image/jpeg'),
+        mimetype: String(m.mimetype || m.mimeType || (kind === 'audio' ? 'audio/ogg; codecs=opus' : 'image/jpeg')),
         type: kind === 'sticker' ? 'image' : kind,
       };
     }
@@ -830,8 +832,9 @@ Deno.serve(async (req) => {
       audioMsg?.url ||
       payload?.audio?.url ||
       null;
+    const audioMime = String(payload?.audio?.mimeType || payload?.audio?.mimetype || audioMsg?.mimetype || audioMsg?.mimeType || '').toLowerCase();
     const hasAudio = !!audioUrl || !!audioMsg ||
-      String(payload?.audio?.mimeType || audioMsg?.mimetype || '').toLowerCase().startsWith('audio/');
+      audioMime.startsWith('audio/');
     let rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || '';
     let isTranscribedAudio = false;
     // Se veio áudio (PTT) e nenhum texto/caption, tenta transcrever via Lovable AI
@@ -842,7 +845,24 @@ Deno.serve(async (req) => {
     // abortaria em "!body" e a ausência fora do expediente NÃO dispararia).
     if (hasAudio && (!rawText || typeof rawText !== 'string' || !rawText.trim())) {
       if (audioUrl) {
-        const transcript = await transcribeAudioFromUrl(audioUrl);
+        let transcriptionUrl = audioUrl;
+        const needsWapiAudioDownload = /mmg\.whatsapp\.net/.test(audioUrl) || /\.enc(\?|$)/.test(audioUrl);
+        if (needsWapiAudioDownload) {
+          const meta = extractWapiMediaMeta(payload, 'audio');
+          const cfg = provider === 'wapi_sucesso'
+            ? (wapiSucessoCfgRow?.value as any)
+            : provider === 'wapi'
+              ? (wapiCfgRow?.value as any)
+              : ((wapiComCfgRow?.value as any) || (zapiCfgRow?.value as any));
+          const resolved = meta ? await downloadWapiMedia(cfg || {}, meta) : null;
+          if (resolved) {
+            transcriptionUrl = resolved;
+            console.log('[audio] mídia W-API descriptografada para transcrição', { provider, mimetype: meta?.mimetype || audioMime || null });
+          } else {
+            console.error('[audio] falha ao resolver mídia criptografada W-API', { provider, hasMeta: !!meta, mimetype: audioMime || meta?.mimetype || null });
+          }
+        }
+        const transcript = await transcribeAudioFromUrl(transcriptionUrl, audioMime);
         if (transcript) {
           rawText = `[Áudio do aluno] ${transcript}`;
           isTranscribedAudio = true;
