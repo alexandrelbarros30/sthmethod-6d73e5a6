@@ -27,6 +27,33 @@ const DOW = ["D", "S", "T", "Q", "Q", "S", "S"];
 const normalizeFoodText = (s: string) =>
   (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
+// Downscale + JPEG-encode a picked file so the base64 payload stays small
+// enough for the edge function invoke (mobile photos are often 5-12 MB raw).
+async function compressImage(file: File, maxSide = 1600, quality = 0.85): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const blob = new Blob([buf], { type: file.type || "image/jpeg" });
+  const bitmap = await createImageBitmap(blob).catch(() => null);
+  if (!bitmap) {
+    // Fallback: return as-is if the browser can't decode
+    return await new Promise<string>((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result || ""));
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas.toDataURL("image/jpeg", quality);
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
 const getPrimaryFoodName = (name: string) =>
   normalizeFoodText(name)
     .split(",")[0]
