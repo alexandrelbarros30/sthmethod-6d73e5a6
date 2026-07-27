@@ -1308,7 +1308,15 @@ Deno.serve(async (req) => {
     // a estimativa de macros/qualidade via food-ai-analyze mode='text'.
     // Roda ANTES do fluxo de menu/IA persona para não ser interceptado.
     // ============================================================
-    if (provider === 'wapi_sucesso' && !hasBlockedMedia && body && looksLikeFoodDescription(body)) {
+    // Áudio transcrito no canal Sucesso do Aluno é tratado como descrição
+    // de refeição em texto para a STHIA (multimodal: foto, texto, áudio).
+    // Removemos o prefixo "[Áudio do aluno]" apenas para a análise
+    // nutricional — o texto original continua salvo em crm_messages.
+    const audioTranscriptForFood = (provider === 'wapi_sucesso' && isTranscribedAudio && body && body.startsWith('[Áudio do aluno]'))
+      ? body.replace(/^\[Áudio do aluno\]\s*/i, '').trim()
+      : '';
+    const foodTextCandidate = audioTranscriptForFood || body;
+    if (provider === 'wapi_sucesso' && !hasBlockedMedia && foodTextCandidate && looksLikeFoodDescription(foodTextCandidate)) {
       let { data: convRow } = await admin
         .from('crm_conversations')
         .select('id, user_id')
@@ -1330,7 +1338,7 @@ Deno.serve(async (req) => {
         status: 'received',
         body,
         external_id: externalId,
-        metadata: { type: 'food_ai_text_input' },
+        metadata: { type: audioTranscriptForFood ? 'food_ai_audio_input' : 'food_ai_text_input', origin: audioTranscriptForFood ? 'audio' : 'text' },
       }).select().maybeSingle().then(() => {}).catch(() => {});
 
       let handled = false;
@@ -1338,8 +1346,8 @@ Deno.serve(async (req) => {
         const { data: aiData, error: aiErr } = await admin.functions.invoke('food-ai-analyze', {
           body: {
             mode: 'text',
-            text: body,
-            audit_source: 'whatsapp_sucesso_text',
+            text: foodTextCandidate,
+            audit_source: audioTranscriptForFood ? 'whatsapp_sucesso_audio' : 'whatsapp_sucesso_text',
             student_id: (convRow as any)?.user_id ?? null,
           },
         });
