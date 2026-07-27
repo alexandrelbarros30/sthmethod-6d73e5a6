@@ -1,0 +1,1 @@
+ALTER TABLE public.food_ai_logs ADD COLUMN IF NOT EXISTS corrections jsonb NOT NULL DEFAULT '[]'::jsonb; ALTER TABLE public.food_ai_logs ADD COLUMN IF NOT EXISTS needs_second_evidence boolean NOT NULL DEFAULT false; ALTER TABLE public.food_ai_logs ADD COLUMN IF NOT EXISTS second_evidence_reason text;
