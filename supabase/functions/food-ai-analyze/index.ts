@@ -244,22 +244,41 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
       reconciled++;
     } else {
       // Kcal/g sanity guard: no real food exceeds ~9.5 kcal/g (pure fat).
+      // Beverages (unit=ml) are much lower: milk-based drinks ~0.4-1.0 kcal/ml,
+      // sugary sodas ~0.5 kcal/ml. Cap at 2.0 kcal/ml — anything above is a
+      // label-reading hallucination (e.g. Nescau 250ml lida como 1003 kcal).
+      const isLiquid = String(f.unit || '').toLowerCase() === 'ml';
+      const perUnitCap = isLiquid ? 2.0 : 9.5;
       const kcalPerG = safeWeight > 0 ? (Number(f.calories) || 0) / safeWeight : 0;
-      const kcalSuspect = kcalPerG > 9.5;
+      const kcalSuspect = kcalPerG > perUnitCap;
       let adj = { ...f, estimated_weight_g: safeWeight };
       if (weightSuspect || kcalSuspect) {
         const beforeKcal = Number(f.calories) || 0;
-        // Rescale kcal/macros to the clamped weight to prevent absurd totals.
-        if (rawWeight > 0) {
+        // Two-stage rescale:
+        //  a) if weight was clamped, scale kcal/macros by the weight change;
+        //  b) if kcal/unit still exceeds the physical cap for the food state
+        //     (solid vs liquid), scale kcal AND all macros down proportionally
+        //     so Atwater keeps balancing after the correction.
+        if (rawWeight > 0 && weightSuspect) {
           const rescale = safeWeight / rawWeight;
           adj.calories = +(((Number(f.calories) || 0) * rescale)).toFixed(1);
           adj.protein_g = +(((Number(f.protein_g) || 0) * rescale)).toFixed(2);
           adj.carbs_g = +(((Number(f.carbs_g) || 0) * rescale)).toFixed(2);
           adj.fat_g = +(((Number(f.fat_g) || 0) * rescale)).toFixed(2);
         }
+        const currKcal = Number(adj.calories) || 0;
+        const currPerUnit = safeWeight > 0 ? currKcal / safeWeight : 0;
+        if (currPerUnit > perUnitCap && safeWeight > 0) {
+          const target = perUnitCap * safeWeight;
+          const factor = currKcal > 0 ? target / currKcal : 0;
+          adj.calories = +target.toFixed(1);
+          adj.protein_g = +(((Number(adj.protein_g) || 0) * factor)).toFixed(2);
+          adj.carbs_g = +(((Number(adj.carbs_g) || 0) * factor)).toFixed(2);
+          adj.fat_g = +(((Number(adj.fat_g) || 0) * factor)).toFixed(2);
+        }
         adj.confidence = Math.min(Number(f.confidence) || 0.4, 0.4);
         if (kcalSuspect) {
-          corrections.push({ item: f.name, rule: 'kcal_per_g_clamp', field: 'calories', before: beforeKcal, after: adj.calories, note: `kcal/g >9.5 (${kcalPerG.toFixed(2)})` });
+          corrections.push({ item: f.name, rule: 'kcal_per_g_clamp', field: 'calories', before: beforeKcal, after: adj.calories, note: `${isLiquid ? 'kcal/ml' : 'kcal/g'} > ${perUnitCap} (${kcalPerG.toFixed(2)})` });
         }
       }
       // Atwater cross-check: expected kcal = P*4 + C*4 + F*9. If the AI-declared
