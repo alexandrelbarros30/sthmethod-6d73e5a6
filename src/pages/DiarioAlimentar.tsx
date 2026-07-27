@@ -1172,6 +1172,7 @@ export default function DiarioAlimentar() {
   const [leadOk, setLeadOk] = useState(() => !!localDiary.getLead());
   const [date, setDate] = useState<string>(todayISO());
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
+  const [sthiaEntryIds, setSthiaEntryIds] = useState<Set<string>>(new Set());
   const [water, setWater] = useState(0);
   const [goals, setGoals] = useState<Goals>(DEFAULT_GOALS);
   const [addOpen, setAddOpen] = useState(false);
