@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Microscope, Megaphone, Newspaper, Sparkles, Download, Info, Apple } from "lucide-react";
+import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Microscope, Megaphone, Newspaper, Sparkles, Download, Info, Apple, NotebookPen, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +16,8 @@ const mainItems = [
 
 const menuItems = [
   { to: "/dashboard/profile", icon: FileText, label: "Minha Ficha" },
-  { to: "/diario-alimentar", icon: Apple, label: "Food AI (STHIA)" },
+  { to: "/diario-alimentar", icon: Utensils, label: "Diário Alimentar" },
+  { to: "/dashboard/sthia-food", icon: Apple, label: "Food AI (STHIA)" },
   { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
   { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
   { to: "/tendencias", icon: Newspaper, label: "STH News" },
