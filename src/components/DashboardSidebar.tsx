@@ -28,8 +28,8 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       group: "Nutrição",
       icon: Salad,
       children: [
-        { to: "/dashboard/sthia-food", icon: Apple, label: "Food AI (STHIA)" },
         { to: "/diario-alimentar", icon: NotebookPen, label: "Diário Alimentar" },
+        { to: "/dashboard/sthia-food", icon: Apple, label: "Food AI (STHIA)" },
       ],
     },
     { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
