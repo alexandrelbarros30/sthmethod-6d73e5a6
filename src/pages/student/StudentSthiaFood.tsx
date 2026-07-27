@@ -550,9 +550,15 @@ function HistoryList({ refreshToken }: { refreshToken: number }) {
 
   const removeLog = async (id: string) => {
     if (!confirm("Excluir esta análise do histórico?")) return;
-    const { error } = await supabase.from("food_ai_logs").delete().eq("id", id);
-    if (error) { toast.error("Não foi possível excluir"); return; }
-    setLogs((prev) => prev.filter((l) => l.id !== id));
+    try {
+      const { error } = await supabase.from("food_ai_logs").delete().eq("id", id);
+      if (error) throw error;
+      setLogs((prev) => prev.filter((l) => l.id !== id));
+      toast.success("Análise excluída");
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Não foi possível excluir a análise. Verifique suas permissões.");
+    }
   };
 
   return (
