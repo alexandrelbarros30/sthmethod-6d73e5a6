@@ -1011,17 +1011,80 @@ Deno.serve(async (req) => {
               ).join('\n');
               const alerts = Array.isArray((aiData as any).alerts) && (aiData as any).alerts.length
                 ? `\n\n⚠️ ${(aiData as any).alerts.slice(0, 3).join(' | ')}` : '';
+              // Índice de qualidade 0..100
+              const qRaw = Number((aiData as any).quality_score);
+              const qScore = Number.isFinite(qRaw) ? Math.max(0, Math.min(100, Math.round(qRaw * 10))) : null;
+              const alertsArr: string[] = Array.isArray((aiData as any).alerts) ? (aiData as any).alerts : [];
+              const hasUltra = alertsArr.some((a) => /ultraproc/i.test(a));
+              const novaLine = hasUltra ? `\n🏷️ *NOVA 4* — ultraprocessado detectado` : '';
+              // Comparação com meta diária do aluno
+              let goalsLine = '';
+              try {
+                const uid = (convRow as any)?.user_id;
+                if (uid) {
+                  const { data: g } = await admin
+                    .from('food_diary_goals')
+                    .select('daily_kcal, protein_g, carbs_g, fat_g')
+                    .eq('user_id', uid).maybeSingle();
+                  if (g && Number(g.daily_kcal) > 0) {
+                    const kcalPct = Math.round((Number(totals.calories) || 0) / Number(g.daily_kcal) * 100);
+                    const pPct = g.protein_g ? Math.round((Number(totals.protein_g) || 0) / Number(g.protein_g) * 100) : null;
+                    goalsLine = `\n\n🎯 *Da sua meta diária*\n• ${kcalPct}% das kcal` +
+                      (pPct !== null ? ` · ${pPct}% da proteína` : '');
+                  }
+                }
+              } catch (_) { /* meta é opcional */ }
+              // Sugestão prática (heurística sobre macros/alertas)
+              const suggestions: string[] = [];
+              const kcalT = Number(totals.calories) || 0;
+              const pT = Number(totals.protein_g) || 0;
+              const fibT = Number(totals.fiber_g) || 0;
+              const naT = Number(totals.sodium_mg) || 0;
+              if (kcalT > 0 && pT / (kcalT / 100) < 6) suggestions.push('aumentar a proteína (frango, ovos, whey)');
+              if (fibT < 5) suggestions.push('incluir vegetais ou folhas para elevar a fibra');
+              if (naT > 800) suggestions.push('reduzir sódio (temperos industrializados/molhos)');
+              if (hasUltra) suggestions.push('trocar o ultraprocessado por uma versão in natura');
+              const suggestionLine = suggestions.length
+                ? `\n\n💡 *Sugestão*: ${suggestions[0]}.` : '';
+              const qualityLine = qScore !== null ? `\n📈 Qualidade: *${cls}* (${qScore}/100)` : `\n📈 Qualidade: *${cls}*`;
               const reply =
                 `🍽️ *STHIA — Análise da sua refeição* ${emoji}\n` +
                 (foodLines ? `\n${foodLines}\n` : '\n_Não consegui identificar itens claros na foto._\n') +
                 `\n📊 *Totais estimados*\n` +
-                `• ${Math.round(Number(totals.calories) || 0)} kcal\n` +
-                `• Proteína ${(Number(totals.protein_g)||0).toFixed(1)} g\n` +
+                `• ${Math.round(kcalT)} kcal\n` +
+                `• Proteína ${pT.toFixed(1)} g\n` +
                 `• Carbo ${(Number(totals.carbs_g)||0).toFixed(1)} g\n` +
                 `• Gordura ${(Number(totals.fat_g)||0).toFixed(1)} g` +
-                (totals.fiber_g ? `\n• Fibra ${Number(totals.fiber_g).toFixed(1)} g` : '') +
-                `\n\n📈 Qualidade: *${cls}*` + alerts +
-                `\n\n_Estimativa STHIA. Para registro oficial use o Diário no portal STH METHOD._`;
+                (totals.fiber_g ? `\n• Fibra ${fibT.toFixed(1)} g` : '') +
+                (totals.sodium_mg ? `\n• Sódio ${Math.round(naT)} mg` : '') +
+                qualityLine + novaLine + alerts + goalsLine + suggestionLine +
+                `\n\n_Estimativa por IA a partir da foto. Se a quantidade estiver diferente, me diga (ex.: "eram 200g de arroz") que eu recalculo._`;
+              // Salva automaticamente no diário alimentar do aluno (best effort)
+              try {
+                const uid = (convRow as any)?.user_id;
+                if (uid && foods.length) {
+                  const today = new Date().toISOString().slice(0, 10);
+                  const rows = foods.map((f: any, i: number) => ({
+                    user_id: uid,
+                    log_date: today,
+                    meal_type: 'lanche',
+                    meal_label: 'WhatsApp STHIA',
+                    item_name: String(f.name || 'Item'),
+                    quantity: Number(f.estimated_weight_g) || 0,
+                    unit: (f.unit === 'ml' ? 'ml' : 'g'),
+                    energy_kcal: Number(f.calories) || 0,
+                    protein_g: Number(f.protein_g) || 0,
+                    carbs_g: Number(f.carbs_g) || 0,
+                    fat_g: Number(f.fat_g) || 0,
+                    fiber_g: Number(f.fiber_g) || 0,
+                    sodium_mg: Number(f.sodium_mg) || 0,
+                    sort_order: i,
+                  }));
+                  await admin.from('food_diary_entries').insert(rows);
+                }
+              } catch (e) {
+                console.error('food_ai diary autosave failed', e);
+              }
               const send = await sendImmediateText('wapi_sucesso', reply);
               await admin.from('crm_messages').insert({
                 conversation_id: convRow!.id,
