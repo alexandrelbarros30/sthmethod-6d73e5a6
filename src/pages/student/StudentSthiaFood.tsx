@@ -264,7 +264,7 @@ function Analyzer({ onAnalyzed }: { onAnalyzed: () => void }) {
   return (
     <Card className="rounded-3xl border-[#E5E5EA] bg-white p-5 space-y-4">
       <div>
-        <h2 className="text-[17px] font-semibold text-[#1D1D1F] tracking-[-0.02em]">Diário Alimentar STHIA</h2>
+        <h2 className="text-[17px] font-semibold text-[#1D1D1F] tracking-[-0.02em]">Diário Alimentar</h2>
         <p className="text-[12px] text-[#86868B] mt-0.5 tracking-[-0.005em]">Análise inteligente por foto, áudio, texto ou rótulo.</p>
       </div>
       <div className="flex gap-1 p-1 rounded-2xl bg-[#F5F5F7]">
