@@ -565,7 +565,7 @@ function AddFoodDialog({
   dateISO: string;
   onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
 }) {
-  const [tab, setTab] = useState<"alimento" | "salvas" | "sthia">("alimento");
+  const [tab, setTab] = useState<"alimento" | "salvas">("alimento");
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
