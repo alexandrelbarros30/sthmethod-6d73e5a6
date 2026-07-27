@@ -378,55 +378,69 @@ const AdminFoodAI = () => {
 
   return (
     <DashboardLayout role="admin" title="STH Food AI">
-      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-lime-500/20 border border-emerald-500/30 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-emerald-500" />
+      <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 [font-feature-settings:'ss01','cv11'] antialiased">
+        {/* Hero */}
+        <section className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] border border-[#E5E5EA] flex items-center justify-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+              <Sparkles className="w-5 h-5 text-[#34C759]" strokeWidth={2.25} />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-semibold tracking-tight">STH Food AI — Console Admin</h1>
-              <p className="text-xs text-muted-foreground">Analise foto, rótulo ou texto e registre direto no diário do aluno</p>
+              <h1 className="text-[26px] md:text-[32px] font-semibold tracking-[-0.022em] leading-tight text-[#1D1D1F]">
+                STH Food AI
+              </h1>
+              <p className="text-[13px] text-[#6E6E73] tracking-[-0.01em] mt-0.5">
+                Análise inteligente de foto, rótulo ou texto — direto ao diário do aluno.
+              </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate("/admin/food-ai/logs")}>
-            <History className="w-4 h-4 mr-2" /> Ver histórico
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/admin/food-ai/logs")}
+            className="rounded-full border-[#E5E5EA] bg-white hover:bg-[#F5F5F7] text-[#1D1D1F] font-medium h-9 px-4"
+          >
+            <History className="w-4 h-4 mr-2" /> Histórico
           </Button>
-        </div>
+        </section>
 
         {/* Aluno */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">1. Aluno</CardTitle></CardHeader>
+        <Card className="rounded-3xl border-[#E5E5EA] shadow-none bg-white overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[#1D1D1F]">
+              <span className="text-[#86868B] font-normal mr-2">01</span>Aluno
+            </CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
             {selectedStudent ? (
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/40">
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-[#E5E5EA] bg-[#F5F5F7]">
                 <div>
-                  <div className="font-medium">{selectedStudent.full_name}</div>
-                  <div className="text-xs text-muted-foreground">{selectedStudent.email}</div>
+                  <div className="font-medium text-[15px] text-[#1D1D1F] tracking-[-0.01em]">{selectedStudent.full_name}</div>
+                  <div className="text-[12px] text-[#6E6E73] mt-0.5">{selectedStudent.email}</div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => { setSelectedStudent(null); setResult(null); }}>Trocar</Button>
+                <Button variant="ghost" size="sm" className="rounded-full text-[#0071E3] hover:bg-white/60 hover:text-[#0071E3]" onClick={() => { setSelectedStudent(null); setResult(null); }}>Trocar</Button>
               </div>
             ) : (
               <>
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868B]" />
                   <Input
-                    className="pl-9"
+                    className="pl-10 h-11 rounded-2xl border-[#E5E5EA] bg-[#F5F5F7] focus-visible:ring-1 focus-visible:ring-[#34C759] focus-visible:border-[#34C759] text-[14px] placeholder:text-[#86868B]"
                     placeholder="Buscar aluno por nome ou email..."
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
                   />
                 </div>
                 {filteredStudents.length > 0 && (
-                  <div className="border rounded-lg divide-y max-h-64 overflow-auto">
+                  <div className="border border-[#E5E5EA] rounded-2xl divide-y divide-[#F2F2F7] max-h-64 overflow-auto bg-white">
                     {filteredStudents.map((s) => (
                       <button
                         key={s.user_id}
                         onClick={() => { setSelectedStudent(s); setStudentSearch(""); }}
-                        className="w-full text-left p-3 hover:bg-muted/60 transition"
+                        className="w-full text-left p-3.5 hover:bg-[#F5F5F7] transition-colors"
                       >
-                        <div className="text-sm font-medium">{s.full_name}</div>
-                        <div className="text-xs text-muted-foreground">{s.email}</div>
+                        <div className="text-[14px] font-medium text-[#1D1D1F] tracking-[-0.01em]">{s.full_name}</div>
+                        <div className="text-[12px] text-[#6E6E73] mt-0.5">{s.email}</div>
                       </button>
                     ))}
                   </div>
@@ -438,17 +452,21 @@ const AdminFoodAI = () => {
 
         {/* Contexto de refeição */}
         {selectedStudent && (
-          <Card>
-            <CardHeader><CardTitle className="text-base">2. Refeição</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Card className="rounded-3xl border-[#E5E5EA] shadow-none bg-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[#1D1D1F]">
+                <span className="text-[#86868B] font-normal mr-2">02</span>Refeição
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Data</Label>
-                <Input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
+                <Label className="text-[12px] font-medium text-[#6E6E73] tracking-[-0.01em]">Data</Label>
+                <Input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} className="h-11 rounded-2xl border-[#E5E5EA] bg-[#F5F5F7] focus-visible:ring-1 focus-visible:ring-[#34C759] focus-visible:border-[#34C759]" />
               </div>
               <div className="space-y-2">
-                <Label>Refeição</Label>
+                <Label className="text-[12px] font-medium text-[#6E6E73] tracking-[-0.01em]">Refeição</Label>
                 <Select value={mealType} onValueChange={setMealType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-11 rounded-2xl border-[#E5E5EA] bg-[#F5F5F7] focus:ring-1 focus:ring-[#34C759]"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {MEAL_TYPES.map((m) => (
                       <SelectItem key={m.key} value={m.key}>{m.icon} {m.label}</SelectItem>
@@ -462,17 +480,21 @@ const AdminFoodAI = () => {
 
         {/* Análise */}
         {selectedStudent && (
-          <Card>
-            <CardHeader><CardTitle className="text-base">3. Análise STHIA</CardTitle></CardHeader>
+          <Card className="rounded-3xl border-[#E5E5EA] shadow-none bg-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[#1D1D1F]">
+                <span className="text-[#86868B] font-normal mr-2">03</span>Análise STHIA
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <Tabs value={mode} onValueChange={(v) => { setMode(v as Mode); setResult(null); }}>
-                <TabsList className="grid grid-cols-3 w-full">
-                  <TabsTrigger value="photo"><Camera className="w-4 h-4 mr-1" /> Foto</TabsTrigger>
-                  <TabsTrigger value="label"><Tag className="w-4 h-4 mr-1" /> Rótulo</TabsTrigger>
-                  <TabsTrigger value="text"><Type className="w-4 h-4 mr-1" /> Texto</TabsTrigger>
+                <TabsList className="grid grid-cols-3 w-full h-11 rounded-2xl bg-[#F5F5F7] p-1 gap-1">
+                  <TabsTrigger value="photo" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-[0_1px_3px_rgba(0,0,0,0.06)] data-[state=active]:text-[#1D1D1F] text-[#6E6E73] font-medium text-[13px]"><Camera className="w-4 h-4 mr-1.5" /> Foto</TabsTrigger>
+                  <TabsTrigger value="label" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-[0_1px_3px_rgba(0,0,0,0.06)] data-[state=active]:text-[#1D1D1F] text-[#6E6E73] font-medium text-[13px]"><Tag className="w-4 h-4 mr-1.5" /> Rótulo</TabsTrigger>
+                  <TabsTrigger value="text" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-[0_1px_3px_rgba(0,0,0,0.06)] data-[state=active]:text-[#1D1D1F] text-[#6E6E73] font-medium text-[13px]"><Type className="w-4 h-4 mr-1.5" /> Texto</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="photo" className="space-y-3 pt-3">
+                <TabsContent value="photo" className="space-y-3 pt-5">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -480,13 +502,19 @@ const AdminFoodAI = () => {
                     className="hidden"
                     onChange={(e) => handleFile(e.target.files?.[0] || null)}
                   />
-                  <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                    <Camera className="w-4 h-4 mr-2" /> {file ? "Trocar imagem" : "Selecionar foto do prato"}
-                  </Button>
-                  {preview && <img src={preview} alt="preview" className="max-h-64 rounded-lg border" />}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full rounded-2xl border-2 border-dashed border-[#D1D1D6] bg-[#F5F5F7] hover:border-[#34C759] hover:bg-[#F0FAF3] transition-colors p-8 text-center group"
+                  >
+                    <Camera className="w-6 h-6 mx-auto mb-2 text-[#34C759]" strokeWidth={2} />
+                    <div className="text-[14px] font-medium text-[#1D1D1F]">{file ? "Trocar imagem" : "Selecionar foto do prato"}</div>
+                    <div className="text-[12px] text-[#86868B] mt-0.5">JPG, PNG · até 10 MB</div>
+                  </button>
+                  {preview && <img src={preview} alt="preview" className="max-h-72 rounded-2xl border border-[#E5E5EA] mx-auto" />}
                 </TabsContent>
 
-                <TabsContent value="label" className="space-y-3 pt-3">
+                <TabsContent value="label" className="space-y-3 pt-5">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -494,24 +522,35 @@ const AdminFoodAI = () => {
                     className="hidden"
                     onChange={(e) => handleFile(e.target.files?.[0] || null)}
                   />
-                  <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                    <Tag className="w-4 h-4 mr-2" /> {file ? "Trocar rótulo" : "Selecionar foto do rótulo"}
-                  </Button>
-                  {preview && <img src={preview} alt="preview" className="max-h-64 rounded-lg border" />}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full rounded-2xl border-2 border-dashed border-[#D1D1D6] bg-[#F5F5F7] hover:border-[#34C759] hover:bg-[#F0FAF3] transition-colors p-8 text-center group"
+                  >
+                    <Tag className="w-6 h-6 mx-auto mb-2 text-[#34C759]" strokeWidth={2} />
+                    <div className="text-[14px] font-medium text-[#1D1D1F]">{file ? "Trocar rótulo" : "Selecionar foto do rótulo"}</div>
+                    <div className="text-[12px] text-[#86868B] mt-0.5">Painel nutricional visível</div>
+                  </button>
+                  {preview && <img src={preview} alt="preview" className="max-h-72 rounded-2xl border border-[#E5E5EA] mx-auto" />}
                 </TabsContent>
 
-                <TabsContent value="text" className="space-y-3 pt-3">
+                <TabsContent value="text" className="space-y-3 pt-5">
                   <Textarea
-                    rows={4}
+                    rows={5}
                     placeholder="Ex: 150g arroz integral, 120g peito de frango grelhado, salada verde com azeite..."
                     value={text}
                     onChange={(e) => setText(e.target.value)}
+                    className="rounded-2xl border-[#E5E5EA] bg-[#F5F5F7] focus-visible:ring-1 focus-visible:ring-[#34C759] focus-visible:border-[#34C759] text-[14px] placeholder:text-[#86868B] resize-none p-4"
                   />
                 </TabsContent>
               </Tabs>
 
-              <div className="pt-4">
-                <Button onClick={analyze} disabled={analyzing} className="w-full sm:w-auto">
+              <div className="pt-6">
+                <Button
+                  onClick={analyze}
+                  disabled={analyzing}
+                  className="w-full sm:w-auto h-11 px-6 rounded-full bg-[#1D1D1F] hover:bg-[#000] text-white font-medium tracking-[-0.01em] shadow-none"
+                >
                   {analyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
                   Analisar com STHIA
                 </Button>
@@ -522,36 +561,35 @@ const AdminFoodAI = () => {
 
         {/* Resultado */}
         {result && (
-          <Card className={reviewMode ? "border-amber-500/50" : ""}>
-            <CardHeader>
+          <Card className={`rounded-3xl shadow-none bg-white ${reviewMode ? "border-[#FF9500]/40" : "border-[#E5E5EA]"}`}>
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <CardTitle className="text-base">4. Resultado & Confirmação</CardTitle>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline">Fonte: {result.source}</Badge>
-                  <Badge variant={result.classification === "🟢 Bom" ? "default" : result.classification === "🔴 Ruim" ? "destructive" : "secondary"}>
-                    {result.classification}
-                  </Badge>
-                  <Badge variant={reviewMode ? "destructive" : "default"}>
-                    Confiança {Math.round((result.confidence || 0) * 100)}%
+                <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[#1D1D1F]">
+                  <span className="text-[#86868B] font-normal mr-2">04</span>Resultado & confirmação
+                </CardTitle>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge variant="outline" className="rounded-full border-[#E5E5EA] bg-[#F5F5F7] text-[#6E6E73] font-normal text-[11px] px-2.5">{result.classification}</Badge>
+                  <Badge className={`rounded-full font-medium text-[11px] px-2.5 border ${reviewMode ? "bg-[#FFF7EB] text-[#B25E00] border-[#FF9500]/30" : "bg-[#F0FAF3] text-[#0F7B3B] border-[#34C759]/30"}`}>
+                    {Math.round((result.confidence || 0) * 100)}% confiança
                   </Badge>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               {reviewMode && (
-                <Alert variant="destructive">
-                  <ShieldAlert className="w-4 h-4" />
-                  <AlertTitle>Revisão necessária</AlertTitle>
-                  <AlertDescription>
+                <Alert className="rounded-2xl border-[#FF9500]/30 bg-[#FFF7EB] text-[#8A5A00]">
+                  <ShieldAlert className="w-4 h-4 !text-[#B25E00]" />
+                  <AlertTitle className="text-[#8A5A00] font-semibold tracking-[-0.01em]">Revisão recomendada</AlertTitle>
+                  <AlertDescription className="text-[#8A5A00]/90 text-[13px]">
                     A confiança está abaixo de {Math.round(CONFIDENCE_THRESHOLD * 100)}%. Revise nome, porção e macros de cada item antes de registrar no diário do aluno.
                   </AlertDescription>
                 </Alert>
               )}
 
               {result.alerts?.length > 0 && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
-                  <div className="font-medium mb-1">Alertas nutricionais</div>
-                  <ul className="list-disc pl-5 space-y-0.5 text-muted-foreground">
+                <div className="rounded-2xl border border-[#FF9500]/25 bg-[#FFF7EB] p-4 text-[13px]">
+                  <div className="font-semibold text-[#8A5A00] mb-1.5 tracking-[-0.01em]">Alertas nutricionais</div>
+                  <ul className="list-disc pl-5 space-y-0.5 text-[#8A5A00]/85">
                     {result.alerts.map((a, i) => <li key={i}>{a}</li>)}
                   </ul>
                 </div>
@@ -561,82 +599,85 @@ const AdminFoodAI = () => {
                 {editedFoods.map((f, i) => {
                   const lowConf = (f.confidence ?? 1) < CONFIDENCE_THRESHOLD;
                   return (
-                    <div key={i} className={`rounded-lg border p-3 space-y-2 ${lowConf ? "border-amber-500/50 bg-amber-500/5" : ""}`}>
+                    <div key={i} className={`rounded-2xl border p-4 space-y-3 transition-colors ${lowConf ? "border-[#FF9500]/40 bg-[#FFF7EB]" : "border-[#E5E5EA] bg-[#FBFBFD]"}`}>
                       <div className="flex items-center gap-2">
                         <Input
-                          className="font-medium"
+                          className="font-medium h-10 rounded-xl border-[#E5E5EA] bg-white focus-visible:ring-1 focus-visible:ring-[#34C759] focus-visible:border-[#34C759] text-[14px] tracking-[-0.01em]"
                           value={f.name}
                           onChange={(e) => updateFood(i, { name: e.target.value })}
                           placeholder="Nome do alimento"
                         />
-                        {lowConf && <Badge variant="destructive" className="whitespace-nowrap">Baixa {Math.round((f.confidence || 0) * 100)}%</Badge>}
-                        <Button variant="ghost" size="icon" onClick={() => removeFood(i)}>
+                        {lowConf && <Badge className="whitespace-nowrap rounded-full bg-[#FF9500]/15 text-[#B25E00] border border-[#FF9500]/30 font-medium text-[11px]">Baixa {Math.round((f.confidence || 0) * 100)}%</Badge>}
+                        <Button variant="ghost" size="icon" className="rounded-full text-[#86868B] hover:text-[#FF3B30] hover:bg-[#FFF0F0]" onClick={() => removeFood(i)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                         <div>
-                          <Label className="text-xs">Porção</Label>
-                          <div className="flex gap-1">
-                            <Input type="number" step="0.1" value={f.estimated_weight_g} onChange={(e) => updateFood(i, { estimated_weight_g: parseFloat(e.target.value) || 0 })} />
+                          <Label className="text-[11px] font-medium text-[#86868B] uppercase tracking-[0.02em]">Porção</Label>
+                          <div className="flex gap-1 mt-1">
+                            <Input type="number" step="0.1" value={f.estimated_weight_g} onChange={(e) => updateFood(i, { estimated_weight_g: parseFloat(e.target.value) || 0 })} className="h-9 rounded-lg border-[#E5E5EA] bg-white text-[13px]" />
                             <Select value={f.unit} onValueChange={(v) => updateFood(i, { unit: v as "g" | "ml" })}>
-                              <SelectTrigger className="w-16"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="w-16 h-9 rounded-lg border-[#E5E5EA] bg-white text-[13px]"><SelectValue /></SelectTrigger>
                               <SelectContent><SelectItem value="g">g</SelectItem><SelectItem value="ml">ml</SelectItem></SelectContent>
                             </Select>
                           </div>
                         </div>
                         <div>
-                          <Label className="text-xs">kcal</Label>
-                          <Input type="number" step="0.1" value={f.calories} onChange={(e) => updateFood(i, { calories: parseFloat(e.target.value) || 0 })} />
+                          <Label className="text-[11px] font-medium text-[#86868B] uppercase tracking-[0.02em]">kcal</Label>
+                          <Input type="number" step="0.1" value={f.calories} onChange={(e) => updateFood(i, { calories: parseFloat(e.target.value) || 0 })} className="h-9 mt-1 rounded-lg border-[#E5E5EA] bg-white text-[13px]" />
                         </div>
                         <div>
-                          <Label className="text-xs text-emerald-600">Proteína (g)</Label>
-                          <Input type="number" step="0.1" value={f.protein_g} onChange={(e) => updateFood(i, { protein_g: parseFloat(e.target.value) || 0 })} />
+                          <Label className="text-[11px] font-medium text-[#34C759] uppercase tracking-[0.02em]">Proteína</Label>
+                          <Input type="number" step="0.1" value={f.protein_g} onChange={(e) => updateFood(i, { protein_g: parseFloat(e.target.value) || 0 })} className="h-9 mt-1 rounded-lg border-[#E5E5EA] bg-white text-[13px]" />
                         </div>
                         <div>
-                          <Label className="text-xs text-amber-600">Carbo (g)</Label>
-                          <Input type="number" step="0.1" value={f.carbs_g} onChange={(e) => updateFood(i, { carbs_g: parseFloat(e.target.value) || 0 })} />
+                          <Label className="text-[11px] font-medium text-[#FF9500] uppercase tracking-[0.02em]">Carbo</Label>
+                          <Input type="number" step="0.1" value={f.carbs_g} onChange={(e) => updateFood(i, { carbs_g: parseFloat(e.target.value) || 0 })} className="h-9 mt-1 rounded-lg border-[#E5E5EA] bg-white text-[13px]" />
                         </div>
                         <div>
-                          <Label className="text-xs text-rose-600">Gordura (g)</Label>
-                          <Input type="number" step="0.1" value={f.fat_g} onChange={(e) => updateFood(i, { fat_g: parseFloat(e.target.value) || 0 })} />
+                          <Label className="text-[11px] font-medium text-[#FF3B30] uppercase tracking-[0.02em]">Gordura</Label>
+                          <Input type="number" step="0.1" value={f.fat_g} onChange={(e) => updateFood(i, { fat_g: parseFloat(e.target.value) || 0 })} className="h-9 mt-1 rounded-lg border-[#E5E5EA] bg-white text-[13px]" />
                         </div>
                         <div>
-                          <Label className="text-xs">Fibra (g)</Label>
-                          <Input type="number" step="0.1" value={f.fiber_g} onChange={(e) => updateFood(i, { fiber_g: parseFloat(e.target.value) || 0 })} />
+                          <Label className="text-[11px] font-medium text-[#86868B] uppercase tracking-[0.02em]">Fibra</Label>
+                          <Input type="number" step="0.1" value={f.fiber_g} onChange={(e) => updateFood(i, { fiber_g: parseFloat(e.target.value) || 0 })} className="h-9 mt-1 rounded-lg border-[#E5E5EA] bg-white text-[13px]" />
                         </div>
                         <div>
-                          <Label className="text-xs">Sódio (mg)</Label>
-                          <Input type="number" step="0.1" value={f.sodium_mg} onChange={(e) => updateFood(i, { sodium_mg: parseFloat(e.target.value) || 0 })} />
+                          <Label className="text-[11px] font-medium text-[#86868B] uppercase tracking-[0.02em]">Sódio</Label>
+                          <Input type="number" step="0.1" value={f.sodium_mg} onChange={(e) => updateFood(i, { sodium_mg: parseFloat(e.target.value) || 0 })} className="h-9 mt-1 rounded-lg border-[#E5E5EA] bg-white text-[13px]" />
                         </div>
                       </div>
                     </div>
                   );
                 })}
-                <Button variant="outline" size="sm" onClick={addFood}>
+                <Button variant="outline" size="sm" onClick={addFood} className="rounded-full border-[#E5E5EA] bg-white text-[#0071E3] hover:bg-[#F5F5F7] hover:text-[#0071E3] h-9">
                   <Plus className="w-4 h-4 mr-1" /> Adicionar item
                 </Button>
               </div>
 
-              <div className="rounded-lg border p-3 bg-muted/40">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Totais</div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 text-sm">
-                  <div><div className="text-muted-foreground text-xs">kcal</div><div className="font-semibold">{editedTotals.calories}</div></div>
-                  <div><div className="text-emerald-600 text-xs">P</div><div className="font-semibold">{editedTotals.protein_g}g</div></div>
-                  <div><div className="text-amber-600 text-xs">C</div><div className="font-semibold">{editedTotals.carbs_g}g</div></div>
-                  <div><div className="text-rose-600 text-xs">G</div><div className="font-semibold">{editedTotals.fat_g}g</div></div>
-                  <div><div className="text-muted-foreground text-xs">Fibra</div><div className="font-semibold">{editedTotals.fiber_g}g</div></div>
-                  <div><div className="text-muted-foreground text-xs">Sódio</div><div className="font-semibold">{editedTotals.sodium_mg}mg</div></div>
+              <div className="rounded-2xl border border-[#E5E5EA] p-5 bg-[#F5F5F7]">
+                <div className="text-[11px] uppercase tracking-[0.06em] text-[#86868B] mb-3 font-medium">Totais</div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                  <div><div className="text-[10px] uppercase tracking-[0.04em] text-[#86868B]">kcal</div><div className="text-[20px] font-semibold text-[#1D1D1F] tracking-[-0.02em] tabular-nums">{Math.round(editedTotals.calories)}</div></div>
+                  <div><div className="text-[10px] uppercase tracking-[0.04em] text-[#34C759]">Proteína</div><div className="text-[20px] font-semibold text-[#1D1D1F] tracking-[-0.02em] tabular-nums">{editedTotals.protein_g.toFixed(0)}<span className="text-[13px] text-[#86868B] font-normal ml-0.5">g</span></div></div>
+                  <div><div className="text-[10px] uppercase tracking-[0.04em] text-[#FF9500]">Carbo</div><div className="text-[20px] font-semibold text-[#1D1D1F] tracking-[-0.02em] tabular-nums">{editedTotals.carbs_g.toFixed(0)}<span className="text-[13px] text-[#86868B] font-normal ml-0.5">g</span></div></div>
+                  <div><div className="text-[10px] uppercase tracking-[0.04em] text-[#FF3B30]">Gordura</div><div className="text-[20px] font-semibold text-[#1D1D1F] tracking-[-0.02em] tabular-nums">{editedTotals.fat_g.toFixed(0)}<span className="text-[13px] text-[#86868B] font-normal ml-0.5">g</span></div></div>
+                  <div><div className="text-[10px] uppercase tracking-[0.04em] text-[#86868B]">Fibra</div><div className="text-[20px] font-semibold text-[#1D1D1F] tracking-[-0.02em] tabular-nums">{editedTotals.fiber_g.toFixed(0)}<span className="text-[13px] text-[#86868B] font-normal ml-0.5">g</span></div></div>
+                  <div><div className="text-[10px] uppercase tracking-[0.04em] text-[#86868B]">Sódio</div><div className="text-[20px] font-semibold text-[#1D1D1F] tracking-[-0.02em] tabular-nums">{Math.round(editedTotals.sodium_mg)}<span className="text-[13px] text-[#86868B] font-normal ml-0.5">mg</span></div></div>
                 </div>
-                <div className="mt-3">
-                  <div className="text-xs text-muted-foreground mb-1">Qualidade nutricional: {result.quality_score}/10</div>
-                  <Progress value={(result.quality_score || 0) * 10} />
+                <div className="mt-5 pt-4 border-t border-[#E5E5EA]">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[12px] text-[#6E6E73] tracking-[-0.01em]">Qualidade nutricional</div>
+                    <div className="text-[13px] font-semibold text-[#1D1D1F] tabular-nums">{result.quality_score}<span className="text-[#86868B] font-normal">/10</span></div>
+                  </div>
+                  <Progress value={(result.quality_score || 0) * 10} className="h-1.5 bg-white [&>div]:bg-[#34C759]" />
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end flex-wrap">
-                <Button variant="ghost" onClick={discard}>Descartar</Button>
-                <Button onClick={saveToDiary} disabled={saving || editedFoods.length === 0}>
+              <div className="flex gap-2 justify-end flex-wrap pt-1">
+                <Button variant="ghost" onClick={discard} className="rounded-full text-[#6E6E73] hover:text-[#FF3B30] hover:bg-[#FFF0F0] h-11 px-5">Descartar</Button>
+                <Button onClick={saveToDiary} disabled={saving || editedFoods.length === 0} className="rounded-full h-11 px-6 bg-[#34C759] hover:bg-[#2FB550] text-white font-medium tracking-[-0.01em] shadow-none disabled:opacity-40">
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   {reviewMode ? "Confirmar e registrar no diário" : "Registrar no diário"}
                 </Button>

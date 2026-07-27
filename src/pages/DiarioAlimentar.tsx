@@ -249,21 +249,21 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
 
   const canAnalyze = (mode === "text" && text.trim().length >= 3) || (mode !== "text" && !!imgB64);
   const confidencePct = Math.round((result?.confidence || 0) * 100);
-  const chipCls = "flex-1 flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors";
-  const activeCls = "bg-[#34C759] border-[#34C759] text-white";
-  const idleCls = "bg-white border-[#E5E5EA] text-[#1C1C1E] hover:border-[#34C759]";
+  const chipCls = "flex-1 flex items-center justify-center gap-1.5 text-[12px] font-medium px-3 h-10 rounded-xl transition-all tracking-[-0.01em]";
+  const activeCls = "bg-white text-[#1D1D1F] shadow-[0_1px_3px_rgba(0,0,0,0.08)]";
+  const idleCls = "bg-transparent text-[#6E6E73] hover:text-[#1D1D1F]";
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 mt-3 space-y-3 overflow-y-auto">
-      <div className="flex gap-2">
+    <div className="flex-1 flex flex-col min-h-0 mt-3 space-y-4 overflow-y-auto antialiased">
+      <div className="flex gap-1 p-1 rounded-2xl bg-[#F5F5F7]">
         <button type="button" className={cn(chipCls, mode === "photo" ? activeCls : idleCls)} onClick={() => { setMode("photo"); setResult(null); }}>
-          <Camera className="w-3.5 h-3.5" /> Foto do prato
+          <Camera className="w-3.5 h-3.5" strokeWidth={2.25} /> Foto
         </button>
         <button type="button" className={cn(chipCls, mode === "label" ? activeCls : idleCls)} onClick={() => { setMode("label"); setResult(null); }}>
-          <Tag className="w-3.5 h-3.5" /> Rótulo
+          <Tag className="w-3.5 h-3.5" strokeWidth={2.25} /> Rótulo
         </button>
         <button type="button" className={cn(chipCls, mode === "text" ? activeCls : idleCls)} onClick={() => { setMode("text"); setResult(null); }}>
-          <Sparkles className="w-3.5 h-3.5" /> Descrever
+          <Sparkles className="w-3.5 h-3.5" strokeWidth={2.25} /> Texto
         </button>
       </div>
 
@@ -272,12 +272,12 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder='Ex.: "2 ovos mexidos, 1 pão francês, café com leite"'
-          rows={3}
-          className="w-full rounded-lg border border-[#E5E5EA] bg-white text-[#1C1C1E] p-3 text-sm focus:outline-none focus:border-[#34C759]"
+          rows={4}
+          className="w-full rounded-2xl border border-[#E5E5EA] bg-[#F5F5F7] text-[#1D1D1F] placeholder:text-[#86868B] p-4 text-[14px] leading-relaxed resize-none focus:outline-none focus:border-[#34C759] focus:ring-1 focus:ring-[#34C759] transition-colors"
         />
       ) : (
         <div className="space-y-2">
-          <label className="block rounded-xl border-2 border-dashed border-[#D1D1D6] bg-[#F2F2F7] p-4 text-center cursor-pointer hover:border-[#34C759] transition-colors">
+          <label className="block rounded-2xl border-2 border-dashed border-[#D1D1D6] bg-[#F5F5F7] p-6 text-center cursor-pointer hover:border-[#34C759] hover:bg-[#F0FAF3] transition-colors">
             <input
               type="file"
               accept="image/*"
@@ -286,55 +286,103 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
               onChange={(e) => onFile(e.target.files?.[0] || null)}
             />
             {imgPreview ? (
-              <img src={imgPreview} alt="preview" className="max-h-48 mx-auto rounded-lg object-contain" />
+              <img src={imgPreview} alt="preview" className="max-h-56 mx-auto rounded-xl object-contain" />
             ) : (
-              <div className="text-sm text-[#6E6E73] py-6">
-                <Camera className="w-6 h-6 mx-auto mb-2 text-[#34C759]" />
-                Toque para {mode === "photo" ? "fotografar o prato" : "fotografar o rótulo"}
+              <div className="py-4">
+                <div className="w-11 h-11 mx-auto rounded-full bg-white border border-[#E5E5EA] flex items-center justify-center mb-2.5">
+                  <Camera className="w-5 h-5 text-[#34C759]" strokeWidth={2} />
+                </div>
+                <div className="text-[14px] font-medium text-[#1D1D1F] tracking-[-0.01em]">
+                  Toque para {mode === "photo" ? "fotografar o prato" : "fotografar o rótulo"}
+                </div>
+                <div className="text-[12px] text-[#86868B] mt-0.5">Boa iluminação melhora a precisão</div>
               </div>
             )}
           </label>
           {imgPreview && (
-            <Button variant="ghost" size="sm" className="text-[#FF3B30]" onClick={() => { setImgB64(null); setImgPreview(null); }}>
+            <Button variant="ghost" size="sm" className="text-[#FF3B30] hover:text-[#FF3B30] hover:bg-[#FFF0F0] rounded-full" onClick={() => { setImgB64(null); setImgPreview(null); }}>
               <X className="w-3.5 h-3.5 mr-1" /> Remover foto
             </Button>
           )}
         </div>
       )}
 
-      <Button onClick={analyze} disabled={!canAnalyze || loading} className="w-full bg-[#34C759] hover:bg-[#30B350] text-white font-semibold">
-        {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analisando com STHIA...</> : <><Sparkles className="w-4 h-4 mr-2" />Analisar</>}
+      <Button
+        onClick={analyze}
+        disabled={!canAnalyze || loading}
+        className="w-full h-12 rounded-full bg-[#1D1D1F] hover:bg-[#000] disabled:bg-[#E5E5EA] disabled:text-[#86868B] text-white font-medium tracking-[-0.01em] text-[15px] shadow-none transition-colors"
+      >
+        {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analisando com STHIA…</> : <><Sparkles className="w-4 h-4 mr-2" />Analisar</>}
       </Button>
 
       {result && (
-        <div className="space-y-3 border border-[#E5E5EA] rounded-xl p-3 bg-white">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4 border border-[#E5E5EA] rounded-3xl p-5 bg-white">
+          {/* Hero macros */}
+          <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-xs text-[#6E6E73]">Confiança: <span className={cn("font-semibold", confidencePct >= 85 ? "text-[#34C759]" : confidencePct >= 60 ? "text-[#FF9500]" : "text-[#FF3B30]")}>{confidencePct}%</span></p>
-              <p className="text-[10px] text-[#8E8E93]">{result.classification}</p>
+              <div className="text-[11px] uppercase tracking-[0.06em] text-[#86868B] font-medium">Total</div>
+              <div className="text-[34px] font-semibold text-[#1D1D1F] tracking-[-0.03em] leading-none tabular-nums">
+                {Math.round(result.totals?.calories || 0)}
+                <span className="text-[15px] text-[#86868B] font-normal ml-1">kcal</span>
+              </div>
+              {result.classification && (
+                <div className="text-[12px] text-[#6E6E73] mt-1.5 tracking-[-0.01em]">{result.classification}</div>
+              )}
             </div>
-            <Badge variant="outline" className="text-[10px]">{Math.round(result.totals?.calories || 0)} kcal</Badge>
+            <div className={cn(
+              "rounded-full px-3 py-1 text-[11px] font-medium tabular-nums border",
+              confidencePct >= 85 ? "bg-[#F0FAF3] text-[#0F7B3B] border-[#34C759]/25"
+                : confidencePct >= 60 ? "bg-[#FFF7EB] text-[#B25E00] border-[#FF9500]/25"
+                : "bg-[#FFF0F0] text-[#C7362B] border-[#FF3B30]/25"
+            )}>
+              {confidencePct}% confiança
+            </div>
           </div>
 
-          {result.notes && <p className="text-[11px] text-[#6E6E73] italic">{result.notes}</p>}
+          {/* Macro breakdown */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Proteína", value: result.totals?.protein_g, color: "#34C759" },
+              { label: "Carbo", value: result.totals?.carbs_g, color: "#FF9500" },
+              { label: "Gordura", value: result.totals?.fat_g, color: "#FF3B30" },
+            ].map((m) => (
+              <div key={m.label} className="rounded-2xl bg-[#F5F5F7] p-3">
+                <div className="text-[10px] uppercase tracking-[0.04em] font-medium" style={{ color: m.color }}>{m.label}</div>
+                <div className="text-[18px] font-semibold text-[#1D1D1F] tracking-[-0.02em] tabular-nums mt-0.5">
+                  {Math.round(Number(m.value) || 0)}<span className="text-[12px] text-[#86868B] font-normal ml-0.5">g</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {result.notes && (
+            <p className="text-[12px] text-[#6E6E73] leading-relaxed tracking-[-0.005em]">{result.notes}</p>
+          )}
 
           {result.needs_second_evidence && (
-            <div className="rounded-lg border border-[#FF9500] bg-[#FFF7EB] p-2.5">
-              <p className="text-[11px] font-semibold text-[#B25E00]">Precisamos de mais uma foto</p>
-              <p className="text-[11px] text-[#8A5A00] mt-0.5">{result.second_evidence_reason || 'Envie uma segunda foto do painel nutricional e da porção indicada para eu concluir com precisão.'}</p>
+            <div className="rounded-2xl border border-[#FF9500]/30 bg-[#FFF7EB] p-3.5">
+              <p className="text-[13px] font-semibold text-[#8A5A00] tracking-[-0.01em]">Precisamos de mais uma foto</p>
+              <p className="text-[12px] text-[#8A5A00]/85 mt-1 leading-relaxed">
+                {result.second_evidence_reason || 'Envie uma segunda foto do painel nutricional e da porção indicada para eu concluir com precisão.'}
+              </p>
             </div>
           )}
 
-          <div className="divide-y divide-[#F2F2F7]">
+          <div className="rounded-2xl border border-[#E5E5EA] divide-y divide-[#F2F2F7] overflow-hidden">
             {(result.foods || []).map((f: any, i: number) => (
-              <div key={i} className="py-2 flex items-start justify-between gap-2">
+              <div key={i} className="p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#1C1C1E] truncate">{f.name}</p>
-                  <p className="text-[11px] text-[#6E6E73]">
-                    {Math.round(f.estimated_weight_g || 0)}{f.unit || "g"} · {Math.round(f.calories || 0)} kcal · P {Number(f.protein_g || 0).toFixed(1)}g · C {Number(f.carbs_g || 0).toFixed(1)}g · G {Number(f.fat_g || 0).toFixed(1)}g
+                  <p className="text-[14px] font-medium text-[#1D1D1F] truncate tracking-[-0.01em]">{f.name}</p>
+                  <p className="text-[11px] text-[#86868B] mt-0.5 tabular-nums">
+                    {Math.round(f.estimated_weight_g || 0)}{f.unit || "g"} · {Math.round(f.calories || 0)} kcal · P{Number(f.protein_g || 0).toFixed(0)} · C{Number(f.carbs_g || 0).toFixed(0)} · G{Number(f.fat_g || 0).toFixed(0)}
                   </p>
                 </div>
-                <Badge variant="outline" className={cn("shrink-0 text-[10px]", (f.confidence || 0) >= 0.85 ? "border-[#34C759] text-[#34C759]" : (f.confidence || 0) >= 0.6 ? "border-[#FF9500] text-[#FF9500]" : "border-[#FF3B30] text-[#FF3B30]")}>
+                <Badge variant="outline" className={cn(
+                  "shrink-0 rounded-full text-[10px] font-medium tabular-nums border px-2",
+                  (f.confidence || 0) >= 0.85 ? "border-[#34C759]/25 bg-[#F0FAF3] text-[#0F7B3B]"
+                    : (f.confidence || 0) >= 0.6 ? "border-[#FF9500]/25 bg-[#FFF7EB] text-[#B25E00]"
+                    : "border-[#FF3B30]/25 bg-[#FFF0F0] text-[#C7362B]"
+                )}>
                   {Math.round((f.confidence || 0) * 100)}%
                 </Badge>
               </div>
@@ -344,18 +392,22 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
           {Array.isArray(result.alerts) && result.alerts.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {result.alerts.map((a: string) => (
-                <Badge key={a} variant="outline" className="text-[10px] border-[#FF9500] text-[#FF9500]">⚠ {a.replace(/_/g, " ")}</Badge>
+                <Badge key={a} variant="outline" className="rounded-full text-[10px] font-medium border-[#FF9500]/30 bg-[#FFF7EB] text-[#B25E00]">
+                  ⚠ {a.replace(/_/g, " ")}
+                </Badge>
               ))}
             </div>
           )}
 
           <div className="flex gap-2 pt-1">
-            <Button size="sm" variant="ghost" onClick={reset} className="flex-1">Recomeçar</Button>
-            <Button size="sm" onClick={saveAll} className="flex-1 bg-[#34C759] hover:bg-[#30B350] text-white font-semibold">
+            <Button size="sm" variant="ghost" onClick={reset} className="flex-1 h-11 rounded-full text-[#6E6E73] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] font-medium">
+              Recomeçar
+            </Button>
+            <Button size="sm" onClick={saveAll} className="flex-1 h-11 rounded-full bg-[#1D1D1F] hover:bg-[#000] text-white font-medium tracking-[-0.01em] shadow-none">
               <Check className="w-4 h-4 mr-1" /> Adicionar {result.foods?.length || 0}
             </Button>
           </div>
-          <p className="text-[10px] text-[#8E8E93] text-center">Análise por IA — confirme antes de salvar. Não substitui orientação do consultor.</p>
+          <p className="text-[10px] text-[#86868B] text-center tracking-[-0.005em]">Análise por IA — confirme antes de salvar. Não substitui orientação do consultor.</p>
         </div>
       )}
     </div>
