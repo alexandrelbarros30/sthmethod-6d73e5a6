@@ -42,6 +42,9 @@ type LogRow = {
   duration_ms: number | null;
   input_text: string | null;
   created_at: string;
+  corrections?: any;
+  needs_second_evidence?: boolean;
+  second_evidence_reason?: string | null;
 };
 
 const STATUS_META: Record<string, { label: string; className: string; icon: any }> = {
