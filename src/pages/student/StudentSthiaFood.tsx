@@ -231,7 +231,16 @@ function Analyzer({ onAnalyzed }: { onAnalyzed: () => void }) {
     (mode === "audio" && transcript.trim().length >= 3) ||
     ((mode === "photo" || mode === "label") && !!imgB64);
   const confidencePct = Math.round((result?.confidence || 0) * 100);
-  const scorePct = Math.round(((result?.quality_score || 0) * 10));
+  const sthiaScore = Number(result?.sthia_score);
+  const scorePct = Number.isFinite(sthiaScore) && sthiaScore > 0
+    ? Math.round(sthiaScore)
+    : Math.round(((result?.quality_score || 0) * 10));
+  const novaMap: Record<number, { label: string; cls: string }> = {
+    1: { label: "NOVA 1 · in natura", cls: "bg-[#F0FAF3] text-[#0F7B3B] border-[#34C759]/25" },
+    2: { label: "NOVA 2 · culinário", cls: "bg-[#F0FAF3] text-[#0F7B3B] border-[#34C759]/25" },
+    3: { label: "NOVA 3 · processado", cls: "bg-[#FFF7EB] text-[#B25E00] border-[#FF9500]/25" },
+    4: { label: "NOVA 4 · ultraprocessado", cls: "bg-[#FFF0F0] text-[#C7362B] border-[#FF3B30]/25" },
+  };
   const chipCls = "flex-1 flex items-center justify-center gap-1.5 text-[12px] font-medium px-3 h-10 rounded-xl transition-all tracking-[-0.01em]";
   const activeCls = "bg-white text-[#1D1D1F] shadow-[0_1px_3px_rgba(0,0,0,0.08)]";
   const idleCls = "bg-transparent text-[#6E6E73] hover:text-[#1D1D1F]";
@@ -343,7 +352,12 @@ function Analyzer({ onAnalyzed }: { onAnalyzed: () => void }) {
               </div>
               {scorePct > 0 && (
                 <div className="rounded-full px-3 py-1 text-[11px] font-medium tabular-nums border border-[#E5E5EA] bg-[#F5F5F7] text-[#1D1D1F]">
-                  Score {scorePct}/100
+                  Score STHIA {scorePct}/100
+                </div>
+              )}
+              {novaMap[Number(result?.nova_summary)] && (
+                <div className={cn("rounded-full px-3 py-1 text-[11px] font-medium border", novaMap[Number(result?.nova_summary)].cls)}>
+                  {novaMap[Number(result?.nova_summary)].label}
                 </div>
               )}
             </div>
@@ -392,6 +406,19 @@ function Analyzer({ onAnalyzed }: { onAnalyzed: () => void }) {
                   ⚠ {a.replace(/_/g, " ")}
                 </Badge>
               ))}
+            </div>
+          )}
+
+          {Array.isArray(result.suggestions) && result.suggestions.length > 0 && (
+            <div className="rounded-2xl bg-[#F5F5F7] border border-[#E5E5EA] p-4 space-y-1.5">
+              <div className="text-[11px] uppercase tracking-[0.05em] text-[#86868B] font-medium">Sugestões STHIA</div>
+              <ul className="space-y-1">
+                {result.suggestions.slice(0, 3).map((s: string, i: number) => (
+                  <li key={i} className="text-[13px] text-[#1D1D1F] leading-relaxed tracking-[-0.005em] flex gap-2">
+                    <span className="text-[#34C759] mt-0.5">•</span><span>{s}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
