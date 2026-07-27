@@ -196,7 +196,7 @@ function Analyzer({ onAnalyzed }: { onAnalyzed: () => void }) {
     if (!user || !result?.foods?.length) return;
     setAdding(true);
     try {
-      const meal = MEAL_TYPES.find((m) => m.value === addMeal);
+      const meal = MEAL_TYPES.find((m) => m.key === addMeal);
       const rows = (result.foods as any[]).map((f) => ({
         user_id: user.id,
         log_date: addDate,
@@ -422,7 +422,7 @@ function Analyzer({ onAnalyzed }: { onAnalyzed: () => void }) {
               <Select value={addMeal} onValueChange={setAddMeal}>
                 <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {MEAL_TYPES.map((m) => (<SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>))}
+                  {MEAL_TYPES.map((m) => (<SelectItem key={m.key} value={m.key}>{m.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -650,7 +650,7 @@ function HistoryList({ refreshToken }: { refreshToken: number }) {
 export default function StudentSthiaFood() {
   const [refreshToken, setRefreshToken] = useState(0);
   return (
-    <DashboardLayout role="student">
+    <DashboardLayout role="student" title="STH FOOD AI">
       <div className="max-w-3xl mx-auto space-y-4 p-4 md:p-6">
         <div>
           <h1 className="text-[26px] font-semibold text-[#1D1D1F] tracking-[-0.03em]">STH FOOD AI</h1>
