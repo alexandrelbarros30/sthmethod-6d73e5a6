@@ -11,6 +11,7 @@ import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight,
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { friendlyMessage, toFriendlyError } from "@/lib/friendly-errors";
 import { localDiary, MEAL_TYPES, DEFAULT_GOALS, type DiaryEntry, type SavedMeal, type Goals } from "@/lib/food-diary-storage";
 import { calculateMacros, type MacroInput } from "@/lib/macro-calculator";
 import { searchFoodBank } from "@/data/food-bank";
