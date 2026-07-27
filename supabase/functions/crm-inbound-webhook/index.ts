@@ -587,26 +587,41 @@ function formatFoodAiReply(
   const alertsArr: string[] = Array.isArray(aiData?.alerts) ? aiData.alerts : [];
   const alerts = alertsArr.length ? `\n\n⚠️ ${alertsArr.slice(0, 3).join(' | ')}` : '';
   const qRaw = Number(aiData?.quality_score);
-  const qScore = Number.isFinite(qRaw) ? Math.max(0, Math.min(100, Math.round(qRaw * 10))) : null;
+  const sthiaRaw = Number(aiData?.sthia_score);
+  const qScore = Number.isFinite(sthiaRaw) && sthiaRaw > 0
+    ? Math.max(0, Math.min(100, Math.round(sthiaRaw)))
+    : (Number.isFinite(qRaw) ? Math.max(0, Math.min(100, Math.round(qRaw * 10))) : null);
   const hasUltra = alertsArr.some((a) => /ultraproc/i.test(a));
-  const novaLine = hasUltra ? `\n🏷️ *NOVA 4* — ultraprocessado detectado` : '';
+  const novaSum = Number(aiData?.nova_summary);
+  const novaLabel: Record<number, string> = {
+    1: 'NOVA 1 — in natura',
+    2: 'NOVA 2 — ingrediente culinário',
+    3: 'NOVA 3 — processado',
+    4: 'NOVA 4 — ultraprocessado',
+  };
+  const novaLine = novaLabel[novaSum]
+    ? `\n🏷️ *${novaLabel[novaSum]}*`
+    : (hasUltra ? `\n🏷️ *NOVA 4* — ultraprocessado detectado` : '');
   let goalsLine = '';
   if (goals && Number(goals.daily_kcal) > 0) {
     const kcalPct = Math.round((Number(totals.calories) || 0) / Number(goals.daily_kcal) * 100);
     const pPct = goals.protein_g ? Math.round((Number(totals.protein_g) || 0) / Number(goals.protein_g) * 100) : null;
     goalsLine = `\n\n🎯 *Da sua meta diária*\n• ${kcalPct}% das kcal` + (pPct !== null ? ` · ${pPct}% da proteína` : '');
   }
-  const suggestions: string[] = [];
+  const suggestions: string[] = Array.isArray(aiData?.suggestions) ? aiData.suggestions.slice(0, 3).map(String) : [];
   const kcalT = Number(totals.calories) || 0;
   const pT = Number(totals.protein_g) || 0;
   const fibT = Number(totals.fiber_g) || 0;
   const naT = Number(totals.sodium_mg) || 0;
-  if (kcalT > 0 && pT / (kcalT / 100) < 6) suggestions.push('aumentar a proteína (frango, ovos, whey)');
-  if (fibT < 5) suggestions.push('incluir vegetais ou folhas para elevar a fibra');
-  if (naT > 800) suggestions.push('reduzir sódio (temperos industrializados/molhos)');
-  if (hasUltra) suggestions.push('trocar o ultraprocessado por uma versão in natura');
+  if (!suggestions.length) {
+    if (kcalT > 0 && pT / (kcalT / 100) < 6) suggestions.push('aumentar a proteína (frango, ovos, whey)');
+    if (fibT < 5) suggestions.push('incluir vegetais ou folhas para elevar a fibra');
+    if (naT > 800) suggestions.push('reduzir sódio (temperos industrializados/molhos)');
+    if (hasUltra) suggestions.push('trocar o ultraprocessado por uma versão in natura');
+  }
   const suggestionLine = suggestions.length ? `\n\n💡 *Sugestão*: ${suggestions[0]}.` : '';
-  const qualityLine = qScore !== null ? `\n📈 Qualidade: *${cls}* (${qScore}/100)` : `\n📈 Qualidade: *${cls}*`;
+  const scoreLabel = String(aiData?.sthia_score_label || cls);
+  const qualityLine = qScore !== null ? `\n📈 Score STHIA: *${scoreLabel}* (${qScore}/100)` : `\n📈 Qualidade: *${cls}*`;
   const disclaimer = sourceKind === 'text'
     ? `\n\n_Estimativa por IA a partir da sua descrição. Sem foto, os pesos são aproximados — se quiser mais precisão, me diga a quantidade exata (ex.: "eram 200g de arroz") ou envie uma foto do prato._`
     : `\n\n_Estimativa por IA a partir da foto. Se a quantidade estiver diferente, me diga (ex.: "eram 200g de arroz") que eu recalculo._`;
@@ -1163,10 +1178,22 @@ Deno.serve(async (req) => {
                 ? `\n\n⚠️ ${(aiData as any).alerts.slice(0, 3).join(' | ')}` : '';
               // Índice de qualidade 0..100
               const qRaw = Number((aiData as any).quality_score);
-              const qScore = Number.isFinite(qRaw) ? Math.max(0, Math.min(100, Math.round(qRaw * 10))) : null;
+              const sthiaRaw = Number((aiData as any).sthia_score);
+              const qScore = Number.isFinite(sthiaRaw) && sthiaRaw > 0
+                ? Math.max(0, Math.min(100, Math.round(sthiaRaw)))
+                : (Number.isFinite(qRaw) ? Math.max(0, Math.min(100, Math.round(qRaw * 10))) : null);
               const alertsArr: string[] = Array.isArray((aiData as any).alerts) ? (aiData as any).alerts : [];
               const hasUltra = alertsArr.some((a) => /ultraproc/i.test(a));
-              const novaLine = hasUltra ? `\n🏷️ *NOVA 4* — ultraprocessado detectado` : '';
+              const novaSum = Number((aiData as any).nova_summary);
+              const novaLabelMap: Record<number, string> = {
+                1: 'NOVA 1 — in natura',
+                2: 'NOVA 2 — ingrediente culinário',
+                3: 'NOVA 3 — processado',
+                4: 'NOVA 4 — ultraprocessado',
+              };
+              const novaLine = novaLabelMap[novaSum]
+                ? `\n🏷️ *${novaLabelMap[novaSum]}*`
+                : (hasUltra ? `\n🏷️ *NOVA 4* — ultraprocessado detectado` : '');
               // Comparação com meta diária do aluno
               let goalsLine = '';
               try {
@@ -1185,18 +1212,22 @@ Deno.serve(async (req) => {
                 }
               } catch (_) { /* meta é opcional */ }
               // Sugestão prática (heurística sobre macros/alertas)
-              const suggestions: string[] = [];
+              const suggestions: string[] = Array.isArray((aiData as any).suggestions)
+                ? (aiData as any).suggestions.slice(0, 3).map(String) : [];
               const kcalT = Number(totals.calories) || 0;
               const pT = Number(totals.protein_g) || 0;
               const fibT = Number(totals.fiber_g) || 0;
               const naT = Number(totals.sodium_mg) || 0;
-              if (kcalT > 0 && pT / (kcalT / 100) < 6) suggestions.push('aumentar a proteína (frango, ovos, whey)');
-              if (fibT < 5) suggestions.push('incluir vegetais ou folhas para elevar a fibra');
-              if (naT > 800) suggestions.push('reduzir sódio (temperos industrializados/molhos)');
-              if (hasUltra) suggestions.push('trocar o ultraprocessado por uma versão in natura');
+              if (!suggestions.length) {
+                if (kcalT > 0 && pT / (kcalT / 100) < 6) suggestions.push('aumentar a proteína (frango, ovos, whey)');
+                if (fibT < 5) suggestions.push('incluir vegetais ou folhas para elevar a fibra');
+                if (naT > 800) suggestions.push('reduzir sódio (temperos industrializados/molhos)');
+                if (hasUltra) suggestions.push('trocar o ultraprocessado por uma versão in natura');
+              }
               const suggestionLine = suggestions.length
                 ? `\n\n💡 *Sugestão*: ${suggestions[0]}.` : '';
-              const qualityLine = qScore !== null ? `\n📈 Qualidade: *${cls}* (${qScore}/100)` : `\n📈 Qualidade: *${cls}*`;
+              const scoreLabel = String((aiData as any).sthia_score_label || cls);
+              const qualityLine = qScore !== null ? `\n📈 Score STHIA: *${scoreLabel}* (${qScore}/100)` : `\n📈 Qualidade: *${cls}*`;
               const reply =
                 `🍽️ *STHIA — Análise da sua refeição* ${emoji}\n` +
                 (foodLines ? `\n${foodLines}\n` : '\n_Não consegui identificar itens claros na foto._\n') +
