@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, BookOpen, ShieldAlert, Activity, Lock, Send } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Download } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +54,16 @@ const AdminProtocolAI = () => {
   const [labsNotes, setLabsNotes] = useState("");
   const [restrictions, setRestrictions] = useState("");
   const [freeText, setFreeText] = useState("");
+
+  // Seletores: cada campo pode ser incluído ou ignorado na análise STHIA
+  const [useStack, setUseStack] = useState(true);
+  const [useLabs, setUseLabs] = useState(true);
+  const [useRestrictions, setUseRestrictions] = useState(true);
+  const [useFreeText, setUseFreeText] = useState(true);
+  const [useExams, setUseExams] = useState(true);
+  const [useStudentProfile, setUseStudentProfile] = useState(true);
+
+  const [pullingStack, setPullingStack] = useState(false);
 
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
@@ -109,6 +121,58 @@ const AdminProtocolAI = () => {
     }
   };
 
+  const pullCurrentStack = async () => {
+    if (!selectedStudent) {
+      toast.error("Selecione um aluno primeiro");
+      return;
+    }
+    setPullingStack(true);
+    try {
+      // 1) Tenta o último protocolo salvo do aluno
+      const { data: last } = await supabase
+        .from("student_protocols")
+        .select("title, content, created_at")
+        .eq("user_id", selectedStudent.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // 2) Puxa o campo de saúde (Protocolo Atual)
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("current_protocol")
+        .eq("user_id", selectedStudent.user_id)
+        .maybeSingle();
+
+      const chunks: string[] = [];
+      if (prof?.current_protocol?.trim()) {
+        chunks.push(`=== PROTOCOLO ATUAL (cadastro / saúde) ===\n${prof.current_protocol.trim()}`);
+      }
+      if (last?.content) {
+        const plain = stripHtml(last.content);
+        chunks.push(
+          `=== ÚLTIMO PROTOCOLO SALVO (${new Date(last.created_at).toLocaleDateString("pt-BR")}${
+            last.title ? ` · ${last.title}` : ""
+          }) ===\n${plain.slice(0, 4000)}`
+        );
+      }
+
+      if (!chunks.length) {
+        toast.info("Nenhum protocolo encontrado — edite manualmente o campo Stack atual");
+        return;
+      }
+
+      const block = chunks.join("\n\n");
+      setCurrentStack((prev) => (prev ? `${prev}\n\n${block}` : block));
+      setUseStack(true);
+      toast.success("Stack atual preenchido a partir do cadastro do aluno");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar stack");
+    } finally {
+      setPullingStack(false);
+    }
+  };
+
   const { data: students = [] } = useQuery({
     queryKey: ["protocol-ai-students", displayRole, user?.id],
     queryFn: async () => {
@@ -137,10 +201,11 @@ const AdminProtocolAI = () => {
     fase: phase,
     experiencia: experience,
     duracao_semanas: Number(durationWeeks) || null,
-    stack_atual: currentStack,
-    exames_recentes: labsNotes,
-    restricoes: restrictions,
-    aluno: selectedStudent
+    stack_atual: useStack ? currentStack : "",
+    exames_recentes: useLabs ? labsNotes : "",
+    restricoes: useRestrictions ? restrictions : "",
+    incluir_exames_upload: useExams,
+    aluno: selectedStudent && useStudentProfile
       ? {
           nome: selectedStudent.full_name,
           peso: selectedStudent.weight,
@@ -159,7 +224,7 @@ const AdminProtocolAI = () => {
         body: {
           mode: "generate",
           brief: buildBrief(),
-          freeText,
+          freeText: useFreeText ? freeText : "",
           studentId: selectedStudent?.user_id ?? null,
         },
       });
@@ -344,12 +409,45 @@ const AdminProtocolAI = () => {
                 </div>
               </div>
 
+              {selectedStudent && (
+                <label className="flex items-center gap-2 text-xs rounded-md border border-border/60 bg-muted/20 px-2 py-1.5 cursor-pointer">
+                  <Checkbox checked={useStudentProfile} onCheckedChange={(v) => setUseStudentProfile(!!v)} />
+                  <span>Incluir dados do aluno (peso/altura/sexo/objetivo) na análise</span>
+                </label>
+              )}
+
               <div>
-                <Label className="text-xs">Stack atual (hormônios / peptídeos / suplementos)</Label>
-                <Textarea rows={3} value={currentStack} onChange={(e) => setCurrentStack(e.target.value)} placeholder="Ex: Testo E 250mg/sem, Trembolona 200mg/sem, GH 4UI/dia, Metformina 850mg 2x..." />
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Stack atual (hormônios / peptídeos / suplementos)</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useStack} onCheckedChange={(v) => setUseStack(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
+                <Textarea rows={3} value={currentStack} onChange={(e) => setCurrentStack(e.target.value)} placeholder="Ex: Testo E 250mg/sem, Trembolona 200mg/sem, GH 4UI/dia, Metformina 850mg 2x... — ou edite manualmente se o aluno não tiver protocolo salvo" />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={pullCurrentStack}
+                  disabled={!selectedStudent || pullingStack}
+                >
+                  {pullingStack ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Puxando...</>
+                  ) : (
+                    <><Download className="w-4 h-4 mr-2" /> Puxar do cadastro (Saúde) / último protocolo</>
+                  )}
+                </Button>
               </div>
               <div>
-                <Label className="text-xs">Exames recentes / biomarcadores relevantes</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Exames recentes / biomarcadores relevantes</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useLabs} onCheckedChange={(v) => setUseLabs(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
                 <Textarea rows={3} value={labsNotes} onChange={(e) => setLabsNotes(e.target.value)} placeholder="Ex: HDL 32, LDL 145, HCT 52%, TGO 60, TGP 78, Estradiol 68..." />
                 <Button
                   type="button"
@@ -367,19 +465,37 @@ const AdminProtocolAI = () => {
                 </Button>
               </div>
               <div>
-                <Label className="text-xs">Restrições / condições clínicas</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Restrições / condições clínicas</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useRestrictions} onCheckedChange={(v) => setUseRestrictions(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
                 <Input value={restrictions} onChange={(e) => setRestrictions(e.target.value)} placeholder="HAS controlada, gastrite, alergia a lactose..." />
               </div>
               {selectedStudent && (
                 <div className="rounded-lg border border-border p-3 bg-muted/20">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG)
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG)
+                    </p>
+                    <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                      <Checkbox checked={useExams} onCheckedChange={(v) => setUseExams(!!v)} />
+                      <span>Usar na análise</span>
+                    </label>
+                  </div>
                   <DocumentUpload userId={selectedStudent.user_id} allowImages />
                 </div>
               )}
               <div>
-                <Label className="text-xs">Observações livres (prompt)</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Observações livres (prompt)</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useFreeText} onCheckedChange={(v) => setUseFreeText(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
                 <Textarea rows={4} value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Ex: montar protocolo off-season 12 semanas com foco em ganho de massa magra e proteção cardiovascular, incluir peptídeos de recuperação..." />
               </div>
 
