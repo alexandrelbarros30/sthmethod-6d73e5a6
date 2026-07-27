@@ -30,6 +30,7 @@ import DailyCheckinCard from "@/components/student/DailyCheckinCard";
 import QuickActionsFab from "@/components/student/QuickActionsFab";
 import NextWorkoutCard from "@/components/student/NextWorkoutCard";
 import WeeklyInsightCard from "@/components/student/WeeklyInsightCard";
+import SthiaFoodWeeklyCard from "@/components/student/SthiaFoodWeeklyCard";
 import { ShieldCheck } from "lucide-react";
 import { formatPhoneBR } from "@/lib/phone";
 import { getLatestTrend } from "@/data/latest-trends";
@@ -282,6 +283,9 @@ const StudentOverview = () => {
 
       {/* INSIGHT SEMANAL — resumo dos últimos 7 dias (destaque nas segundas) */}
       <WeeklyInsightCard />
+
+      {/* STHIA FOOD · 7 dias — insights nutricionais */}
+      <SthiaFoodWeeklyCard />
 
       {/* AÇÃO DO DIA — card contextual acima de tudo */}
       <DailyHeroCard
