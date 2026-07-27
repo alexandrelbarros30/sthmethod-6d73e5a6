@@ -113,26 +113,88 @@ function extractIncomingMediaUrl(payload: any, kind: 'image' | 'video' | 'docume
       payload?.image?.imageUrl, payload?.image?.url, payload?.image?.link,
       d?.image?.imageUrl, d?.image?.url,
       payload?.msgContent?.imageMessage?.url, d?.msgContent?.imageMessage?.url,
+      payload?.msgContent?.imageMessage?.URL, d?.msgContent?.imageMessage?.URL,
       payload?.message?.imageMessage?.url, d?.message?.imageMessage?.url,
+      payload?.message?.imageMessage?.URL, d?.message?.imageMessage?.URL,
     );
   }
   if (kind === 'video') {
     candidates.push(payload?.video?.videoUrl, payload?.video?.url, d?.video?.videoUrl,
-      payload?.msgContent?.videoMessage?.url, d?.msgContent?.videoMessage?.url);
+      payload?.msgContent?.videoMessage?.url, d?.msgContent?.videoMessage?.url,
+      payload?.msgContent?.videoMessage?.URL, d?.msgContent?.videoMessage?.URL);
   }
   if (kind === 'document') {
     candidates.push(payload?.document?.documentUrl, payload?.document?.url, d?.document?.documentUrl,
-      payload?.msgContent?.documentMessage?.url, d?.msgContent?.documentMessage?.url);
+      payload?.msgContent?.documentMessage?.url, d?.msgContent?.documentMessage?.url,
+      payload?.msgContent?.documentMessage?.URL, d?.msgContent?.documentMessage?.URL);
   }
   if (kind === 'sticker') {
     candidates.push(payload?.sticker?.stickerUrl, payload?.sticker?.url,
-      payload?.msgContent?.stickerMessage?.url);
+      payload?.msgContent?.stickerMessage?.url,
+      payload?.msgContent?.stickerMessage?.URL);
   }
   candidates.push(payload?.mediaUrl, d?.mediaUrl, payload?.fileUrl, d?.fileUrl);
   for (const c of candidates) {
     if (typeof c === 'string' && c.startsWith('http')) return c;
   }
   return null;
+}
+
+// Extrai os metadados de mídia W-API (mediaKey/directPath/mimetype) necessários
+// para chamar o endpoint download-media, que devolve um link temporário já
+// descriptografado. URLs mmg.whatsapp.net vêm com payload .enc e NÃO podem
+// ser baixadas direto — precisam passar pelo download-media.
+function extractWapiMediaMeta(payload: any, kind: 'image' | 'video' | 'document' | 'sticker' | null):
+  { mediaKey: string; directPath: string; mimetype: string; type: string } | null {
+  if (!payload || !kind) return null;
+  const d = payload?.data || {};
+  const containers = [payload?.msgContent, d?.msgContent, payload?.message, d?.message].filter(Boolean);
+  const keyName = kind === 'image' ? 'imageMessage'
+    : kind === 'video' ? 'videoMessage'
+    : kind === 'document' ? 'documentMessage'
+    : 'stickerMessage';
+  for (const c of containers) {
+    const m = (c as any)?.[keyName] || (c as any)?.documentWithCaptionMessage?.message?.documentMessage;
+    if (m && (m.mediaKey || m.MediaKey) && (m.directPath || m.DirectPath)) {
+      return {
+        mediaKey: String(m.mediaKey || m.MediaKey),
+        directPath: String(m.directPath || m.DirectPath),
+        mimetype: String(m.mimetype || m.mimeType || 'image/jpeg'),
+        type: kind === 'sticker' ? 'image' : kind,
+      };
+    }
+  }
+  return null;
+}
+
+async function downloadWapiMedia(
+  cfg: any,
+  meta: { mediaKey: string; directPath: string; mimetype: string; type: string },
+): Promise<string | null> {
+  try {
+    const serverUrl = ((cfg?.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
+    const instanceId = (cfg?.instance_id || '').trim();
+    const token = (cfg?.token || cfg?.instance_token || '').trim();
+    const clientToken = (cfg?.client_token || '').trim();
+    if (!instanceId || !token) return null;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+    if (clientToken) headers['Client-Token'] = clientToken;
+    const resp = await fetch(`${serverUrl}/v1/message/download-media?instanceId=${instanceId}`, {
+      method: 'POST', headers, body: JSON.stringify(meta),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok || (data as any)?.error) {
+      console.error('wapi download-media error', resp.status, data);
+      return null;
+    }
+    return typeof (data as any)?.fileLink === 'string' ? (data as any).fileLink : null;
+  } catch (e) {
+    console.error('wapi download-media exception', e);
+    return null;
+  }
 }
 
 async function generateAiReply({
@@ -941,7 +1003,17 @@ Deno.serve(async (req) => {
         convRow = ins.data as any;
       }
 
-      const mediaUrl = extractIncomingMediaUrl(payload, blockedMediaKind);
+      let mediaUrl = extractIncomingMediaUrl(payload, blockedMediaKind);
+      // URLs mmg.whatsapp.net com sufixo .enc precisam ser resolvidas via
+      // W-API download-media (retorna link temporário já descriptografado).
+      const needsWapiDownload = !mediaUrl || /mmg\.whatsapp\.net/.test(mediaUrl) || /\.enc(\?|$)/.test(mediaUrl);
+      if (needsWapiDownload) {
+        const meta = extractWapiMediaMeta(payload, blockedMediaKind);
+        if (meta) {
+          const resolved = await downloadWapiMedia((wapiSucessoCfgRow?.value as any) || {}, meta);
+          if (resolved) mediaUrl = resolved;
+        }
+      }
 
       // Registra a mídia recebida no histórico
       try {
