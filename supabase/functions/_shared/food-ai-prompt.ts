@@ -43,7 +43,10 @@ Estrutura obrigatória (todos os números com no máx. 2 casas decimais):
     "fat_g": number,
     "fiber_g": number,
     "sodium_mg": number,
-    "confidence": number
+    "confidence": number,
+    "nutrition_basis": "per_100g" | "per_100ml" | "per_serving" | "per_package" | "per_unit" | "unknown",
+    "serving_size_declared": number, // valor da porção lida no rótulo (g ou ml); 0 se desconhecido
+    "servings_per_package": number   // porções por embalagem; 0 se desconhecido
   }],
   "totals": {
     "calories": number, "protein_g": number, "carbs_g": number,
@@ -62,4 +65,18 @@ Estrutura obrigatória (todos os números com no máx. 2 casas decimais):
 - Diferencie valores estimados de valores de rótulo do fabricante.
 - Português do Brasil, tom técnico e neutro, sem emojis excessivos.
 - Nunca prometa resultados milagrosos, nunca dê conselho médico. Se detectar sinais de risco, sugira falar com o consultor humano.
+
+## BASE DA TABELA NUTRICIONAL (nutrition_basis) — OBRIGATÓRIO
+Antes de escalar kcal/macros, DECLARE explicitamente a base da tabela lida:
+- "per_100g" ou "per_100ml": a tabela está expressa por 100 g / 100 ml. Escale por (peso_real / 100).
+- "per_serving": a tabela é por porção. Preencha "serving_size_declared" com o valor da porção (em g ou ml) informado no rótulo. Escale por (peso_real / serving_size_declared).
+- "per_package": a tabela é para a embalagem inteira. Preencha "servings_per_package" e "serving_size_declared" se possível.
+- "per_unit": valor por unidade (ex: 1 biscoito).
+- "unknown": NÃO consegui identificar a base com segurança. Nesse caso, use kcal/macros conservadores e marque confidence ≤ 0.4.
+
+PROIBIDO adivinhar a base. Se o rótulo estiver borrado, cortado, sem os dizeres "Porção de X g/ml" ou "Valor por 100 g/ml", use "unknown". A plataforma pedirá uma segunda foto — não invente.
+
+VALIDAÇÃO ATWATER: sempre confira internamente que kcal ≈ P*4 + C*4 + G*9 (±25%). Se não bater, revise a base declarada — provavelmente você misturou "por porção" com "por 100 g".
+
+LÍQUIDOS: bebidas prontas (leite, achocolatado, sucos, refrigerantes, isotônicos) raramente passam de 1,0 kcal/ml. Se o cálculo final resultar em > 2 kcal/ml, algo está errado na base — reveja ou marque "unknown".
 `;
