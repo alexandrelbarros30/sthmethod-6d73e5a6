@@ -1219,18 +1219,26 @@ export default function DiarioAlimentar() {
   // Load data
   const refresh = async () => {
     if (isAuth && user) {
-      const [{ data: e }, { data: w }, { data: g }] = await Promise.all([
+      const [{ data: e }, { data: w }, { data: g }, { data: logs }] = await Promise.all([
         supabase.from("food_diary_entries").select("*").eq("user_id", user.id).eq("log_date", date).order("created_at"),
         supabase.from("food_diary_water").select("ml").eq("user_id", user.id).eq("log_date", date).maybeSingle(),
         supabase.from("food_diary_goals").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("food_ai_logs").select("diary_entry_ids").eq("student_id", user.id).eq("log_date", date),
       ]);
       setEntries((e || []) as DiaryEntry[]);
       setWater(w?.ml || 0);
       setGoals(g ? { daily_kcal: g.daily_kcal, protein_g: g.protein_g, carbs_g: g.carbs_g, fat_g: g.fat_g, water_ml: g.water_ml } : DEFAULT_GOALS);
+      const ids = new Set<string>();
+      (logs || []).forEach((row: any) => {
+        const arr = Array.isArray(row?.diary_entry_ids) ? row.diary_entry_ids : [];
+        arr.forEach((id: any) => { if (typeof id === "string") ids.add(id); });
+      });
+      setSthiaEntryIds(ids);
     } else {
       setEntries(localDiary.getEntries(date));
       setWater(localDiary.getWater(date));
       setGoals(localDiary.getGoals());
+      setSthiaEntryIds(new Set());
     }
   };
 
