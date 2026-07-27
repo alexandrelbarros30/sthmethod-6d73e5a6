@@ -546,6 +546,84 @@ function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'finance
   return { queue, nutriCategory, tags };
 }
 
+// ============================================================
+// STH FOOD AI — detector de descrição de refeição por texto
+// (usado no canal Sucesso do Aluno para acionar food-ai-analyze
+// em modo 'text' sem exigir foto).
+// ============================================================
+function looksLikeFoodDescription(text: string): boolean {
+  const raw = String(text || '').trim();
+  if (raw.length < 4 || raw.length > 800) return false;
+  const t = raw.toLowerCase();
+  // Ignora saudações / mensagens curtas de conversa
+  if (/^(oi|olá|ola|hey|opa|bom dia|boa tarde|boa noite|obrigad|obg|valeu|ok|blz|beleza|tchau|até|ate|entendi|👍|✅|🙏)\b/.test(t)) return false;
+  // Ignora perguntas puras sem números/comida
+  if (/\?$/.test(t) && !/\d/.test(t)) return false;
+
+  const hasQty = /\b\d+([.,]\d+)?\s*(g|gr|gramas?|kg|ml|l|litros?|un|und|unid|unidades?|pcs|fatias?|colher(es)?|conchas?|x[ií]caras?|copos?|pratos?|scoops?|doses?|por[cç][aã]o|por[cç][oõ]es|latas?|garrafas?)\b/.test(t);
+
+  const foodWords = /\b(arroz|feij[aã]o|frango|carne|bife|patinho|alcatra|cox[aã]o|fil[eé]|peixe|salm[aã]o|atum|til[aá]pia|ovos?|omelete|p[aã]o|leite|iogurte|queijo|requeij[aã]o|whey|prote[ií]na|banana|ma[cç][aã]|manga|abacaxi|melancia|mam[aã]o|laranja|morango|uva|batata|mandioca|macarr[aã]o|massa|salada|alface|tomate|cenoura|br[oó]colis|couve|espinafre|aveia|granola|tapioca|panqueca|caf[eé]|suco|refrigerante|coca|guaran[aá]|cerveja|vinho|azeite|manteiga|nescau|toddy|shake|barra|cookie|biscoito|bolo|pizza|hamb[uú]rguer|sandu[ií]che|lanche|almo[cç]o|jantar|refei[cç][aã]o|caf[eé] da manh[aã])\b/.test(t);
+
+  const hasListSep = /\n|,|;| e | com | \+ /i.test(raw);
+
+  // Precisa ter quantidade OU (alimento reconhecido + estrutura de lista)
+  return hasQty || (foodWords && hasListSep) || (foodWords && /\d/.test(t));
+}
+
+// Formata a resposta padrão STH FOOD AI para o WhatsApp.
+// Reutilizada nos fluxos de foto e texto do canal Sucesso.
+function formatFoodAiReply(
+  aiData: any,
+  goals: { daily_kcal?: number | null; protein_g?: number | null } | null,
+  sourceKind: 'photo' | 'text',
+): { text: string; totals: any; foods: any[]; cls: string } {
+  const totals = aiData?.totals || {};
+  const foods = Array.isArray(aiData?.foods) ? aiData.foods : [];
+  const cls = aiData?.classification || 'Moderado';
+  const emoji = /excel|otim|bom/i.test(cls) ? '🟢' : /ruim|baix|frac/i.test(cls) ? '🔴' : '🟡';
+  const foodLines = foods.slice(0, 8).map((f: any) =>
+    `• ${f.name} — ${Math.round(Number(f.estimated_weight_g) || 0)}${f.unit || 'g'} · ${Math.round(Number(f.calories) || 0)} kcal · P${(Number(f.protein_g)||0).toFixed(1)} C${(Number(f.carbs_g)||0).toFixed(1)} G${(Number(f.fat_g)||0).toFixed(1)}`
+  ).join('\n');
+  const alertsArr: string[] = Array.isArray(aiData?.alerts) ? aiData.alerts : [];
+  const alerts = alertsArr.length ? `\n\n⚠️ ${alertsArr.slice(0, 3).join(' | ')}` : '';
+  const qRaw = Number(aiData?.quality_score);
+  const qScore = Number.isFinite(qRaw) ? Math.max(0, Math.min(100, Math.round(qRaw * 10))) : null;
+  const hasUltra = alertsArr.some((a) => /ultraproc/i.test(a));
+  const novaLine = hasUltra ? `\n🏷️ *NOVA 4* — ultraprocessado detectado` : '';
+  let goalsLine = '';
+  if (goals && Number(goals.daily_kcal) > 0) {
+    const kcalPct = Math.round((Number(totals.calories) || 0) / Number(goals.daily_kcal) * 100);
+    const pPct = goals.protein_g ? Math.round((Number(totals.protein_g) || 0) / Number(goals.protein_g) * 100) : null;
+    goalsLine = `\n\n🎯 *Da sua meta diária*\n• ${kcalPct}% das kcal` + (pPct !== null ? ` · ${pPct}% da proteína` : '');
+  }
+  const suggestions: string[] = [];
+  const kcalT = Number(totals.calories) || 0;
+  const pT = Number(totals.protein_g) || 0;
+  const fibT = Number(totals.fiber_g) || 0;
+  const naT = Number(totals.sodium_mg) || 0;
+  if (kcalT > 0 && pT / (kcalT / 100) < 6) suggestions.push('aumentar a proteína (frango, ovos, whey)');
+  if (fibT < 5) suggestions.push('incluir vegetais ou folhas para elevar a fibra');
+  if (naT > 800) suggestions.push('reduzir sódio (temperos industrializados/molhos)');
+  if (hasUltra) suggestions.push('trocar o ultraprocessado por uma versão in natura');
+  const suggestionLine = suggestions.length ? `\n\n💡 *Sugestão*: ${suggestions[0]}.` : '';
+  const qualityLine = qScore !== null ? `\n📈 Qualidade: *${cls}* (${qScore}/100)` : `\n📈 Qualidade: *${cls}*`;
+  const disclaimer = sourceKind === 'text'
+    ? `\n\n_Estimativa por IA a partir da sua descrição. Sem foto, os pesos são aproximados — se quiser mais precisão, me diga a quantidade exata (ex.: "eram 200g de arroz") ou envie uma foto do prato._`
+    : `\n\n_Estimativa por IA a partir da foto. Se a quantidade estiver diferente, me diga (ex.: "eram 200g de arroz") que eu recalculo._`;
+  const text =
+    `🍽️ *STHIA — Análise da sua refeição* ${emoji}\n` +
+    (foodLines ? `\n${foodLines}\n` : '\n_Não consegui identificar itens claros._\n') +
+    `\n📊 *Totais estimados*\n` +
+    `• ${Math.round(kcalT)} kcal\n` +
+    `• Proteína ${pT.toFixed(1)} g\n` +
+    `• Carbo ${(Number(totals.carbs_g)||0).toFixed(1)} g\n` +
+    `• Gordura ${(Number(totals.fat_g)||0).toFixed(1)} g` +
+    (totals.fiber_g ? `\n• Fibra ${fibT.toFixed(1)} g` : '') +
+    (totals.sodium_mg ? `\n• Sódio ${Math.round(naT)} mg` : '') +
+    qualityLine + novaLine + alerts + goalsLine + suggestionLine + disclaimer;
+  return { text, totals, foods, cls };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -1221,6 +1299,141 @@ Deno.serve(async (req) => {
         metadata: { type: 'sucesso_media_ack', media_kind: blockedMediaKind },
       });
       return await finish({ ok: true, sucesso_media_ack: true, media_kind: blockedMediaKind });
+    }
+
+    // ============================================================
+    // STH FOOD AI — análise por TEXTO no canal Sucesso do Aluno
+    // Detecta descrições de refeição em texto livre (ex.: "2 ovos e
+    // 1 pão francês", "200g frango, 150g batata doce") e devolve
+    // a estimativa de macros/qualidade via food-ai-analyze mode='text'.
+    // Roda ANTES do fluxo de menu/IA persona para não ser interceptado.
+    // ============================================================
+    if (provider === 'wapi_sucesso' && !hasBlockedMedia && body && looksLikeFoodDescription(body)) {
+      let { data: convRow } = await admin
+        .from('crm_conversations')
+        .select('id, user_id')
+        .eq('phone', phone)
+        .maybeSingle();
+      if (!convRow) {
+        const ins = await admin.from('crm_conversations').insert({
+          phone, wa_id: waId, display_name: name || null, channel: 'whatsapp',
+          status: 'open', provider: 'wapi_sucesso', queue_type: 'sucesso',
+          session_started_at: new Date().toISOString(),
+        }).select('id, user_id').single();
+        convRow = ins.data as any;
+      }
+      // Registra a inbound (texto de comida)
+      await admin.from('crm_messages').insert({
+        conversation_id: convRow!.id,
+        direction: 'in',
+        source: 'wapi_sucesso',
+        status: 'received',
+        body,
+        external_id: externalId,
+        metadata: { type: 'food_ai_text_input' },
+      }).select().maybeSingle().then(() => {}).catch(() => {});
+
+      let handled = false;
+      try {
+        const { data: aiData, error: aiErr } = await admin.functions.invoke('food-ai-analyze', {
+          body: {
+            mode: 'text',
+            text: body,
+            audit_source: 'whatsapp_sucesso_text',
+            student_id: (convRow as any)?.user_id ?? null,
+          },
+        });
+        if (!aiErr && aiData && !(aiData as any).error) {
+          const needsSecond = (aiData as any).needs_second_evidence === true;
+          const secondReason = (aiData as any).second_evidence_reason as string | null;
+          if (needsSecond) {
+            const askReply =
+              `🍽️ *STHIA — Preciso de um detalhe a mais*\n\n` +
+              (secondReason || 'Me diga a quantidade aproximada de cada item (em gramas, ml, colheres ou unidades) para eu concluir com precisão.') +
+              `\n\n_Você também pode enviar uma foto do prato/embalagem que eu recalculo._`;
+            const sendAsk = await sendImmediateText('wapi_sucesso', askReply);
+            await admin.from('crm_messages').insert({
+              conversation_id: convRow!.id,
+              direction: 'out',
+              source: 'wapi_sucesso',
+              status: sendAsk.sent ? 'sent' : 'failed',
+              body: askReply,
+              external_id: sendAsk.messageId,
+              metadata: { type: 'food_ai_text_second_evidence_request', reason: secondReason },
+            });
+            handled = true;
+          } else {
+            // Meta diária do aluno (opcional)
+            let goals: any = null;
+            try {
+              const uid = (convRow as any)?.user_id;
+              if (uid) {
+                const { data: g } = await admin
+                  .from('food_diary_goals')
+                  .select('daily_kcal, protein_g, carbs_g, fat_g')
+                  .eq('user_id', uid).maybeSingle();
+                goals = g || null;
+              }
+            } catch (_) { /* meta é opcional */ }
+            const { text: reply, totals, foods, cls } = formatFoodAiReply(aiData, goals, 'text');
+
+            // Salva no diário alimentar (best effort)
+            try {
+              const uid = (convRow as any)?.user_id;
+              if (uid && foods.length) {
+                const today = new Date().toISOString().slice(0, 10);
+                const rows = foods.map((f: any, i: number) => ({
+                  user_id: uid,
+                  log_date: today,
+                  meal_type: 'lanche',
+                  meal_label: 'WhatsApp STHIA (texto)',
+                  item_name: String(f.name || 'Item'),
+                  quantity: Number(f.estimated_weight_g) || 0,
+                  unit: (f.unit === 'ml' ? 'ml' : 'g'),
+                  energy_kcal: Number(f.calories) || 0,
+                  protein_g: Number(f.protein_g) || 0,
+                  carbs_g: Number(f.carbs_g) || 0,
+                  fat_g: Number(f.fat_g) || 0,
+                  fiber_g: Number(f.fiber_g) || 0,
+                  sodium_mg: Number(f.sodium_mg) || 0,
+                  sort_order: i,
+                }));
+                await admin.from('food_diary_entries').insert(rows);
+              }
+            } catch (e) {
+              console.error('food_ai_text diary autosave failed', e);
+            }
+
+            const send = await sendImmediateText('wapi_sucesso', reply);
+            await admin.from('crm_messages').insert({
+              conversation_id: convRow!.id,
+              direction: 'out',
+              source: 'wapi_sucesso',
+              status: send.sent ? 'sent' : 'failed',
+              body: reply,
+              external_id: send.messageId,
+              metadata: { type: 'food_ai_analysis_text', totals, classification: cls, foods_count: foods.length },
+            });
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'food_ai_analysis_text',
+              queue_type: 'sucesso',
+              severity: 'info',
+              metadata: { conversation_id: convRow!.id, foods_count: foods.length, classification: cls },
+            });
+            handled = true;
+          }
+        } else {
+          console.error('food-ai-analyze (text) error', aiErr, (aiData as any)?.error);
+        }
+      } catch (e) {
+        console.error('food_ai_text pipeline error', e);
+      }
+
+      if (handled) {
+        return await finish({ ok: true, sucesso_food_ai_text: true });
+      }
+      // Se falhou, segue o fluxo normal (IA persona / menu)
     }
 
     if (hasBlockedMedia) {
