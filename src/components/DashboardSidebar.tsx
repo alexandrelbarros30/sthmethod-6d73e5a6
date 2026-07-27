@@ -132,6 +132,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/popups", icon: Megaphone, label: "Popups" },
         { to: "/admin/notifications", icon: Bell, label: "Notificações" },
         { to: "/admin/release-log", icon: History, label: "Histórico Liberações" },
+        { to: "/admin/ia-historico", icon: Sparkles, label: "Histórico IA" },
         { to: "/admin/feedback", icon: History, label: "Feedback dos Alunos" },
         { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
         { to: "/admin/sthia", icon: Brain, label: "STHIA (IA)" },
