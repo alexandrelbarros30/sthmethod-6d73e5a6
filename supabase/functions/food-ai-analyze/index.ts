@@ -404,12 +404,41 @@ Deno.serve(async (req) => {
       return Math.abs(b - a) / base > 0.5;
     });
     const labelHardTrigger = mode === 'label' && corrections.some((c) => c.rule === 'atwater_rewrite' || c.rule === 'hard_ceiling');
-    const needsSecondEvidence = severe.length > 0 || labelHardTrigger;
+    // Ambiguous-basis gate: se em modo label/photo a IA declarou nutrition_basis='unknown'
+    // (ou não declarou), NÃO podemos concluir com segurança — pedimos segunda foto e
+    // registramos a correção para auditoria, sem manter kcal potencialmente escalados errado.
+    const ambiguousBasisItems = reconciledFoods.filter((f) => {
+      const nb = String((f as any).nutrition_basis || '').toLowerCase();
+      return !nb || nb === 'unknown';
+    });
+    if ((mode === 'label' || mode === 'photo') && ambiguousBasisItems.length > 0) {
+      for (const f of ambiguousBasisItems) {
+        corrections.push({
+          item: f.name,
+          rule: 'basis_unknown',
+          field: 'calories',
+          before: Number(f.calories) || 0,
+          after: Number(f.calories) || 0,
+          note: 'IA não declarou a base da tabela nutricional (per_100g/per_serving/etc). Escala bloqueada.',
+        });
+        // Colapsa confiança do item ambíguo — a UI já esconde recomendações abaixo de 0.4
+        (f as any).confidence = Math.min(Number(f.confidence) || 0.3, 0.3);
+      }
+      extraAlerts.push('base_nutricional_ambigua');
+    }
+    const basisAmbiguous = (mode === 'label' || mode === 'photo') && ambiguousBasisItems.length > 0;
+    const needsSecondEvidence = severe.length > 0 || labelHardTrigger || basisAmbiguous;
     let secondEvidenceReason: string | null = null;
     if (needsSecondEvidence) {
-      secondEvidenceReason = mode === 'label'
-        ? 'Divergência entre kcal declarado e kcal calculado pelos macros. Envie uma segunda foto nítida do painel nutricional e da porção indicada para confirmar.'
-        : 'Não foi possível estimar com segurança. Envie uma segunda foto com mais luz, focada no prato inteiro e, se possível, um referencial de tamanho (talher, mão).';
+      if (basisAmbiguous && mode === 'label') {
+        secondEvidenceReason = 'Não foi possível identificar se a tabela nutricional está expressa por 100 g/ml ou por porção. Envie uma segunda foto nítida mostrando o cabeçalho da tabela (ex: "Porção de 200 ml" ou "Valores por 100 g") e a lateral da embalagem.';
+      } else if (basisAmbiguous) {
+        secondEvidenceReason = 'Preciso de mais contexto para dimensionar a porção com segurança. Envie uma segunda foto com um referencial (talher, mão, embalagem ao lado).';
+      } else if (mode === 'label') {
+        secondEvidenceReason = 'Divergência entre kcal declarado e kcal calculado pelos macros. Envie uma segunda foto nítida do painel nutricional e da porção indicada para confirmar.';
+      } else {
+        secondEvidenceReason = 'Não foi possível estimar com segurança. Envie uma segunda foto com mais luz, focada no prato inteiro e, se possível, um referencial de tamanho (talher, mão).';
+      }
       extraAlerts.push('segunda_evidencia_requerida');
     }
 
