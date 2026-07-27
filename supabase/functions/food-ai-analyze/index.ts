@@ -109,6 +109,9 @@ interface FoodItem {
   fiber_g: number;
   sodium_mg: number;
   confidence: number;
+  nutrition_basis?: 'per_100g' | 'per_100ml' | 'per_serving' | 'per_package' | 'per_unit' | 'unknown';
+  serving_size_declared?: number;
+  servings_per_package?: number;
 }
 
 const toolSchema = {
@@ -135,8 +138,11 @@ const toolSchema = {
               fiber_g: { type: 'number' },
               sodium_mg: { type: 'number' },
               confidence: { type: 'number' },
+              nutrition_basis: { type: 'string', description: 'per_100g | per_100ml | per_serving | per_package | per_unit | unknown' },
+              serving_size_declared: { type: 'number', description: 'Porção lida no rótulo em g/ml; 0 se desconhecido' },
+              servings_per_package: { type: 'number', description: 'Porções por embalagem; 0 se desconhecido' },
             },
-            required: ['name', 'estimated_weight_g', 'unit', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g', 'sodium_mg', 'confidence'],
+            required: ['name', 'estimated_weight_g', 'unit', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g', 'sodium_mg', 'confidence', 'nutrition_basis', 'serving_size_declared', 'servings_per_package'],
           },
         },
         totals: {
