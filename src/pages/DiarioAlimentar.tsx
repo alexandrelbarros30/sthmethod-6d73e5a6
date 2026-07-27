@@ -160,15 +160,98 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
   onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
 }) {
   const { user } = useAuth();
-  const [mode, setMode] = useState<"photo" | "text" | "label">("photo");
+  const [mode, setMode] = useState<"photo" | "text" | "label" | "audio">("photo");
   const [text, setText] = useState("");
   const [imgB64, setImgB64] = useState<string | null>(null);
   const [imgMime, setImgMime] = useState<string>("image/jpeg");
   const [imgPreview, setImgPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  // ----- Áudio -----
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [transcript, setTranscript] = useState<string>("");
+  const recRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recMimeRef = useRef<string>("audio/webm");
+  const [recSeconds, setRecSeconds] = useState(0);
+  const timerRef = useRef<number | null>(null);
 
-  const reset = () => { setText(""); setImgB64(null); setImgPreview(null); setResult(null); };
+  const reset = () => { setText(""); setImgB64(null); setImgPreview(null); setResult(null); setTranscript(""); setRecSeconds(0); };
+
+  const stopStream = () => {
+    try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
+    streamRef.current = null;
+    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      // Escolhe o melhor mime suportado: Chrome/Firefox -> webm/opus; Safari -> mp4.
+      const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/mpeg"];
+      const chosen = candidates.find((c) => (window as any).MediaRecorder && MediaRecorder.isTypeSupported?.(c)) || "";
+      const rec = chosen ? new MediaRecorder(stream, { mimeType: chosen }) : new MediaRecorder(stream);
+      recMimeRef.current = rec.mimeType || chosen || "audio/webm";
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
+      rec.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: recMimeRef.current });
+        stopStream();
+        setRecording(false);
+        if (!blob.size || blob.size < 1024) {
+          toast.error("Gravação muito curta. Tente novamente.");
+          return;
+        }
+        await transcribeBlob(blob);
+      };
+      rec.start();
+      recRef.current = rec;
+      setRecording(true);
+      setRecSeconds(0);
+      timerRef.current = window.setInterval(() => setRecSeconds((s) => s + 1), 1000) as unknown as number;
+    } catch (err) {
+      console.error("mic error", err);
+      toast.error("Não foi possível acessar o microfone. Verifique as permissões.");
+    }
+  };
+
+  const stopRecording = () => {
+    try { recRef.current?.stop(); } catch { /* noop */ }
+  };
+
+  const transcribeBlob = async (blob: Blob) => {
+    setTranscribing(true);
+    try {
+      const b64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || "").split(",")[1] || "");
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      const { data, error } = await supabase.functions.invoke("food-ai-transcribe", {
+        body: { audio: b64, mime: blob.type || recMimeRef.current },
+      });
+      if (error) {
+        let parsed: any = null;
+        try { parsed = await (error as any)?.context?.json?.(); } catch { /* noop */ }
+        throw new Error(parsed?.error || parsed?.details || error.message || "transcription_failed");
+      }
+      const txt = String((data as any)?.text || "").trim();
+      if (!txt) {
+        toast.error("Não consegui entender o áudio. Tente novamente falando um pouco mais alto.");
+        return;
+      }
+      setTranscript(txt);
+    } catch (e: any) {
+      const f = toFriendlyError(e);
+      toast.error(`[${f.code}] ${f.title}`, { description: f.message });
+    } finally {
+      setTranscribing(false);
+    }
+  };
 
   const onFile = async (file: File | null) => {
     if (!file) return;
@@ -189,13 +272,16 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
     setLoading(true);
     setResult(null);
     try {
+      const isAudio = mode === "audio";
+      const analyzeMode = isAudio || mode === "text" ? "text" : mode;
+      const payloadText = isAudio ? transcript.trim() : (mode === "text" ? text.trim() : undefined);
       const { data, error } = await supabase.functions.invoke("food-ai-analyze", {
         body: {
-          mode,
-          text: mode === "text" ? text.trim() : undefined,
-          image: mode !== "text" ? imgB64 : undefined,
+          mode: analyzeMode,
+          text: payloadText,
+          image: !isAudio && mode !== "text" ? imgB64 : undefined,
           mime: imgMime,
-          audit_source: "student_diary",
+          audit_source: isAudio ? "student_diary_audio" : "student_diary",
           student_id: user?.id ?? null,
         },
       });
@@ -247,7 +333,10 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
     onAdd(entries);
   };
 
-  const canAnalyze = (mode === "text" && text.trim().length >= 3) || (mode !== "text" && !!imgB64);
+  const canAnalyze =
+    (mode === "text" && text.trim().length >= 3) ||
+    (mode === "audio" && transcript.trim().length >= 3) ||
+    ((mode === "photo" || mode === "label") && !!imgB64);
   const confidencePct = Math.round((result?.confidence || 0) * 100);
   const chipCls = "flex-1 flex items-center justify-center gap-1.5 text-[12px] font-medium px-3 h-10 rounded-xl transition-all tracking-[-0.01em]";
   const activeCls = "bg-white text-[#1D1D1F] shadow-[0_1px_3px_rgba(0,0,0,0.08)]";
@@ -255,6 +344,9 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 mt-3 space-y-4 overflow-y-auto antialiased">
+      <p className="text-[11px] text-[#86868B] tracking-[-0.005em] leading-snug">
+        A STHIA entende sua alimentação da forma que for mais natural para você — foto, rótulo, texto ou áudio.
+      </p>
       <div className="flex gap-1 p-1 rounded-2xl bg-[#F5F5F7]">
         <button type="button" className={cn(chipCls, mode === "photo" ? activeCls : idleCls)} onClick={() => { setMode("photo"); setResult(null); }}>
           <Camera className="w-3.5 h-3.5" strokeWidth={2.25} /> Foto
@@ -265,9 +357,58 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
         <button type="button" className={cn(chipCls, mode === "text" ? activeCls : idleCls)} onClick={() => { setMode("text"); setResult(null); }}>
           <Sparkles className="w-3.5 h-3.5" strokeWidth={2.25} /> Texto
         </button>
+        <button type="button" className={cn(chipCls, mode === "audio" ? activeCls : idleCls)} onClick={() => { setMode("audio"); setResult(null); }}>
+          <Mic className="w-3.5 h-3.5" strokeWidth={2.25} /> Áudio
+        </button>
       </div>
 
-      {mode === "text" ? (
+      {mode === "audio" ? (
+        <div className="space-y-3">
+          {!transcript && (
+            <div className="rounded-2xl border-2 border-dashed border-[#D1D1D6] bg-[#F5F5F7] p-6 text-center">
+              <button
+                type="button"
+                onClick={recording ? stopRecording : startRecording}
+                disabled={transcribing}
+                className={cn(
+                  "w-16 h-16 mx-auto rounded-full flex items-center justify-center transition-all shadow-sm",
+                  recording ? "bg-[#FF3B30] text-white animate-pulse" : "bg-white border border-[#E5E5EA] text-[#34C759] hover:border-[#34C759]"
+                )}
+                aria-label={recording ? "Parar gravação" : "Iniciar gravação"}
+              >
+                {recording ? <Square className="w-6 h-6" strokeWidth={2.25} /> : <Mic className="w-6 h-6" strokeWidth={2} />}
+              </button>
+              <div className="text-[14px] font-medium text-[#1D1D1F] mt-3 tracking-[-0.01em]">
+                {transcribing ? "Transcrevendo…" : recording ? `Gravando… ${String(Math.floor(recSeconds / 60)).padStart(1, "0")}:${String(recSeconds % 60).padStart(2, "0")}` : "Toque para falar sua refeição"}
+              </div>
+              <div className="text-[12px] text-[#86868B] mt-0.5">
+                {recording ? "Toque no quadrado para parar" : "Ex.: “dois ovos mexidos, um pão francês e um café”"}
+              </div>
+            </div>
+          )}
+          {transcript && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] uppercase tracking-[0.05em] text-[#86868B] font-medium">Transcrição</div>
+                <button
+                  type="button"
+                  onClick={() => { setTranscript(""); setResult(null); }}
+                  className="text-[11px] text-[#0071E3] hover:underline"
+                >
+                  Regravar
+                </button>
+              </div>
+              <textarea
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                rows={3}
+                className="w-full rounded-xl border border-[#E5E5EA] bg-[#F5F5F7] text-[#1D1D1F] p-3 text-[13px] leading-relaxed resize-none focus:outline-none focus:border-[#34C759] focus:ring-1 focus:ring-[#34C759] transition-colors"
+              />
+              <p className="text-[11px] text-[#86868B]">Ajuste o texto se algo ficou diferente do que você falou.</p>
+            </div>
+          )}
+        </div>
+      ) : mode === "text" ? (
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
