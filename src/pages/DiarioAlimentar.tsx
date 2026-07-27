@@ -274,6 +274,13 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
 
           {result.notes && <p className="text-[11px] text-[#6E6E73] italic">{result.notes}</p>}
 
+          {result.needs_second_evidence && (
+            <div className="rounded-lg border border-[#FF9500] bg-[#FFF7EB] p-2.5">
+              <p className="text-[11px] font-semibold text-[#B25E00]">Precisamos de mais uma foto</p>
+              <p className="text-[11px] text-[#8A5A00] mt-0.5">{result.second_evidence_reason || 'Envie uma segunda foto do painel nutricional e da porção indicada para eu concluir com precisão.'}</p>
+            </div>
+          )}
+
           <div className="divide-y divide-[#F2F2F7]">
             {(result.foods || []).map((f: any, i: number) => (
               <div key={i} className="py-2 flex items-start justify-between gap-2">
