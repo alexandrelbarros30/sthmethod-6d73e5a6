@@ -194,6 +194,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/consultor/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
     { to: "/consultor/image-consents", icon: ImageIcon, label: "Autorização de Imagens" },
+    { to: "/consultor/ia-historico", icon: Sparkles, label: "Histórico IA" },
     {
       group: "Nutrição",
       icon: Salad,
