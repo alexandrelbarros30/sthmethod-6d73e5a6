@@ -580,6 +580,14 @@ Deno.serve(async (req) => {
       else logId = logRow?.id ?? null;
     }
 
+    // Fase 7 — Alerta CRM proativo: 3+ análises em 7 dias com Score<50
+    // ou NOVA 4 predominante geram uma task na CRM (dedupe 3 dias).
+    if (admin && studentId && payload.status === 'analyzed') {
+      evaluateCrmAlert(admin, studentId).catch((e) =>
+        console.error('food-ai crm alert eval failed', e),
+      );
+    }
+
     return new Response(JSON.stringify({ ...payload, log_id: logId }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     console.error('food-ai-analyze error', err);
