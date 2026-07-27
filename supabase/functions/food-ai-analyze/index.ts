@@ -85,11 +85,39 @@ async function fsLookup(name: string) {
     const json = await res.json();
     if (!res.ok || json.error) { fsCache.set(key, null); return null; }
     const raw = json.foods?.food ? (Array.isArray(json.foods.food) ? json.foods.food : [json.foods.food]) : [];
-    const generic = raw.find((f: any) => !f.brand_name) || raw[0];
-    if (!generic) { fsCache.set(key, null); return null; }
-    const parsed = fsParseDescription(generic.food_description || '');
+    if (!raw.length) { fsCache.set(key, null); return null; }
+    // Token-overlap guard: só aceita candidatos cujo food_name compartilhe
+    // pelo menos um token significativo (>=3 chars) com o nome buscado.
+    // Evita casos onde "Nescau Protein" casa em item genérico ("Chocolate drink")
+    // e escala calorias absurdas.
+    const normalize = (s: string) => (s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ');
+    const searchTokens = new Set(normalize(key).split(/\s+/).filter((t) => t.length >= 3));
+    const scored = raw.map((c: any) => {
+      const nameTokens = new Set(normalize(c.food_name || '').split(/\s+/).filter((t) => t.length >= 3));
+      let overlap = 0;
+      for (const t of searchTokens) if (nameTokens.has(t)) overlap++;
+      // Prefere match com marca quando o usuário citou marca; senão prefere genérico.
+      const brandBonus = c.brand_name ? 0.1 : 0;
+      return { c, score: overlap + brandBonus };
+    }).filter((x: any) => x.score > 0)
+      .sort((a: any, b: any) => b.score - a.score);
+    const picked = scored[0]?.c;
+    if (!picked) { fsCache.set(key, null); return null; }
+    const parsed = fsParseDescription(picked.food_description || '');
     if (!parsed) { fsCache.set(key, null); return null; }
-    const out = { ...parsed, label: generic.food_name };
+    // Sanity: rejeita per100 fora do envelope físico de bebidas quando o
+    // nome buscado sugere líquido (ml, bebida, leite, suco, refri, whey pronto, shake).
+    const looksLiquid = /\b(bebida|leite|suco|refri|refrigerante|shake|iogurte liquido|whey (?:ready|pronto)|ml|drink)\b/i.test(key);
+    if (looksLiquid && parsed.per100.energy_kcal > 200) {
+      // Bebidas raramente passam de 200 kcal/100ml (leite condensado ~320, é exceção).
+      // Descarta para forçar cálculo por caps físicos + Atwater.
+      fsCache.set(key, null);
+      return null;
+    }
+    const out = { ...parsed, label: picked.food_name };
     fsCache.set(key, out);
     return out;
   } catch { fsCache.set(key, null); return null; }
