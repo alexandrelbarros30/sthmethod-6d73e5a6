@@ -70,6 +70,21 @@ const AdminProtocolAI = () => {
   const [reviewNotes, setReviewNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [pullingAnalysis, setPullingAnalysis] = useState(false);
+  const [protocolVersion, setProtocolVersion] = useState(0);
+
+  // Strip markdown code fences (```html ... ```) that the model sometimes wraps the HTML in,
+  // which prevents the SMART parser from recognizing the structure and makes the "revised" version
+  // look identical to the original.
+  const cleanRevisedHtml = (raw: string) => {
+    if (!raw) return raw;
+    let html = raw.trim();
+    html = html.replace(/^```(?:html|HTML)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    // Some models return escaped tags — unescape once.
+    if (!/</.test(html) && /&lt;/.test(html)) {
+      html = html.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+    }
+    return html;
+  };
 
   const stripHtml = (html: string) =>
     html.replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -252,8 +267,10 @@ const AdminProtocolAI = () => {
     onSuccess: (data) => {
       setReview(data);
       // Auto-aplica o protocolo revisado no card principal para que o admin veja imediatamente a versão corrigida
-      if (data?.revised_protocol) {
-        setResult((r) => (r ? { ...r, protocol_html: data.revised_protocol! } : r));
+      const cleaned = cleanRevisedHtml(data?.revised_protocol || "");
+      if (cleaned) {
+        setResult((r) => (r ? { ...r, protocol_html: cleaned } : r));
+        setProtocolVersion((v) => v + 1);
       }
       toast.success(
         reviewNotes.trim()
@@ -267,7 +284,13 @@ const AdminProtocolAI = () => {
 
   const applyRevised = () => {
     if (!review?.revised_protocol) return;
-    setResult((r) => (r ? { ...r, protocol_html: review.revised_protocol! } : r));
+    const cleaned = cleanRevisedHtml(review.revised_protocol);
+    if (!cleaned) {
+      toast.error("A IA não devolveu HTML revisado. Tente revisar novamente.");
+      return;
+    }
+    setResult((r) => (r ? { ...r, protocol_html: cleaned } : r));
+    setProtocolVersion((v) => v + 1);
     toast.success("Versão revisada aplicada");
   };
 
@@ -552,9 +575,9 @@ const AdminProtocolAI = () => {
                 </CardHeader>
                 <CardContent>
                   {isSmart ? (
-                    <GamifiedProtocolPanel content={result.protocol_html} userId={selectedStudent?.user_id ?? user?.id ?? ""} readOnly />
+                    <GamifiedProtocolPanel key={`smart-${protocolVersion}`} content={result.protocol_html} userId={selectedStudent?.user_id ?? user?.id ?? ""} readOnly />
                   ) : (
-                    <div className="rounded-lg border border-border bg-card p-4 max-h-[600px] overflow-y-auto">
+                    <div key={`rich-${protocolVersion}`} className="rounded-lg border border-border bg-card p-4 max-h-[600px] overflow-y-auto">
                       <RichContentRenderer content={result.protocol_html} showParagraphBullets={false} showZebra={false} />
                     </div>
                   )}
