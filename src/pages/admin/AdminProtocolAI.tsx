@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, BookOpen, ShieldAlert, Activity, Lock, Send } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Download } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +54,16 @@ const AdminProtocolAI = () => {
   const [labsNotes, setLabsNotes] = useState("");
   const [restrictions, setRestrictions] = useState("");
   const [freeText, setFreeText] = useState("");
+
+  // Seletores: cada campo pode ser incluído ou ignorado na análise STHIA
+  const [useStack, setUseStack] = useState(true);
+  const [useLabs, setUseLabs] = useState(true);
+  const [useRestrictions, setUseRestrictions] = useState(true);
+  const [useFreeText, setUseFreeText] = useState(true);
+  const [useExams, setUseExams] = useState(true);
+  const [useStudentProfile, setUseStudentProfile] = useState(true);
+
+  const [pullingStack, setPullingStack] = useState(false);
 
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
@@ -109,6 +121,58 @@ const AdminProtocolAI = () => {
     }
   };
 
+  const pullCurrentStack = async () => {
+    if (!selectedStudent) {
+      toast.error("Selecione um aluno primeiro");
+      return;
+    }
+    setPullingStack(true);
+    try {
+      // 1) Tenta o último protocolo salvo do aluno
+      const { data: last } = await supabase
+        .from("student_protocols")
+        .select("title, content, created_at")
+        .eq("user_id", selectedStudent.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // 2) Puxa o campo de saúde (Protocolo Atual)
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("current_protocol")
+        .eq("user_id", selectedStudent.user_id)
+        .maybeSingle();
+
+      const chunks: string[] = [];
+      if (prof?.current_protocol?.trim()) {
+        chunks.push(`=== PROTOCOLO ATUAL (cadastro / saúde) ===\n${prof.current_protocol.trim()}`);
+      }
+      if (last?.content) {
+        const plain = stripHtml(last.content);
+        chunks.push(
+          `=== ÚLTIMO PROTOCOLO SALVO (${new Date(last.created_at).toLocaleDateString("pt-BR")}${
+            last.title ? ` · ${last.title}` : ""
+          }) ===\n${plain.slice(0, 4000)}`
+        );
+      }
+
+      if (!chunks.length) {
+        toast.info("Nenhum protocolo encontrado — edite manualmente o campo Stack atual");
+        return;
+      }
+
+      const block = chunks.join("\n\n");
+      setCurrentStack((prev) => (prev ? `${prev}\n\n${block}` : block));
+      setUseStack(true);
+      toast.success("Stack atual preenchido a partir do cadastro do aluno");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar stack");
+    } finally {
+      setPullingStack(false);
+    }
+  };
+
   const { data: students = [] } = useQuery({
     queryKey: ["protocol-ai-students", displayRole, user?.id],
     queryFn: async () => {
@@ -137,10 +201,11 @@ const AdminProtocolAI = () => {
     fase: phase,
     experiencia: experience,
     duracao_semanas: Number(durationWeeks) || null,
-    stack_atual: currentStack,
-    exames_recentes: labsNotes,
-    restricoes: restrictions,
-    aluno: selectedStudent
+    stack_atual: useStack ? currentStack : "",
+    exames_recentes: useLabs ? labsNotes : "",
+    restricoes: useRestrictions ? restrictions : "",
+    incluir_exames_upload: useExams,
+    aluno: selectedStudent && useStudentProfile
       ? {
           nome: selectedStudent.full_name,
           peso: selectedStudent.weight,
@@ -159,7 +224,7 @@ const AdminProtocolAI = () => {
         body: {
           mode: "generate",
           brief: buildBrief(),
-          freeText,
+          freeText: useFreeText ? freeText : "",
           studentId: selectedStudent?.user_id ?? null,
         },
       });
