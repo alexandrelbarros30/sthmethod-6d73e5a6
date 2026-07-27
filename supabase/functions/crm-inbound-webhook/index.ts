@@ -575,11 +575,13 @@ function looksLikeFoodDescription(text: string): boolean {
 function formatFoodAiReply(
   aiData: any,
   goals: { daily_kcal?: number | null; protein_g?: number | null } | null,
-  sourceKind: 'photo' | 'text',
+  sourceKind: 'photo' | 'text' | 'audio',
+  opts: { logId?: string | null; logDate?: string | null; publicUrl?: string } = {},
 ): { text: string; totals: any; foods: any[]; cls: string } {
   const totals = aiData?.totals || {};
   const foods = Array.isArray(aiData?.foods) ? aiData.foods : [];
   const cls = aiData?.classification || 'Moderado';
+  const missing: string[] = [];
   const emoji = /excel|otim|bom/i.test(cls) ? '🟢' : /ruim|baix|frac/i.test(cls) ? '🔴' : '🟡';
   const foodLines = foods.slice(0, 8).map((f: any) =>
     `• ${f.name} — ${Math.round(Number(f.estimated_weight_g) || 0)}${f.unit || 'g'} · ${Math.round(Number(f.calories) || 0)} kcal · P${(Number(f.protein_g)||0).toFixed(1)} C${(Number(f.carbs_g)||0).toFixed(1)} G${(Number(f.fat_g)||0).toFixed(1)}`
@@ -591,6 +593,7 @@ function formatFoodAiReply(
   const qScore = Number.isFinite(sthiaRaw) && sthiaRaw > 0
     ? Math.max(0, Math.min(100, Math.round(sthiaRaw)))
     : (Number.isFinite(qRaw) ? Math.max(0, Math.min(100, Math.round(qRaw * 10))) : null);
+  if (qScore === null) missing.push('sthia_score');
   const hasUltra = alertsArr.some((a) => /ultraproc/i.test(a));
   const novaSum = Number(aiData?.nova_summary);
   const novaLabel: Record<number, string> = {
@@ -599,32 +602,69 @@ function formatFoodAiReply(
     3: 'NOVA 3 — processado',
     4: 'NOVA 4 — ultraprocessado',
   };
-  const novaLine = novaLabel[novaSum]
-    ? `\n🏷️ *${novaLabel[novaSum]}*`
-    : (hasUltra ? `\n🏷️ *NOVA 4* — ultraprocessado detectado` : '');
+  let novaLine = '';
+  if (novaLabel[novaSum]) {
+    novaLine = `\n🏷️ *${novaLabel[novaSum]}*`;
+  } else if (hasUltra) {
+    novaLine = `\n🏷️ *NOVA 4* — ultraprocessado detectado`;
+  } else {
+    missing.push('nova_summary');
+    // Fallback amigável para o WhatsApp — nunca deixamos o campo em branco.
+    novaLine = `\n🏷️ NOVA — classificação em análise`;
+  }
   let goalsLine = '';
   if (goals && Number(goals.daily_kcal) > 0) {
     const kcalPct = Math.round((Number(totals.calories) || 0) / Number(goals.daily_kcal) * 100);
     const pPct = goals.protein_g ? Math.round((Number(totals.protein_g) || 0) / Number(goals.protein_g) * 100) : null;
     goalsLine = `\n\n🎯 *Da sua meta diária*\n• ${kcalPct}% das kcal` + (pPct !== null ? ` · ${pPct}% da proteína` : '');
   }
-  const suggestions: string[] = Array.isArray(aiData?.suggestions) ? aiData.suggestions.slice(0, 3).map(String) : [];
   const kcalT = Number(totals.calories) || 0;
   const pT = Number(totals.protein_g) || 0;
   const fibT = Number(totals.fiber_g) || 0;
   const naT = Number(totals.sodium_mg) || 0;
-  if (!suggestions.length) {
+  const aiSuggestions: string[] = Array.isArray(aiData?.suggestions)
+    ? aiData.suggestions.slice(0, 3).map((s: any) => String(s).trim()).filter(Boolean)
+    : [];
+  const suggestions: string[] = [...aiSuggestions];
+  if (!aiSuggestions.length) {
+    missing.push('suggestions');
     if (kcalT > 0 && pT / (kcalT / 100) < 6) suggestions.push('aumentar a proteína (frango, ovos, whey)');
     if (fibT < 5) suggestions.push('incluir vegetais ou folhas para elevar a fibra');
     if (naT > 800) suggestions.push('reduzir sódio (temperos industrializados/molhos)');
     if (hasUltra) suggestions.push('trocar o ultraprocessado por uma versão in natura');
+    if (!suggestions.length) suggestions.push('mantenha a hidratação e distribua bem as próximas refeições');
   }
-  const suggestionLine = suggestions.length ? `\n\n💡 *Sugestão*: ${suggestions[0]}.` : '';
+  // Fase: até 3 sugestões (bullets) para dar mais valor por mensagem.
+  const suggestionLine = suggestions.length
+    ? `\n\n💡 *Sugestões STHIA*\n${suggestions.slice(0, 3).map((s) => `• ${s}`).join('\n')}`
+    : '';
   const scoreLabel = String(aiData?.sthia_score_label || cls);
   const qualityLine = qScore !== null ? `\n📈 Score STHIA: *${scoreLabel}* (${qScore}/100)` : `\n📈 Qualidade: *${cls}*`;
-  const disclaimer = sourceKind === 'text'
-    ? `\n\n_Estimativa por IA a partir da sua descrição. Sem foto, os pesos são aproximados — se quiser mais precisão, me diga a quantidade exata (ex.: "eram 200g de arroz") ou envie uma foto do prato._`
-    : `\n\n_Estimativa por IA a partir da foto. Se a quantidade estiver diferente, me diga (ex.: "eram 200g de arroz") que eu recalculo._`;
+  const disclaimer =
+    sourceKind === 'photo'
+      ? `\n\n_Estimativa por IA a partir da foto. Se a quantidade estiver diferente, me diga (ex.: "eram 200g de arroz") que eu recalculo._`
+      : sourceKind === 'audio'
+        ? `\n\n_Estimativa por IA a partir do seu áudio. Se a quantidade estiver diferente, me diga (ex.: "eram 200g de arroz") ou envie uma foto que eu recalculo._`
+        : `\n\n_Estimativa por IA a partir da sua descrição. Sem foto, os pesos são aproximados — se quiser mais precisão, me diga a quantidade exata (ex.: "eram 200g de arroz") ou envie uma foto do prato._`;
+
+  // Resumo curto de macros (chip) — proteína · fibra · calorias.
+  const macroSummary = `\n\n⚡ *Resumo*: ${Math.round(kcalT)} kcal · ${pT.toFixed(1)} g proteína · ${fibT.toFixed(1)} g fibra`;
+
+  // Deep link para o histórico do aluno (Diário Alimentar mostra badge STHIA da Fase 6).
+  const publicUrl = (opts.publicUrl || 'https://sthmethod.com.br').replace(/\/$/, '');
+  const dateParam = opts.logDate || new Date().toISOString().slice(0, 10);
+  const deepLink = opts.logId
+    ? `\n\n🔗 Ver no seu histórico STHIA:\n${publicUrl}/diario-alimentar?date=${dateParam}&sthia=${opts.logId}`
+    : `\n\n🔗 Ver no seu Diário Alimentar:\n${publicUrl}/diario-alimentar?date=${dateParam}`;
+
+  if (missing.length) {
+    console.warn('[food-ai reply] campos ausentes — usando fallback:', missing.join(', '), {
+      log_id: opts.logId ?? null,
+      source: sourceKind,
+      classification: cls,
+    });
+  }
+
   const text =
     `🍽️ *STHIA — Análise da sua refeição* ${emoji}\n` +
     (foodLines ? `\n${foodLines}\n` : '\n_Não consegui identificar itens claros._\n') +
@@ -635,7 +675,7 @@ function formatFoodAiReply(
     `• Gordura ${(Number(totals.fat_g)||0).toFixed(1)} g` +
     (totals.fiber_g ? `\n• Fibra ${fibT.toFixed(1)} g` : '') +
     (totals.sodium_mg ? `\n• Sódio ${Math.round(naT)} mg` : '') +
-    qualityLine + novaLine + alerts + goalsLine + suggestionLine + disclaimer;
+    qualityLine + novaLine + macroSummary + alerts + goalsLine + suggestionLine + deepLink + disclaimer;
   return { text, totals, foods, cls };
 }
 
