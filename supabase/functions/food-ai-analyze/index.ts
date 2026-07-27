@@ -271,16 +271,50 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
         fat_g: +(hit.per100.fat_g * factor).toFixed(2),
         confidence: blended,
       };
-      if (Math.abs((Number(f.calories) || 0) - rewritten.calories) > 5) {
-        corrections.push({ item: f.name, rule: 'db_reconcile', field: 'calories', before: Number(f.calories) || 0, after: rewritten.calories, note: 'sobrescrito pela base de dados nutricional' });
+      // Sanity check ANTES de aceitar o rewrite:
+      // 1) cap físico kcal/g ou kcal/ml (líquido não passa de 2.0 kcal/ml).
+      // 2) Atwater precisa bater com o kcal calculado (±25%).
+      // 3) delta absoluto vs. o que a IA já tinha: se >100% e IA estava plausível,
+      //    descarta o hit (provável mismatch nome↔item FS).
+      const isLiquid = String(rewritten.unit || '').toLowerCase() === 'ml';
+      const perUnitCap = isLiquid ? 2.0 : 9.5;
+      const kcalPerUnit = safeWeight > 0 ? rewritten.calories / safeWeight : 0;
+      const atwater = rewritten.protein_g * 4 + rewritten.carbs_g * 4 + rewritten.fat_g * 9;
+      const atwaterOk = atwater > 5
+        ? Math.abs(rewritten.calories - atwater) / Math.max(atwater, 1) <= 0.25
+        : true;
+      const aiKcal = Number(f.calories) || 0;
+      const aiKcalPerUnit = safeWeight > 0 ? aiKcal / safeWeight : 0;
+      const aiPlausible = aiKcal > 0 && aiKcalPerUnit <= perUnitCap;
+      const rewriteExplodesKcal = aiPlausible && rewritten.calories > aiKcal * 2.5;
+      const dbLooksWrong = kcalPerUnit > perUnitCap || !atwaterOk || rewriteExplodesKcal;
+
+      if (dbLooksWrong) {
+        // Rejeita o rewrite: cai no ramo de heurística (caps físicos + Atwater).
+        corrections.push({
+          item: f.name,
+          rule: 'db_reconcile',
+          field: 'calories',
+          before: aiKcal,
+          after: aiKcal,
+          note: `hit da base descartado (kcal/${isLiquid ? 'ml' : 'g'}=${kcalPerUnit.toFixed(2)}, atwaterOk=${atwaterOk}, explodesKcal=${rewriteExplodesKcal})`,
+        });
+        // Deixa o fluxo cair no else — reprocessa via caps físicos abaixo.
+      } else {
+        if (Math.abs(aiKcal - rewritten.calories) > 5) {
+          corrections.push({ item: f.name, rule: 'db_reconcile', field: 'calories', before: aiKcal, after: rewritten.calories, note: 'sobrescrito pela base de dados nutricional' });
+        }
+        out.push(rewritten);
+        reconciled++;
+        continue;
       }
-      out.push(rewritten);
-      reconciled++;
     } else {
       // Kcal/g sanity guard: no real food exceeds ~9.5 kcal/g (pure fat).
       // Beverages (unit=ml) are much lower: milk-based drinks ~0.4-1.0 kcal/ml,
       // sugary sodas ~0.5 kcal/ml. Cap at 2.0 kcal/ml — anything above is a
       // label-reading hallucination (e.g. Nescau 250ml lida como 1003 kcal).
+    }
+    {
       const isLiquid = String(f.unit || '').toLowerCase() === 'ml';
       const perUnitCap = isLiquid ? 2.0 : 9.5;
       const kcalPerG = safeWeight > 0 ? (Number(f.calories) || 0) / safeWeight : 0;
