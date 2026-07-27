@@ -653,7 +653,7 @@ function formatFoodAiReply(
   } else {
     missing.push('nova_summary');
     // Fallback amigável para o WhatsApp — nunca deixamos o campo em branco.
-    novaLine = `\n🏷️ NOVA — ainda nao esta interpetando o audio`;
+    novaLine = `\n🏷️ NOVA — preciso que o canal fale com nutri interprete o audio e analise as refecioes e alimentos`;
   }
   let goalsLine = '';
   if (goals && Number(goals.daily_kcal) > 0) {
@@ -1369,11 +1369,11 @@ Deno.serve(async (req) => {
     // de refeição em texto para a STHIA (multimodal: foto, texto, áudio).
     // Removemos o prefixo "[Áudio do aluno]" apenas para a análise
     // nutricional — o texto original continua salvo em crm_messages.
-    const audioTranscriptForFood = (provider === 'wapi_sucesso' && isTranscribedAudio && body && body.startsWith('[Áudio do aluno]'))
+    const audioTranscriptForFood = ((provider === 'wapi_sucesso' || provider === 'wapi_nutri') && isTranscribedAudio && body && body.startsWith('[Áudio do aluno]'))
       ? body.replace(/^\[Áudio do aluno\]\s*/i, '').trim()
       : '';
     const foodTextCandidate = audioTranscriptForFood || body;
-    if (provider === 'wapi_sucesso' && !hasBlockedMedia && foodTextCandidate && looksLikeFoodDescription(foodTextCandidate)) {
+    if ((provider === 'wapi_sucesso' || provider === 'wapi_nutri') && !hasBlockedMedia && foodTextCandidate && looksLikeFoodDescription(foodTextCandidate)) {
       let { data: convRow } = await admin
         .from('crm_conversations')
         .select('id, user_id')
@@ -1382,7 +1382,7 @@ Deno.serve(async (req) => {
       if (!convRow) {
         const ins = await admin.from('crm_conversations').insert({
           phone, wa_id: waId, display_name: name || null, channel: 'whatsapp',
-          status: 'open', provider: 'wapi_sucesso', queue_type: 'sucesso',
+          status: 'open', provider, queue_type: provider === 'wapi_nutri' ? 'nutri' : 'sucesso',
           session_started_at: new Date().toISOString(),
         }).select('id, user_id').single();
         convRow = ins.data as any;
@@ -1391,7 +1391,7 @@ Deno.serve(async (req) => {
       await admin.from('crm_messages').insert({
         conversation_id: convRow!.id,
         direction: 'in',
-        source: 'wapi_sucesso',
+        source: provider,
         status: 'received',
         body,
         external_id: externalId,
@@ -1404,7 +1404,7 @@ Deno.serve(async (req) => {
           body: {
             mode: 'text',
             text: foodTextCandidate,
-            audit_source: audioTranscriptForFood ? 'whatsapp_sucesso_audio' : 'whatsapp_sucesso_text',
+            audit_source: audioTranscriptForFood ? `whatsapp_${provider === 'wapi_nutri' ? 'nutri' : 'sucesso'}_audio` : `whatsapp_${provider === 'wapi_nutri' ? 'nutri' : 'sucesso'}_text`,
             student_id: (convRow as any)?.user_id ?? null,
           },
         });
@@ -1416,11 +1416,11 @@ Deno.serve(async (req) => {
               `🍽️ *STHIA — Preciso de um detalhe a mais*\n\n` +
               (secondReason || 'Me diga a quantidade aproximada de cada item (em gramas, ml, colheres ou unidades) para eu concluir com precisão.') +
               `\n\n_Você também pode enviar uma foto do prato/embalagem que eu recalculo._`;
-            const sendAsk = await sendImmediateText('wapi_sucesso', askReply);
+            const sendAsk = await sendImmediateText(provider, askReply);
             await admin.from('crm_messages').insert({
               conversation_id: convRow!.id,
               direction: 'out',
-              source: 'wapi_sucesso',
+              source: provider,
               status: sendAsk.sent ? 'sent' : 'failed',
               body: askReply,
               external_id: sendAsk.messageId,
@@ -1464,7 +1464,7 @@ Deno.serve(async (req) => {
                   user_id: uid,
                   log_date: today,
                   meal_type: 'lanche',
-                  meal_label: 'WhatsApp STHIA (texto)',
+                  meal_label: `WhatsApp STHIA (${provider === 'wapi_nutri' ? 'Nutri' : 'Sucesso'})`,
                   item_name: String(f.name || 'Item'),
                   quantity: Number(f.estimated_weight_g) || 0,
                   unit: (f.unit === 'ml' ? 'ml' : 'g'),
@@ -1482,11 +1482,11 @@ Deno.serve(async (req) => {
               console.error('food_ai_text diary autosave failed', e);
             }
 
-            const send = await sendImmediateText('wapi_sucesso', reply);
+            const send = await sendImmediateText(provider, reply);
             await admin.from('crm_messages').insert({
               conversation_id: convRow!.id,
               direction: 'out',
-              source: 'wapi_sucesso',
+              source: provider,
               status: send.sent ? 'sent' : 'failed',
               body: reply,
               external_id: send.messageId,
