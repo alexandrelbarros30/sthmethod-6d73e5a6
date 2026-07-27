@@ -549,9 +549,10 @@ Deno.serve(async (req) => {
       status: needsSecondEvidence ? 'pending_second_evidence' : 'analyzed',
     };
 
-    // Fire-and-forget audit log (never blocks the response).
+    // Persist audit log and return its id so the client can link diary entries back.
+    let logId: string | null = null;
     if (admin && !skipServerLog) {
-      admin.from('food_ai_logs').insert({
+      const { data: logRow, error: logErr } = await admin.from('food_ai_logs').insert({
         student_id: studentId,
         admin_id: adminId,
         source: auditSource,
@@ -574,10 +575,12 @@ Deno.serve(async (req) => {
         needs_second_evidence: needsSecondEvidence,
         second_evidence_reason: secondEvidenceReason,
         duration_ms: Date.now() - started,
-      }).then(({ error }) => { if (error) console.error('food_ai_logs edge insert', error); });
+      }).select('id').single();
+      if (logErr) console.error('food_ai_logs edge insert', logErr);
+      else logId = logRow?.id ?? null;
     }
 
-    return new Response(JSON.stringify(payload), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ ...payload, log_id: logId }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     console.error('food-ai-analyze error', err);
     const msg = err instanceof Error ? err.message : String(err);
