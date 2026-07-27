@@ -200,22 +200,35 @@ async function callGemini(apiKey: string, mode: Mode, text?: string, imageDataUr
   return JSON.parse(tc.function.arguments);
 }
 
-async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; reconciledCount: number }> {
+interface Correction {
+  item: string;
+  rule: 'weight_clamp' | 'kcal_per_g_clamp' | 'atwater_rewrite' | 'atwater_fill' | 'hard_ceiling' | 'db_reconcile';
+  field: 'calories' | 'weight' | 'macros';
+  before: number;
+  after: number;
+  note?: string;
+}
+
+async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; reconciledCount: number; corrections: Correction[] }> {
   let reconciled = 0;
   const out: FoodItem[] = [];
+  const corrections: Correction[] = [];
   for (const f of foods) {
     // Sanity clamp on weight: a single food item rarely exceeds ~1500g.
     // Anything beyond is almost certainly a hallucinated portion estimate.
     const rawWeight = Number(f.estimated_weight_g) || 0;
     const weightSuspect = rawWeight <= 0 || rawWeight > 1500;
     const safeWeight = weightSuspect ? Math.min(Math.max(rawWeight || 100, 1), 300) : rawWeight;
+    if (weightSuspect) {
+      corrections.push({ item: f.name, rule: 'weight_clamp', field: 'weight', before: rawWeight, after: safeWeight, note: 'peso fora do intervalo plausível (0-1500 g)' });
+    }
 
     const hit = await fsLookup(f.name);
     if (hit && rawWeight > 0 && !weightSuspect) {
       const factor = safeWeight / 100;
       // Blend AI confidence with FatSecret trust; never blindly inflate to 0.9.
       const blended = Math.min(0.9, Math.max(0.6, (Number(f.confidence) || 0.5) * 0.5 + 0.45));
-      out.push({
+      const rewritten = {
         ...f,
         estimated_weight_g: safeWeight,
         calories: +(hit.per100.energy_kcal * factor).toFixed(1),
@@ -223,7 +236,11 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
         carbs_g: +(hit.per100.carbs_g * factor).toFixed(2),
         fat_g: +(hit.per100.fat_g * factor).toFixed(2),
         confidence: blended,
-      });
+      };
+      if (Math.abs((Number(f.calories) || 0) - rewritten.calories) > 5) {
+        corrections.push({ item: f.name, rule: 'db_reconcile', field: 'calories', before: Number(f.calories) || 0, after: rewritten.calories, note: 'sobrescrito pela base de dados nutricional' });
+      }
+      out.push(rewritten);
       reconciled++;
     } else {
       // Kcal/g sanity guard: no real food exceeds ~9.5 kcal/g (pure fat).
@@ -231,6 +248,7 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
       const kcalSuspect = kcalPerG > 9.5;
       let adj = { ...f, estimated_weight_g: safeWeight };
       if (weightSuspect || kcalSuspect) {
+        const beforeKcal = Number(f.calories) || 0;
         // Rescale kcal/macros to the clamped weight to prevent absurd totals.
         if (rawWeight > 0) {
           const rescale = safeWeight / rawWeight;
@@ -240,6 +258,9 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
           adj.fat_g = +(((Number(f.fat_g) || 0) * rescale)).toFixed(2);
         }
         adj.confidence = Math.min(Number(f.confidence) || 0.4, 0.4);
+        if (kcalSuspect) {
+          corrections.push({ item: f.name, rule: 'kcal_per_g_clamp', field: 'calories', before: beforeKcal, after: adj.calories, note: `kcal/g >9.5 (${kcalPerG.toFixed(2)})` });
+        }
       }
       // Atwater cross-check: expected kcal = P*4 + C*4 + F*9. If the AI-declared
       // kcal deviates >25% from Atwater, trust the macros and rewrite kcal.
@@ -250,21 +271,26 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
       if (atwater > 5 && declared > 0) {
         const ratio = declared / atwater;
         if (ratio > 1.25 || ratio < 0.75) {
+          const before = declared;
           adj.calories = +atwater.toFixed(1);
           adj.confidence = Math.min(Number(adj.confidence) || 0.5, 0.5);
+          corrections.push({ item: f.name, rule: 'atwater_rewrite', field: 'calories', before, after: adj.calories, note: `Atwater divergiu ${(((ratio-1))*100).toFixed(0)}% do declarado` });
         }
       } else if (atwater > 5 && declared === 0) {
         adj.calories = +atwater.toFixed(1);
+        corrections.push({ item: f.name, rule: 'atwater_fill', field: 'calories', before: 0, after: adj.calories, note: 'kcal ausente, calculado via Atwater' });
       }
       // Hard ceiling per single item: cannot exceed weight * 9 kcal/g (pure fat).
       if (safeWeight > 0 && adj.calories > safeWeight * 9) {
+        const before = adj.calories;
         adj.calories = +(safeWeight * 9).toFixed(1);
         adj.confidence = Math.min(Number(adj.confidence) || 0.4, 0.4);
+        corrections.push({ item: f.name, rule: 'hard_ceiling', field: 'calories', before, after: adj.calories, note: 'kcal > peso*9 (teto físico)' });
       }
       out.push(adj);
     }
   }
-  return { foods: out, reconciledCount: reconciled };
+  return { foods: out, reconciledCount: reconciled, corrections };
 }
 
 function recomputeTotals(foods: FoodItem[]) {
@@ -327,7 +353,7 @@ Deno.serve(async (req) => {
     const aiResult = await callGemini(LOVABLE_API_KEY, mode, text, imageDataUrl);
     const initialFoods: FoodItem[] = Array.isArray(aiResult?.foods) ? aiResult.foods : [];
 
-    const { foods: reconciledFoods, reconciledCount } = await reconcileFoods(initialFoods);
+    const { foods: reconciledFoods, reconciledCount, corrections } = await reconcileFoods(initialFoods);
     const totals = recomputeTotals(reconciledFoods);
 
     // Internal audit tag only — never surfaced to end users.
@@ -342,6 +368,26 @@ Deno.serve(async (req) => {
     const extraAlerts: string[] = [];
     if (reconciledFoods.some((f) => (Number(f.confidence) || 0) <= 0.4)) extraAlerts.push('peso_suspeito');
 
+    // Second-evidence gate: any severe correction (>50% delta on kcal) or a hard
+    // ceiling / atwater rewrite on LABEL mode means we can't safely conclude
+    // from a single frame — ask for a second photo of the nutrition panel/portion.
+    const severe = corrections.filter((c) => {
+      if (c.field !== 'calories') return false;
+      const b = Math.abs(c.before);
+      const a = Math.abs(c.after);
+      const base = Math.max(b, a, 1);
+      return Math.abs(b - a) / base > 0.5;
+    });
+    const labelHardTrigger = mode === 'label' && corrections.some((c) => c.rule === 'atwater_rewrite' || c.rule === 'hard_ceiling');
+    const needsSecondEvidence = severe.length > 0 || labelHardTrigger;
+    let secondEvidenceReason: string | null = null;
+    if (needsSecondEvidence) {
+      secondEvidenceReason = mode === 'label'
+        ? 'Divergência entre kcal declarado e kcal calculado pelos macros. Envie uma segunda foto nítida do painel nutricional e da porção indicada para confirmar.'
+        : 'Não foi possível estimar com segurança. Envie uma segunda foto com mais luz, focada no prato inteiro e, se possível, um referencial de tamanho (talher, mão).';
+      extraAlerts.push('segunda_evidencia_requerida');
+    }
+
     const payload = {
       analysis_type: aiResult?.analysis_type || mode,
       confidence: globalConfidence,
@@ -354,6 +400,10 @@ Deno.serve(async (req) => {
       source,
       reconciled_count: reconciledCount,
       total_count: reconciledFoods.length,
+      corrections,
+      needs_second_evidence: needsSecondEvidence,
+      second_evidence_reason: secondEvidenceReason,
+      status: needsSecondEvidence ? 'pending_second_evidence' : 'analyzed',
     };
 
     // Fire-and-forget audit log (never blocks the response).
@@ -375,8 +425,11 @@ Deno.serve(async (req) => {
         ai_source: payload.source,
         reconciled_count: payload.reconciled_count,
         total_count: payload.total_count,
-        status: 'analyzed',
-        needs_review: payload.confidence < 0.7,
+        status: payload.status,
+        needs_review: payload.confidence < 0.7 || needsSecondEvidence,
+        corrections: corrections as any,
+        needs_second_evidence: needsSecondEvidence,
+        second_evidence_reason: secondEvidenceReason,
         duration_ms: Date.now() - started,
       }).then(({ error }) => { if (error) console.error('food_ai_logs edge insert', error); });
     }

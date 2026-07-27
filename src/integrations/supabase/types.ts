@@ -2865,6 +2865,7 @@ export type Database = {
           alerts: Json
           classification: string | null
           confidence: number | null
+          corrections: Json
           created_at: string
           diary_entry_ids: Json
           duration_ms: number | null
@@ -2879,9 +2880,11 @@ export type Database = {
           meal_type: string | null
           mode: string
           needs_review: boolean
+          needs_second_evidence: boolean
           notes: string | null
           quality_score: number | null
           reconciled_count: number
+          second_evidence_reason: string | null
           source: string
           status: string
           student_id: string | null
@@ -2895,6 +2898,7 @@ export type Database = {
           alerts?: Json
           classification?: string | null
           confidence?: number | null
+          corrections?: Json
           created_at?: string
           diary_entry_ids?: Json
           duration_ms?: number | null
@@ -2909,9 +2913,11 @@ export type Database = {
           meal_type?: string | null
           mode?: string
           needs_review?: boolean
+          needs_second_evidence?: boolean
           notes?: string | null
           quality_score?: number | null
           reconciled_count?: number
+          second_evidence_reason?: string | null
           source?: string
           status?: string
           student_id?: string | null
@@ -2925,6 +2931,7 @@ export type Database = {
           alerts?: Json
           classification?: string | null
           confidence?: number | null
+          corrections?: Json
           created_at?: string
           diary_entry_ids?: Json
           duration_ms?: number | null
@@ -2939,9 +2946,11 @@ export type Database = {
           meal_type?: string | null
           mode?: string
           needs_review?: boolean
+          needs_second_evidence?: boolean
           notes?: string | null
           quality_score?: number | null
           reconciled_count?: number
+          second_evidence_reason?: string | null
           source?: string
           status?: string
           student_id?: string | null

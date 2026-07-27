@@ -42,6 +42,9 @@ type LogRow = {
   duration_ms: number | null;
   input_text: string | null;
   created_at: string;
+  corrections?: any;
+  needs_second_evidence?: boolean;
+  second_evidence_reason?: string | null;
 };
 
 const STATUS_META: Record<string, { label: string; className: string; icon: any }> = {
@@ -302,6 +305,33 @@ const AdminFoodAILogs = () => {
               {selected.totals && (
                 <div className="rounded border p-2 bg-muted/40 text-xs">
                   <span className="font-medium">Totais:</span> {(selected.totals as any).calories}kcal • P{(selected.totals as any).protein_g}g • C{(selected.totals as any).carbs_g}g • G{(selected.totals as any).fat_g}g
+                </div>
+              )}
+
+              {selected.needs_second_evidence && (
+                <div className="rounded border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700">
+                  <div className="font-medium">Segunda evidência solicitada</div>
+                  <div>{selected.second_evidence_reason || "—"}</div>
+                </div>
+              )}
+
+              {Array.isArray(selected.corrections) && selected.corrections.length > 0 && (
+                <div>
+                  <div className="font-medium mb-1">Correções automáticas aplicadas</div>
+                  <div className="rounded border divide-y">
+                    {selected.corrections.map((c: any, i: number) => (
+                      <div key={i} className="p-2 text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium">{c.item}</span>
+                          <Badge variant="outline" className="text-[10px]">{c.rule}</Badge>
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          {c.field}: <span className="line-through">{c.before}</span> → <span className="font-semibold text-foreground">{c.after}</span>
+                        </div>
+                        {c.note && <div className="text-[11px] text-muted-foreground italic mt-0.5">{c.note}</div>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
