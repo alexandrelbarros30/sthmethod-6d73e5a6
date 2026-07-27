@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
     const aiResult = await callGemini(LOVABLE_API_KEY, mode, text, imageDataUrl);
     const initialFoods: FoodItem[] = Array.isArray(aiResult?.foods) ? aiResult.foods : [];
 
-    const { foods: reconciledFoods, reconciledCount } = await reconcileFoods(initialFoods);
+    const { foods: reconciledFoods, reconciledCount, corrections } = await reconcileFoods(initialFoods);
     const totals = recomputeTotals(reconciledFoods);
 
     // Internal audit tag only — never surfaced to end users.
@@ -368,6 +368,26 @@ Deno.serve(async (req) => {
     const extraAlerts: string[] = [];
     if (reconciledFoods.some((f) => (Number(f.confidence) || 0) <= 0.4)) extraAlerts.push('peso_suspeito');
 
+    // Second-evidence gate: any severe correction (>50% delta on kcal) or a hard
+    // ceiling / atwater rewrite on LABEL mode means we can't safely conclude
+    // from a single frame — ask for a second photo of the nutrition panel/portion.
+    const severe = corrections.filter((c) => {
+      if (c.field !== 'calories') return false;
+      const b = Math.abs(c.before);
+      const a = Math.abs(c.after);
+      const base = Math.max(b, a, 1);
+      return Math.abs(b - a) / base > 0.5;
+    });
+    const labelHardTrigger = mode === 'label' && corrections.some((c) => c.rule === 'atwater_rewrite' || c.rule === 'hard_ceiling');
+    const needsSecondEvidence = severe.length > 0 || labelHardTrigger;
+    let secondEvidenceReason: string | null = null;
+    if (needsSecondEvidence) {
+      secondEvidenceReason = mode === 'label'
+        ? 'Divergência entre kcal declarado e kcal calculado pelos macros. Envie uma segunda foto nítida do painel nutricional e da porção indicada para confirmar.'
+        : 'Não foi possível estimar com segurança. Envie uma segunda foto com mais luz, focada no prato inteiro e, se possível, um referencial de tamanho (talher, mão).';
+      extraAlerts.push('segunda_evidencia_requerida');
+    }
+
     const payload = {
       analysis_type: aiResult?.analysis_type || mode,
       confidence: globalConfidence,
@@ -380,6 +400,10 @@ Deno.serve(async (req) => {
       source,
       reconciled_count: reconciledCount,
       total_count: reconciledFoods.length,
+      corrections,
+      needs_second_evidence: needsSecondEvidence,
+      second_evidence_reason: secondEvidenceReason,
+      status: needsSecondEvidence ? 'pending_second_evidence' : 'analyzed',
     };
 
     // Fire-and-forget audit log (never blocks the response).
@@ -401,8 +425,11 @@ Deno.serve(async (req) => {
         ai_source: payload.source,
         reconciled_count: payload.reconciled_count,
         total_count: payload.total_count,
-        status: 'analyzed',
-        needs_review: payload.confidence < 0.7,
+        status: payload.status,
+        needs_review: payload.confidence < 0.7 || needsSecondEvidence,
+        corrections: corrections as any,
+        needs_second_evidence: needsSecondEvidence,
+        second_evidence_reason: secondEvidenceReason,
         duration_ms: Date.now() - started,
       }).then(({ error }) => { if (error) console.error('food_ai_logs edge insert', error); });
     }
