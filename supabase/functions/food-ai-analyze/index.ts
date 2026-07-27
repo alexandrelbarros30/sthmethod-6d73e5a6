@@ -407,11 +407,17 @@ Deno.serve(async (req) => {
     // Ambiguous-basis gate: se em modo label/photo a IA declarou nutrition_basis='unknown'
     // (ou não declarou), NÃO podemos concluir com segurança — pedimos segunda foto e
     // registramos a correção para auditoria, sem manter kcal potencialmente escalados errado.
+    // Basis ambiguity só é bloqueante quando a IA de fato tentou LER um rótulo
+    // (analysis_type === 'label'). Em fotos de prato (mode='photo' + analysis_type='meal_photo'),
+    // o peso vem da estimativa visual e o kcal é reconciliado via FS/TACO — não faz sentido
+    // exigir "base da tabela nutricional" nesse caso. Também aceitamos per_unit como base válida.
+    const aiTypeLabel = String(aiResult?.analysis_type || '').toLowerCase() === 'label';
+    const gateActive = mode === 'label' || (mode === 'photo' && aiTypeLabel);
     const ambiguousBasisItems = reconciledFoods.filter((f) => {
       const nb = String((f as any).nutrition_basis || '').toLowerCase();
       return !nb || nb === 'unknown';
     });
-    if ((mode === 'label' || mode === 'photo') && ambiguousBasisItems.length > 0) {
+    if (gateActive && ambiguousBasisItems.length > 0) {
       for (const f of ambiguousBasisItems) {
         corrections.push({
           item: f.name,
@@ -426,7 +432,7 @@ Deno.serve(async (req) => {
       }
       extraAlerts.push('base_nutricional_ambigua');
     }
-    const basisAmbiguous = (mode === 'label' || mode === 'photo') && ambiguousBasisItems.length > 0;
+    const basisAmbiguous = gateActive && ambiguousBasisItems.length > 0;
     const needsSecondEvidence = severe.length > 0 || labelHardTrigger || basisAmbiguous;
     let secondEvidenceReason: string | null = null;
     if (needsSecondEvidence) {
