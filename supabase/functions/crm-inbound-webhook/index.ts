@@ -1003,7 +1003,17 @@ Deno.serve(async (req) => {
         convRow = ins.data as any;
       }
 
-      const mediaUrl = extractIncomingMediaUrl(payload, blockedMediaKind);
+      let mediaUrl = extractIncomingMediaUrl(payload, blockedMediaKind);
+      // URLs mmg.whatsapp.net com sufixo .enc precisam ser resolvidas via
+      // W-API download-media (retorna link temporário já descriptografado).
+      const needsWapiDownload = !mediaUrl || /mmg\.whatsapp\.net/.test(mediaUrl) || /\.enc(\?|$)/.test(mediaUrl);
+      if (needsWapiDownload) {
+        const meta = extractWapiMediaMeta(payload, blockedMediaKind);
+        if (meta) {
+          const resolved = await downloadWapiMedia((wapiSucessoCfgRow?.value as any) || {}, meta);
+          if (resolved) mediaUrl = resolved;
+        }
+      }
 
       // Registra a mídia recebida no histórico
       try {
