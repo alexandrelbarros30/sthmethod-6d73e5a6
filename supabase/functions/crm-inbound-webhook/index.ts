@@ -1004,8 +1004,8 @@ Deno.serve(async (req) => {
                   external_id: sendAsk.messageId,
                   metadata: { type: 'food_ai_second_evidence_request', reason: secondReason },
                 });
-                continue;
-              }
+                handled = true;
+              } else {
               const foodLines = foods.slice(0, 8).map((f: any) =>
                 `• ${f.name} — ${Math.round(Number(f.estimated_weight_g) || 0)}${f.unit || 'g'} · ${Math.round(Number(f.calories) || 0)} kcal · P${(Number(f.protein_g)||0).toFixed(1)} C${(Number(f.carbs_g)||0).toFixed(1)} G${(Number(f.fat_g)||0).toFixed(1)}`
               ).join('\n');
@@ -1040,6 +1040,7 @@ Deno.serve(async (req) => {
                 metadata: { conversation_id: convRow!.id, foods_count: foods.length, classification: cls },
               });
               handled = true;
+              }
             } else {
               console.error('food-ai-analyze error', aiErr, (aiData as any)?.error);
             }
