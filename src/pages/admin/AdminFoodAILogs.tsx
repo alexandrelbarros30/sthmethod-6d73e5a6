@@ -48,11 +48,11 @@ type LogRow = {
 };
 
 const STATUS_META: Record<string, { label: string; className: string; icon: any }> = {
-  saved: { label: "Salvo no diário", className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30", icon: CheckCircle2 },
-  analyzed: { label: "Analisado", className: "bg-sky-500/15 text-sky-600 border-sky-500/30", icon: Eye },
-  pending_review: { label: "Revisão pendente", className: "bg-amber-500/15 text-amber-600 border-amber-500/30", icon: AlertTriangle },
-  discarded: { label: "Descartado", className: "bg-muted text-muted-foreground border-border", icon: XCircle },
-  error: { label: "Erro", className: "bg-rose-500/15 text-rose-600 border-rose-500/30", icon: XCircle },
+  saved: { label: "Salvo", className: "bg-[#F0FAF3] text-[#0F7B3B] border-[#34C759]/25", icon: CheckCircle2 },
+  analyzed: { label: "Analisado", className: "bg-[#F0F6FF] text-[#0071E3] border-[#0071E3]/20", icon: Eye },
+  pending_review: { label: "Pendente", className: "bg-[#FFF7EB] text-[#B25E00] border-[#FF9500]/25", icon: AlertTriangle },
+  discarded: { label: "Descartado", className: "bg-[#F5F5F7] text-[#6E6E73] border-[#E5E5EA]", icon: XCircle },
+  error: { label: "Erro", className: "bg-[#FFF0F0] text-[#C7362B] border-[#FF3B30]/25", icon: XCircle },
 };
 
 const AdminFoodAILogs = () => {
@@ -128,10 +128,18 @@ const AdminFoodAILogs = () => {
 
   return (
     <DashboardLayout role="admin" title="Histórico STH Food AI">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-5">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/food-ai")}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar ao console
+      <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-6 antialiased">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-[26px] md:text-[32px] font-semibold tracking-[-0.022em] leading-tight text-[#1D1D1F]">
+              Histórico
+            </h1>
+            <p className="text-[13px] text-[#6E6E73] tracking-[-0.01em] mt-0.5">
+              Todas as análises geradas pela STH Food AI.
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/food-ai")} className="rounded-full text-[#0071E3] hover:bg-[#F0F6FF] hover:text-[#0071E3] h-9 px-4">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Console
           </Button>
         </div>
 
@@ -149,14 +157,14 @@ const AdminFoodAILogs = () => {
         </div>
 
         {/* Filtros */}
-        <Card>
+        <Card className="rounded-3xl border-[#E5E5EA] shadow-none bg-white">
           <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="relative md:col-span-2">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Buscar aluno, notas..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868B]" />
+              <Input className="pl-10 h-11 rounded-2xl border-[#E5E5EA] bg-[#F5F5F7] focus-visible:ring-1 focus-visible:ring-[#34C759] focus-visible:border-[#34C759] placeholder:text-[#86868B]" placeholder="Buscar aluno, notas..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="h-11 rounded-2xl border-[#E5E5EA] bg-[#F5F5F7]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="saved">Salvos</SelectItem>
@@ -167,7 +175,7 @@ const AdminFoodAILogs = () => {
               </SelectContent>
             </Select>
             <Select value={modeFilter} onValueChange={setModeFilter}>
-              <SelectTrigger><SelectValue placeholder="Modo" /></SelectTrigger>
+              <SelectTrigger className="h-11 rounded-2xl border-[#E5E5EA] bg-[#F5F5F7]"><SelectValue placeholder="Modo" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os modos</SelectItem>
                 <SelectItem value="photo">Foto</SelectItem>
@@ -179,12 +187,16 @@ const AdminFoodAILogs = () => {
         </Card>
 
         {/* Tabela */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Análises ({filtered.length})</CardTitle></CardHeader>
+        <Card className="rounded-3xl border-[#E5E5EA] shadow-none bg-white overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[#1D1D1F]">
+              Análises <span className="text-[#86868B] font-normal ml-1">({filtered.length})</span>
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="border-b border-[#E5E5EA] hover:bg-transparent">
                   <TableHead>Data</TableHead>
                   <TableHead>Aluno</TableHead>
                   <TableHead>Modo</TableHead>
@@ -207,31 +219,31 @@ const AdminFoodAILogs = () => {
                   const conf = l.confidence != null ? Math.round(Number(l.confidence) * 100) : null;
                   const lowConf = conf != null && conf < 70;
                   return (
-                    <TableRow key={l.id} className="text-sm">
-                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                    <TableRow key={l.id} className="text-sm border-[#F2F2F7] hover:bg-[#F5F5F7]/60">
+                      <TableCell className="whitespace-nowrap text-xs text-[#6E6E73] tabular-nums">
                         {format(new Date(l.created_at), "dd/MM HH:mm", { locale: ptBR })}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium truncate max-w-[180px]">{p?.full_name || "—"}</div>
-                        <div className="text-xs text-muted-foreground truncate max-w-[180px]">{p?.email}</div>
+                        <div className="font-medium truncate max-w-[180px] text-[#1D1D1F] tracking-[-0.01em]">{p?.full_name || "—"}</div>
+                        <div className="text-xs text-[#86868B] truncate max-w-[180px]">{p?.email}</div>
                       </TableCell>
-                      <TableCell><Badge variant="outline">{l.mode}</Badge></TableCell>
-                      <TableCell className="text-xs">{l.meal_label || "—"}<div className="text-muted-foreground">{l.log_date}</div></TableCell>
+                      <TableCell><Badge variant="outline" className="rounded-full text-[11px] border-[#E5E5EA] bg-[#F5F5F7] text-[#6E6E73] font-normal">{l.mode}</Badge></TableCell>
+                      <TableCell className="text-xs text-[#1D1D1F]">{l.meal_label || "—"}<div className="text-[#86868B] tabular-nums">{l.log_date}</div></TableCell>
                       <TableCell>
                         {conf != null ? (
-                          <Badge variant={lowConf ? "destructive" : "default"}>{conf}%</Badge>
+                          <Badge className={`rounded-full font-medium text-[11px] tabular-nums border ${lowConf ? "bg-[#FFF7EB] text-[#B25E00] border-[#FF9500]/25" : "bg-[#F0FAF3] text-[#0F7B3B] border-[#34C759]/25"}`}>{conf}%</Badge>
                         ) : "—"}
                       </TableCell>
-                      <TableCell>{l.quality_score != null ? `${l.quality_score}/10` : "—"}</TableCell>
+                      <TableCell className="tabular-nums text-[#1D1D1F]">{l.quality_score != null ? `${l.quality_score}/10` : "—"}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={meta.className}>
+                        <Badge variant="outline" className={`rounded-full font-medium text-[11px] ${meta.className}`}>
                           <meta.icon className="w-3 h-3 mr-1" />
                           {meta.label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{l.ai_source || l.source}</TableCell>
+                      <TableCell className="text-xs text-[#86868B]">{l.ai_source || l.source}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => setSelected(l)}>
+                        <Button variant="ghost" size="icon" className="rounded-full text-[#0071E3] hover:bg-[#F0F6FF] hover:text-[#0071E3]" onClick={() => setSelected(l)}>
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TableCell>
@@ -349,13 +361,17 @@ const AdminFoodAILogs = () => {
 };
 
 function MetricCard({ label, value, tone, hint }: { label: string; value: string | number; tone?: "emerald" | "amber" | "rose"; hint?: string }) {
-  const toneClass = tone === "emerald" ? "text-emerald-600" : tone === "amber" ? "text-amber-600" : tone === "rose" ? "text-rose-600" : "";
+  const toneClass =
+    tone === "emerald" ? "text-[#0F7B3B]" :
+    tone === "amber" ? "text-[#B25E00]" :
+    tone === "rose" ? "text-[#C7362B]" :
+    "text-[#1D1D1F]";
   return (
-    <Card>
-      <CardContent className="p-3">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-semibold ${toneClass}`}>{value}</div>
-        {hint && <div className="text-[10px] text-muted-foreground mt-0.5">{hint}</div>}
+    <Card className="rounded-2xl border-[#E5E5EA] shadow-none bg-white">
+      <CardContent className="p-4">
+        <div className="text-[11px] uppercase tracking-[0.04em] text-[#86868B] font-medium">{label}</div>
+        <div className={`text-[26px] font-semibold tracking-[-0.022em] tabular-nums mt-1 ${toneClass}`}>{value}</div>
+        {hint && <div className="text-[10px] text-[#86868B] mt-1">{hint}</div>}
       </CardContent>
     </Card>
   );
