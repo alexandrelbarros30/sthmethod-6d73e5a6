@@ -987,6 +987,25 @@ Deno.serve(async (req) => {
               const foods = Array.isArray((aiData as any).foods) ? (aiData as any).foods : [];
               const cls = (aiData as any).classification || 'Moderado';
               const emoji = /excel|otim|bom/i.test(cls) ? '🟢' : /ruim|baix|frac/i.test(cls) ? '🔴' : '🟡';
+              const needsSecond = (aiData as any).needs_second_evidence === true;
+              const secondReason = (aiData as any).second_evidence_reason as string | null;
+              if (needsSecond) {
+                const askReply =
+                  `🍽️ *STHIA — Preciso de mais uma foto*\n\n` +
+                  (secondReason || 'Envie uma segunda foto para eu concluir a análise com precisão.') +
+                  `\n\n_Após a segunda foto eu finalizo a análise._`;
+                const sendAsk = await sendImmediateText('wapi_sucesso', askReply);
+                await admin.from('crm_messages').insert({
+                  conversation_id: convRow!.id,
+                  direction: 'out',
+                  source: 'wapi_sucesso',
+                  status: sendAsk.sent ? 'sent' : 'failed',
+                  body: askReply,
+                  external_id: sendAsk.messageId,
+                  metadata: { type: 'food_ai_second_evidence_request', reason: secondReason },
+                });
+                continue;
+              }
               const foodLines = foods.slice(0, 8).map((f: any) =>
                 `• ${f.name} — ${Math.round(Number(f.estimated_weight_g) || 0)}${f.unit || 'g'} · ${Math.round(Number(f.calories) || 0)} kcal · P${(Number(f.protein_g)||0).toFixed(1)} C${(Number(f.carbs_g)||0).toFixed(1)} G${(Number(f.fat_g)||0).toFixed(1)}`
               ).join('\n');
