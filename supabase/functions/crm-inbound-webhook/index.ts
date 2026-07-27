@@ -1397,7 +1397,20 @@ Deno.serve(async (req) => {
                 goals = g || null;
               }
             } catch (_) { /* meta é opcional */ }
-            const { text: reply, totals, foods, cls } = formatFoodAiReply(aiData, goals, 'text');
+            const sourceKind: 'audio' | 'text' = audioTranscriptForFood ? 'audio' : 'text';
+            const today = new Date().toISOString().slice(0, 10);
+            const { text: reply, totals, foods, cls } = formatFoodAiReply(aiData, goals, sourceKind, {
+              logId: (aiData as any)?.log_id ?? null,
+              logDate: today,
+            });
+            console.log('[food-ai reply] canal Sucesso enviando análise', {
+              source: sourceKind,
+              log_id: (aiData as any)?.log_id ?? null,
+              foods: foods.length,
+              sthia_score: (aiData as any)?.sthia_score ?? null,
+              nova_summary: (aiData as any)?.nova_summary ?? null,
+              has_suggestions: Array.isArray((aiData as any)?.suggestions) && (aiData as any).suggestions.length > 0,
+            });
 
             // Salva no diário alimentar (best effort)
             try {
@@ -1434,14 +1447,27 @@ Deno.serve(async (req) => {
               status: send.sent ? 'sent' : 'failed',
               body: reply,
               external_id: send.messageId,
-              metadata: { type: 'food_ai_analysis_text', totals, classification: cls, foods_count: foods.length },
+              metadata: {
+                type: audioTranscriptForFood ? 'food_ai_analysis_audio' : 'food_ai_analysis_text',
+                totals,
+                classification: cls,
+                foods_count: foods.length,
+                log_id: (aiData as any)?.log_id ?? null,
+                source: sourceKind,
+              },
             });
             await admin.from('automation_logs').insert({
               contact_phone: phone,
-              event_type: 'food_ai_analysis_text',
+              event_type: audioTranscriptForFood ? 'food_ai_analysis_audio' : 'food_ai_analysis_text',
               queue_type: 'sucesso',
               severity: 'info',
-              metadata: { conversation_id: convRow!.id, foods_count: foods.length, classification: cls },
+              metadata: {
+                conversation_id: convRow!.id,
+                foods_count: foods.length,
+                classification: cls,
+                log_id: (aiData as any)?.log_id ?? null,
+                source: sourceKind,
+              },
             });
             handled = true;
           }
