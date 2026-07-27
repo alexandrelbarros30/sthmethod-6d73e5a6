@@ -85,11 +85,39 @@ async function fsLookup(name: string) {
     const json = await res.json();
     if (!res.ok || json.error) { fsCache.set(key, null); return null; }
     const raw = json.foods?.food ? (Array.isArray(json.foods.food) ? json.foods.food : [json.foods.food]) : [];
-    const generic = raw.find((f: any) => !f.brand_name) || raw[0];
-    if (!generic) { fsCache.set(key, null); return null; }
-    const parsed = fsParseDescription(generic.food_description || '');
+    if (!raw.length) { fsCache.set(key, null); return null; }
+    // Token-overlap guard: só aceita candidatos cujo food_name compartilhe
+    // pelo menos um token significativo (>=3 chars) com o nome buscado.
+    // Evita casos onde "Nescau Protein" casa em item genérico ("Chocolate drink")
+    // e escala calorias absurdas.
+    const normalize = (s: string) => (s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ');
+    const searchTokens = new Set(normalize(key).split(/\s+/).filter((t) => t.length >= 3));
+    const scored = raw.map((c: any) => {
+      const nameTokens = new Set(normalize(c.food_name || '').split(/\s+/).filter((t) => t.length >= 3));
+      let overlap = 0;
+      for (const t of searchTokens) if (nameTokens.has(t)) overlap++;
+      // Prefere match com marca quando o usuário citou marca; senão prefere genérico.
+      const brandBonus = c.brand_name ? 0.1 : 0;
+      return { c, score: overlap + brandBonus };
+    }).filter((x: any) => x.score > 0)
+      .sort((a: any, b: any) => b.score - a.score);
+    const picked = scored[0]?.c;
+    if (!picked) { fsCache.set(key, null); return null; }
+    const parsed = fsParseDescription(picked.food_description || '');
     if (!parsed) { fsCache.set(key, null); return null; }
-    const out = { ...parsed, label: generic.food_name };
+    // Sanity: rejeita per100 fora do envelope físico de bebidas quando o
+    // nome buscado sugere líquido (ml, bebida, leite, suco, refri, whey pronto, shake).
+    const looksLiquid = /\b(bebida|leite|suco|refri|refrigerante|shake|iogurte liquido|whey (?:ready|pronto)|ml|drink)\b/i.test(key);
+    if (looksLiquid && parsed.per100.energy_kcal > 200) {
+      // Bebidas raramente passam de 200 kcal/100ml (leite condensado ~320, é exceção).
+      // Descarta para forçar cálculo por caps físicos + Atwater.
+      fsCache.set(key, null);
+      return null;
+    }
+    const out = { ...parsed, label: picked.food_name };
     fsCache.set(key, out);
     return out;
   } catch { fsCache.set(key, null); return null; }
@@ -243,16 +271,50 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
         fat_g: +(hit.per100.fat_g * factor).toFixed(2),
         confidence: blended,
       };
-      if (Math.abs((Number(f.calories) || 0) - rewritten.calories) > 5) {
-        corrections.push({ item: f.name, rule: 'db_reconcile', field: 'calories', before: Number(f.calories) || 0, after: rewritten.calories, note: 'sobrescrito pela base de dados nutricional' });
+      // Sanity check ANTES de aceitar o rewrite:
+      // 1) cap físico kcal/g ou kcal/ml (líquido não passa de 2.0 kcal/ml).
+      // 2) Atwater precisa bater com o kcal calculado (±25%).
+      // 3) delta absoluto vs. o que a IA já tinha: se >100% e IA estava plausível,
+      //    descarta o hit (provável mismatch nome↔item FS).
+      const isLiquid = String(rewritten.unit || '').toLowerCase() === 'ml';
+      const perUnitCap = isLiquid ? 2.0 : 9.5;
+      const kcalPerUnit = safeWeight > 0 ? rewritten.calories / safeWeight : 0;
+      const atwater = rewritten.protein_g * 4 + rewritten.carbs_g * 4 + rewritten.fat_g * 9;
+      const atwaterOk = atwater > 5
+        ? Math.abs(rewritten.calories - atwater) / Math.max(atwater, 1) <= 0.25
+        : true;
+      const aiKcal = Number(f.calories) || 0;
+      const aiKcalPerUnit = safeWeight > 0 ? aiKcal / safeWeight : 0;
+      const aiPlausible = aiKcal > 0 && aiKcalPerUnit <= perUnitCap;
+      const rewriteExplodesKcal = aiPlausible && rewritten.calories > aiKcal * 2.5;
+      const dbLooksWrong = kcalPerUnit > perUnitCap || !atwaterOk || rewriteExplodesKcal;
+
+      if (dbLooksWrong) {
+        // Rejeita o rewrite: cai no ramo de heurística (caps físicos + Atwater).
+        corrections.push({
+          item: f.name,
+          rule: 'db_reconcile',
+          field: 'calories',
+          before: aiKcal,
+          after: aiKcal,
+          note: `hit da base descartado (kcal/${isLiquid ? 'ml' : 'g'}=${kcalPerUnit.toFixed(2)}, atwaterOk=${atwaterOk}, explodesKcal=${rewriteExplodesKcal})`,
+        });
+        // Deixa o fluxo cair no else — reprocessa via caps físicos abaixo.
+      } else {
+        if (Math.abs(aiKcal - rewritten.calories) > 5) {
+          corrections.push({ item: f.name, rule: 'db_reconcile', field: 'calories', before: aiKcal, after: rewritten.calories, note: 'sobrescrito pela base de dados nutricional' });
+        }
+        out.push(rewritten);
+        reconciled++;
+        continue;
       }
-      out.push(rewritten);
-      reconciled++;
     } else {
       // Kcal/g sanity guard: no real food exceeds ~9.5 kcal/g (pure fat).
       // Beverages (unit=ml) are much lower: milk-based drinks ~0.4-1.0 kcal/ml,
       // sugary sodas ~0.5 kcal/ml. Cap at 2.0 kcal/ml — anything above is a
       // label-reading hallucination (e.g. Nescau 250ml lida como 1003 kcal).
+    }
+    {
       const isLiquid = String(f.unit || '').toLowerCase() === 'ml';
       const perUnitCap = isLiquid ? 2.0 : 9.5;
       const kcalPerG = safeWeight > 0 ? (Number(f.calories) || 0) / safeWeight : 0;
