@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check, Camera, Sparkles, Tag, Mic, Square, Wand2 } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check, Camera, Sparkles, Tag, Mic, Square, Wand2, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -565,7 +565,7 @@ function AddFoodDialog({
   dateISO: string;
   onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
 }) {
-  const [tab, setTab] = useState<"alimento" | "salvas" | "sthia">("alimento");
+  const [tab, setTab] = useState<"alimento" | "salvas">("alimento");
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -745,9 +745,10 @@ function AddFoodDialog({
           </div>
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-2 bg-[#F2F2F7] border border-[#E5E5EA]">
-            <TabsTrigger value="alimento" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Alimento</TabsTrigger>
-            <TabsTrigger value="salvas" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Salvas</TabsTrigger>
+          <TabsList className="grid grid-cols-3 bg-[#F2F2F7] border border-[#E5E5EA]">
+            <TabsTrigger value="alimento" className="text-[11px] data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Alimento</TabsTrigger>
+            <TabsTrigger value="salvas" className="text-[11px] data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Salvas</TabsTrigger>
+            <TabsTrigger value="historico" className="text-[11px] data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Histórico IA</TabsTrigger>
           </TabsList>
 
           <TabsContent value="alimento" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
@@ -903,6 +904,20 @@ function AddFoodDialog({
                 </div>
               </div>
             ))}
+          </TabsContent>
+          <TabsContent value="historico" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
+            <div className="flex-1 overflow-y-auto border border-[#E5E5EA] rounded-xl p-4 bg-[#F2F2F7] text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-white border border-[#E5E5EA] flex items-center justify-center mx-auto mb-2">
+                <History className="w-6 h-6 text-[#8E8E93]" />
+              </div>
+              <h3 className="font-semibold text-[#1C1C1E]">Histórico Completo STHIA</h3>
+              <p className="text-sm text-[#6E6E73] leading-relaxed">
+                As análises detalhadas por IA agora possuem um menu exclusivo para melhor visualização e acompanhamento semanal.
+              </p>
+              <Button asChild className="w-full bg-[#1D1D1F] text-white hover:bg-black rounded-full h-10 mt-2">
+                <Link to="/dashboard/sthia-food">Acessar STHIA FOOD IA</Link>
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
