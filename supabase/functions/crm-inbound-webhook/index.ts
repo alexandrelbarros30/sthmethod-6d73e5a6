@@ -28,13 +28,56 @@ async function transcribeAudioFromUrl(url: string): Promise<string | null> {
       return null;
     }
 
-    // WhatsApp PTT é geralmente .ogg/opus. O endpoint aceita ogg.
     const ct = (audioBlob.type || '').toLowerCase();
+    const isOggOpus = ct.includes('ogg') || ct.includes('opus');
     const ext = ct.includes('mp4') || ct.includes('m4a') ? 'm4a'
       : ct.includes('webm') ? 'webm'
       : ct.includes('wav') ? 'wav'
       : ct.includes('mpeg') || ct.includes('mp3') ? 'mp3'
       : 'ogg';
+
+    // WhatsApp PTT vem em OGG/Opus — o gpt-4o-mini-transcribe rejeita
+    // ("Audio file might be corrupted or unsupported"). Nesses casos usamos
+    // o Gemini via chat completions com input_audio (aceita ogg/opus nativo).
+    if (isOggOpus) {
+      const bytes = new Uint8Array(await audioBlob.arrayBuffer());
+      // base64 em blocos para não estourar a stack
+      let bin = '';
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+      }
+      const b64 = btoa(bin);
+      const ctrlG = new AbortController();
+      const timerG = setTimeout(() => ctrlG.abort(), 30000);
+      const rg = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        signal: ctrlG.signal,
+        body: JSON.stringify({
+          model: 'google/gemini-3.6-flash',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Transcreva integralmente o áudio a seguir em português do Brasil. Responda APENAS com a transcrição literal, sem prefixos, comentários ou explicações.' },
+                { type: 'input_audio', input_audio: { data: b64, format: 'ogg' } },
+              ],
+            },
+          ],
+        }),
+      }).finally(() => clearTimeout(timerG));
+      if (!rg.ok) {
+        console.error(`[transcribe] gemini ${rg.status}: ${await rg.text().catch(() => '')}`);
+        return null;
+      }
+      const dg = await rg.json().catch(() => null) as any;
+      const text = String(dg?.choices?.[0]?.message?.content || '').trim();
+      return text || null;
+    }
 
     const form = new FormData();
     form.append('model', 'openai/gpt-4o-mini-transcribe');
