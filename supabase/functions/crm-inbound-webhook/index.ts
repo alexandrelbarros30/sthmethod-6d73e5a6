@@ -1301,6 +1301,141 @@ Deno.serve(async (req) => {
       return await finish({ ok: true, sucesso_media_ack: true, media_kind: blockedMediaKind });
     }
 
+    // ============================================================
+    // STH FOOD AI — análise por TEXTO no canal Sucesso do Aluno
+    // Detecta descrições de refeição em texto livre (ex.: "2 ovos e
+    // 1 pão francês", "200g frango, 150g batata doce") e devolve
+    // a estimativa de macros/qualidade via food-ai-analyze mode='text'.
+    // Roda ANTES do fluxo de menu/IA persona para não ser interceptado.
+    // ============================================================
+    if (provider === 'wapi_sucesso' && !hasBlockedMedia && body && looksLikeFoodDescription(body)) {
+      let { data: convRow } = await admin
+        .from('crm_conversations')
+        .select('id, user_id')
+        .eq('phone', phone)
+        .maybeSingle();
+      if (!convRow) {
+        const ins = await admin.from('crm_conversations').insert({
+          phone, wa_id: waId, display_name: name || null, channel: 'whatsapp',
+          status: 'open', provider: 'wapi_sucesso', queue_type: 'sucesso',
+          session_started_at: new Date().toISOString(),
+        }).select('id, user_id').single();
+        convRow = ins.data as any;
+      }
+      // Registra a inbound (texto de comida)
+      await admin.from('crm_messages').insert({
+        conversation_id: convRow!.id,
+        direction: 'in',
+        source: 'wapi_sucesso',
+        status: 'received',
+        body,
+        external_id: externalId,
+        metadata: { type: 'food_ai_text_input' },
+      }).select().maybeSingle().then(() => {}).catch(() => {});
+
+      let handled = false;
+      try {
+        const { data: aiData, error: aiErr } = await admin.functions.invoke('food-ai-analyze', {
+          body: {
+            mode: 'text',
+            text: body,
+            audit_source: 'whatsapp_sucesso_text',
+            student_id: (convRow as any)?.user_id ?? null,
+          },
+        });
+        if (!aiErr && aiData && !(aiData as any).error) {
+          const needsSecond = (aiData as any).needs_second_evidence === true;
+          const secondReason = (aiData as any).second_evidence_reason as string | null;
+          if (needsSecond) {
+            const askReply =
+              `🍽️ *STHIA — Preciso de um detalhe a mais*\n\n` +
+              (secondReason || 'Me diga a quantidade aproximada de cada item (em gramas, ml, colheres ou unidades) para eu concluir com precisão.') +
+              `\n\n_Você também pode enviar uma foto do prato/embalagem que eu recalculo._`;
+            const sendAsk = await sendImmediateText('wapi_sucesso', askReply);
+            await admin.from('crm_messages').insert({
+              conversation_id: convRow!.id,
+              direction: 'out',
+              source: 'wapi_sucesso',
+              status: sendAsk.sent ? 'sent' : 'failed',
+              body: askReply,
+              external_id: sendAsk.messageId,
+              metadata: { type: 'food_ai_text_second_evidence_request', reason: secondReason },
+            });
+            handled = true;
+          } else {
+            // Meta diária do aluno (opcional)
+            let goals: any = null;
+            try {
+              const uid = (convRow as any)?.user_id;
+              if (uid) {
+                const { data: g } = await admin
+                  .from('food_diary_goals')
+                  .select('daily_kcal, protein_g, carbs_g, fat_g')
+                  .eq('user_id', uid).maybeSingle();
+                goals = g || null;
+              }
+            } catch (_) { /* meta é opcional */ }
+            const { text: reply, totals, foods, cls } = formatFoodAiReply(aiData, goals, 'text');
+
+            // Salva no diário alimentar (best effort)
+            try {
+              const uid = (convRow as any)?.user_id;
+              if (uid && foods.length) {
+                const today = new Date().toISOString().slice(0, 10);
+                const rows = foods.map((f: any, i: number) => ({
+                  user_id: uid,
+                  log_date: today,
+                  meal_type: 'lanche',
+                  meal_label: 'WhatsApp STHIA (texto)',
+                  item_name: String(f.name || 'Item'),
+                  quantity: Number(f.estimated_weight_g) || 0,
+                  unit: (f.unit === 'ml' ? 'ml' : 'g'),
+                  energy_kcal: Number(f.calories) || 0,
+                  protein_g: Number(f.protein_g) || 0,
+                  carbs_g: Number(f.carbs_g) || 0,
+                  fat_g: Number(f.fat_g) || 0,
+                  fiber_g: Number(f.fiber_g) || 0,
+                  sodium_mg: Number(f.sodium_mg) || 0,
+                  sort_order: i,
+                }));
+                await admin.from('food_diary_entries').insert(rows);
+              }
+            } catch (e) {
+              console.error('food_ai_text diary autosave failed', e);
+            }
+
+            const send = await sendImmediateText('wapi_sucesso', reply);
+            await admin.from('crm_messages').insert({
+              conversation_id: convRow!.id,
+              direction: 'out',
+              source: 'wapi_sucesso',
+              status: send.sent ? 'sent' : 'failed',
+              body: reply,
+              external_id: send.messageId,
+              metadata: { type: 'food_ai_analysis_text', totals, classification: cls, foods_count: foods.length },
+            });
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'food_ai_analysis_text',
+              queue_type: 'sucesso',
+              severity: 'info',
+              metadata: { conversation_id: convRow!.id, foods_count: foods.length, classification: cls },
+            });
+            handled = true;
+          }
+        } else {
+          console.error('food-ai-analyze (text) error', aiErr, (aiData as any)?.error);
+        }
+      } catch (e) {
+        console.error('food_ai_text pipeline error', e);
+      }
+
+      if (handled) {
+        return await finish({ ok: true, sucesso_food_ai_text: true });
+      }
+      // Se falhou, segue o fluxo normal (IA persona / menu)
+    }
+
     if (hasBlockedMedia) {
       // Para o canal Fale com o Nutri (wapi), inativos/leads NÃO devem ser
       // atendidos aqui — devem ser encaminhados imediatamente ao Comercial.
