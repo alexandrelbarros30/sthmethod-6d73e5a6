@@ -580,6 +580,14 @@ Deno.serve(async (req) => {
       else logId = logRow?.id ?? null;
     }
 
+    // Fase 7 — Alerta CRM proativo: 3+ análises em 7 dias com Score<50
+    // ou NOVA 4 predominante geram uma task na CRM (dedupe 3 dias).
+    if (admin && studentId && payload.status === 'analyzed') {
+      evaluateCrmAlert(admin, studentId).catch((e) =>
+        console.error('food-ai crm alert eval failed', e),
+      );
+    }
+
     return new Response(JSON.stringify({ ...payload, log_id: logId }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     console.error('food-ai-analyze error', err);
@@ -606,3 +614,85 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+// ============= Fase 7 — Alerta CRM proativo STHIA Food =============
+async function evaluateCrmAlert(admin: any, studentId: string) {
+  const sinceIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: logs, error } = await admin
+    .from('food_ai_logs')
+    .select('id, quality_score, classification, alerts, created_at')
+    .eq('student_id', studentId)
+    .eq('status', 'analyzed')
+    .gte('created_at', sinceIso)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error || !Array.isArray(logs) || logs.length < 3) return;
+
+  const lowScore = logs.filter((l: any) => Number(l.quality_score ?? 100) < 50).length;
+  const nova4 = logs.filter((l: any) => {
+    const c = String(l.classification || '').toLowerCase();
+    return c.includes('ultra') || c.includes('nova 4') || c.includes('nova4');
+  }).length;
+  const nova4Dominant = nova4 >= 3 && nova4 / logs.length >= 0.5;
+  const lowScoreDominant = lowScore >= 3;
+  if (!nova4Dominant && !lowScoreDominant) return;
+
+  // Debounce — skip if any open alert task exists in last 3 days for this student.
+  const debounceIso = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('user_id, full_name, phone')
+    .eq('user_id', studentId)
+    .maybeSingle();
+  const phone = profile?.phone ? String(profile.phone).replace(/\D/g, '') : null;
+
+  const { data: existing } = await admin
+    .from('crm_tasks')
+    .select('id')
+    .eq('status', 'todo')
+    .ilike('title', 'STHIA Food · Alerta%')
+    .ilike('notes', `%student:${studentId}%`)
+    .gte('created_at', debounceIso)
+    .limit(1);
+  if (existing && existing.length > 0) return;
+
+  // Contexto para o card CRM.
+  const alertCounts: Record<string, number> = {};
+  logs.forEach((l: any) => {
+    (Array.isArray(l.alerts) ? l.alerts : []).forEach((a: any) => {
+      const key = String(a?.type || a?.label || a || '').trim();
+      if (key) alertCounts[key] = (alertCounts[key] || 0) + 1;
+    });
+  });
+  const topAlerts = Object.entries(alertCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k, v]) => `${k}×${v}`)
+    .join(', ');
+  const avgScore = Math.round(
+    logs.reduce((s: number, l: any) => s + Number(l.quality_score ?? 0), 0) / logs.length,
+  );
+
+  const reasons: string[] = [];
+  if (lowScoreDominant) reasons.push(`${lowScore} refeições c/ Score < 50 (média ${avgScore})`);
+  if (nova4Dominant) reasons.push(`${nova4}/${logs.length} ultraprocessadas (NOVA 4)`);
+
+  const title = `STHIA Food · Alerta nutricional — ${profile?.full_name || 'aluno'}`;
+  const notes = [
+    `student:${studentId}`,
+    `janela: últimos 7 dias (${logs.length} análises)`,
+    `motivo: ${reasons.join(' · ')}`,
+    topAlerts ? `alertas recorrentes: ${topAlerts}` : null,
+    'ação sugerida: revisar cardápio e agendar contato com o aluno.',
+  ].filter(Boolean).join('\n');
+
+  const dueAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const { error: insErr } = await admin.from('crm_tasks').insert({
+    phone,
+    title,
+    notes,
+    status: 'todo',
+    due_at: dueAt,
+  });
+  if (insErr) console.error('crm_tasks insert (STHIA Food alert)', insErr);
+}
