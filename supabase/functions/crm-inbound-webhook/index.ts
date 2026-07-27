@@ -653,7 +653,7 @@ function formatFoodAiReply(
   } else {
     missing.push('nova_summary');
     // Fallback amigável para o WhatsApp — nunca deixamos o campo em branco.
-    novaLine = `\n🏷️ NOVA — classificação em análise`;
+    novaLine = `\n🏷️ NOVA — ainda nao esta interpetando o audio`;
   }
   let goalsLine = '';
   if (goals && Number(goals.daily_kcal) > 0) {
