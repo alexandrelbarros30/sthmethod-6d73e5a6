@@ -1455,22 +1455,6 @@ export default function DiarioAlimentar() {
           </div>
         </div>
 
-        {/* Meals */}
-        {isAuth && (
-          <Link
-            to="/dashboard/sthia-food"
-            className="flex items-center justify-between gap-3 rounded-2xl border border-[#34C759]/25 bg-[#F0FAF3] px-4 py-3 shadow-apple-sm hover:bg-[#E6F7EC] transition-colors"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Wand2 className="w-4 h-4 text-[#0F7B3B] shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[#0F7B3B] leading-tight">Analisar com STHIA Food</p>
-                <p className="text-[11px] text-[#0F7B3B]/70 leading-tight">Foto, rótulo, texto ou áudio — adiciona direto no diário.</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-[#0F7B3B] shrink-0" />
-          </Link>
-        )}
 
         {allMeals.map((m) => {
           const items = groupByMeal(m.key);
