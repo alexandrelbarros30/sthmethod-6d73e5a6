@@ -344,6 +344,8 @@ const App = () => (
             <Route path="/admin/popups" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPopups /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNotifications /></ProtectedRoute>} />
             <Route path="/admin/release-log" element={<ProtectedRoute allowedRoles={["admin"]}><AdminReleaseLog /></ProtectedRoute>} />
+            <Route path="/admin/ia-historico" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminAIHistory /></Suspense></ProtectedRoute>} />
+            <Route path="/consultor/ia-historico" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminAIHistory /></Suspense></ProtectedRoute>} />
             <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminFeedback /></ProtectedRoute>} />
             <Route path="/admin/access-audit" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccessAudit /></ProtectedRoute>} />
             <Route path="/admin/backups" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBackups /></ProtectedRoute>} />
