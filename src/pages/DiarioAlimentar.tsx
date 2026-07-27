@@ -170,11 +170,25 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
           student_id: user?.id ?? null,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // Tenta extrair o payload de erro do edge (contém code STH-XXX legível).
+        let parsed: any = null;
+        try { parsed = await (error as any)?.context?.json?.(); } catch { /* noop */ }
+        const status = (error as any)?.context?.status;
+        throw Object.assign(new Error(parsed?.error || parsed?.details || error.message || "analysis_failed"), {
+          status: status ?? (parsed?.code === "STH-402" ? 402 : parsed?.code === "STH-429" ? 429 : 500),
+          code: parsed?.code,
+        });
+      }
       if ((data as any)?.error) throw new Error((data as any).details || (data as any).error);
       setResult(data);
     } catch (e: any) {
-      toast.error("Não consegui analisar", { description: String(e?.message || e).slice(0, 160) });
+      // Se já veio um code STH-402 (créditos) do edge, mapeia para friendly com título correto.
+      let f = toFriendlyError(e);
+      if (e?.code === "STH-402" || e?.status === 402) {
+        f = { code: "STH-402", title: "Serviço indisponível no momento", message: "A análise por IA está temporariamente fora do ar. Tente novamente em instantes ou fale com a equipe." };
+      }
+      toast.error(`[${f.code}] ${f.title}`, { description: f.message });
     } finally {
       setLoading(false);
     }
