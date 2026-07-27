@@ -1501,7 +1501,17 @@ export default function DiarioAlimentar() {
                             className="min-w-0 flex-1 text-left"
                             title="Editar quantidade"
                           >
-                            <p className="text-sm font-medium truncate text-[#1C1C1E]">{it.item_name}</p>
+                            <p className="text-sm font-medium truncate text-[#1C1C1E] flex items-center gap-1.5">
+                              <span className="truncate">{it.item_name}</span>
+                              {sthiaEntryIds.has(it.id) && (
+                                <span
+                                  title="Análise STHIA Food"
+                                  className="inline-flex items-center gap-0.5 shrink-0 rounded-full bg-[#F0FAF3] text-[#0F7B3B] border border-[#34C759]/25 px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-wider"
+                                >
+                                  <Wand2 className="w-2.5 h-2.5" /> STHIA
+                                </span>
+                              )}
+                            </p>
                             <p className="text-[11px] text-[#6E6E73]">
                               {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
                             </p>
