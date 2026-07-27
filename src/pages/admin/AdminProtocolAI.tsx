@@ -409,12 +409,45 @@ const AdminProtocolAI = () => {
                 </div>
               </div>
 
+              {selectedStudent && (
+                <label className="flex items-center gap-2 text-xs rounded-md border border-border/60 bg-muted/20 px-2 py-1.5 cursor-pointer">
+                  <Checkbox checked={useStudentProfile} onCheckedChange={(v) => setUseStudentProfile(!!v)} />
+                  <span>Incluir dados do aluno (peso/altura/sexo/objetivo) na análise</span>
+                </label>
+              )}
+
               <div>
-                <Label className="text-xs">Stack atual (hormônios / peptídeos / suplementos)</Label>
-                <Textarea rows={3} value={currentStack} onChange={(e) => setCurrentStack(e.target.value)} placeholder="Ex: Testo E 250mg/sem, Trembolona 200mg/sem, GH 4UI/dia, Metformina 850mg 2x..." />
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Stack atual (hormônios / peptídeos / suplementos)</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useStack} onCheckedChange={(v) => setUseStack(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
+                <Textarea rows={3} value={currentStack} onChange={(e) => setCurrentStack(e.target.value)} placeholder="Ex: Testo E 250mg/sem, Trembolona 200mg/sem, GH 4UI/dia, Metformina 850mg 2x... — ou edite manualmente se o aluno não tiver protocolo salvo" />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={pullCurrentStack}
+                  disabled={!selectedStudent || pullingStack}
+                >
+                  {pullingStack ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Puxando...</>
+                  ) : (
+                    <><Download className="w-4 h-4 mr-2" /> Puxar do cadastro (Saúde) / último protocolo</>
+                  )}
+                </Button>
               </div>
               <div>
-                <Label className="text-xs">Exames recentes / biomarcadores relevantes</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Exames recentes / biomarcadores relevantes</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useLabs} onCheckedChange={(v) => setUseLabs(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
                 <Textarea rows={3} value={labsNotes} onChange={(e) => setLabsNotes(e.target.value)} placeholder="Ex: HDL 32, LDL 145, HCT 52%, TGO 60, TGP 78, Estradiol 68..." />
                 <Button
                   type="button"
@@ -432,19 +465,37 @@ const AdminProtocolAI = () => {
                 </Button>
               </div>
               <div>
-                <Label className="text-xs">Restrições / condições clínicas</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Restrições / condições clínicas</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useRestrictions} onCheckedChange={(v) => setUseRestrictions(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
                 <Input value={restrictions} onChange={(e) => setRestrictions(e.target.value)} placeholder="HAS controlada, gastrite, alergia a lactose..." />
               </div>
               {selectedStudent && (
                 <div className="rounded-lg border border-border p-3 bg-muted/20">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG)
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG)
+                    </p>
+                    <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                      <Checkbox checked={useExams} onCheckedChange={(v) => setUseExams(!!v)} />
+                      <span>Usar na análise</span>
+                    </label>
+                  </div>
                   <DocumentUpload userId={selectedStudent.user_id} allowImages />
                 </div>
               )}
               <div>
-                <Label className="text-xs">Observações livres (prompt)</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Observações livres (prompt)</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={useFreeText} onCheckedChange={(v) => setUseFreeText(!!v)} />
+                    <span>Usar na análise</span>
+                  </label>
+                </div>
                 <Textarea rows={4} value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Ex: montar protocolo off-season 12 semanas com foco em ganho de massa magra e proteção cardiovascular, incluir peptídeos de recuperação..." />
               </div>
 
