@@ -1002,7 +1002,7 @@ Deno.serve(async (req) => {
                 `• Gordura ${(Number(totals.fat_g)||0).toFixed(1)} g` +
                 (totals.fiber_g ? `\n• Fibra ${Number(totals.fiber_g).toFixed(1)} g` : '') +
                 `\n\n📈 Qualidade: *${cls}*` + alerts +
-                `\n\n_Estimativa por visão + FatSecret. Para registro oficial use o Diário no portal STH METHOD._`;
+                `\n\n_Estimativa STHIA. Para registro oficial use o Diário no portal STH METHOD._`;
               const send = await sendImmediateText('wapi_sucesso', reply);
               await admin.from('crm_messages').insert({
                 conversation_id: convRow!.id,

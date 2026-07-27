@@ -241,6 +241,26 @@ async function reconcileFoods(foods: FoodItem[]): Promise<{ foods: FoodItem[]; r
         }
         adj.confidence = Math.min(Number(f.confidence) || 0.4, 0.4);
       }
+      // Atwater cross-check: expected kcal = P*4 + C*4 + F*9. If the AI-declared
+      // kcal deviates >25% from Atwater, trust the macros and rewrite kcal.
+      // This catches classic label bugs (e.g. per-package total shown as per-serving)
+      // that produced things like a 1000 kcal reading for a single serving.
+      const atwater = (Number(adj.protein_g) || 0) * 4 + (Number(adj.carbs_g) || 0) * 4 + (Number(adj.fat_g) || 0) * 9;
+      const declared = Number(adj.calories) || 0;
+      if (atwater > 5 && declared > 0) {
+        const ratio = declared / atwater;
+        if (ratio > 1.25 || ratio < 0.75) {
+          adj.calories = +atwater.toFixed(1);
+          adj.confidence = Math.min(Number(adj.confidence) || 0.5, 0.5);
+        }
+      } else if (atwater > 5 && declared === 0) {
+        adj.calories = +atwater.toFixed(1);
+      }
+      // Hard ceiling per single item: cannot exceed weight * 9 kcal/g (pure fat).
+      if (safeWeight > 0 && adj.calories > safeWeight * 9) {
+        adj.calories = +(safeWeight * 9).toFixed(1);
+        adj.confidence = Math.min(Number(adj.confidence) || 0.4, 0.4);
+      }
       out.push(adj);
     }
   }
@@ -310,9 +330,10 @@ Deno.serve(async (req) => {
     const { foods: reconciledFoods, reconciledCount } = await reconcileFoods(initialFoods);
     const totals = recomputeTotals(reconciledFoods);
 
+    // Internal audit tag only — never surfaced to end users.
     const source = reconciledCount === reconciledFoods.length && reconciledFoods.length > 0
-      ? 'fatsecret'
-      : reconciledCount > 0 ? 'fatsecret+ia' : (aiResult?.source || 'ia_estimativa');
+      ? 'sthia_db'
+      : reconciledCount > 0 ? 'sthia_hibrido' : 'sthia_visao';
 
     // Global confidence = min(item confidences) so a single suspect item lowers the whole batch.
     const itemConfs = reconciledFoods.map((f) => Number(f.confidence) || 0);

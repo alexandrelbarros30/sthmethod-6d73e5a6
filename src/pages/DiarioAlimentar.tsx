@@ -267,7 +267,7 @@ function FoodAITab({ mealType, mealLabel, onAdd }: {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-[#6E6E73]">Confiança: <span className={cn("font-semibold", confidencePct >= 85 ? "text-[#34C759]" : confidencePct >= 60 ? "text-[#FF9500]" : "text-[#FF3B30]")}>{confidencePct}%</span></p>
-              <p className="text-[10px] text-[#8E8E93]">Fonte: {String(result.source || "ia")} · {result.classification}</p>
+              <p className="text-[10px] text-[#8E8E93]">{result.classification}</p>
             </div>
             <Badge variant="outline" className="text-[10px]">{Math.round(result.totals?.calories || 0)} kcal</Badge>
           </div>
