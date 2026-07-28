@@ -28,16 +28,16 @@ export const useSubscriptionGuard = () => {
 
       const previewUnlocked = !!(profile as any)?.preview_unlocked;
 
-      // When previewing as student, force-show the real student experience
-      // (treat as active so the full meal/protocol UI renders, regardless of payment).
-      if (isPreviewing) {
-        return { active: true, subscription: sub, previewUnlocked: true };
-      }
-
       if (!sub) return { active: false, subscription: null, previewUnlocked };
       const isExpired = new Date(sub.end_date) < new Date();
       const isSuspended = sub.status === "suspended";
-      
+
+      // When previewing as student, force-show the real student experience
+      // for payment/expiry checks, but never bypass a manual suspension.
+      if (isPreviewing) {
+        return { active: !isSuspended, subscription: sub, previewUnlocked: true };
+      }
+
       return {
         active: sub.status === "active" && !isExpired && !isSuspended,
         subscription: sub,

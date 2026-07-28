@@ -690,15 +690,27 @@ const AdminStudents = () => {
 
   const subMutation = useMutation({
     mutationFn: async () => {
-      if (selected?.subscription) {
-        await supabase.from("subscriptions").update({
-          plan_id: subForm.plan_id, start_date: subForm.start_date, end_date: subForm.end_date, status: subForm.status,
-        }).eq("id", selected.subscription.id);
-      } else {
-        await supabase.from("subscriptions").insert({
-          user_id: selected.user_id, plan_id: subForm.plan_id, start_date: subForm.start_date, end_date: subForm.end_date, status: subForm.status,
-        });
+      if (!selected?.user_id) throw new Error("Aluno não selecionado");
+      if (!subForm.plan_id || !subForm.start_date || !subForm.end_date) {
+        throw new Error("Preencha plano, início e vencimento antes de salvar");
       }
+
+      const { data, error } = await supabase.functions.invoke("admin-manage-students", {
+        body: {
+          action: "update_subscription",
+          user_id: selected.user_id,
+          subscription_id: selected.subscription?.id,
+          plan_id: subForm.plan_id,
+          start_date: subForm.start_date,
+          end_date: subForm.end_date,
+          status: subForm.status,
+        },
+      });
+
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || "Erro ao atualizar assinatura");
+      }
+
       // Espelha vencimento no SuperCoach (fire-and-forget).
       if (subForm.end_date) {
         supabase.functions.invoke("supercoach-sync-expiration", {
@@ -710,9 +722,28 @@ const AdminStudents = () => {
           },
         }).catch((e) => console.warn("[SuperCoach sync] falhou", e));
       }
+
+      return data?.subscription;
     },
-    onSuccess: () => { toast.success("Assinatura atualizada!"); qc.invalidateQueries({ queryKey: ["admin-students-list"] }); setSubOpen(false); },
-    onError: () => toast.error("Erro ao atualizar assinatura"),
+    onSuccess: (subscription) => {
+      toast.success(subForm.status === "suspended" ? "Aluno suspenso com sucesso!" : "Assinatura atualizada!");
+      const selectedPlan = plans?.find((p: any) => p.id === subForm.plan_id);
+      setSelected((prev: any) => prev ? {
+        ...prev,
+        subscription: subscription || prev.subscription,
+        plan: selectedPlan?.name || prev.plan,
+        planDurationDays: selectedPlan?.duration_days || prev.planDurationDays,
+        startDate: subForm.start_date,
+        endDate: subForm.end_date,
+        status: subForm.status === "suspended" ? "suspended" : (subForm.status === "active" && new Date(subForm.end_date) > new Date() ? "active" : "expired"),
+      } : prev);
+      qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+      qc.invalidateQueries({ queryKey: ["subscription", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["my-subscription", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["subscription-guard"] });
+      setSubOpen(false);
+    },
+    onError: (error: any) => toast.error(error?.message || "Erro ao atualizar assinatura"),
   });
 
   const openEdit = (s: any) => {
