@@ -98,6 +98,100 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "update_subscription") {
+      const { user_id, subscription_id, plan_id, start_date, end_date, status } = payload;
+      const allowedStatuses = ["active", "expired", "suspended"];
+
+      if (!user_id || !plan_id || !start_date || !end_date || !status) {
+        return new Response(JSON.stringify({ error: "user_id, plano, datas e status são obrigatórios" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!allowedStatuses.includes(status)) {
+        return new Response(JSON.stringify({ error: "Status de assinatura inválido" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: plan, error: planError } = await adminClient
+        .from("plans")
+        .select("id")
+        .eq("id", plan_id)
+        .maybeSingle();
+
+      if (planError || !plan) {
+        return new Response(JSON.stringify({ error: "Plano não encontrado" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const subscriptionPayload = {
+        user_id,
+        plan_id,
+        start_date,
+        end_date,
+        status,
+        updated_at: new Date().toISOString(),
+      };
+
+      let savedSubscription: any = null;
+      let subscriptionError: any = null;
+
+      if (subscription_id) {
+        const { data: updated, error } = await adminClient
+          .from("subscriptions")
+          .update(subscriptionPayload)
+          .eq("id", subscription_id)
+          .select("*")
+          .maybeSingle();
+        savedSubscription = updated;
+        subscriptionError = error;
+      }
+
+      if (!savedSubscription && !subscriptionError) {
+        const { data: existing, error: existingError } = await adminClient
+          .from("subscriptions")
+          .select("id")
+          .eq("user_id", user_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (existingError) {
+          subscriptionError = existingError;
+        } else if (existing?.id) {
+          const { data: updated, error } = await adminClient
+            .from("subscriptions")
+            .update(subscriptionPayload)
+            .eq("id", existing.id)
+            .select("*")
+            .maybeSingle();
+          savedSubscription = updated;
+          subscriptionError = error;
+        } else {
+          const { data: inserted, error } = await adminClient
+            .from("subscriptions")
+            .insert(subscriptionPayload)
+            .select("*")
+            .single();
+          savedSubscription = inserted;
+          subscriptionError = error;
+        }
+      }
+
+      if (subscriptionError || !savedSubscription) {
+        console.error("update_subscription error:", subscriptionError?.message || "unknown");
+        return new Response(JSON.stringify({ error: "Erro ao atualizar assinatura" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, subscription: savedSubscription }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "delete") {
       const { user_id } = payload;
       if (!user_id) {
