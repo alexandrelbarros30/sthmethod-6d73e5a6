@@ -36,8 +36,10 @@ export const useSubscriptionGuard = () => {
 
       if (!sub) return { active: false, subscription: null, previewUnlocked };
       const isExpired = new Date(sub.end_date) < new Date();
+      const isSuspended = sub.status === "suspended";
+      
       return {
-        active: sub.status === "active" && !isExpired,
+        active: sub.status === "active" && !isExpired && !isSuspended,
         subscription: sub,
         previewUnlocked,
       };
