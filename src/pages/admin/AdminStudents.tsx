@@ -146,7 +146,7 @@ const AdminStudents = () => {
           subscription: sub || null,
           startDate: sub?.start_date || null,
           endDate: sub?.end_date || null,
-          status: sub ? (sub.status === "active" && new Date(sub.end_date) > new Date() ? "active" : sub.status === "suspended" ? "suspended" : "expired") : "none",
+          status: sub ? (sub.status === "suspended" ? "suspended" : (sub.status === "active" && new Date(sub.end_date) > new Date() ? "active" : "expired")) : "none",
           initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
         };
       });
@@ -806,7 +806,7 @@ const AdminStudents = () => {
               subscription: sub || null,
               startDate: sub?.start_date || null,
               endDate: sub?.end_date || null,
-              status: sub ? (sub.status === "active" && new Date(sub.end_date) > new Date() ? "active" : sub.status === "suspended" ? "suspended" : "expired") : "none",
+              status: sub ? (sub.status === "suspended" ? "suspended" : (sub.status === "active" && new Date(sub.end_date) > new Date() ? "active" : "expired")) : "none",
               initials: prof.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
             };
             setSelected(fallbackStudent);
