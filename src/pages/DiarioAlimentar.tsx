@@ -1377,16 +1377,44 @@ export default function DiarioAlimentar() {
       <div className="max-w-3xl mx-auto p-4 space-y-4 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#1C1C1E]">Diário Alimentar</h1>
-            <p className="text-xs text-[#6E6E73]">
-              {dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-            </p>
+          <div className="flex items-center gap-2 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (window.history.length > 1) navigate(-1);
+                else navigate(isAuth ? "/dashboard" : "/");
+              }}
+              className="h-9 w-9 shrink-0 text-[#1C1C1E] hover:bg-[#F2F2F7]"
+              aria-label="Voltar"
+              title="Voltar"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight text-[#1C1C1E]">Diário Alimentar</h1>
+              <p className="text-xs text-[#6E6E73]">
+                {dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setCalcOpen(true)}
               className="border-[#E5E5EA] bg-white text-[#34C759] hover:bg-[#F2F2F7] hover:text-[#30B350]">
               <Calculator className="w-4 h-4 mr-1" /> Calcular
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (window.history.length > 1) navigate(-1);
+                else navigate(isAuth ? "/dashboard" : "/");
+              }}
+              className="h-9 w-9 text-[#1C1C1E] hover:bg-[#F2F2F7]"
+              aria-label="Fechar"
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
             </Button>
           </div>
         </div>
