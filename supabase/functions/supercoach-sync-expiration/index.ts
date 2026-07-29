@@ -260,6 +260,21 @@ Deno.serve(async (req) => {
       )
     }
 
+    // ====== SET PASSWORD ======
+    if (action === 'set_password') {
+      if (!password || password.length < 4) throw new Error('password inválido (mínimo 4 caracteres)')
+      const putPayload = [{ ...found.match, password, password_confirmation: password }]
+      const put = await fetch(ACCOUNT_URL, { method: 'PUT', headers: auth, body: JSON.stringify(putPayload) })
+      const putText = await put.text()
+      if (!put.ok) throw new Error(`Sincronização de senha falhou (${put.status}): ${putText.slice(0, 300)}`)
+      return new Response(JSON.stringify({
+        ok: true,
+        status: 'password_synced',
+        matchedBy: found.matchedBy,
+        customer: { id: found.match.id, name: found.match.name, email: found.match.email },
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     // action === 'update'
     if (!expiresDate || !/^\d{4}-\d{2}-\d{2}$/.test(expiresDate)) {
       throw new Error('expiresDate obrigatório no formato YYYY-MM-DD')
