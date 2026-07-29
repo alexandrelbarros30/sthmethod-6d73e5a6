@@ -355,6 +355,15 @@ const StudentGuidedWorkout = () => {
                   className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-border/40 bg-muted text-left"
                 >
                   {poster ? (
+                    <>
+                    <img
+                      src={poster}
+                      alt=""
+                      aria-hidden
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-40"
+                    />
                     <img
                       src={poster}
                       alt={title}
@@ -366,8 +375,9 @@ const StudentGuidedWorkout = () => {
                         const ph = (e.currentTarget.nextElementSibling as HTMLElement | null);
                         if (ph) ph.style.display = "flex";
                       }}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform"
                     />
+                    </>
                   ) : null}
                   {!poster && (
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-background flex items-center justify-center">
@@ -414,9 +424,16 @@ const StudentGuidedWorkout = () => {
             <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-border/40 bg-muted">
               <img
                 src={safeImgUrl(program.poster_url)}
+                alt=""
+                aria-hidden
+                referrerPolicy="no-referrer"
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-40"
+              />
+              <img
+                src={safeImgUrl(program.poster_url)}
                 alt={program?.title || "Programa"}
                 referrerPolicy="no-referrer"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-contain"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3">
