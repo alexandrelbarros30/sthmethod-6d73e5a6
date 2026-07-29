@@ -10,3 +10,9 @@ Motivo: o Nutri é canal técnico de prioridade para aluno ativo. Inativos consu
 Encerramento mantém marca de fala "Conte Comigo!" do Nutri Alexandre.
 
 **REGRA ABSOLUTA (reforço diário):** No canal Fale com o Nutri, se o contato NÃO É CLIENTE ATIVO (lead que nunca foi cliente, aluno vencido ou ex-aluno), NÃO HAVERÁ ATENDIMENTO com o Nutri em hipótese alguma. Deve ser encaminhado imediatamente para o canal Comercial (https://wa.me/5521998496289) — 1ª adesão para leads, renovação para vencidos/ex-alunos. Sem exceção, sem "só dessa vez", sem responder a dúvida técnica antes de redirecionar.
+
+**Status suspenso/cancelado:** `classifySubscription()` no crm-inbound-webhook trata status `suspended/suspenso/cancelled/canceled/cancelado/blocked/paused/inactive` como INATIVO mesmo com `end_date` futuro, e nesse caso a whitelist do Nutri NÃO libera (hardBlocked). Encaminhamento automático ao Comercial (5521 99849-6289).
+
+**Nome do contato:** o nome do cadastro STH METHOD (`profiles.full_name`) tem prioridade sobre o push name do WhatsApp em todos os canais; a REGRA DE NOME é injetada no prompt de todos os canais (inclusive Nutri).
+
+**Telefone removido:** 21 97248-6650 não existe — proibido citar em prompts, templates, memórias e mensagens.
