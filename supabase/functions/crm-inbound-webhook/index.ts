@@ -402,6 +402,30 @@ function digitsOnly(raw: string | null | undefined): string {
   return clean.replace(/\D+/g, '').replace(/^0+/, '');
 }
 
+/**
+ * Classifica a identidade do contato a partir da assinatura mais recente.
+ * Regra: status suspenso/cancelado/bloqueado NUNCA é aluno ativo,
+ * mesmo que a vigência (end_date) ainda esteja no futuro.
+ */
+const INACTIVE_SUB_STATUSES = new Set([
+  'suspended', 'suspenso', 'cancelled', 'canceled', 'cancelado',
+  'blocked', 'bloqueado', 'paused', 'pausado', 'inactive', 'inativo',
+]);
+
+export function classifySubscription(
+  sub: { end_date?: string | null; status?: string | null } | null | undefined,
+): { identity: 'aluno_ativo' | 'aluno_vencido' | 'ex_aluno' | 'lead'; hardBlocked: boolean } {
+  if (!sub) return { identity: 'lead', hardBlocked: false };
+  const status = String(sub.status || '').toLowerCase().trim();
+  const endMs = sub.end_date ? new Date(sub.end_date).getTime() : 0;
+  const days = endMs ? Math.floor((endMs - Date.now()) / 86400000) : -9999;
+  if (INACTIVE_SUB_STATUSES.has(status)) {
+    return { identity: days < -365 ? 'ex_aluno' : 'aluno_vencido', hardBlocked: true };
+  }
+  if (endMs && endMs > Date.now()) return { identity: 'aluno_ativo', hardBlocked: false };
+  return { identity: days < -365 ? 'ex_aluno' : 'aluno_vencido', hardBlocked: false };
+}
+
 function buildInternalPhones(_configuredInstances: { zapi: string; wapi: string; wapi_sucesso: string }, connectedPhone: string): Set<string> {
   const numbers = new Set<string>();
   const hardcodedKnownInternalNumbers = [
