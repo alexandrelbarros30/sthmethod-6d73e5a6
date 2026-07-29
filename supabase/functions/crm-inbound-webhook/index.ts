@@ -290,9 +290,9 @@ async function generateAiReply({
   const systemPrompt = basePrompt + renderMemoryBlock(memories);
 
   const contactFirstName = (profile?.full_name || '').toString().trim().split(/\s+/)[0] || '';
-  const nameGuard = queue !== 'nutri'
-    ? `\n⚠️ REGRA DE NOME: ${contactFirstName ? `o interlocutor se chama "${contactFirstName}" — use APENAS este primeiro nome ao se dirigir a ele.` : 'não há nome confirmado no contexto — trate por "você".'} NUNCA chame o interlocutor de "Alexandre" (esse nome pertence ao Nutri, não ao lead/aluno) nem invente qualquer outro nome.`
-    : '';
+  // Regra de nome vale para TODOS os canais (Comercial, Nutri, Sucesso):
+  // o nome do cadastro STH METHOD é a fonte de verdade.
+  const nameGuard = `\n⚠️ REGRA DE NOME: ${contactFirstName ? `o interlocutor se chama "${contactFirstName}" (nome do cadastro STH METHOD) — use APENAS este primeiro nome ao se dirigir a ele, já na saudação inicial.` : 'não há nome confirmado no cadastro — trate por "você" e não invente nomes.'} NUNCA chame o interlocutor de "Alexandre" (esse nome pertence ao Nutri, não ao lead/aluno) nem invente qualquer outro nome.`;
   const userPrompt = `${context}${nameGuard}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
 
   const reply = await callAiEngine({ engine, systemPrompt, userPrompt });
@@ -400,6 +400,30 @@ function digitsOnly(raw: string | null | undefined): string {
   // Remove tudo que não é dígito, mas se for wa_id completo, pega só a parte numérica antes do @
   const clean = String(raw).split('@')[0];
   return clean.replace(/\D+/g, '').replace(/^0+/, '');
+}
+
+/**
+ * Classifica a identidade do contato a partir da assinatura mais recente.
+ * Regra: status suspenso/cancelado/bloqueado NUNCA é aluno ativo,
+ * mesmo que a vigência (end_date) ainda esteja no futuro.
+ */
+const INACTIVE_SUB_STATUSES = new Set([
+  'suspended', 'suspenso', 'cancelled', 'canceled', 'cancelado',
+  'blocked', 'bloqueado', 'paused', 'pausado', 'inactive', 'inativo',
+]);
+
+export function classifySubscription(
+  sub: { end_date?: string | null; status?: string | null } | null | undefined,
+): { identity: 'aluno_ativo' | 'aluno_vencido' | 'ex_aluno' | 'lead'; hardBlocked: boolean } {
+  if (!sub) return { identity: 'lead', hardBlocked: false };
+  const status = String(sub.status || '').toLowerCase().trim();
+  const endMs = sub.end_date ? new Date(sub.end_date).getTime() : 0;
+  const days = endMs ? Math.floor((endMs - Date.now()) / 86400000) : -9999;
+  if (INACTIVE_SUB_STATUSES.has(status)) {
+    return { identity: days < -365 ? 'ex_aluno' : 'aluno_vencido', hardBlocked: true };
+  }
+  if (endMs && endMs > Date.now()) return { identity: 'aluno_ativo', hardBlocked: false };
+  return { identity: days < -365 ? 'ex_aluno' : 'aluno_vencido', hardBlocked: false };
 }
 
 function buildInternalPhones(_configuredInstances: { zapi: string; wapi: string; wapi_sucesso: string }, connectedPhone: string): Set<string> {
@@ -1554,6 +1578,7 @@ Deno.serve(async (req) => {
       // Determina identidade antes do envio para escolher a mensagem correta.
       let mediaIdentifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
       let mediaProfile: any = null;
+      let mediaHardBlocked = false;
       if (provider === 'wapi') {
         try {
           const prof = await findProfileByPhone(admin, phone, 'user_id, full_name, phone', waId);
@@ -1562,18 +1587,11 @@ Deno.serve(async (req) => {
             const { data: subs } = await admin.from('subscriptions')
               .select('end_date, status').eq('user_id', prof.user_id)
               .order('end_date', { ascending: false }).limit(1);
-            const sub = subs?.[0];
-            if (sub) {
-              const isFuture = new Date(sub.end_date).getTime() > Date.now();
-              // Fonte de verdade: end_date. status='active' vencido NÃO é ativo.
-              if (isFuture) mediaIdentifiedAs = 'aluno_ativo';
-              else {
-                const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-                mediaIdentifiedAs = days < -365 ? 'ex_aluno' : 'aluno_vencido';
-              }
-            }
+            const cls = classifySubscription(subs?.[0]);
+            mediaIdentifiedAs = cls.identity;
+            mediaHardBlocked = cls.hardBlocked;
           }
-          if (mediaIdentifiedAs !== 'aluno_ativo') {
+          if (mediaIdentifiedAs !== 'aluno_ativo' && !mediaHardBlocked) {
             const phoneDigitsForWL = String(phone || '').replace(/\D/g, '');
             const { data: whitelistHit } = await admin.from('crm_nutri_whitelist')
               .select('id').eq('phone', phoneDigitsForWL).maybeSingle();
@@ -1595,7 +1613,7 @@ Deno.serve(async (req) => {
         const ins = await admin.from('crm_conversations').insert({
           phone,
           wa_id: waId,
-          display_name: name || null,
+          display_name: mediaProfile?.full_name || name || null,
           channel: 'whatsapp',
           status: 'open',
           provider: isNutriInactive ? 'zapi' : provider,
@@ -1880,30 +1898,23 @@ Deno.serve(async (req) => {
     const redirectToSucessoNumber = false;
 
     const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone', waId);
-    let displayName = name || profile?.full_name || null;
+    // Nome oficial do cadastro STH METHOD tem prioridade sobre o push name do WhatsApp.
+    let displayName = profile?.full_name || name || null;
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
+    let identityHardBlocked = false;
 
     if (profile) {
       const { data: subs } = await admin.from('subscriptions').select('end_date, status').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
-      const sub = subs?.[0];
-      if (sub) {
-        // Fonte de verdade: end_date. status='active' vencido NÃO é ativo
-        // (evita 27+ vencidos entrando como aluno_ativo no Nutri).
-        const isFuture = new Date(sub.end_date).getTime() > Date.now();
-        if (isFuture) {
-          identifiedAs = 'aluno_ativo';
-        } else {
-          const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-          if (days < -365) identifiedAs = 'ex_aluno';
-          else identifiedAs = 'aluno_vencido';
-        }
-      }
+      // Fonte de verdade: end_date + status. Suspenso/cancelado NUNCA é ativo.
+      const cls = classifySubscription(subs?.[0]);
+      identifiedAs = cls.identity;
+      identityHardBlocked = cls.hardBlocked;
     }
 
     // Whitelist manual do canal Fale com o Nutri: números listados aqui
     // são atendidos como aluno_ativo (parceiros, jornalistas, casos especiais),
-    // pulando o bloqueio automático. Só faz sentido para o provider WAPI (Nutri).
-    if (provider === 'wapi' && identifiedAs !== 'aluno_ativo') {
+    // pulando o bloqueio automático. Não se aplica a suspensos/cancelados.
+    if (provider === 'wapi' && identifiedAs !== 'aluno_ativo' && !identityHardBlocked) {
       const phoneDigitsForWL = String(phone || '').replace(/\D/g, '');
       const { data: whitelistHit } = await admin
         .from('crm_nutri_whitelist')
