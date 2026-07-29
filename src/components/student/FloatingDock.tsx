@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Microscope, Megaphone, Newspaper, Sparkles, Download, Info, Apple, NotebookPen, Utensils } from "lucide-react";
+import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Microscope, Megaphone, Newspaper, Sparkles, Download, Info, Apple, NotebookPen, Utensils, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -187,6 +187,30 @@ const FloatingDock = () => {
                 >
                   <Sparkles className="w-4 h-4" strokeWidth={1.8} />
                   Refazer guia
+                </button>
+                <button
+                  onClick={async () => {
+                    setMenuOpen(false);
+                    try {
+                      if ("caches" in window) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map((k) => caches.delete(k)));
+                      }
+                      if ("serviceWorker" in navigator) {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(regs.map((r) => r.unregister()));
+                      }
+                    } catch {
+                      // noop
+                    }
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("_rt", Date.now().toString());
+                    window.location.replace(url.toString());
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium text-foreground/70 hover:bg-muted/60 hover:text-foreground transition-colors tracking-tight"
+                >
+                  <RefreshCw className="w-4 h-4" strokeWidth={1.8} />
+                  Atualizar sistema
                 </button>
                 <button
                   onClick={() => { signOut(); navigate("/"); setMenuOpen(false); }}
