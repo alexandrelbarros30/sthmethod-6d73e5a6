@@ -33,7 +33,7 @@ export function normalizeClinicalHtml(raw: string | null | undefined): string {
   // Remove stray fences/wrappers left behind
   s = s.replace(/<\/?(html|body|head)[^>]*>/gi, "");
 
-  return DOMPurify.sanitize(s, {
+  const clean = DOMPurify.sanitize(s, {
     ALLOWED_TAGS: [
       "p", "br", "hr", "span", "div",
       "h1", "h2", "h3", "h4", "h5", "h6",
@@ -46,4 +46,24 @@ export function normalizeClinicalHtml(raw: string | null | undefined): string {
     FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "style", "img"],
     FORBID_ATTR: ["style", "onerror", "onload", "onclick", "onmouseover"],
   });
+
+  return wrapTables(clean);
+}
+
+/**
+ * Envolve cada <table> em um container com rolagem horizontal.
+ * Sem isso, no mobile as colunas colapsam e o texto quebra letra a letra.
+ */
+function wrapTables(html: string): string {
+  if (typeof document === "undefined" || !/<table\b/i.test(html)) return html;
+  const host = document.createElement("div");
+  host.innerHTML = html;
+  host.querySelectorAll("table").forEach((table) => {
+    if ((table.parentElement as HTMLElement | null)?.classList.contains("clinical-table-wrap")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "clinical-table-wrap";
+    table.parentNode?.insertBefore(wrap, table);
+    wrap.appendChild(table);
+  });
+  return host.innerHTML;
 }
