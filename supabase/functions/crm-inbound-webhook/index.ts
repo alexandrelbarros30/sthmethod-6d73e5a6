@@ -1613,7 +1613,7 @@ Deno.serve(async (req) => {
         const ins = await admin.from('crm_conversations').insert({
           phone,
           wa_id: waId,
-          display_name: name || null,
+          display_name: mediaProfile?.full_name || name || null,
           channel: 'whatsapp',
           status: 'open',
           provider: isNutriInactive ? 'zapi' : provider,
