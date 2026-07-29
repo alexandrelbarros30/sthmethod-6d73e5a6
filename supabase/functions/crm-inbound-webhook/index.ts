@@ -1578,6 +1578,7 @@ Deno.serve(async (req) => {
       // Determina identidade antes do envio para escolher a mensagem correta.
       let mediaIdentifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
       let mediaProfile: any = null;
+      let mediaHardBlocked = false;
       if (provider === 'wapi') {
         try {
           const prof = await findProfileByPhone(admin, phone, 'user_id, full_name, phone', waId);
@@ -1586,18 +1587,11 @@ Deno.serve(async (req) => {
             const { data: subs } = await admin.from('subscriptions')
               .select('end_date, status').eq('user_id', prof.user_id)
               .order('end_date', { ascending: false }).limit(1);
-            const sub = subs?.[0];
-            if (sub) {
-              const isFuture = new Date(sub.end_date).getTime() > Date.now();
-              // Fonte de verdade: end_date. status='active' vencido NÃO é ativo.
-              if (isFuture) mediaIdentifiedAs = 'aluno_ativo';
-              else {
-                const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-                mediaIdentifiedAs = days < -365 ? 'ex_aluno' : 'aluno_vencido';
-              }
-            }
+            const cls = classifySubscription(subs?.[0]);
+            mediaIdentifiedAs = cls.identity;
+            mediaHardBlocked = cls.hardBlocked;
           }
-          if (mediaIdentifiedAs !== 'aluno_ativo') {
+          if (mediaIdentifiedAs !== 'aluno_ativo' && !mediaHardBlocked) {
             const phoneDigitsForWL = String(phone || '').replace(/\D/g, '');
             const { data: whitelistHit } = await admin.from('crm_nutri_whitelist')
               .select('id').eq('phone', phoneDigitsForWL).maybeSingle();
