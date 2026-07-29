@@ -1285,11 +1285,26 @@ html, body {
   background: hsl(var(--muted) / 0.3);
   border-radius: 0 6px 6px 0;
 }
+.clinical-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1em 0;
+  border-radius: 10px;
+  border: 1px solid hsl(var(--border));
+  scrollbar-width: thin;
+}
 .clinical-report table {
   width: 100%;
+  min-width: 620px;
   border-collapse: collapse;
-  margin: 1em 0;
+  margin: 0;
   font-size: 13px;
+  table-layout: auto;
+}
+.clinical-table-wrap > table {
+  max-width: none;
 }
 .clinical-report th,
 .clinical-report td {
@@ -1297,6 +1312,26 @@ html, body {
   padding: 8px 10px;
   text-align: left;
   vertical-align: top;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.5;
+}
+/* Colunas do quadro de interpretação laboratorial */
+.clinical-report th:first-child,
+.clinical-report td:first-child { min-width: 130px; }
+.clinical-report th:nth-child(2),
+.clinical-report td:nth-child(2),
+.clinical-report th:nth-child(3),
+.clinical-report td:nth-child(3) { min-width: 96px; white-space: nowrap; }
+.clinical-report th:nth-child(4),
+.clinical-report td:nth-child(4) { min-width: 70px; white-space: nowrap; }
+.clinical-report th:nth-child(5),
+.clinical-report td:nth-child(5) { min-width: 220px; }
+@media (max-width: 640px) {
+  .clinical-report table { font-size: 12px; }
+  .clinical-report th,
+  .clinical-report td { padding: 6px 8px; }
 }
 .clinical-report th { background: hsl(var(--muted) / 0.5); font-weight: 600; }
 .clinical-report tr { page-break-inside: avoid; }
