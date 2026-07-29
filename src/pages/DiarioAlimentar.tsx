@@ -1177,6 +1177,7 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
 /* ---------------- Main Page ---------------- */
 export default function DiarioAlimentar() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAuth = !!user;
   const [leadOk, setLeadOk] = useState(() => !!localDiary.getLead());
   const [date, setDate] = useState<string>(todayISO());
