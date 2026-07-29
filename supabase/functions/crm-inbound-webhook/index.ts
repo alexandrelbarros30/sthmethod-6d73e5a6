@@ -1898,30 +1898,23 @@ Deno.serve(async (req) => {
     const redirectToSucessoNumber = false;
 
     const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone', waId);
-    let displayName = name || profile?.full_name || null;
+    // Nome oficial do cadastro STH METHOD tem prioridade sobre o push name do WhatsApp.
+    let displayName = profile?.full_name || name || null;
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
+    let identityHardBlocked = false;
 
     if (profile) {
       const { data: subs } = await admin.from('subscriptions').select('end_date, status').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
-      const sub = subs?.[0];
-      if (sub) {
-        // Fonte de verdade: end_date. status='active' vencido NÃO é ativo
-        // (evita 27+ vencidos entrando como aluno_ativo no Nutri).
-        const isFuture = new Date(sub.end_date).getTime() > Date.now();
-        if (isFuture) {
-          identifiedAs = 'aluno_ativo';
-        } else {
-          const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-          if (days < -365) identifiedAs = 'ex_aluno';
-          else identifiedAs = 'aluno_vencido';
-        }
-      }
+      // Fonte de verdade: end_date + status. Suspenso/cancelado NUNCA é ativo.
+      const cls = classifySubscription(subs?.[0]);
+      identifiedAs = cls.identity;
+      identityHardBlocked = cls.hardBlocked;
     }
 
     // Whitelist manual do canal Fale com o Nutri: números listados aqui
     // são atendidos como aluno_ativo (parceiros, jornalistas, casos especiais),
-    // pulando o bloqueio automático. Só faz sentido para o provider WAPI (Nutri).
-    if (provider === 'wapi' && identifiedAs !== 'aluno_ativo') {
+    // pulando o bloqueio automático. Não se aplica a suspensos/cancelados.
+    if (provider === 'wapi' && identifiedAs !== 'aluno_ativo' && !identityHardBlocked) {
       const phoneDigitsForWL = String(phone || '').replace(/\D/g, '');
       const { data: whitelistHit } = await admin
         .from('crm_nutri_whitelist')
