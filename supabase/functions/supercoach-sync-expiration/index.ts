@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}))
     let { action, email, name, expiresDate, userId, password } = body as {
-      action: 'search' | 'update' | 'create'
+      action: 'search' | 'update' | 'create' | 'set_password'
       email?: string
       name?: string
       expiresDate?: string // YYYY-MM-DD
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     // Resolve email/name from profile when only userId was provided (used by
     // automated flows: mercado-pago-webhook, verify-pix-receipt, admin manual
     // payments/subscription edits).
-    if ((action === 'search' || action === 'update') && !email && !name && userId) {
+    if (action !== 'create' && !email && !name && userId) {
       try {
         const admin = createClient(
           Deno.env.get('SUPABASE_URL')!,
