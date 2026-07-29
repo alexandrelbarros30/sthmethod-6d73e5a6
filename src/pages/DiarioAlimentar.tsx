@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check, Camera, Sparkles, Tag, Mic, Square, Wand2, History } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check, Camera, Sparkles, Tag, Mic, Square, Wand2, History, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import { localDiary, MEAL_TYPES, DEFAULT_GOALS, type DiaryEntry, type SavedMeal,
 import { calculateMacros, type MacroInput } from "@/lib/macro-calculator";
 import { searchFoodBank } from "@/data/food-bank";
 import { getPortionPresets } from "@/lib/portion-units";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
