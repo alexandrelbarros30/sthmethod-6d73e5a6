@@ -80,12 +80,21 @@ const SuperCoachAssignedPrograms = ({ userId, email, name, compact, title }: Pro
               >
                 <div className="relative aspect-[16/10] bg-muted">
                   {p.cover_url ? (
+                    <>
+                    <img
+                      src={p.cover_url}
+                      alt=""
+                      aria-hidden
+                      className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-40"
+                      loading="lazy"
+                    />
                     <img
                       src={p.cover_url}
                       alt={p.name}
-                      className="w-full h-full object-cover"
+                      className="relative w-full h-full object-contain"
                       loading="lazy"
                     />
+                    </>
                   ) : (
                     <div className="w-full h-full grid place-items-center text-muted-foreground/40">
                       <Dumbbell className="w-8 h-8" />
