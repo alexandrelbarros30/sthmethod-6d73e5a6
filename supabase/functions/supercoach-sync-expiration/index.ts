@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}))
     let { action, email, name, expiresDate, userId, password } = body as {
-      action: 'search' | 'update' | 'create'
+      action: 'search' | 'update' | 'create' | 'set_password'
       email?: string
       name?: string
       expiresDate?: string // YYYY-MM-DD
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     // Resolve email/name from profile when only userId was provided (used by
     // automated flows: mercado-pago-webhook, verify-pix-receipt, admin manual
     // payments/subscription edits).
-    if ((action === 'search' || action === 'update') && !email && !name && userId) {
+    if (action !== 'create' && !email && !name && userId) {
       try {
         const admin = createClient(
           Deno.env.get('SUPABASE_URL')!,
@@ -143,6 +143,26 @@ Deno.serve(async (req) => {
       const arr: any[] = Array.isArray(list) ? list : (list?.data || list?.customers || [])
       const existing = findCustomer(arr, profile.email, profile.full_name)
       if (existing) {
+        // Já existe no ST Coach: garantir que a senha fique igual à do STH METHOD
+        const desired = (password && password.length >= 4) ? password : null
+        if (desired) {
+          const putPayload = [{ ...existing.match, password: desired, password_confirmation: desired }]
+          const put = await fetch(ACCOUNT_URL, { method: 'PUT', headers: auth, body: JSON.stringify(putPayload) })
+          const putText = await put.text()
+          if (put.ok) {
+            return new Response(JSON.stringify({
+              ok: true, status: 'password_synced',
+              message: `Aluno já existia no ST Coach — senha sincronizada com o STH METHOD`,
+              customer: {
+                id: existing.match.id,
+                name: existing.match.name,
+                email: existing.match.email,
+                temporary_password: desired,
+              },
+            }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+          }
+          console.warn('[supercoach-sync-expiration] falha ao sincronizar senha', put.status, putText.slice(0, 200))
+        }
         return new Response(JSON.stringify({
           ok: false, status: 'already_exists',
           message: `Aluno já existe no SuperCoach: ${existing.match.name} (${existing.match.email})`,
@@ -238,6 +258,21 @@ Deno.serve(async (req) => {
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
+    }
+
+    // ====== SET PASSWORD ======
+    if (action === 'set_password') {
+      if (!password || password.length < 4) throw new Error('password inválido (mínimo 4 caracteres)')
+      const putPayload = [{ ...found.match, password, password_confirmation: password }]
+      const put = await fetch(ACCOUNT_URL, { method: 'PUT', headers: auth, body: JSON.stringify(putPayload) })
+      const putText = await put.text()
+      if (!put.ok) throw new Error(`Sincronização de senha falhou (${put.status}): ${putText.slice(0, 300)}`)
+      return new Response(JSON.stringify({
+        ok: true,
+        status: 'password_synced',
+        matchedBy: found.matchedBy,
+        customer: { id: found.match.id, name: found.match.name, email: found.match.email },
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     // action === 'update'

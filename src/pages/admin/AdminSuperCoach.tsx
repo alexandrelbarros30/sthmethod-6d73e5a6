@@ -369,17 +369,31 @@ export default function AdminSuperCoach() {
   };
 
   const createInSuperCoach = async (row: StudentRow) => {
-    if (!confirm(`Criar cadastro no SuperCoach para ${row.full_name}?\nSerá gerada uma senha temporária.`)) return;
+    const senha = prompt(
+      `Criar/sincronizar cadastro no ST Coach para ${row.full_name}.\nInforme a MESMA senha usada no STH METHOD (mínimo 4 caracteres):`,
+      "",
+    );
+    if (senha === null) return;
+    if (senha && senha.length < 4) {
+      toast({ title: "Senha muito curta", variant: "destructive" });
+      return;
+    }
     setSavingId(row.user_id);
     try {
       const { data, error } = await supabase.functions.invoke("supercoach-sync-expiration", {
         body: {
           action: "create",
           userId: row.user_id,
+          password: senha || undefined,
           expiresDate: row.endDate ? row.endDate.slice(0, 10) : undefined,
         },
       });
       if (error) throw error;
+      if (data?.ok && data?.status === "password_synced") {
+        await persistStatus(row, "updated", data.message || "Senha sincronizada no ST Coach", "");
+        toast({ title: "Senha sincronizada no ST Coach", description: data.message });
+        return;
+      }
       if (!data?.ok) {
         if (data?.status === "already_exists") {
           await persistStatus(row, "updated", data.message || "Já existia no SuperCoach", "");
