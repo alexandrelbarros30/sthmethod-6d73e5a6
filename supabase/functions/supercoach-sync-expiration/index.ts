@@ -143,6 +143,26 @@ Deno.serve(async (req) => {
       const arr: any[] = Array.isArray(list) ? list : (list?.data || list?.customers || [])
       const existing = findCustomer(arr, profile.email, profile.full_name)
       if (existing) {
+        // Já existe no ST Coach: garantir que a senha fique igual à do STH METHOD
+        const desired = (password && password.length >= 4) ? password : null
+        if (desired) {
+          const putPayload = [{ ...existing.match, password: desired, password_confirmation: desired }]
+          const put = await fetch(ACCOUNT_URL, { method: 'PUT', headers: auth, body: JSON.stringify(putPayload) })
+          const putText = await put.text()
+          if (put.ok) {
+            return new Response(JSON.stringify({
+              ok: true, status: 'password_synced',
+              message: `Aluno já existia no ST Coach — senha sincronizada com o STH METHOD`,
+              customer: {
+                id: existing.match.id,
+                name: existing.match.name,
+                email: existing.match.email,
+                temporary_password: desired,
+              },
+            }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+          }
+          console.warn('[supercoach-sync-expiration] falha ao sincronizar senha', put.status, putText.slice(0, 200))
+        }
         return new Response(JSON.stringify({
           ok: false, status: 'already_exists',
           message: `Aluno já existe no SuperCoach: ${existing.match.name} (${existing.match.email})`,
