@@ -290,9 +290,9 @@ async function generateAiReply({
   const systemPrompt = basePrompt + renderMemoryBlock(memories);
 
   const contactFirstName = (profile?.full_name || '').toString().trim().split(/\s+/)[0] || '';
-  const nameGuard = queue !== 'nutri'
-    ? `\n⚠️ REGRA DE NOME: ${contactFirstName ? `o interlocutor se chama "${contactFirstName}" — use APENAS este primeiro nome ao se dirigir a ele.` : 'não há nome confirmado no contexto — trate por "você".'} NUNCA chame o interlocutor de "Alexandre" (esse nome pertence ao Nutri, não ao lead/aluno) nem invente qualquer outro nome.`
-    : '';
+  // Regra de nome vale para TODOS os canais (Comercial, Nutri, Sucesso):
+  // o nome do cadastro STH METHOD é a fonte de verdade.
+  const nameGuard = `\n⚠️ REGRA DE NOME: ${contactFirstName ? `o interlocutor se chama "${contactFirstName}" (nome do cadastro STH METHOD) — use APENAS este primeiro nome ao se dirigir a ele, já na saudação inicial.` : 'não há nome confirmado no cadastro — trate por "você" e não invente nomes.'} NUNCA chame o interlocutor de "Alexandre" (esse nome pertence ao Nutri, não ao lead/aluno) nem invente qualquer outro nome.`;
   const userPrompt = `${context}${nameGuard}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
 
   const reply = await callAiEngine({ engine, systemPrompt, userPrompt });
