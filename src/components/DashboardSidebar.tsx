@@ -28,6 +28,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       group: "Nutrição",
       icon: Salad,
       children: [
+        { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
         { to: "/diario-alimentar", icon: Utensils, label: "Diário Alimentar" },
         { to: "/dashboard/sthia-food", icon: Apple, label: "Food AI (STHIA)" },
       ],
