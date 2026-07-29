@@ -585,6 +585,10 @@ const AdminStudents = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      // Espelha a senha no ST Coach (fire-and-forget)
+      supabase.functions.invoke("supercoach-sync-expiration", {
+        body: { action: "set_password", userId: passwordReset.userId, password: newPassword },
+      }).catch((e) => console.warn("[SuperCoach set_password]", e));
       await logAdminAccess({
         action: "delete_student",
         resourceType: "profiles",
