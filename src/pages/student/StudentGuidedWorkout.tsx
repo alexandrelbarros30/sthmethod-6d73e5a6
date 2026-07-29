@@ -424,9 +424,16 @@ const StudentGuidedWorkout = () => {
             <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-border/40 bg-muted">
               <img
                 src={safeImgUrl(program.poster_url)}
+                alt=""
+                aria-hidden
+                referrerPolicy="no-referrer"
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-40"
+              />
+              <img
+                src={safeImgUrl(program.poster_url)}
                 alt={program?.title || "Programa"}
                 referrerPolicy="no-referrer"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-contain"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3">
