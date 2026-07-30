@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,20 @@ type ReviewResult = {
   _meta?: { usage?: any };
 };
 
+type AdviceResult = {
+  advice_html: string;
+  key_points?: string[];
+  cautions?: string[];
+};
+
+const htmlToPlain = (html: string) =>
+  (html || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|li|h[1-6]|div)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
 const stripMealMacroLines = (html: string) =>
   (html || "")
     .replace(/<p[^>]*>\s*(?:<[^>]+>\s*)*Macros\s+da\s+Refei[cç][aã]o[\s\S]*?<\/p>\s*/gi, "")
@@ -78,6 +92,16 @@ const AdminDietAI = () => {
   const [preferences, setPreferences] = useState("");
   const [freeText, setFreeText] = useState("");
   const [usePhotos, setUsePhotos] = useState(true);
+
+  // Protocolo do aluno
+  const [protocolText, setProtocolText] = useState("");
+  const [protocolTitle, setProtocolTitle] = useState("");
+  const [useProtocol, setUseProtocol] = useState(true);
+
+  // Orientação (consulta STHIA)
+  const [advice, setAdvice] = useState<AdviceResult | null>(null);
+  const [adviceExtra, setAdviceExtra] = useState("");
+  const [useAdvice, setUseAdvice] = useState(true);
 
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
@@ -143,7 +167,35 @@ const AdminDietAI = () => {
 
   const pickStudent = async (s: any) => {
     setSelectedStudent(s);
+    setProtocolText("");
+    setProtocolTitle("");
+    setAdvice(null);
     // Não auto-preenche o briefing — o admin decide via botão "Puxar macros"
+  };
+
+  const pullProtocol = async () => {
+    if (!selectedStudent?.user_id) return;
+    try {
+      const { data, error } = await supabase
+        .from("student_protocols")
+        .select("title, content, updated_at")
+        .eq("user_id", selectedStudent.user_id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      const plain = htmlToPlain((data as any)?.content || "");
+      if (!plain) {
+        toast.message("Este aluno não tem protocolo com conteúdo salvo.");
+        return;
+      }
+      setProtocolText(plain.slice(0, 8000));
+      setProtocolTitle((data as any)?.title || "Protocolo atual");
+      setUseProtocol(true);
+      toast.success(`Protocolo puxado: ${(data as any)?.title || "sem título"}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar protocolo");
+    }
   };
 
   const saveMacrosToProfile = async () => {
@@ -182,7 +234,15 @@ const AdminDietAI = () => {
         preferencias: preferences,
       };
       const { data, error } = await supabase.functions.invoke("generate-diet-ai", {
-        body: { mode: "generate", brief, freeText, studentId: selectedStudent?.user_id || null, includePhotos: usePhotos },
+        body: {
+          mode: "generate",
+          brief,
+          freeText: [freeText, adviceExtra.trim() ? `Ajustes adicionais do admin após a consulta:\n${adviceExtra.trim()}` : ""].filter(Boolean).join("\n\n"),
+          studentId: selectedStudent?.user_id || null,
+          includePhotos: usePhotos,
+          protocolText: useProtocol ? protocolText : "",
+          adviceText: useAdvice && advice?.advice_html ? htmlToPlain(advice.advice_html) : "",
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -194,6 +254,43 @@ const AdminDietAI = () => {
       toast.success("Cardápio gerado pela STHIA");
     },
     onError: (e: any) => toast.error(e.message || "Falha ao gerar"),
+  });
+
+  const adviceMut = useMutation({
+    mutationFn: async () => {
+      const brief = {
+        aluno: selectedStudent?.full_name || null,
+        peso_kg: selectedStudent?.weight || null,
+        altura_cm: selectedStudent?.height || null,
+        objetivo: objective,
+        kcal_alvo: kcalTarget ? Number(kcalTarget) : null,
+        proteina_g_alvo: proteinTarget ? Number(proteinTarget) : null,
+        carboidrato_g_alvo: carbsTarget ? Number(carbsTarget) : null,
+        lipidio_g_alvo: fatTarget ? Number(fatTarget) : null,
+        numero_refeicoes: Number(numMeals) || 5,
+        restricoes: restrictions,
+        preferencias: preferences,
+      };
+      const { data, error } = await supabase.functions.invoke("generate-diet-ai", {
+        body: {
+          mode: "advice",
+          brief,
+          freeText,
+          studentId: selectedStudent?.user_id || null,
+          includePhotos: usePhotos,
+          protocolText: useProtocol ? protocolText : "",
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as AdviceResult;
+    },
+    onSuccess: (data) => {
+      setAdvice(data);
+      setUseAdvice(true);
+      toast.success("Orientação de consulta gerada pela STHIA");
+    },
+    onError: (e: any) => toast.error(e.message || "Falha ao gerar orientação"),
   });
 
   const reviewMut = useMutation({
