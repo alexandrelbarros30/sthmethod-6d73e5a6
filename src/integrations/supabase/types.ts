@@ -2237,6 +2237,48 @@ export type Database = {
         }
         Relationships: []
       }
+      diet_consultations: {
+        Row: {
+          advice_html: string
+          brief: Json | null
+          cautions: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          key_points: Json
+          protocol_title: string | null
+          student_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          advice_html: string
+          brief?: Json | null
+          cautions?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_points?: Json
+          protocol_title?: string | null
+          student_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          advice_html?: string
+          brief?: Json | null
+          cautions?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_points?: Json
+          protocol_title?: string | null
+          student_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       diet_foods: {
         Row: {
           carbs_g: number

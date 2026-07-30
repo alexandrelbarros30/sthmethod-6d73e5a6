@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText, History, Lock, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { normalizeSearch } from "@/lib/utils";
@@ -76,6 +76,7 @@ const stripMealMacroLines = (html: string) =>
 const AdminDietAI = () => {
   const { role, user } = useAuth();
   const displayRole = role === "consultor" ? "consultor" : "admin";
+  const queryClient = useQueryClient();
 
   // Student selection
   const [studentSearch, setStudentSearch] = useState("");
@@ -106,6 +107,22 @@ const AdminDietAI = () => {
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Histórico de orientações (restrito a admin/consultor)
+  const { data: consultHistory = [], refetch: refetchHistory } = useQuery({
+    queryKey: ["diet-consultations", selectedStudent?.user_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("diet_consultations")
+        .select("id, title, advice_html, key_points, cautions, protocol_title, created_at")
+        .eq("student_id", selectedStudent.user_id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedStudent?.user_id,
+  });
 
   const { data: students = [] } = useQuery({
     queryKey: ["diet-ai-students", displayRole, user?.id],
@@ -285,10 +302,39 @@ const AdminDietAI = () => {
       if ((data as any)?.error) throw new Error((data as any).error);
       return data as AdviceResult;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setAdvice(data);
       setUseAdvice(true);
       toast.success("Orientação de consulta gerada pela STHIA");
+      // Grava no histórico da conta do aluno (visível apenas para admin/consultor)
+      if (selectedStudent?.user_id && user?.id && data?.advice_html) {
+        const { error } = await supabase.from("diet_consultations").insert({
+          student_id: selectedStudent.user_id,
+          created_by: user.id,
+          title: `Orientação — consulta STHIA (${new Date().toLocaleDateString("pt-BR")})`,
+          advice_html: data.advice_html,
+          key_points: (data.key_points || []) as any,
+          cautions: (data.cautions || []) as any,
+          brief: {
+            objetivo: objective,
+            kcal_alvo: kcalTarget ? Number(kcalTarget) : null,
+            proteina_g_alvo: proteinTarget ? Number(proteinTarget) : null,
+            carboidrato_g_alvo: carbsTarget ? Number(carbsTarget) : null,
+            lipidio_g_alvo: fatTarget ? Number(fatTarget) : null,
+            numero_refeicoes: Number(numMeals) || 5,
+            restricoes: restrictions,
+            preferencias: preferences,
+            observacoes: freeText,
+          } as any,
+          protocol_title: useProtocol && protocolTitle ? protocolTitle : null,
+        });
+        if (error) {
+          toast.error("Orientação gerada, mas falhou ao gravar no histórico do aluno.");
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["diet-consultations", selectedStudent.user_id] });
+          toast.success("Orientação registrada na ficha do aluno (acesso restrito à equipe)");
+        }
+      }
     },
     onError: (e: any) => toast.error(e.message || "Falha ao gerar orientação"),
   });
@@ -592,6 +638,65 @@ const AdminDietAI = () => {
 
         {/* RIGHT: result */}
         <div className="xl:col-span-3 space-y-4">
+          {selectedStudent && consultHistory.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="font-display text-base flex flex-wrap items-center gap-2">
+                  <History className="w-4 h-4 text-primary" />
+                  Histórico de orientações — {selectedStudent.full_name}
+                  <Badge variant="secondary" className="gap-1 text-[10px]">
+                    <Lock className="w-3 h-3" /> Visível só para admin/consultor
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {(consultHistory as any[]).map((c) => (
+                  <div key={c.id} className="rounded-lg border border-border p-3 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{c.title}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {new Date(c.created_at).toLocaleString("pt-BR")}
+                          {c.protocol_title ? ` · protocolo: ${c.protocol_title}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setAdvice({
+                              advice_html: c.advice_html,
+                              key_points: (c.key_points || []) as string[],
+                              cautions: (c.cautions || []) as string[],
+                            });
+                            setUseAdvice(true);
+                            toast.success("Orientação carregada do histórico");
+                          }}
+                        >
+                          Reabrir
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            if (!window.confirm("Excluir esta orientação do histórico?")) return;
+                            const { error } = await supabase.from("diet_consultations").delete().eq("id", c.id);
+                            if (error) return toast.error("Falha ao excluir");
+                            refetchHistory();
+                            toast.success("Orientação excluída");
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {advice && (
             <Card className="border-primary/30">
               <CardHeader>
