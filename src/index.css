@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -167,55 +167,54 @@ html, body {
 @layer base {
   /* ── STH Green theme — applied to the student dashboard ── */
   .theme-sth-green {
-    /* Slightly green-tinted near-black surfaces */
-    --background: 155 30% 3%;
-    --foreground: 150 15% 96%;
+    /* Light Premium — superfícies claras, hierarquia por elevação */
+    --background: 240 9% 96%;        /* #F5F5F7 */
+    --foreground: 240 3% 12%;        /* #1D1D1F */
 
-    --card: 155 25% 5%;
-    --card-foreground: 150 15% 96%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 3% 12%;
 
-    --popover: 155 25% 6%;
-    --popover-foreground: 150 15% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 3% 12%;
 
-    /* Primary = STH neon green */
-    --primary: 150 95% 45%;
-    --primary-foreground: 155 60% 6%;
+    /* Primary = verde STH #0FA968 */
+    --primary: 158 84% 36%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 155 18% 12%;
-    --secondary-foreground: 150 12% 88%;
+    --secondary: 240 9% 94%;
+    --secondary-foreground: 240 3% 12%;
 
-    --muted: 155 15% 11%;
-    --muted-foreground: 150 8% 62%;
+    --muted: 240 9% 95%;
+    --muted-foreground: 240 2% 44%;  /* #6E6E73 */
 
-    --accent: 150 60% 18%;
-    --accent-foreground: 150 95% 80%;
+    --accent: 158 84% 95%;
+    --accent-foreground: 158 84% 24%;
 
-    --border: 150 18% 14%;
-    --input: 150 18% 14%;
-    --ring: 150 95% 45%;
+    --border: 240 6% 91%;            /* #E5E5E7 */
+    --input: 240 6% 91%;
+    --ring: 158 84% 36%;
 
-    --sidebar-background: 155 30% 3%;
-    --sidebar-foreground: 150 12% 88%;
-    --sidebar-primary: 150 95% 45%;
-    --sidebar-primary-foreground: 155 60% 6%;
-    --sidebar-accent: 150 25% 10%;
-    --sidebar-accent-foreground: 150 95% 80%;
-    --sidebar-border: 150 18% 14%;
-    --sidebar-ring: 150 95% 45%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 3% 20%;
+    --sidebar-primary: 158 84% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 9% 96%;
+    --sidebar-accent-foreground: 158 84% 26%;
+    --sidebar-border: 240 6% 91%;
+    --sidebar-ring: 158 84% 36%;
 
-    --glow: 150 95% 45%;
-    --surface: 155 22% 6%;
-    --surface-hover: 150 25% 10%;
-    --gradient-start: 150 95% 45%;
-    --gradient-end: 152 70% 30%;
-    --text-subtle: 150 8% 55%;
+    --glow: 158 84% 36%;
+    --surface: 0 0% 100%;
+    --surface-hover: 240 9% 94%;
+    --gradient-start: 240 3% 12%;
+    --gradient-end: 158 84% 36%;
+    --text-subtle: 240 2% 50%;
 
-    --brand: 150 95% 45%;
-    --brand-foreground: 155 60% 6%;
+    --brand: 158 84% 36%;
+    --brand-foreground: 0 0% 100%;
 
-    background:
-      radial-gradient(120% 80% at 50% 0%, hsl(155 60% 8% / 0.9) 0%, hsl(0 0% 0%) 60%),
-      hsl(0 0% 0%);
+    background: hsl(240 9% 96%);
+    color-scheme: light;
   }
 }
 
@@ -826,189 +825,129 @@ html, body {
   }
 
   /* =====================================================================
-     STH NEON FULL PREMIUM — Auto-promotion global p/ a Área do Aluno
+     STH LIGHT PREMIUM · "Profundidade" — Área do Aluno
      Aplicado quando .theme-sth-green está em <html> (DashboardLayout).
-     Cobre cards, dialogs, popovers, sidebar, dock, headers e CTAs sem
-     precisar editar cada página individualmente.
+     Paleta travada: base #F5F5F7 · superfície #FFFFFF · texto #1D1D1F
+     secundário #6E6E73 · ação #0FA968. Hierarquia por elevação, não por brilho.
      ===================================================================== */
 
-  /* Fundo geral neon-radial sutil em todo o app do aluno */
   html.theme-sth-green body {
-    background:
-      radial-gradient(120% 80% at 50% 0%, hsl(155 60% 8% / 0.9) 0%, hsl(0 0% 0%) 60%),
-      hsl(0 0% 0%);
+    background: hsl(240 9% 96%);
   }
 
-  /* shadcn Card → vidro cristalino com halo neon */
+  /* shadcn Card → superfície branca com elevação sutil */
   html.theme-sth-green .rounded-2xl.border.bg-card,
   html.theme-sth-green .rounded-xl.border.bg-card,
   html.theme-sth-green .rounded-lg.border.bg-card {
-    background: rgb(255 255 255 / 0.035) !important;
-    border-color: rgb(255 255 255 / 0.10) !important;
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    background: hsl(0 0% 100%) !important;
+    border-color: hsl(240 6% 93%) !important;
     box-shadow:
-      0 14px 40px -14px rgb(0 0 0 / 0.7),
-      0 0 30px -8px hsl(var(--primary) / 0.32),
-      inset 0 1px 0 rgb(255 255 255 / 0.10),
-      inset 0 -1px 0 rgb(0 0 0 / 0.30) !important;
+      0 1px 2px hsl(240 6% 10% / 0.04),
+      0 8px 24px -12px hsl(240 6% 10% / 0.10) !important;
   }
 
-  /* Dialog / Sheet / Popover / Dropdown content (Radix portala p/ body,
-     mas .theme-sth-green vive em <html>) */
+  /* Cards da home do aluno (border/40 + bg-background) → mesma elevação */
+  html.theme-sth-green .rounded-3xl.border.bg-background {
+    background: hsl(0 0% 100%) !important;
+    border-color: hsl(240 6% 93%) !important;
+    box-shadow:
+      0 1px 2px hsl(240 6% 10% / 0.04),
+      0 8px 24px -12px hsl(240 6% 10% / 0.10) !important;
+  }
+
+  /* Dialog / Sheet / Popover / Dropdown content */
   html.theme-sth-green [role="dialog"],
   html.theme-sth-green [data-radix-popper-content-wrapper] > * {
-    background: hsl(155 25% 5% / 0.94) !important;
-    border: 1px solid hsl(var(--primary) / 0.18) !important;
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
-    box-shadow:
-      0 24px 60px -16px rgb(0 0 0 / 0.85),
-      0 0 50px -10px hsl(var(--primary) / 0.45) !important;
-    color: hsl(var(--foreground));
-  }
-  html.theme-sth-green [role="dialog"] h2,
-  html.theme-sth-green [role="dialog"] h3,
-  html.theme-sth-green [data-radix-popper-content-wrapper] h2 {
-    background-image: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    background: hsl(0 0% 100%) !important;
+    border: 1px solid hsl(240 6% 91%) !important;
+    box-shadow: 0 32px 64px -24px hsl(240 6% 10% / 0.28) !important;
+    color: hsl(240 3% 12%);
   }
 
-  /* CTAs primários ganham halo neon (bg-primary / bg-foreground em fluxo do aluno) */
+  /* CTAs primários — sombra colorida discreta, sem halo neon */
   html.theme-sth-green button.bg-primary,
-  html.theme-sth-green a.bg-primary,
-  html.theme-sth-green button.bg-foreground,
-  html.theme-sth-green a.bg-foreground {
-    box-shadow:
-      0 0 0 1px hsl(var(--primary) / 0.35),
-      0 4px 18px -4px hsl(var(--primary) / 0.55),
-      inset 0 1px 0 rgb(255 255 255 / 0.18) !important;
-    transition: box-shadow .2s ease, transform .2s ease;
+  html.theme-sth-green a.bg-primary {
+    box-shadow: 0 6px 18px -8px hsl(var(--primary) / 0.55) !important;
+    transition: box-shadow .18s ease, transform .18s ease;
   }
-  html.theme-sth-green button.bg-primary:hover,
-  html.theme-sth-green a.bg-primary:hover,
-  html.theme-sth-green button.bg-foreground:hover,
-  html.theme-sth-green a.bg-foreground:hover {
-    box-shadow:
-      0 0 0 1px hsl(var(--primary) / 0.55),
-      0 6px 26px -4px hsl(var(--primary) / 0.75),
-      inset 0 1px 0 rgb(255 255 255 / 0.25) !important;
-    transform: translateY(-0.5px);
+  html.theme-sth-green button.bg-primary:active,
+  html.theme-sth-green a.bg-primary:active {
+    transform: scale(0.985);
   }
 
-  /* Inputs / Textarea / Select trigger ganham acabamento glass */
+  /* Inputs / Textarea / Select trigger */
   html.theme-sth-green input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
   html.theme-sth-green textarea,
   html.theme-sth-green [role="combobox"] {
-    background: hsl(155 22% 6% / 0.7) !important;
-    border-color: hsl(var(--primary) / 0.18) !important;
+    background: hsl(240 9% 97%) !important;
+    border-color: hsl(240 6% 90%) !important;
   }
   html.theme-sth-green input:focus-visible,
   html.theme-sth-green textarea:focus-visible,
   html.theme-sth-green [role="combobox"]:focus-visible {
-    border-color: hsl(var(--primary) / 0.55) !important;
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18), 0 0 18px -4px hsl(var(--primary) / 0.45) !important;
+    background: hsl(0 0% 100%) !important;
+    border-color: hsl(var(--primary) / 0.6) !important;
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.14) !important;
   }
 
-  /* Sidebar desktop — glass com borda neon */
+  /* Sidebar desktop */
   html.theme-sth-green aside.fixed.left-0 {
-    background: hsl(155 30% 3% / 0.72) !important;
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border-right: 1px solid hsl(var(--primary) / 0.16) !important;
-    box-shadow: 0 0 60px -12px hsl(var(--primary) / 0.32);
+    background: hsl(0 0% 100% / 0.86) !important;
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    border-right: 1px solid hsl(240 6% 91%) !important;
   }
 
-  /* Header mobile — glass */
+  /* Header mobile */
   html.theme-sth-green .fixed.top-0.left-0.right-0.h-12 {
-    background: hsl(155 30% 3% / 0.78) !important;
-    border-bottom: 1px solid hsl(var(--primary) / 0.18) !important;
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background: hsl(0 0% 100% / 0.86) !important;
+    border-bottom: 1px solid hsl(240 6% 91%) !important;
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
   }
 
-  /* Logo "ST" da sidebar/dock — passa a usar gradiente neon */
-  html.theme-sth-green .bg-foreground.rounded-xl.flex.items-center.justify-center,
-  html.theme-sth-green .bg-foreground.rounded-lg.flex.items-center.justify-center {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(152 70% 30%)) !important;
-    box-shadow:
-      0 0 0 1px hsl(var(--primary) / 0.5),
-      0 4px 18px -4px hsl(var(--primary) / 0.6),
-      inset 0 1px 0 rgb(255 255 255 / 0.25) !important;
-  }
-  html.theme-sth-green .bg-foreground.rounded-xl span.text-background,
-  html.theme-sth-green .bg-foreground.rounded-lg span.text-background {
-    color: hsl(155 60% 6%) !important;
-  }
-
-  /* FloatingDock — fundo glass com borda neon */
+  /* FloatingDock — vidro claro elevado */
   html.theme-sth-green .rounded-full.border.bg-background\/90 {
-    background: hsl(155 25% 5% / 0.85) !important;
-    border-color: hsl(var(--primary) / 0.22) !important;
-    box-shadow:
-      0 20px 50px -12px rgb(0 0 0 / 0.7),
-      0 0 36px -8px hsl(var(--primary) / 0.42) !important;
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background: hsl(0 0% 100% / 0.92) !important;
+    border-color: hsl(240 6% 91%) !important;
+    box-shadow: 0 24px 48px -20px hsl(240 6% 10% / 0.30) !important;
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
   }
 
-  /* Botão central do dock — círculo neon pulsante leve */
+  /* Botão central do dock — verde STH sólido */
   html.theme-sth-green .w-\[54px\].h-\[54px\].rounded-full.bg-foreground {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(152 70% 28%)) !important;
-    box-shadow:
-      0 0 0 1px hsl(var(--primary) / 0.55),
-      0 8px 28px -6px hsl(var(--primary) / 0.7),
-      inset 0 1px 0 rgb(255 255 255 / 0.25) !important;
+    background: hsl(var(--primary)) !important;
+    box-shadow: 0 10px 24px -8px hsl(var(--primary) / 0.55) !important;
   }
   html.theme-sth-green .w-\[54px\].h-\[54px\].rounded-full.bg-foreground svg {
-    color: hsl(155 60% 6%) !important;
+    color: hsl(0 0% 100%) !important;
   }
 
-  /* Active item highlight em sidebar/dock — fundo verde neon translúcido */
+  /* Item ativo em sidebar/dock */
   html.theme-sth-green .bg-foreground\/10 {
-    background: hsl(var(--primary) / 0.15) !important;
+    background: hsl(var(--primary) / 0.10) !important;
     color: hsl(var(--primary)) !important;
-    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.25);
   }
 
-  /* Radix Progress fill em verde neon com glow */
+  /* Radix Progress fill */
   html.theme-sth-green [data-state] > div.bg-primary,
   html.theme-sth-green [data-state].bg-primary {
-    background: linear-gradient(90deg, hsl(var(--primary) / 0.85), hsl(var(--primary))) !important;
-    box-shadow:
-      0 0 8px hsl(var(--primary) / 0.8),
-      0 0 16px hsl(var(--primary) / 0.5),
-      inset 0 0 6px rgb(255 255 255 / 0.35) !important;
+    background: hsl(var(--primary)) !important;
   }
 
-  /* Badges variant default ganham preenchimento neon */
-  html.theme-sth-green .bg-primary.text-primary-foreground {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(152 70% 30%)) !important;
-    color: hsl(155 60% 6%) !important;
-  }
-
-  /* Toaster (sonner) — herda glass */
+  /* Toaster (sonner) */
   html.theme-sth-green [data-sonner-toast] {
-    background: hsl(155 25% 5% / 0.94) !important;
-    border: 1px solid hsl(var(--primary) / 0.22) !important;
-    color: hsl(var(--foreground)) !important;
-    backdrop-filter: blur(20px) saturate(160%);
-    box-shadow: 0 12px 32px -10px rgb(0 0 0 / 0.7), 0 0 24px -8px hsl(var(--primary) / 0.4) !important;
+    background: hsl(0 0% 100%) !important;
+    border: 1px solid hsl(240 6% 91%) !important;
+    color: hsl(240 3% 12%) !important;
+    box-shadow: 0 20px 40px -18px hsl(240 6% 10% / 0.28) !important;
   }
 
   /* Tabs list ativa */
   html.theme-sth-green [data-state="active"][role="tab"] {
-    background: hsl(var(--primary) / 0.15) !important;
+    background: hsl(var(--primary) / 0.10) !important;
     color: hsl(var(--primary)) !important;
-    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.3);
-  }
-
-  /* Ícones lucide dentro de cards ganham micro-halo neon */
-  html.theme-sth-green .rounded-2xl.border.bg-card svg.lucide,
-  html.theme-sth-green .rounded-xl.border.bg-card svg.lucide {
-    filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.35));
   }
 }
 
@@ -1438,4 +1377,20 @@ div[style*="Edit with Lovable"],
   pointer-events: none !important;
   position: absolute !important;
   z-index: -9999 !important;
+}
+
+/* =====================================================================
+   Tipografia travada da Área do Aluno — Sora (títulos) + Manrope (corpo)
+   ===================================================================== */
+html.theme-sth-green body,
+html.theme-sth-green [role="dialog"],
+html.theme-sth-green [data-radix-popper-content-wrapper] {
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+html.theme-sth-green h1,
+html.theme-sth-green h2,
+html.theme-sth-green h3,
+html.theme-sth-green h4 {
+  font-family: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.02em;
 }

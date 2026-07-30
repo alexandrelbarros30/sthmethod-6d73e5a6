@@ -40,7 +40,6 @@ const Ring = ({ radius, pct, color }: { radius: number; pct: number; color: stri
         strokeDasharray={c}
         strokeDashoffset={offset}
         className="transition-all duration-1000 ease-out"
-        style={{ filter: `drop-shadow(0 0 6px ${color}80)` }}
       />
     </>
   );
