@@ -43,6 +43,8 @@ const upscaleThumbUrl = (raw?: string | null) => {
   let out = raw;
   // i.vimeocdn.com/video/xxx_295x166.jpg  ->  _1280.jpg
   out = out.replace(/_(\d{2,4})x(\d{2,4})(?=\.(jpg|jpeg|png|webp)(\?|$))/i, "_1280");
+  // i.vimeocdn.com/video/xxx-d_295x166?region=us  ->  -d_1280?region=us (sem extensão)
+  out = out.replace(/_(\d{2,4})x(\d{2,4})(?=(\?|$))/i, "_1280");
   // querystring style: ?mw=295&mh=166 / ?w=295&h=166
   try {
     const u = new URL(out);
