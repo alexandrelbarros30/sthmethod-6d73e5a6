@@ -638,6 +638,65 @@ const AdminDietAI = () => {
 
         {/* RIGHT: result */}
         <div className="xl:col-span-3 space-y-4">
+          {selectedStudent && consultHistory.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="font-display text-base flex flex-wrap items-center gap-2">
+                  <History className="w-4 h-4 text-primary" />
+                  Histórico de orientações — {selectedStudent.full_name}
+                  <Badge variant="secondary" className="gap-1 text-[10px]">
+                    <Lock className="w-3 h-3" /> Visível só para admin/consultor
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {(consultHistory as any[]).map((c) => (
+                  <div key={c.id} className="rounded-lg border border-border p-3 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{c.title}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {new Date(c.created_at).toLocaleString("pt-BR")}
+                          {c.protocol_title ? ` · protocolo: ${c.protocol_title}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setAdvice({
+                              advice_html: c.advice_html,
+                              key_points: (c.key_points || []) as string[],
+                              cautions: (c.cautions || []) as string[],
+                            });
+                            setUseAdvice(true);
+                            toast.success("Orientação carregada do histórico");
+                          }}
+                        >
+                          Reabrir
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            if (!window.confirm("Excluir esta orientação do histórico?")) return;
+                            const { error } = await supabase.from("diet_consultations").delete().eq("id", c.id);
+                            if (error) return toast.error("Falha ao excluir");
+                            refetchHistory();
+                            toast.success("Orientação excluída");
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {advice && (
             <Card className="border-primary/30">
               <CardHeader>
