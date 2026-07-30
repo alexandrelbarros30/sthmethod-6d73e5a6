@@ -108,6 +108,22 @@ const AdminDietAI = () => {
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Histórico de orientações (restrito a admin/consultor)
+  const { data: consultHistory = [], refetch: refetchHistory } = useQuery({
+    queryKey: ["diet-consultations", selectedStudent?.user_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("diet_consultations")
+        .select("id, title, advice_html, key_points, cautions, protocol_title, created_at")
+        .eq("student_id", selectedStudent.user_id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedStudent?.user_id,
+  });
+
   const { data: students = [] } = useQuery({
     queryKey: ["diet-ai-students", displayRole, user?.id],
     queryFn: async () => {
