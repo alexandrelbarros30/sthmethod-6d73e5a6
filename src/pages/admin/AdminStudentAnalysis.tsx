@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/utils";
 import { normalizeClinicalHtml } from "@/lib/clinical-html";
+import ClinicalReport from "@/components/shared/ClinicalReport";
 import { isRealPdf, INVALID_PDF_MESSAGE } from "@/lib/pdf-validate";
 import { toast } from "sonner";
 
@@ -647,10 +648,7 @@ export default function AdminStudentAnalysis() {
                       Emitido em {new Date(current.created_at).toLocaleString("pt-BR")}
                     </p>
                   </div>
-                  <div
-                    className="clinical-report"
-                    dangerouslySetInnerHTML={{ __html: normalizeClinicalHtml(current.report_html) }}
-                  />
+                  <ClinicalReport html={current.report_html} />
                 </CardContent>
               </Card>
             </div>
