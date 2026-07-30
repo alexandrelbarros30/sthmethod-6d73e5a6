@@ -655,7 +655,7 @@ const StudentGuidedWorkout = () => {
                 }
               >
                 {isGroupStart && (
-                  <div className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2.5 border border-b-0 border-border/60 bg-muted/40 -mb-1">
+                  <div className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2.5 border border-b-0 border-border/60 bg-muted/40 -mb-3">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-foreground/60" />
                     <span className="font-medium tracking-[0.16em] uppercase text-[11px] text-foreground">
                       {groupKind}{ex.group_name ? ` · ${ex.group_name}` : ""}
@@ -666,25 +666,27 @@ const StudentGuidedWorkout = () => {
                   </div>
                 )}
                 <div
-                  className={inGroup ? "relative space-y-3 p-3 pl-5 -mx-1" : "space-y-3"}
+                  className={inGroup ? "relative space-y-3 px-4 pt-4 pb-4" : "space-y-3"}
                   style={
                     inGroup
                       ? {
-                          borderLeft: "1px solid hsl(var(--border))",
-                          borderRight: "1px solid hsl(var(--border))",
-                          borderTop: isGroupStart ? "1px solid hsl(var(--border))" : "none",
-                          borderBottom: isGroupEnd ? "1px solid hsl(var(--border))" : "none",
+                          borderLeft: "1px solid hsl(var(--border) / 0.6)",
+                          borderRight: "1px solid hsl(var(--border) / 0.6)",
+                          borderTop: "none",
+                          borderBottom: "none",
+                          paddingTop: isGroupStart ? 16 : 0,
+                          paddingBottom: isGroupEnd ? 16 : 0,
                           borderTopLeftRadius: 0,
                           borderTopRightRadius: 0,
-                          borderBottomLeftRadius: isGroupEnd ? 16 : 0,
-                          borderBottomRightRadius: isGroupEnd ? 16 : 0,
+                          borderBottomLeftRadius: 0,
+                          borderBottomRightRadius: 0,
                           background: "hsl(var(--muted) / 0.25)",
                         }
                       : undefined
                   }
                 >
                 {inGroup && (
-                  <span className="absolute -left-3 top-3 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground text-background">
+                  <span className="absolute left-2 top-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground/90 text-background">
                     {posLabel}
                   </span>
                 )}
