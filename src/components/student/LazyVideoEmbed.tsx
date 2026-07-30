@@ -87,6 +87,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
   const [thumbIdx, setThumbIdx] = useState(0);
   const [thumbUnavailable, setThumbUnavailable] = useState(false);
   const [vimeoPoster, setVimeoPoster] = useState<string | null>(null);
+  const [vimeoPosterRaw, setVimeoPosterRaw] = useState<string | null>(null);
   const fileVideoRef = useRef<HTMLVideoElement | null>(null);
   const ytId = kind === "embed" ? getYoutubeId(url) : null;
   const vimeoId = kind === "embed" ? getVimeoId(url) : null;
@@ -120,6 +121,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
   useEffect(() => {
     let cancelled = false;
     setVimeoPoster(null);
+    setVimeoPosterRaw(null);
     if (!vimeoId) return;
 
     fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(`https://vimeo.com/${vimeoId}`)}`)
@@ -127,6 +129,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       .then((data) => {
         if (!cancelled && data?.thumbnail_url) {
           setVimeoPoster(normalizeImageUrl(upscaleThumbUrl(data.thumbnail_url)));
+          setVimeoPosterRaw(normalizeImageUrl(data.thumbnail_url));
           setThumbIdx(0);
           setThumbUnavailable(false);
         }
@@ -156,10 +159,11 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       ytId ? `https://i.ytimg.com/vi/${ytId}/0.jpg` : "",
       ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "",
       vimeoPoster,
+      vimeoPosterRaw,
     ].filter(Boolean) as string[];
 
     return Array.from(new Set(candidates));
-  }, [posterUrl, vimeoPoster, ytId]);
+  }, [posterUrl, vimeoPoster, vimeoPosterRaw, ytId]);
 
   const thumbSrc = thumbCandidates[thumbIdx] || null;
 
