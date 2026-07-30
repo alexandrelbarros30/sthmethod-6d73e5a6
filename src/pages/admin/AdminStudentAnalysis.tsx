@@ -141,6 +141,14 @@ export default function AdminStudentAnalysis() {
   const toggleBody = (id: string) =>
     setSelectedBodyIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  // Por padrão, todos os exames do sistema vêm marcados; admin pode escolher quais usar
+  useEffect(() => {
+    setSelectedExamIds((existingExams as any[]).map((d) => d.id));
+  }, [existingExams]);
+
+  const toggleExam = (id: string) =>
+    setSelectedExamIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
   const uploadExamFiles = async (files: FileList | null) => {
     if (!files || !studentId) return;
     setUploading(true);
