@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText, History, Lock, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { normalizeSearch } from "@/lib/utils";
@@ -76,6 +76,7 @@ const stripMealMacroLines = (html: string) =>
 const AdminDietAI = () => {
   const { role, user } = useAuth();
   const displayRole = role === "consultor" ? "consultor" : "admin";
+  const queryClient = useQueryClient();
 
   // Student selection
   const [studentSearch, setStudentSearch] = useState("");
