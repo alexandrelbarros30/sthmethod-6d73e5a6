@@ -2287,6 +2287,18 @@ Deno.serve(async (req) => {
     // Se houver atendente humano ou flag de handoff, ignoramos mensagens automáticas de fluxo e ausência.
     const isChannelEnabled = channelEnabled;
     const aiMode = String((aiModeCfg?.value as any)?.mode || 'auto'); // off | auto | ai_only
+
+    // MIGRAÇÃO: canal "Sucesso do Aluno" está SUSPENSO. Conversas do Comercial
+    // (Z-API) que ficaram presas no menu do Sucesso travam a renovação. Aqui
+    // migramos para o estado de renovação atendido pela IA Comercial.
+    if (provider === 'zapi' && (conv.flow_state === 'sucesso_main_menu' || conv.queue_type === 'sucesso')) {
+      await admin.from('crm_conversations')
+        .update({ flow_state: 'comercial_renovacao', queue_type: 'comercial' })
+        .eq('id', conv.id);
+      (conv as any).flow_state = 'comercial_renovacao';
+      (conv as any).queue_type = 'comercial';
+    }
+
     const shouldBootstrapCommercialFlow = provider === 'zapi' && !conv.flow_state;
 
     // HARD RULE: bloqueio do canal Nutri para não-ativos tem PRECEDÊNCIA sobre
