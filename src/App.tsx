@@ -108,6 +108,7 @@ import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminNutrition from "./pages/admin/AdminNutrition";
 import AdminTraining from "./pages/admin/AdminTraining";
 import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
+import AdminPreviewCompare from "./pages/admin/AdminPreviewCompare";
 import AdminTrainingPrograms from "./pages/admin/AdminTrainingPrograms";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
@@ -339,6 +340,7 @@ const App = () => (
             <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminProtocol /></Suspense></ProtectedRoute>} />
             <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTraining /></ProtectedRoute>} />
             <Route path="/admin/exercise-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminExerciseLibrary /></ProtectedRoute>} />
+            <Route path="/admin/preview-compare" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPreviewCompare /></ProtectedRoute>} />
             <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute allowedRoles={["admin"]}><AdminContent /></ProtectedRoute>} />
             <Route path="/admin/layout" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayoutExterno /></ProtectedRoute>} />
