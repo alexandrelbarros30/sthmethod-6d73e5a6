@@ -58,6 +58,15 @@ export default function DocumentUpload({ userId, onUploaded, allowImages = false
       throw new Error("Não foi possível ler o arquivo selecionado. Tente baixar o PDF no aparelho e enviar novamente.");
     }
 
+    // Valida a assinatura real do arquivo (%PDF-). Páginas HTML de portais de
+    // laboratório costumam ser salvas com extensão .pdf e quebram o visualizador.
+    const head = new TextDecoder().decode(new Uint8Array(buffer.slice(0, 1024)));
+    if (!head.trimStart().startsWith("%PDF-")) {
+      throw new Error(
+        "Este arquivo não é um PDF válido (parece ser uma página do site do laboratório). Abra o laudo no portal e use a opção 'Baixar PDF' ou 'Imprimir → Salvar como PDF' antes de enviar."
+      );
+    }
+
     return new Blob([buffer], { type: "application/pdf" });
   };
 

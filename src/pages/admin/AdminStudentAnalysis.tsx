@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/utils";
 import { normalizeClinicalHtml } from "@/lib/clinical-html";
+import { isRealPdf, INVALID_PDF_MESSAGE } from "@/lib/pdf-validate";
 import { toast } from "sonner";
 
 type Student = { user_id: string; full_name: string | null; email: string | null };
@@ -150,6 +151,10 @@ export default function AdminStudentAnalysis() {
         }
         if (file.size > 15 * 1024 * 1024) {
           toast.error(`${file.name} maior que 15MB`);
+          continue;
+        }
+        if (ext === "pdf" && !(await isRealPdf(file))) {
+          toast.error(`${file.name}: ${INVALID_PDF_MESSAGE}`);
           continue;
         }
         const path = `clinical-analysis/${studentId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;

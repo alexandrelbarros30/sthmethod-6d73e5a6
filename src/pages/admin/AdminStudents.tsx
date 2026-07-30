@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { normalizeSearch } from "@/lib/utils";
+import { assertRealPdf } from "@/lib/pdf-validate";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -264,9 +265,12 @@ const AdminStudents = () => {
   });
 
   const uploadPdf = async (file: File, ownerUserId: string, type: "lab_exam" | "medical_prescription"): Promise<string> => {
+    await assertRealPdf(file);
     // Salva sempre dentro da pasta do dono (userId) para casar com as policies de storage privadas
     const path = `${ownerUserId}/${type}_${Date.now()}.pdf`;
-    const { error } = await supabase.storage.from("documents").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage
+      .from("documents")
+      .upload(path, file, { upsert: true, contentType: "application/pdf" });
     if (error) throw error;
     const { data } = supabase.storage.from("documents").getPublicUrl(path);
     // Registra também na tabela clinical_documents (com storage_path, para signed URL)
