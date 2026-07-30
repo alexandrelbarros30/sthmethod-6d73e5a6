@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera, Save, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -47,6 +48,7 @@ export default function AdminStudentAnalysis() {
   const [extraImagePaths, setExtraImagePaths] = useState<{ path: string; name: string }[]>([]);
   const [extraExamPaths, setExtraExamPaths] = useState<{ path: string; name: string }[]>([]);
   const [includeExistingExams, setIncludeExistingExams] = useState(true);
+  const [selectedExamIds, setSelectedExamIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const examInputRef = useRef<HTMLInputElement | null>(null);
