@@ -178,21 +178,11 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
 
       return (
         <div className={`relative h-full w-full overflow-hidden bg-card ${className || ""}`}>
-          {thumbSrc && !thumbUnavailable && (
-            <img
-              src={thumbSrc}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-2xl"
-              draggable={false}
-              referrerPolicy="no-referrer"
-            />
-          )}
           <video
             ref={fileVideoRef}
             src={url}
-            className="sth-workout-video absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-contain sm:bottom-12 sm:h-[calc(100%-3rem)]"
-            style={{ objectFit: "contain" }}
+            className="sth-workout-video absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-cover sm:bottom-12 sm:h-[calc(100%-3rem)]"
+            style={{ objectFit: "cover", objectPosition: "center" }}
             playsInline
             {...({ "webkit-playsinline": "true" } as Record<string, string>)}
             preload="metadata"
@@ -254,28 +244,18 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       aria-label={`Reproduzir vídeo${title ? `: ${title}` : ""}`}
     >
       {thumbSrc && !thumbUnavailable && (
-        <>
-        <img
-          src={thumbSrc}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-2xl"
-          draggable={false}
-          referrerPolicy="no-referrer"
-        />
         <img
           key={thumbSrc}
           src={thumbSrc}
           alt={title || "Vídeo"}
-          className="sth-workout-preview-media absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-contain sm:bottom-12 sm:h-[calc(100%-3rem)]"
-          style={{ objectFit: "contain" }}
+          className="sth-workout-preview-media absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-cover sm:bottom-12 sm:h-[calc(100%-3rem)]"
+          style={{ objectFit: "cover", objectPosition: "center" }}
           loading="eager"
           decoding="async"
           draggable={false}
           referrerPolicy="no-referrer"
           onError={handleThumbError}
         />
-        </>
       )}
 
       {(!thumbSrc || thumbUnavailable) && (
