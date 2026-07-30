@@ -647,10 +647,7 @@ export default function AdminStudentAnalysis() {
                       Emitido em {new Date(current.created_at).toLocaleString("pt-BR")}
                     </p>
                   </div>
-                  <div
-                    className="clinical-report"
-                    dangerouslySetInnerHTML={{ __html: normalizeClinicalHtml(current.report_html) }}
-                  />
+                  <ClinicalReport html={current.report_html} />
                 </CardContent>
               </Card>
             </div>
