@@ -655,7 +655,7 @@ const StudentGuidedWorkout = () => {
                 }
               >
                 {isGroupStart && (
-                  <div className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2.5 border border-b-0 border-border/60 bg-muted/40 -mb-1">
+                  <div className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2.5 border border-b-0 border-border/60 bg-muted/40 -mb-3">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-foreground/60" />
                     <span className="font-medium tracking-[0.16em] uppercase text-[11px] text-foreground">
                       {groupKind}{ex.group_name ? ` · ${ex.group_name}` : ""}
@@ -666,25 +666,27 @@ const StudentGuidedWorkout = () => {
                   </div>
                 )}
                 <div
-                  className={inGroup ? "relative space-y-3 p-3 pl-5 -mx-1" : "space-y-3"}
+                  className={inGroup ? "relative space-y-3 px-4 pt-4 pb-4" : "space-y-3"}
                   style={
                     inGroup
                       ? {
-                          borderLeft: "1px solid hsl(var(--border))",
-                          borderRight: "1px solid hsl(var(--border))",
-                          borderTop: isGroupStart ? "1px solid hsl(var(--border))" : "none",
-                          borderBottom: isGroupEnd ? "1px solid hsl(var(--border))" : "none",
+                          borderLeft: "1px solid hsl(var(--border) / 0.6)",
+                          borderRight: "1px solid hsl(var(--border) / 0.6)",
+                          borderTop: "none",
+                          borderBottom: "none",
+                          paddingTop: isGroupStart ? 16 : 0,
+                          paddingBottom: isGroupEnd ? 16 : 0,
                           borderTopLeftRadius: 0,
                           borderTopRightRadius: 0,
-                          borderBottomLeftRadius: isGroupEnd ? 16 : 0,
-                          borderBottomRightRadius: isGroupEnd ? 16 : 0,
+                          borderBottomLeftRadius: 0,
+                          borderBottomRightRadius: 0,
                           background: "hsl(var(--muted) / 0.25)",
                         }
                       : undefined
                   }
                 >
                 {inGroup && (
-                  <span className="absolute -left-3 top-3 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground text-background">
+                  <span className="absolute left-2 top-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground/90 text-background">
                     {posLabel}
                   </span>
                 )}
@@ -819,14 +821,11 @@ const StudentGuidedWorkout = () => {
                 {idx < exList.length - 1 && (
                   inGroup && !isGroupEnd ? (
                     <div
-                      className="flex justify-center items-center gap-2 pt-1 text-[10px] font-black uppercase tracking-[0.25em]"
-                      style={{ color: "#39FF14", textShadow: "0 0 8px rgba(57,255,20,0.7)" }}
+                      className="flex justify-center items-center gap-2 pt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground"
                     >
-                      <span className="h-px flex-1" style={{ background: "#39FF14", boxShadow: "0 0 6px #39FF14" }} />
-                      <ChevronsDown className="w-4 h-4" />
+                      <span className="h-px flex-1 bg-border/70" />
                       sem descanso · próximo do {groupKind.toLowerCase()}
-                      <ChevronsDown className="w-4 h-4" />
-                      <span className="h-px flex-1" style={{ background: "#39FF14", boxShadow: "0 0 6px #39FF14" }} />
+                      <span className="h-px flex-1 bg-border/70" />
                     </div>
                   ) : (
                     <div className="flex justify-center pt-1 text-muted-foreground/50">
@@ -837,16 +836,9 @@ const StudentGuidedWorkout = () => {
                 </div>
                 {isGroupEnd && (
                   <div
-                    className="relative rounded-b-2xl px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.3em] border-2 border-t-0 -mt-1"
-                    style={{
-                      color: "#39FF14",
-                      borderColor: "#39FF14",
-                      background: "linear-gradient(90deg, rgba(57,255,20,0.06), rgba(57,255,20,0.22))",
-                      textShadow: "0 0 8px rgba(57,255,20,0.7)",
-                      boxShadow: "0 0 26px rgba(57,255,20,0.55), inset 0 0 14px rgba(57,255,20,0.2)",
-                    }}
+                    className="relative rounded-b-2xl px-4 py-2.5 text-center text-[10px] font-medium uppercase tracking-[0.22em] border border-t-0 border-border/60 bg-muted/40 text-muted-foreground -mt-3"
                   >
-                    ▲ fim do {groupKind.toLowerCase()} — descanse ▲
+                    fim do {groupKind.toLowerCase()} — descanse
                   </div>
                 )}
               </div>
