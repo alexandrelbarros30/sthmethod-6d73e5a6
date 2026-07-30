@@ -2210,15 +2210,18 @@ const AdminStudents = () => {
             <Label>Nova senha *</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input type={showResetPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10 pr-10" minLength={6} />
+              <Input type={showResetPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10 pr-10" minLength={8} />
               <button type="button" onClick={() => setShowResetPassword(!showResetPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                 {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Use ao menos 8 caracteres com letras maiúsculas, minúsculas, números e símbolos. Senhas comuns ou já vazadas (ex.: "123456", "senha123", nome + ano) são recusadas automaticamente pelo sistema de segurança.
+          </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setPasswordReset(null); setNewPassword(""); }}>Cancelar</Button>
-            <Button onClick={() => resetPasswordMutation.mutate()} disabled={resetPasswordMutation.isPending || newPassword.length < 6}>
+            <Button onClick={() => resetPasswordMutation.mutate()} disabled={resetPasswordMutation.isPending || newPassword.length < 8}>
               {resetPasswordMutation.isPending ? "Alterando..." : "Alterar senha"}
             </Button>
           </DialogFooter>
