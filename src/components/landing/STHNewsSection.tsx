@@ -21,8 +21,19 @@ import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 import mounjaroPesoTravadoImg from "@/assets/sthnews-mounjaro-peso-travado-hero.jpg";
+import tirzeRetaImg from "@/assets/sthnews-tirze-vs-reta-hero.jpg";
 
 const rawArticles = [
+  {
+    to: "/tendencias/tirzepatida-vs-retatrutida",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "30 Jul 2026",
+    publishedAt: "2026-07-30",
+    title: "⚖️ Tirzepatida ou retatrutida? Não são a mesma coisa",
+    desc: "Uma controla a fome e ensina novos hábitos. A outra refina a composição corporal de quem já domina o comportamento.",
+    img: tirzeRetaImg,
+  },
   {
     to: "/tendencias/tirzepatida-desmame",
     tag: "CAPA",

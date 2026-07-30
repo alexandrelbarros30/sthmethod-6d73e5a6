@@ -27,6 +27,7 @@ import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 import clenbuterolImg from "@/assets/sthnews-clenbuterol-hero.jpg";
 import mounjaroPesoTravadoImg from "@/assets/sthnews-mounjaro-peso-travado-hero.jpg";
 import periodizacaoImg from "@/assets/sthnews-periodizacao-hero.jpg";
+import tirzeRetaImg from "@/assets/sthnews-tirze-vs-reta-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -34,6 +35,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/tirzepatida-vs-retatrutida", kicker: "Tirzepatida × Retatrutida", title: "⚖️ Tirzepatida ou retatrutida? Não são a mesma coisa.", desc: "Uma controla a fome e ensina novos hábitos. A outra refina a composição corporal de quem já domina o comportamento.", img: tirzeRetaImg },
   { to: "/tendencias/periodizacao-medicamentos", kicker: "Estratégia farmacológica", title: "⏳ Periodização de medicamentos e peptídeos: a sofisticação que ninguém aplica.", desc: "Mais compostos não é mais resultado. Cada fase pede a intervenção certa — no momento certo.", img: periodizacaoImg },
   { to: "/tendencias/tirzepatida-desmame", kicker: "Tirzepatida & manutenção", title: "💉 O desmame da tirzepatida: quando a caneta acaba, o verdadeiro desafio começa.", desc: "Emagrecer é apenas a primeira etapa. A manutenção dos resultados depende dos hábitos construídos durante o tratamento.", img: tirzeDesmameImg },
   { to: "/tendencias/clenbuterol", kicker: "Termogênese & risco", title: "🔥 Clenbuterol: o termogênico mais poderoso ou uma bomba-relógio cardiovascular?", desc: "Mecanismo beta-2 adrenérgico, perda de gordura acelerada e o preço fisiológico que o coração paga.", img: clenbuterolImg },
