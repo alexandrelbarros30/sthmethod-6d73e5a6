@@ -1,0 +1,1 @@
+DELETE FROM public.clinical_documents WHERE id = 'bd2a8b09-a1ca-409b-8102-f494da275411';
