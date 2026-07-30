@@ -43,6 +43,7 @@ import HormoniosBfAlto from "./pages/HormoniosBfAlto";
 import TirzepatidaHipertrofia from "./pages/TirzepatidaHipertrofia";
 import TirzepatidaColaterais from "./pages/TirzepatidaColaterais";
 import TirzepatidaDesmame from "./pages/TirzepatidaDesmame";
+import TirzepatidaRetatrutida from "./pages/TirzepatidaRetatrutida";
 import MounjaroPesoTravado from "./pages/MounjaroPesoTravado";
 import HipertensaoArterial from "./pages/HipertensaoArterial";
 import CarboidratosHipertrofia from "./pages/CarboidratosHipertrofia";
@@ -256,6 +257,7 @@ const App = () => (
             <Route path="/tendencias/tirzepatida-hipertrofia" element={<TirzepatidaHipertrofia />} />
             <Route path="/tendencias/tirzepatida-colaterais" element={<TirzepatidaColaterais />} />
             <Route path="/tendencias/tirzepatida-desmame" element={<TirzepatidaDesmame />} />
+            <Route path="/tendencias/tirzepatida-vs-retatrutida" element={<TirzepatidaRetatrutida />} />
             <Route path="/tendencias/mounjaro-peso-travado" element={<MounjaroPesoTravado />} />
             <Route path="/tendencias/hipertensao-arterial" element={<HipertensaoArterial />} />
             <Route path="/tendencias/carboidratos-hipertrofia" element={<CarboidratosHipertrofia />} />
