@@ -585,10 +585,6 @@ const AdminStudents = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      // Espelha a senha no ST Coach (fire-and-forget)
-      supabase.functions.invoke("supercoach-sync-expiration", {
-        body: { action: "set_password", userId: passwordReset.userId, password: newPassword },
-      }).catch((e) => console.warn("[SuperCoach set_password]", e));
       await logAdminAccess({
         action: "delete_student",
         resourceType: "profiles",
@@ -603,7 +599,7 @@ const AdminStudents = () => {
 
   const resetPasswordMutation = useMutation({
     mutationFn: async () => {
-      if (!passwordReset || newPassword.length < 6) throw new Error("Senha deve ter no mínimo 6 caracteres");
+      if (!passwordReset || newPassword.length < 8) throw new Error("Senha deve ter no mínimo 8 caracteres");
       const ok = await requireReauth({
         reason: `Você está redefinindo a senha de "${passwordReset.name}". Confirme sua senha.`,
         action: "reset_student_password",
@@ -615,6 +611,10 @@ const AdminStudents = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      // Espelha a senha no ST Coach (fire-and-forget)
+      supabase.functions.invoke("supercoach-sync-expiration", {
+        body: { action: "set_password", userId: passwordReset.userId, password: newPassword },
+      }).catch((e) => console.warn("[SuperCoach set_password]", e));
       await logAdminAccess({
         action: "reset_student_password",
         resourceType: "auth.users",
