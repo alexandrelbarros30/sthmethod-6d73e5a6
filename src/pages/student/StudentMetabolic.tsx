@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Microscope, AlertCircle, X, ChevronDown, FlaskConical, ClipboardList, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import ClinicalReport from "@/components/shared/ClinicalReport";
 import { cn } from "@/lib/utils";
 import { usePreviewAs } from "@/hooks/usePreviewAs";
 
@@ -184,9 +185,9 @@ const StudentMetabolic = () => {
                       </ol>
                     </div>
                   )}
-                  <div
-                    className="clinical-report rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 sm:px-4 sm:py-3.5 prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: a.report_html }}
+                  <ClinicalReport
+                    html={a.report_html}
+                    className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 sm:px-4 sm:py-3.5 max-w-none"
                   />
                 </div>
               )}
