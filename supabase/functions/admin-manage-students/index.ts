@@ -89,7 +89,16 @@ Deno.serve(async (req) => {
       const { error } = await adminClient.auth.admin.updateUserById(user_id, { password: new_password });
       if (error) {
         console.error("Error resetting password:", error.message);
-        return new Response(JSON.stringify({ error: `Erro ao alterar senha: ${error.message}` }), {
+        const raw = (error.message || "").toLowerCase();
+        let friendly = `Erro ao alterar senha: ${error.message}`;
+        if (raw.includes("weak") || raw.includes("pwned") || raw.includes("easy to guess")) {
+          friendly = "Esta senha foi encontrada em vazamentos públicos e é considerada fraca. Escolha outra (mín. 8 caracteres, misturando letras maiúsculas, minúsculas, números e símbolos — evite nome, datas ou sequências).";
+        } else if (raw.includes("should be at least") || raw.includes("length")) {
+          friendly = "A senha é curta demais. Use pelo menos 8 caracteres.";
+        } else if (raw.includes("user not found")) {
+          friendly = "Usuário não encontrado na autenticação.";
+        }
+        return new Response(JSON.stringify({ error: friendly }), {
           status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

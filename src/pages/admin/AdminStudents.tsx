@@ -585,10 +585,6 @@ const AdminStudents = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      // Espelha a senha no ST Coach (fire-and-forget)
-      supabase.functions.invoke("supercoach-sync-expiration", {
-        body: { action: "set_password", userId: passwordReset.userId, password: newPassword },
-      }).catch((e) => console.warn("[SuperCoach set_password]", e));
       await logAdminAccess({
         action: "delete_student",
         resourceType: "profiles",
@@ -603,7 +599,7 @@ const AdminStudents = () => {
 
   const resetPasswordMutation = useMutation({
     mutationFn: async () => {
-      if (!passwordReset || newPassword.length < 6) throw new Error("Senha deve ter no mínimo 6 caracteres");
+      if (!passwordReset || newPassword.length < 8) throw new Error("Senha deve ter no mínimo 8 caracteres");
       const ok = await requireReauth({
         reason: `Você está redefinindo a senha de "${passwordReset.name}". Confirme sua senha.`,
         action: "reset_student_password",
@@ -615,6 +611,10 @@ const AdminStudents = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      // Espelha a senha no ST Coach (fire-and-forget)
+      supabase.functions.invoke("supercoach-sync-expiration", {
+        body: { action: "set_password", userId: passwordReset.userId, password: newPassword },
+      }).catch((e) => console.warn("[SuperCoach set_password]", e));
       await logAdminAccess({
         action: "reset_student_password",
         resourceType: "auth.users",
@@ -2210,15 +2210,18 @@ const AdminStudents = () => {
             <Label>Nova senha *</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input type={showResetPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10 pr-10" minLength={6} />
+              <Input type={showResetPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10 pr-10" minLength={8} />
               <button type="button" onClick={() => setShowResetPassword(!showResetPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                 {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Use ao menos 8 caracteres com letras maiúsculas, minúsculas, números e símbolos. Senhas comuns ou já vazadas (ex.: "123456", "senha123", nome + ano) são recusadas automaticamente pelo sistema de segurança.
+          </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setPasswordReset(null); setNewPassword(""); }}>Cancelar</Button>
-            <Button onClick={() => resetPasswordMutation.mutate()} disabled={resetPasswordMutation.isPending || newPassword.length < 6}>
+            <Button onClick={() => resetPasswordMutation.mutate()} disabled={resetPasswordMutation.isPending || newPassword.length < 8}>
               {resetPasswordMutation.isPending ? "Alterando..." : "Alterar senha"}
             </Button>
           </DialogFooter>
