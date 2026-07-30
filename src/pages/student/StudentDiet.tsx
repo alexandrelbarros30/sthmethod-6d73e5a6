@@ -10,6 +10,7 @@ import PreviewAsBanner from "@/components/student/PreviewAsBanner";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import PreviewLockedCard from "@/components/student/PreviewLockedCard";
 import { useMealTracking } from "@/hooks/useMealTracking";
+import { extractMealRawHtml } from "@/lib/diet-meal-sync";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
 import MealCard from "@/components/student/MealCard";
