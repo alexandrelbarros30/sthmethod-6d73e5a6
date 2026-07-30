@@ -33,6 +33,32 @@ const normalizeImageUrl = (raw?: string | null) => {
   }
 };
 
+/**
+ * Thumbnails do Vimeo/ST Coach chegam em baixa resolução (ex.: `_295x166`).
+ * Aqui elevamos para 1280 de largura mantendo a proporção nativa da mídia,
+ * evitando ampliação/pixelização no preview.
+ */
+const upscaleThumbUrl = (raw?: string | null) => {
+  if (!raw) return "";
+  let out = raw;
+  // i.vimeocdn.com/video/xxx_295x166.jpg  ->  _1280.jpg
+  out = out.replace(/_(\d{2,4})x(\d{2,4})(?=\.(jpg|jpeg|png|webp)(\?|$))/i, "_1280");
+  // querystring style: ?mw=295&mh=166 / ?w=295&h=166
+  try {
+    const u = new URL(out);
+    if (/vimeocdn\.com/i.test(u.hostname)) {
+      for (const [k, v] of Array.from(u.searchParams.entries())) {
+        if (/^(mw|w)$/i.test(k) && Number(v) < 1280) u.searchParams.set(k, "1280");
+        if (/^(mh|h)$/i.test(k)) u.searchParams.delete(k);
+      }
+      out = u.toString();
+    }
+  } catch {
+    /* url relativa — mantém */
+  }
+  return out;
+};
+
 interface LazyVideoEmbedProps {
   url: string;
   title?: string;
@@ -98,7 +124,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!cancelled && data?.thumbnail_url) {
-          setVimeoPoster(normalizeImageUrl(data.thumbnail_url));
+          setVimeoPoster(normalizeImageUrl(upscaleThumbUrl(data.thumbnail_url)));
           setThumbIdx(0);
           setThumbUnavailable(false);
         }
@@ -119,7 +145,10 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
   // onLoad nem de WebP. Para Vimeo/ST Coach, usa a capa do cadastro e oEmbed.
   const thumbCandidates = useMemo(() => {
     const candidates = [
+      normalizeImageUrl(upscaleThumbUrl(posterUrl)),
       normalizeImageUrl(posterUrl),
+      ytId ? `https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg` : "",
+      ytId ? `https://i.ytimg.com/vi/${ytId}/sddefault.jpg` : "",
       ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : "",
       ytId ? `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg` : "",
       ytId ? `https://i.ytimg.com/vi/${ytId}/0.jpg` : "",
@@ -182,8 +211,8 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
             <video
             ref={fileVideoRef}
             src={url}
-            className="sth-workout-video absolute inset-0 h-full w-full object-cover object-center"
-            style={{ objectFit: "cover", objectPosition: "center" }}
+            className="sth-workout-video absolute inset-0 h-full w-full object-contain object-center"
+            style={{ objectFit: "contain", objectPosition: "center" }}
             playsInline
             {...({ "webkit-playsinline": "true" } as Record<string, string>)}
             preload="metadata"
@@ -253,8 +282,8 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           key={thumbSrc}
           src={thumbSrc}
           alt={title || "Vídeo"}
-          className="sth-workout-preview-media absolute inset-0 h-full w-full object-cover object-center"
-          style={{ objectFit: "cover", objectPosition: "center" }}
+          className="sth-workout-preview-media absolute inset-0 h-full w-full object-contain object-center"
+          style={{ objectFit: "contain", objectPosition: "center" }}
           loading="eager"
           decoding="async"
           draggable={false}
