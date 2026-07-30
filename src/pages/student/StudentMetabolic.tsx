@@ -185,7 +185,7 @@ const StudentMetabolic = () => {
                     </div>
                   )}
                   <div
-                    className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 sm:px-4 sm:py-3.5 prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:text-xs [&_th]:border [&_th]:border-border [&_th]:p-1.5 [&_th]:bg-muted [&_td]:border [&_td]:border-border [&_td]:p-1.5"
+                    className="clinical-report rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 sm:px-4 sm:py-3.5 prose prose-sm dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: a.report_html }}
                   />
                 </div>
