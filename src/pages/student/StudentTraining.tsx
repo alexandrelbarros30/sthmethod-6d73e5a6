@@ -322,11 +322,18 @@ const StudentTraining = () => {
                               </div>
                             )}
                             {media?.kind === "image" && (
-                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black relative">
+                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-muted relative">
+                                <img
+                                  src={media.url}
+                                  alt=""
+                                  aria-hidden="true"
+                                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35"
+                                  draggable={false}
+                                />
                                 <img
                                   src={media.url}
                                   alt={ex.name}
-                                  className="w-full h-full object-contain"
+                                  className="relative w-full h-full object-contain"
                                   loading="lazy"
                                   draggable={false}
                                 />
@@ -336,7 +343,7 @@ const StudentTraining = () => {
                               </div>
                             )}
                             {media?.kind === "file" && (
-                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-muted">
                                 <LazyVideoEmbed
                                   url={media.url}
                                   title={ex.name}

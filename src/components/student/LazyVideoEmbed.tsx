@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Pause, Play } from "lucide-react";
+import { Dumbbell, Pause, Play } from "lucide-react";
 
 // Extrai o ID do YouTube a partir da URL de embed/watch/short.
 const getYoutubeId = (url: string) => {
@@ -178,10 +178,20 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
 
       return (
         <div className={`relative h-full w-full overflow-hidden bg-card ${className || ""}`}>
+          {thumbSrc && !thumbUnavailable && (
+            <img
+              src={thumbSrc}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-2xl"
+              draggable={false}
+              referrerPolicy="no-referrer"
+            />
+          )}
           <video
             ref={fileVideoRef}
             src={url}
-            className="sth-workout-video absolute inset-0 h-full w-full object-contain"
+            className="sth-workout-video absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-contain sm:bottom-12 sm:h-[calc(100%-3rem)]"
             style={{ objectFit: "contain" }}
             playsInline
             {...({ "webkit-playsinline": "true" } as Record<string, string>)}
@@ -244,11 +254,20 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       aria-label={`Reproduzir vídeo${title ? `: ${title}` : ""}`}
     >
       {thumbSrc && !thumbUnavailable && (
+        <>
+        <img
+          src={thumbSrc}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-2xl"
+          draggable={false}
+          referrerPolicy="no-referrer"
+        />
         <img
           key={thumbSrc}
           src={thumbSrc}
           alt={title || "Vídeo"}
-          className="sth-workout-preview-media absolute inset-0 h-full w-full object-contain"
+          className="sth-workout-preview-media absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-contain sm:bottom-12 sm:h-[calc(100%-3rem)]"
           style={{ objectFit: "contain" }}
           loading="eager"
           decoding="async"
@@ -256,13 +275,18 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           referrerPolicy="no-referrer"
           onError={handleThumbError}
         />
+        </>
       )}
 
       {(!thumbSrc || thumbUnavailable) && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted text-center">
-          <p className="max-w-[80%] text-sm font-semibold leading-snug text-foreground">
+        <div className="absolute inset-x-0 top-0 bottom-11 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-muted to-secondary px-4 text-center sm:bottom-12">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/70 text-foreground/70">
+            <Dumbbell className="h-5 w-5" />
+          </span>
+          <p className="max-w-[85%] text-sm font-semibold leading-snug text-foreground line-clamp-2">
             {title || "Vídeo de referência técnica"}
           </p>
+          <p className="text-[11px] text-muted-foreground">Toque para reproduzir</p>
         </div>
       )}
 
