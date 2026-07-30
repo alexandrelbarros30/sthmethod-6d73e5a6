@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, Stethoscope, AlertTriangle, ClipboardList, History, Trash2, Upload, FileText, ImagePlus, X, Camera, Save, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -47,6 +48,7 @@ export default function AdminStudentAnalysis() {
   const [extraImagePaths, setExtraImagePaths] = useState<{ path: string; name: string }[]>([]);
   const [extraExamPaths, setExtraExamPaths] = useState<{ path: string; name: string }[]>([]);
   const [includeExistingExams, setIncludeExistingExams] = useState(true);
+  const [selectedExamIds, setSelectedExamIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const examInputRef = useRef<HTMLInputElement | null>(null);
@@ -139,6 +141,14 @@ export default function AdminStudentAnalysis() {
   const toggleBody = (id: string) =>
     setSelectedBodyIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  // Por padrão, todos os exames do sistema vêm marcados; admin pode escolher quais usar
+  useEffect(() => {
+    setSelectedExamIds((existingExams as any[]).map((d) => d.id));
+  }, [existingExams]);
+
+  const toggleExam = (id: string) =>
+    setSelectedExamIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
   const uploadExamFiles = async (files: FileList | null) => {
     if (!files || !studentId) return;
     setUploading(true);
@@ -213,7 +223,10 @@ export default function AdminStudentAnalysis() {
     mutationFn: async () => {
       if (!studentId) throw new Error("Selecione um aluno");
       const existingPaths = includeExistingExams
-        ? (existingExams as any[]).map((d) => d.storage_path).filter(Boolean)
+        ? (existingExams as any[])
+            .filter((d) => selectedExamIds.includes(d.id))
+            .map((d) => d.storage_path)
+            .filter(Boolean)
         : [];
       const mergedExamPaths = Array.from(
         new Set([...existingPaths, ...extraExamPaths.map((f) => f.path)])
@@ -445,10 +458,43 @@ export default function AdminStudentAnalysis() {
                           </Label>
                         </div>
                       </div>
-                      <ul className="space-y-0.5">
-                        {(existingExams as any[]).slice(0, 5).map((d) => (
-                          <li key={d.id} className="text-[10px] text-muted-foreground flex items-center justify-between gap-2">
-                            <span className="truncate">
+                      {includeExistingExams && (existingExams as any[]).length > 1 && (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] text-muted-foreground">
+                            {selectedExamIds.length} de {(existingExams as any[]).length} selecionado(s)
+                          </span>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 text-[10px] px-2"
+                              onClick={() => setSelectedExamIds((existingExams as any[]).map((d) => d.id))}
+                            >
+                              Todos
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 text-[10px] px-2"
+                              onClick={() => setSelectedExamIds([])}
+                            >
+                              Nenhum
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      <ul className="space-y-0.5 max-h-40 overflow-y-auto pr-1">
+                        {(existingExams as any[]).map((d) => (
+                          <li key={d.id} className="text-[10px] text-muted-foreground flex items-center gap-2">
+                            {includeExistingExams && (
+                              <Checkbox
+                                checked={selectedExamIds.includes(d.id)}
+                                onCheckedChange={() => toggleExam(d.id)}
+                                className="h-3.5 w-3.5 shrink-0"
+                                aria-label="Usar este exame na análise"
+                              />
+                            )}
+                            <span className="truncate flex-1">
                               {d.storage_path?.split("/").pop() || "exame.pdf"}
                             </span>
                             <span className="opacity-70 shrink-0">
@@ -458,9 +504,11 @@ export default function AdminStudentAnalysis() {
                         ))}
                       </ul>
                       <p className="text-[9px] text-muted-foreground">
-                        {includeExistingExams
-                          ? "STHIA fará OCR desses arquivos automaticamente."
-                          : "Estes exames não serão considerados nesta análise."}
+                        {!includeExistingExams
+                          ? "Estes exames não serão considerados nesta análise."
+                          : selectedExamIds.length === 0
+                          ? "Nenhum exame marcado — a STHIA usará apenas o texto e anexos novos."
+                          : "STHIA fará OCR apenas dos exames marcados."}
                       </p>
                     </div>
                   )}
