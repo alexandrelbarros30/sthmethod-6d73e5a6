@@ -283,8 +283,30 @@ serve(async (req) => {
       }
     }
 
+    const protocolBlock = String(protocolText || "").trim()
+      ? `\n\nPROTOCOLO ATUAL DO ALUNO (registrado na ficha — use para calibrar timing, hidratação, sódio, fibras, suporte hepático/renal, sensibilidade à insulina e tolerância gastrointestinal; NÃO prescreva medicamentos e NÃO cite doses):\n${String(protocolText).slice(0, 8000)}`
+      : "";
+
+    const adviceBlock = String(adviceText || "").trim()
+      ? `\n\nORIENTAÇÃO/CONSULTA STHIA JÁ APROVADA PELO ADMIN (esta é a base estratégica obrigatória do cardápio — ratifique-a):\n${String(adviceText).slice(0, 8000)}`
+      : "";
+
     const systemPrompt = isReview
       ? `Você é um nutricionista sênior revisando um cardápio brasileiro. Avalie coerência, distribuição de macros ao longo do dia, adequação ao objetivo, variedade, praticidade e possíveis melhorias. Use TACO/TBCA como referência.\n\n${TACO_REF}`
+      : isAdvice
+      ? `Você é a STHIA — nutricionista sênior do STH METHOD em modo CONSULTA.
+Sua tarefa NÃO é montar cardápio. É entregar uma ORIENTAÇÃO ESTRATÉGICA (parecer de consulta) que servirá de base para a geração posterior do cardápio.
+
+Analise o briefing, os dados do aluno, o protocolo atual (quando houver) e as fotos (quando houver) e devolva:
+- leitura do caso (contexto, objetivo, ponto de partida)
+- estratégia nutricional recomendada (déficit/superávit, distribuição de macros, timing pré/pós treino, fibras, hidratação, sódio)
+- ajustes por conta do protocolo atual, sem citar doses nem prescrever medicamento
+- alimentos e combinações prioritárias, e o que evitar
+- riscos, pontos de atenção e critérios de acompanhamento
+
+NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em português BR, tom técnico, direto e premium, em HTML simples (<p>, <strong>, <ul>, <li>), sem markdown.${protocolBlock}
+
+${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
 Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno). NÃO invente valores nutricionais — use TACO/TBCA. Temperatura 0.
 
@@ -325,10 +347,12 @@ REGRAS:
 - Opção 2, 3 e 4 devem ser aproximadamente isocalóricas e isomacros em relação à BASE.
 - Campo diet_text DEVE conter o HTML completo pronto para renderizar no portal do aluno.
 - Nos campos numéricos do tool call (energy_kcal, protein_g, carbs_g, fat_g), retorne SEMPRE valores inteiros (sem casas decimais).
-- Retorne APENAS via tool call.`;
+- Retorne APENAS via tool call.${protocolBlock}${adviceBlock}`;
 
     const userText = isReview
       ? `Revise este cardápio e devolva análise + sugestões:\n\n${dietContent}`
+      : isAdvice
+      ? `Dados do caso:\n${JSON.stringify(brief, null, 2)}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}\n\nEntregue a orientação de consulta agora (sem montar cardápio).`
       : (() => {
           const kcal = Number((brief as any)?.kcal_alvo) || null;
           const p = Number((brief as any)?.proteina_g_alvo) || null;
