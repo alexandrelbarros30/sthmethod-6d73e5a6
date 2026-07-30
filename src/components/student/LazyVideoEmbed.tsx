@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
 import { flushSync } from "react-dom";
 import { Dumbbell, Pause, Play } from "lucide-react";
 
@@ -43,6 +43,8 @@ const upscaleThumbUrl = (raw?: string | null) => {
   let out = raw;
   // i.vimeocdn.com/video/xxx_295x166.jpg  ->  _1280.jpg
   out = out.replace(/_(\d{2,4})x(\d{2,4})(?=\.(jpg|jpeg|png|webp)(\?|$))/i, "_1280");
+  // i.vimeocdn.com/video/xxx-d_295x166?region=us  ->  -d_1280?region=us (sem extensão)
+  out = out.replace(/_(\d{2,4})x(\d{2,4})(?=(\?|$))/i, "_1280");
   // querystring style: ?mw=295&mh=166 / ?w=295&h=166
   try {
     const u = new URL(out);
@@ -85,6 +87,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
   const [thumbIdx, setThumbIdx] = useState(0);
   const [thumbUnavailable, setThumbUnavailable] = useState(false);
   const [vimeoPoster, setVimeoPoster] = useState<string | null>(null);
+  const [vimeoPosterRaw, setVimeoPosterRaw] = useState<string | null>(null);
   const fileVideoRef = useRef<HTMLVideoElement | null>(null);
   const ytId = kind === "embed" ? getYoutubeId(url) : null;
   const vimeoId = kind === "embed" ? getVimeoId(url) : null;
@@ -118,6 +121,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
   useEffect(() => {
     let cancelled = false;
     setVimeoPoster(null);
+    setVimeoPosterRaw(null);
     if (!vimeoId) return;
 
     fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(`https://vimeo.com/${vimeoId}`)}`)
@@ -125,6 +129,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       .then((data) => {
         if (!cancelled && data?.thumbnail_url) {
           setVimeoPoster(normalizeImageUrl(upscaleThumbUrl(data.thumbnail_url)));
+          setVimeoPosterRaw(normalizeImageUrl(data.thumbnail_url));
           setThumbIdx(0);
           setThumbUnavailable(false);
         }
@@ -154,10 +159,11 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       ytId ? `https://i.ytimg.com/vi/${ytId}/0.jpg` : "",
       ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "",
       vimeoPoster,
+      vimeoPosterRaw,
     ].filter(Boolean) as string[];
 
     return Array.from(new Set(candidates));
-  }, [posterUrl, vimeoPoster, ytId]);
+  }, [posterUrl, vimeoPoster, vimeoPosterRaw, ytId]);
 
   const thumbSrc = thumbCandidates[thumbIdx] || null;
 
@@ -189,6 +195,25 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       return;
     }
     setThumbUnavailable(true);
+  };
+
+  /**
+   * Algumas capas do Vimeo/ST Coach respondem 200 mas entregam a imagem
+   * genérica de "vídeo indisponível" (quadrado escuro com ícone de câmera
+   * cortada) ou um arquivo minúsculo. Nesses casos descartamos a capa e
+   * caímos no placeholder elegante do STH METHOD em vez de exibir o erro.
+   */
+  const handleThumbLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget;
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    if (!w || !h) return;
+    const ratio = w / h;
+    const isTooSmall = w < 160 || h < 90;
+    const isNotLandscape = ratio < 1.2; // capa real do exercício é sempre ~16:9
+    if (isTooSmall || isNotLandscape) {
+      handleThumbError();
+    }
   };
 
   if (active) {
@@ -289,6 +314,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           draggable={false}
           referrerPolicy="no-referrer"
           onError={handleThumbError}
+          onLoad={handleThumbLoad}
           />
         )}
 
