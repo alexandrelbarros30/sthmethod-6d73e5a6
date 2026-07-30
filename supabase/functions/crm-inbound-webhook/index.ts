@@ -2884,8 +2884,34 @@ Gere a mensagem final agora.`;
           }
         }
       }
+    } else if (conv.flow_state === 'comercial_renovacao') {
+      // Aluno inativo em processo de renovação: IA Comercial responde livremente,
+      // sempre com o link de renovação disponível. Sem menus, sem travar.
+      const renewalLink = profile?.user_id
+        ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}`
+        : 'https://sthmethod.com.br/renovacao';
+      try {
+        const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: 'comercial' });
+        if (ai?.response) {
+          const r = await sendMessage(ai.response, 'ai_renovacao');
+          autoReply = { sent: r.sent, engine: ai.engine || 'ai', mode: 'renovacao_comercial' };
+        } else {
+          const r = await sendMessage(
+            `Estou aqui pra te ajudar na renovação 💪\n\nVocê pode concluir agora, 100% automatizado:\n\n🔗 ${renewalLink}\n\nQualquer dúvida sobre planos ou valores, é só me falar.`,
+            'renovacao_fallback',
+          );
+          autoReply = { sent: r.sent, engine: 'renovacao_fallback' };
+        }
+      } catch (e) {
+        console.error('comercial_renovacao ai failed', e);
+        const r = await sendMessage(
+          `Para renovar sua consultoria de forma 100% automatizada, acesse:\n\n🔗 ${renewalLink}`,
+          'renovacao_fallback',
+        );
+        autoReply = { sent: r.sent, engine: 'renovacao_fallback', error: String(e) };
+      }
+
     } else if (conv.flow_state === 'nutri_main') {
-      // (branch nutri abaixo)
       const trimmed = body.trim();
       const has = (...kw: string[]) => kw.some(k => body.toLowerCase().includes(k));
       
