@@ -197,6 +197,25 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
     setThumbUnavailable(true);
   };
 
+  /**
+   * Algumas capas do Vimeo/ST Coach respondem 200 mas entregam a imagem
+   * genérica de "vídeo indisponível" (quadrado escuro com ícone de câmera
+   * cortada) ou um arquivo minúsculo. Nesses casos descartamos a capa e
+   * caímos no placeholder elegante do STH METHOD em vez de exibir o erro.
+   */
+  const handleThumbLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget;
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    if (!w || !h) return;
+    const ratio = w / h;
+    const isTooSmall = w < 160 || h < 90;
+    const isNotLandscape = ratio < 1.2; // capa real do exercício é sempre ~16:9
+    if (isTooSmall || isNotLandscape) {
+      handleThumbError();
+    }
+  };
+
   if (active) {
     if (kind === "file") {
       const progress = fileDuration > 0 ? Math.min(100, Math.max(0, (fileCurrentTime / fileDuration) * 100)) : 0;
