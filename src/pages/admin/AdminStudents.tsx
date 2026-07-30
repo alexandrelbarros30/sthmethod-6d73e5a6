@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { normalizeSearch } from "@/lib/utils";
+import { assertRealPdf } from "@/lib/pdf-validate";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
