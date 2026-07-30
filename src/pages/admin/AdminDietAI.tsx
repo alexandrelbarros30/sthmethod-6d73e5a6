@@ -592,10 +592,72 @@ const AdminDietAI = () => {
 
         {/* RIGHT: result */}
         <div className="xl:col-span-3 space-y-4">
-          {!result && (
+          {advice && (
+            <Card className="border-primary/30">
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="font-display text-base flex items-center gap-2">
+                    <Stethoscope className="w-4 h-4 text-primary" /> Orientação — consulta STHIA
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Usar como base</span>
+                    <Switch checked={useAdvice} onCheckedChange={setUseAdvice} />
+                    <Button size="sm" variant="outline" onClick={() => adviceMut.mutate()} disabled={adviceMut.isPending}>
+                      <RefreshCw className="w-4 h-4 mr-1" /> Reconsultar
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none text-sm max-h-[420px] overflow-y-auto rounded-lg border border-border bg-card p-4"
+                  dangerouslySetInnerHTML={{ __html: advice.advice_html || "" }}
+                />
+                {advice.key_points?.length ? (
+                  <div className="text-sm">
+                    <p className="font-medium mb-1">Pontos-chave</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      {advice.key_points.map((k, i) => <li key={i}>{k}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+                {advice.cautions?.length ? (
+                  <div className="text-sm">
+                    <p className="font-medium mb-1">Cuidados</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      {advice.cautions.map((k, i) => <li key={i}>{k}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <Label className="text-xs">Ratificar / complementar o briefing antes de gerar o cardápio</Label>
+                  <Textarea
+                    rows={3}
+                    value={adviceExtra}
+                    onChange={(e) => setAdviceExtra(e.target.value)}
+                    placeholder="Ex: manter a estratégia da consulta, mas trocar o pré-treino por tapioca e reduzir lactose..."
+                  />
+                  <Button
+                    className="w-full"
+                    onClick={() => generateMut.mutate()}
+                    disabled={generateMut.isPending}
+                  >
+                    {generateMut.isPending ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando cardápio...</>
+                    ) : (
+                      <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio ratificando a orientação</>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!result && !advice && (
             <Card>
               <CardContent className="py-16 text-center text-muted-foreground text-sm">
-                Preencha o briefing e clique em <span className="font-medium">Gerar cardápio</span> para começar.
+                Puxe macros/protocolo do aluno, gere a <span className="font-medium">orientação de consulta</span> e depois o <span className="font-medium">cardápio</span>.
               </CardContent>
             </Card>
           )}
