@@ -655,25 +655,12 @@ const StudentGuidedWorkout = () => {
                 }
               >
                 {isGroupStart && (
-                  <div
-                    className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2 border-2 border-b-0 -mb-1"
-                    style={{
-                      background: "linear-gradient(90deg, rgba(57,255,20,0.22), rgba(57,255,20,0.06))",
-                      borderColor: "#39FF14",
-                      boxShadow: "0 0 26px rgba(57,255,20,0.55), inset 0 0 14px rgba(57,255,20,0.2)",
-                    }}
-                  >
-                    <span
-                      className="inline-block w-2 h-2 rounded-full"
-                      style={{ background: "#39FF14", boxShadow: "0 0 8px #39FF14" }}
-                    />
-                    <span
-                      className="font-extrabold tracking-[0.2em] uppercase text-[13px]"
-                      style={{ color: "#39FF14", textShadow: "0 0 8px rgba(57,255,20,0.7)" }}
-                    >
+                  <div className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2.5 border border-b-0 border-border/60 bg-muted/40 -mb-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-foreground/60" />
+                    <span className="font-medium tracking-[0.16em] uppercase text-[11px] text-foreground">
                       {groupKind}{ex.group_name ? ` · ${ex.group_name}` : ""}
                     </span>
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground ml-auto">
+                    <span className="text-[10px] tracking-wide text-muted-foreground ml-auto">
                       execute {groupSize} exercícios sem descanso
                     </span>
                   </div>
@@ -683,32 +670,21 @@ const StudentGuidedWorkout = () => {
                   style={
                     inGroup
                       ? {
-                          borderLeft: "3px solid #39FF14",
-                          borderRight: "3px solid #39FF14",
-                          borderTop: isGroupStart ? "3px solid #39FF14" : "none",
-                          borderBottom: isGroupEnd ? "3px solid #39FF14" : "none",
+                          borderLeft: "1px solid hsl(var(--border))",
+                          borderRight: "1px solid hsl(var(--border))",
+                          borderTop: isGroupStart ? "1px solid hsl(var(--border))" : "none",
+                          borderBottom: isGroupEnd ? "1px solid hsl(var(--border))" : "none",
                           borderTopLeftRadius: 0,
                           borderTopRightRadius: 0,
                           borderBottomLeftRadius: isGroupEnd ? 16 : 0,
                           borderBottomRightRadius: isGroupEnd ? 16 : 0,
-                          background:
-                            "linear-gradient(180deg, rgba(57,255,20,0.10), rgba(57,255,20,0.03))",
-                          boxShadow:
-                            "inset 0 0 18px rgba(57,255,20,0.18), 0 0 22px rgba(57,255,20,0.4)",
+                          background: "hsl(var(--muted) / 0.25)",
                         }
                       : undefined
                   }
                 >
                 {inGroup && (
-                  <span
-                    className="absolute -left-3 top-3 text-[10px] font-black px-1.5 py-0.5 rounded-md"
-                    style={{
-                      background: "#0a0a0a",
-                      color: "#39FF14",
-                      border: "1px solid #39FF14",
-                      boxShadow: "0 0 8px rgba(57,255,20,0.6)",
-                    }}
-                  >
+                  <span className="absolute -left-3 top-3 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground text-background">
                     {posLabel}
                   </span>
                 )}
@@ -716,28 +692,12 @@ const StudentGuidedWorkout = () => {
                   <p className="font-bold text-foreground">
                     {idx + 1}. {ex.custom_name || "Exercício"}
                     {inGroup && (
-                      <span
-                        className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full border align-middle font-black"
-                        style={{
-                          backgroundColor: "rgba(57,255,20,0.18)",
-                          borderColor: "#39FF14",
-                          color: "#39FF14",
-                          textShadow: "0 0 6px rgba(57,255,20,0.6)",
-                        }}
-                      >
+                      <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full border border-border/70 bg-muted/60 text-muted-foreground align-middle font-medium tracking-wide">
                         {groupKind} · {groupIndex}/{groupSize}
                       </span>
                     )}
                     {ex.group_name && (
-                      <span
-                        className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full border align-middle"
-                        style={{
-                          backgroundColor: "rgba(57,255,20,0.15)",
-                          borderColor: "#39FF14",
-                          color: "#39FF14",
-                          textShadow: "0 0 6px rgba(57,255,20,0.6)",
-                        }}
-                      >
+                      <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full border border-border/70 text-muted-foreground align-middle">
                         {ex.group_name}
                       </span>
                     )}
