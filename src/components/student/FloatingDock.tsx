@@ -156,7 +156,7 @@ const FloatingDock = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.96 }}
                 transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-                className="absolute bottom-full right-0 mb-3 w-56 rounded-3xl bg-background border border-border/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] p-2 space-y-0.5"
+                className="absolute bottom-full right-0 mb-3 w-56 rounded-3xl bg-background border border-border/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] p-2 space-y-0.5 max-h-[60vh] overflow-y-auto overscroll-contain"
               >
                 {menuItems.map((item) => {
                   const Icon = item.icon;
