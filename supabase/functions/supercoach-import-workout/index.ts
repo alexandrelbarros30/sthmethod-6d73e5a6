@@ -29,6 +29,35 @@ function cleanImageUrl(value: any): string {
   return url
 }
 
+function firstMediaUrl(...values: any[]): string {
+  for (const value of values) {
+    const url = cleanImageUrl(value)
+    if (url) return url
+  }
+  return ''
+}
+
+async function resolveHighQualityCover(raw: any, videoUrl = ''): Promise<string> {
+  const direct = firstMediaUrl(
+    raw?.cover_url_hd, raw?.thumbnail_hd, raw?.thumb_url_hd, raw?.poster_url,
+    raw?.cover_url, raw?.image_url, raw?.thumbnail_url, raw?.thumb_url,
+    raw?.video_url_thumb,
+  )
+  if (direct && direct !== videoUrl) return direct
+
+  const vimeoId = String(videoUrl).match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1]
+  if (vimeoId) {
+    try {
+      const response = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(`https://vimeo.com/${vimeoId}`)}&width=1280`)
+      if (response.ok) {
+        const data = await response.json()
+        return firstMediaUrl(data?.thumbnail_url)
+      }
+    } catch { /* mantém os fallbacks da origem */ }
+  }
+  return direct
+}
+
 function parseSetsReps(sr: string): { sets: string; reps: string } {
   const s = String(sr || '').trim()
   const m = s.match(/^\s*(\d+)\s*[xX]\s*(.+)$/)
@@ -151,19 +180,20 @@ async function fetchTrainingDetails(token: string, programId: number | string, t
       return jd?.workout || jd?.data || null
     } catch { return null }
   }))
-  const exercises = lite.map((w, i) => {
+  const exercises = await Promise.all(lite.map(async (w, i) => {
     const d = details[i] || {}
+    const videoUrl = d.video_url || w.video_url_thumb || ''
     return {
       id: w.id,
       name: d.name || w.name || '',
       series_repetitions: d.series_repetitions || w.series_repetitions || '',
       description: d.description || '',
-      video_url: d.video_url || w.video_url_thumb || '',
-      cover_url: d.cover_url || w.cover_url || null,
+      video_url: videoUrl,
+      cover_url: await resolveHighQualityCover({ ...w, ...d }, videoUrl),
       intervals: d.intervals ?? null,
       weight_suggestion: d.weight_suggestion || null,
     }
-  })
+  }))
   return { training: t, exercises }
 }
 
@@ -272,7 +302,7 @@ function buildExerciseRows(templateId: string, source: any[]) {
       rest_interval: ex.intervals != null && Number(ex.intervals) > 0 ? `${ex.intervals}s` : '',
       load_suggestion: ex.weight_suggestion || '',
       video_url: ex.video_url || ex.video_url_thumb || '',
-      image_url: cleanImageUrl(ex.cover_url || ex.video_url_thumb),
+       image_url: firstMediaUrl(ex.cover_url, ex.video_url_thumb),
       supercoach_workout_id: Number.isFinite(Number(ex.id)) ? Number(ex.id) : null,
       sort_order: i,
     }

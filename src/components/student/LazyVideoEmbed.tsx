@@ -177,11 +177,12 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       };
 
       return (
-        <div className={`relative h-full w-full overflow-hidden bg-card ${className || ""}`}>
-          <video
+        <div className={`w-full overflow-hidden bg-card ${className || ""}`}>
+          <div className="relative aspect-video w-full overflow-hidden bg-card">
+            <video
             ref={fileVideoRef}
             src={url}
-            className="sth-workout-video absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-cover sm:bottom-12 sm:h-[calc(100%-3rem)]"
+            className="sth-workout-video absolute inset-0 h-full w-full object-cover object-center"
             style={{ objectFit: "cover", objectPosition: "center" }}
             playsInline
             {...({ "webkit-playsinline": "true" } as Record<string, string>)}
@@ -195,16 +196,17 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
             onPlay={() => setFilePlaying(true)}
             onPause={() => setFilePlaying(false)}
             onEnded={() => setFilePlaying(false)}
-          />
+            />
 
-          <button
-            type="button"
-            onClick={togglePlayback}
-            className="absolute inset-0 z-10 cursor-pointer bg-transparent"
-            aria-label={filePlaying ? "Pausar vídeo" : `Reproduzir vídeo${title ? `: ${title}` : ""}`}
-          />
+            <button
+              type="button"
+              onClick={togglePlayback}
+              className="absolute inset-0 z-10 cursor-pointer bg-transparent"
+              aria-label={filePlaying ? "Pausar vídeo" : `Reproduzir vídeo${title ? `: ${title}` : ""}`}
+            />
+          </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center gap-2 bg-background/80 px-3 text-foreground shadow-[0_-10px_28px_-18px_hsl(var(--foreground))] ring-1 ring-border/35 backdrop-blur-md sm:h-12 sm:px-4">
+          <div className="relative z-20 flex h-11 items-center gap-2 bg-background/90 px-3 text-foreground ring-1 ring-border/35 backdrop-blur-md sm:h-12 sm:px-4">
             <button
               type="button"
               onClick={togglePlayback}
@@ -226,13 +228,15 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
       );
     }
     return (
-      <iframe
-        src={embedSrc}
-        className={className || "w-full h-full"}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-        title={title}
-      />
+      <div className={`aspect-video w-full overflow-hidden bg-card ${className || ""}`}>
+        <iframe
+          src={embedSrc}
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          title={title}
+        />
+      </div>
     );
   }
 
@@ -240,26 +244,27 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
     <button
       type="button"
       onClick={handleActivate}
-      className={`group relative w-full h-full overflow-hidden bg-card ${className || ""}`}
+      className={`group block w-full overflow-hidden bg-card text-left ${className || ""}`}
       aria-label={`Reproduzir vídeo${title ? `: ${title}` : ""}`}
     >
-      {thumbSrc && !thumbUnavailable && (
-        <img
+      <div className="relative aspect-video w-full overflow-hidden bg-card">
+        {thumbSrc && !thumbUnavailable && (
+          <img
           key={thumbSrc}
           src={thumbSrc}
           alt={title || "Vídeo"}
-          className="sth-workout-preview-media absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-cover sm:bottom-12 sm:h-[calc(100%-3rem)]"
+          className="sth-workout-preview-media absolute inset-0 h-full w-full object-cover object-center"
           style={{ objectFit: "cover", objectPosition: "center" }}
           loading="eager"
           decoding="async"
           draggable={false}
           referrerPolicy="no-referrer"
           onError={handleThumbError}
-        />
-      )}
+          />
+        )}
 
       {(!thumbSrc || thumbUnavailable) && (
-        <div className="absolute inset-x-0 top-0 bottom-11 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-muted to-secondary px-4 text-center sm:bottom-12">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-muted to-secondary px-4 text-center">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/70 text-foreground/70">
             <Dumbbell className="h-5 w-5" />
           </span>
@@ -268,9 +273,10 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           </p>
           <p className="text-[11px] text-muted-foreground">Toque para reproduzir</p>
         </div>
-      )}
+        )}
+      </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center gap-2 bg-background/80 px-3 text-foreground shadow-[0_-10px_28px_-18px_hsl(var(--foreground))] ring-1 ring-border/35 backdrop-blur-md sm:h-12 sm:px-4">
+      <div className="relative z-20 flex h-11 items-center gap-2 bg-background/90 px-3 text-foreground ring-1 ring-border/35 backdrop-blur-md sm:h-12 sm:px-4">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background sm:h-9 sm:w-9">
           <Play className="ml-0.5 h-4 w-4 sm:h-4.5 sm:w-4.5" fill="currentColor" strokeWidth={1.8} />
         </div>
