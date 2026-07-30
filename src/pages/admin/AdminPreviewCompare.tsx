@@ -101,16 +101,12 @@ const AdminPreviewCompare = () => {
   }, [exercises, search, limit]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      role="admin"
+      title="Comparação de Preview"
+      subtitle="Validação de enquadramento e nitidez: ST Coach × STH METHOD."
+    >
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Comparação de Preview — ST Coach × STH METHOD</h1>
-          <p className="text-sm text-muted-foreground">
-            Validação lado a lado de enquadramento (proporção nativa, sem recorte) e nitidez
-            (resolução real da thumbnail entregue).
-          </p>
-        </div>
-
         <Card>
           <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
             <div className="relative flex-1">
