@@ -231,12 +231,15 @@ serve(async (req) => {
       dietContent = "",
       studentId = null,
       includePhotos = true,
+      protocolText = "",
+      adviceText = "",
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const isReview = mode === "review";
+    const isAdvice = mode === "advice";
 
     // ---------- Fetch student body photos (latest per angle + previous for comparison) ----------
     type PhotoItem = { label: string; url: string; taken_at: string };
