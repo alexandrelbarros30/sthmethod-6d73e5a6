@@ -717,12 +717,25 @@ const StudentGuidedWorkout = () => {
                   <p className="font-bold text-foreground">
                     {idx + 1}. {ex.custom_name || "Exercício"}
                     {inGroup && (
-                      <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full border border-border/70 bg-muted/60 text-muted-foreground align-middle font-medium tracking-wide">
+                      <span
+                        className="ml-2 text-[10px] px-2 py-0.5 rounded-full border align-middle font-medium tracking-wide"
+                        style={{
+                          borderColor: groupBorder,
+                          background: groupBadgeBg,
+                          color: groupColor,
+                        }}
+                      >
                         {groupKind} · {groupIndex}/{groupSize}
                       </span>
                     )}
                     {ex.group_name && (
-                      <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full border border-border/70 text-muted-foreground align-middle">
+                      <span
+                        className="ml-2 text-[10px] px-2 py-0.5 rounded-full border align-middle"
+                        style={{
+                          borderColor: groupBorder,
+                          color: groupColor,
+                        }}
+                      >
                         {ex.group_name}
                       </span>
                     )}
