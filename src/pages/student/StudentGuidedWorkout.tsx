@@ -775,11 +775,18 @@ const StudentGuidedWorkout = () => {
                 )}
 
                 {videoSource?.kind === "image" && (
-                  <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black relative">
+                  <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-muted relative">
+                    <img
+                      src={videoSource.url}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35"
+                      draggable={false}
+                    />
                     <img
                       src={videoSource.url}
                       alt={ex.custom_name || "Exercício"}
-                      className="w-full h-full object-contain"
+                      className="relative w-full h-full object-contain"
                       loading="lazy"
                       draggable={false}
                     />
@@ -790,11 +797,18 @@ const StudentGuidedWorkout = () => {
                 )}
 
                 {!videoSource && fallbackImage && (
-                  <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black/30 relative">
+                  <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-muted relative">
+                    <img
+                      src={fallbackImage}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35"
+                      draggable={false}
+                    />
                     <img
                       src={fallbackImage}
                       alt={ex.custom_name || "Exercício"}
-                      className="w-full h-full object-cover"
+                      className="relative w-full h-full object-contain"
                       loading="lazy"
                       draggable={false}
                     />
