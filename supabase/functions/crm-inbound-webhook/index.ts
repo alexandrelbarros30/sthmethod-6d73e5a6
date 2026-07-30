@@ -2885,6 +2885,7 @@ Gere a mensagem final agora.`;
         }
       }
     } else if (conv.flow_state === 'nutri_main') {
+      // (branch nutri abaixo)
       const trimmed = body.trim();
       const has = (...kw: string[]) => kw.some(k => body.toLowerCase().includes(k));
       
