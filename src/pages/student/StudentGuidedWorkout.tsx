@@ -755,7 +755,7 @@ const StudentGuidedWorkout = () => {
 
                 {videoSource?.kind === "embed" && (
                   <>
-                    <div className="aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-card relative">
+                    <div className="rounded-2xl overflow-hidden border border-border/40 bg-card relative">
                       <LazyVideoEmbed url={videoSource.url} title={ex.custom_name} posterUrl={ex.image_url || meta?.image_url} />
                       <StCoachCredit variant="overlay" />
                     </div>
@@ -764,7 +764,7 @@ const StudentGuidedWorkout = () => {
                 )}
 
                 {videoSource?.kind === "file" && (
-                  <div className="aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-muted">
+                  <div className="rounded-2xl overflow-hidden border border-border/40 bg-muted">
                     <LazyVideoEmbed
                       url={videoSource.url}
                       title={ex.custom_name}

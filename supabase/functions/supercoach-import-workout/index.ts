@@ -29,6 +29,35 @@ function cleanImageUrl(value: any): string {
   return url
 }
 
+function firstMediaUrl(...values: any[]): string {
+  for (const value of values) {
+    const url = cleanImageUrl(value)
+    if (url) return url
+  }
+  return ''
+}
+
+async function resolveHighQualityCover(raw: any, videoUrl = ''): Promise<string> {
+  const direct = firstMediaUrl(
+    raw?.cover_url_hd, raw?.thumbnail_hd, raw?.thumb_url_hd, raw?.poster_url,
+    raw?.cover_url, raw?.image_url, raw?.thumbnail_url, raw?.thumb_url,
+    raw?.video_url_thumb,
+  )
+  if (direct && direct !== videoUrl) return direct
+
+  const vimeoId = String(videoUrl).match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1]
+  if (vimeoId) {
+    try {
+      const response = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(`https://vimeo.com/${vimeoId}`)}&width=1280`)
+      if (response.ok) {
+        const data = await response.json()
+        return firstMediaUrl(data?.thumbnail_url)
+      }
+    } catch { /* mantém os fallbacks da origem */ }
+  }
+  return direct
+}
+
 function parseSetsReps(sr: string): { sets: string; reps: string } {
   const s = String(sr || '').trim()
   const m = s.match(/^\s*(\d+)\s*[xX]\s*(.+)$/)
@@ -151,19 +180,20 @@ async function fetchTrainingDetails(token: string, programId: number | string, t
       return jd?.workout || jd?.data || null
     } catch { return null }
   }))
-  const exercises = lite.map((w, i) => {
+  const exercises = await Promise.all(lite.map(async (w, i) => {
     const d = details[i] || {}
+    const videoUrl = d.video_url || w.video_url_thumb || ''
     return {
       id: w.id,
       name: d.name || w.name || '',
       series_repetitions: d.series_repetitions || w.series_repetitions || '',
       description: d.description || '',
-      video_url: d.video_url || w.video_url_thumb || '',
-      cover_url: d.cover_url || w.cover_url || null,
+      video_url: videoUrl,
+      cover_url: await resolveHighQualityCover({ ...w, ...d }, videoUrl),
       intervals: d.intervals ?? null,
       weight_suggestion: d.weight_suggestion || null,
     }
-  })
+  }))
   return { training: t, exercises }
 }
 
@@ -272,7 +302,7 @@ function buildExerciseRows(templateId: string, source: any[]) {
       rest_interval: ex.intervals != null && Number(ex.intervals) > 0 ? `${ex.intervals}s` : '',
       load_suggestion: ex.weight_suggestion || '',
       video_url: ex.video_url || ex.video_url_thumb || '',
-      image_url: cleanImageUrl(ex.cover_url || ex.video_url_thumb),
+       image_url: firstMediaUrl(ex.cover_url, ex.video_url_thumb),
       supercoach_workout_id: Number.isFinite(Number(ex.id)) ? Number(ex.id) : null,
       sort_order: i,
     }
@@ -344,6 +374,7 @@ Deno.serve(async (req) => {
         | 'import-training'
         | 'import-program'
         | 'repair-program'
+        | 'repair-exercise-media'
         | 'list-library'
       programId?: number | string
     }
@@ -441,6 +472,63 @@ Deno.serve(async (req) => {
         }
       }
       return new Response(JSON.stringify({ ok: failures.length === 0, repaired: true, programId: localProgramId, trainings: imported, exercises, failures }), {
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      })
+    }
+
+    if (action === 'repair-exercise-media') {
+      const { admin } = await requireWriter(req, body)
+      const requestedLimit = Math.min(200, Math.max(1, Number((body as any).limit) || 100))
+      let query = admin
+        .from('workout_template_exercises')
+        .select('id, custom_name, video_url, image_url, supercoach_workout_id, template_id')
+        .not('supercoach_workout_id', 'is', null)
+        .or('custom_name.is.null,custom_name.eq.,image_url.is.null,image_url.eq.')
+        .limit(requestedLimit)
+      if ((body as any).localProgramId) {
+        const { data: templates, error: templateErr } = await admin
+          .from('workout_templates').select('id').eq('program_id', (body as any).localProgramId)
+        if (templateErr) throw templateErr
+        const ids = (templates || []).map((item: any) => item.id)
+        if (!ids.length) return new Response(JSON.stringify({ ok: true, repaired: 0, remaining: 0 }), {
+          headers: { ...corsHeaders, 'content-type': 'application/json' },
+        })
+        query = query.in('template_id', ids)
+      }
+      const { data: rows, error: rowsErr } = await query
+      if (rowsErr) throw rowsErr
+
+      let repaired = 0
+      const failures: { id: string; error: string }[] = []
+      for (let offset = 0; offset < (rows || []).length; offset += 10) {
+        const batch = (rows || []).slice(offset, offset + 10)
+        await Promise.all(batch.map(async (row: any) => {
+          try {
+            const response = await fetch(WORKOUT_URL(row.supercoach_workout_id), { headers: auth })
+            if (!response.ok) throw new Error(`workout ${response.status}`)
+            const json = await response.json()
+            const detail = json?.workout || json?.data || json || {}
+            const videoUrl = detail.video_url || row.video_url || ''
+            const imageUrl = await resolveHighQualityCover(detail, videoUrl)
+            const patch: Record<string, any> = {}
+            if (!String(row.custom_name || '').trim() && String(detail.name || '').trim()) patch.custom_name = detail.name
+            if (!String(row.video_url || '').trim() && videoUrl) patch.video_url = videoUrl
+            if (!String(row.image_url || '').trim() && imageUrl) patch.image_url = imageUrl
+            if (!Object.keys(patch).length) return
+            const { error } = await admin.from('workout_template_exercises').update(patch).eq('id', row.id)
+            if (error) throw error
+            repaired++
+          } catch (error: any) {
+            failures.push({ id: row.id, error: error?.message || String(error) })
+          }
+        }))
+      }
+      const { count: remaining } = await admin
+        .from('workout_template_exercises')
+        .select('id', { count: 'exact', head: true })
+        .not('supercoach_workout_id', 'is', null)
+        .or('custom_name.is.null,custom_name.eq.,image_url.is.null,image_url.eq.')
+      return new Response(JSON.stringify({ ok: failures.length === 0, repaired, inspected: rows?.length || 0, remaining: remaining || 0, failures }), {
         headers: { ...corsHeaders, 'content-type': 'application/json' },
       })
     }

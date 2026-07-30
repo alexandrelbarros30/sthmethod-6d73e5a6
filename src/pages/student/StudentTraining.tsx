@@ -314,7 +314,7 @@ const StudentTraining = () => {
                             {/* Video embed */}
                             {media?.kind === "embed" && (
                               <div className="space-y-1.5">
-                                <div className="relative aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-card">
+                                <div className="relative rounded-2xl overflow-hidden border border-border/40 bg-card">
                                   <LazyVideoEmbed url={media.url} title={ex.name} posterUrl={ex.image_url || libMeta?.image_url} />
                                   <StCoachCredit variant="overlay" />
                                 </div>
@@ -336,7 +336,7 @@ const StudentTraining = () => {
                               </div>
                             )}
                             {media?.kind === "file" && (
-                              <div className="aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-muted">
+                              <div className="rounded-2xl overflow-hidden border border-border/40 bg-muted">
                                 <LazyVideoEmbed
                                   url={media.url}
                                   title={ex.name}
