@@ -2631,15 +2631,61 @@ Gere a mensagem final agora.`;
           originalMessage: String(body),
           messageSent: false,
         });
-        autoReply = {
-          sent: false,
-          engine: 'nutri_block_silent',
-          reason: 'nutri_block_already_sent',
-          transfer: 'nutri->comercial',
-          rule: 'nutri_channel_active_only',
-          identified_as: identifiedAs,
-          commercial_conversation_id: conv.id,
-        };
+        // O aviso de bloqueio já foi enviado nesta janela. A partir daqui o
+        // contato PRECISA continuar sendo atendido — antes ele ficava em
+        // silêncio total (lead perguntava e ninguém respondia). Agora a IA
+        // Comercial assume e responde pelo canal Comercial.
+        if (silentMode) {
+          autoReply = {
+            sent: false,
+            engine: 'nutri_block_silent',
+            reason: 'nutri_block_silent_mode',
+            transfer: 'nutri->comercial',
+            identified_as: identifiedAs,
+            commercial_conversation_id: conv.id,
+          };
+        } else {
+          const ai = await generateAiReply({
+            admin,
+            conversationId: conv.id,
+            phone,
+            waId: conv.wa_id,
+            queue: 'comercial',
+          });
+          if (ai?.response) {
+            const r = await sendMessage(ai.response, 'ai_comercial_pos_transfer', null, 'zapi');
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'ai_comercial_pos_transfer',
+              queue_type: 'comercial',
+              action_taken: 'ai_reply',
+              severity: 'info',
+              metadata: {
+                engine: ai.engine || 'ai',
+                identified_as: identifiedAs,
+                original_provider: provider,
+                conversation_id: conv.id,
+              },
+            });
+            autoReply = {
+              sent: r.sent,
+              engine: ai.engine || 'ai',
+              queue: 'comercial',
+              transfer: 'nutri->comercial',
+              identified_as: identifiedAs,
+              commercial_conversation_id: conv.id,
+            };
+          } else {
+            autoReply = {
+              sent: false,
+              engine: 'nutri_block_silent',
+              reason: 'ai_no_response',
+              transfer: 'nutri->comercial',
+              identified_as: identifiedAs,
+              commercial_conversation_id: conv.id,
+            };
+          }
+        }
       }
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
