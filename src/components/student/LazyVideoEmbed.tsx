@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
 import { flushSync } from "react-dom";
 import { Dumbbell, Pause, Play } from "lucide-react";
 
@@ -203,7 +203,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
    * cortada) ou um arquivo minúsculo. Nesses casos descartamos a capa e
    * caímos no placeholder elegante do STH METHOD em vez de exibir o erro.
    */
-  const handleThumbLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+  const handleThumbLoad = (event: SyntheticEvent<HTMLImageElement>) => {
     const img = event.currentTarget;
     const w = img.naturalWidth;
     const h = img.naturalHeight;
