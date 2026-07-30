@@ -314,6 +314,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           draggable={false}
           referrerPolicy="no-referrer"
           onError={handleThumbError}
+          onLoad={handleThumbLoad}
           />
         )}
 
