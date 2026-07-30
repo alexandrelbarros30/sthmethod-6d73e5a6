@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,20 @@ type ReviewResult = {
   _meta?: { usage?: any };
 };
 
+type AdviceResult = {
+  advice_html: string;
+  key_points?: string[];
+  cautions?: string[];
+};
+
+const htmlToPlain = (html: string) =>
+  (html || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|li|h[1-6]|div)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
 const stripMealMacroLines = (html: string) =>
   (html || "")
     .replace(/<p[^>]*>\s*(?:<[^>]+>\s*)*Macros\s+da\s+Refei[cç][aã]o[\s\S]*?<\/p>\s*/gi, "")
@@ -78,6 +92,16 @@ const AdminDietAI = () => {
   const [preferences, setPreferences] = useState("");
   const [freeText, setFreeText] = useState("");
   const [usePhotos, setUsePhotos] = useState(true);
+
+  // Protocolo do aluno
+  const [protocolText, setProtocolText] = useState("");
+  const [protocolTitle, setProtocolTitle] = useState("");
+  const [useProtocol, setUseProtocol] = useState(true);
+
+  // Orientação (consulta STHIA)
+  const [advice, setAdvice] = useState<AdviceResult | null>(null);
+  const [adviceExtra, setAdviceExtra] = useState("");
+  const [useAdvice, setUseAdvice] = useState(true);
 
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
@@ -143,7 +167,35 @@ const AdminDietAI = () => {
 
   const pickStudent = async (s: any) => {
     setSelectedStudent(s);
+    setProtocolText("");
+    setProtocolTitle("");
+    setAdvice(null);
     // Não auto-preenche o briefing — o admin decide via botão "Puxar macros"
+  };
+
+  const pullProtocol = async () => {
+    if (!selectedStudent?.user_id) return;
+    try {
+      const { data, error } = await supabase
+        .from("student_protocols")
+        .select("title, content, updated_at")
+        .eq("user_id", selectedStudent.user_id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      const plain = htmlToPlain((data as any)?.content || "");
+      if (!plain) {
+        toast.message("Este aluno não tem protocolo com conteúdo salvo.");
+        return;
+      }
+      setProtocolText(plain.slice(0, 8000));
+      setProtocolTitle((data as any)?.title || "Protocolo atual");
+      setUseProtocol(true);
+      toast.success(`Protocolo puxado: ${(data as any)?.title || "sem título"}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar protocolo");
+    }
   };
 
   const saveMacrosToProfile = async () => {
@@ -182,7 +234,15 @@ const AdminDietAI = () => {
         preferencias: preferences,
       };
       const { data, error } = await supabase.functions.invoke("generate-diet-ai", {
-        body: { mode: "generate", brief, freeText, studentId: selectedStudent?.user_id || null, includePhotos: usePhotos },
+        body: {
+          mode: "generate",
+          brief,
+          freeText: [freeText, adviceExtra.trim() ? `Ajustes adicionais do admin após a consulta:\n${adviceExtra.trim()}` : ""].filter(Boolean).join("\n\n"),
+          studentId: selectedStudent?.user_id || null,
+          includePhotos: usePhotos,
+          protocolText: useProtocol ? protocolText : "",
+          adviceText: useAdvice && advice?.advice_html ? htmlToPlain(advice.advice_html) : "",
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -194,6 +254,43 @@ const AdminDietAI = () => {
       toast.success("Cardápio gerado pela STHIA");
     },
     onError: (e: any) => toast.error(e.message || "Falha ao gerar"),
+  });
+
+  const adviceMut = useMutation({
+    mutationFn: async () => {
+      const brief = {
+        aluno: selectedStudent?.full_name || null,
+        peso_kg: selectedStudent?.weight || null,
+        altura_cm: selectedStudent?.height || null,
+        objetivo: objective,
+        kcal_alvo: kcalTarget ? Number(kcalTarget) : null,
+        proteina_g_alvo: proteinTarget ? Number(proteinTarget) : null,
+        carboidrato_g_alvo: carbsTarget ? Number(carbsTarget) : null,
+        lipidio_g_alvo: fatTarget ? Number(fatTarget) : null,
+        numero_refeicoes: Number(numMeals) || 5,
+        restricoes: restrictions,
+        preferencias: preferences,
+      };
+      const { data, error } = await supabase.functions.invoke("generate-diet-ai", {
+        body: {
+          mode: "advice",
+          brief,
+          freeText,
+          studentId: selectedStudent?.user_id || null,
+          includePhotos: usePhotos,
+          protocolText: useProtocol ? protocolText : "",
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as AdviceResult;
+    },
+    onSuccess: (data) => {
+      setAdvice(data);
+      setUseAdvice(true);
+      toast.success("Orientação de consulta gerada pela STHIA");
+    },
+    onError: (e: any) => toast.error(e.message || "Falha ao gerar orientação"),
   });
 
   const reviewMut = useMutation({
@@ -365,6 +462,26 @@ const AdminDietAI = () => {
                   <Button size="sm" variant="outline" className="w-full" onClick={() => applyStudentMacros(selectedStudent)}>
                     <Download className="w-3 h-3 mr-1" /> Puxar macros do aluno para o briefing
                   </Button>
+                  <Button size="sm" variant="outline" className="w-full" onClick={pullProtocol}>
+                    <FileText className="w-3 h-3 mr-1" /> Puxar protocolo do aluno
+                  </Button>
+                  {protocolText && (
+                    <div className="rounded border border-border bg-background/60 p-2 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-medium truncate">{protocolTitle}</p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-muted-foreground">Usar</span>
+                          <Switch checked={useProtocol} onCheckedChange={setUseProtocol} />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground max-h-24 overflow-y-auto whitespace-pre-wrap">
+                        {protocolText.slice(0, 900)}
+                      </p>
+                      <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => { setProtocolText(""); setProtocolTitle(""); }}>
+                        Remover protocolo
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -433,6 +550,18 @@ const AdminDietAI = () => {
               </div>
 
               <Button
+                variant="secondary"
+                onClick={() => adviceMut.mutate()}
+                disabled={adviceMut.isPending}
+                className="w-full"
+              >
+                {adviceMut.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Consultando...</>
+                ) : (
+                  <><Stethoscope className="w-4 h-4 mr-2" /> Gerar orientação — consulta STHIA</>
+                )}
+              </Button>
+              <Button
                 onClick={() => generateMut.mutate()}
                 disabled={generateMut.isPending}
                 className="w-full"
@@ -463,10 +592,72 @@ const AdminDietAI = () => {
 
         {/* RIGHT: result */}
         <div className="xl:col-span-3 space-y-4">
-          {!result && (
+          {advice && (
+            <Card className="border-primary/30">
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="font-display text-base flex items-center gap-2">
+                    <Stethoscope className="w-4 h-4 text-primary" /> Orientação — consulta STHIA
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Usar como base</span>
+                    <Switch checked={useAdvice} onCheckedChange={setUseAdvice} />
+                    <Button size="sm" variant="outline" onClick={() => adviceMut.mutate()} disabled={adviceMut.isPending}>
+                      <RefreshCw className="w-4 h-4 mr-1" /> Reconsultar
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none text-sm max-h-[420px] overflow-y-auto rounded-lg border border-border bg-card p-4"
+                  dangerouslySetInnerHTML={{ __html: advice.advice_html || "" }}
+                />
+                {advice.key_points?.length ? (
+                  <div className="text-sm">
+                    <p className="font-medium mb-1">Pontos-chave</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      {advice.key_points.map((k, i) => <li key={i}>{k}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+                {advice.cautions?.length ? (
+                  <div className="text-sm">
+                    <p className="font-medium mb-1">Cuidados</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      {advice.cautions.map((k, i) => <li key={i}>{k}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <Label className="text-xs">Ratificar / complementar o briefing antes de gerar o cardápio</Label>
+                  <Textarea
+                    rows={3}
+                    value={adviceExtra}
+                    onChange={(e) => setAdviceExtra(e.target.value)}
+                    placeholder="Ex: manter a estratégia da consulta, mas trocar o pré-treino por tapioca e reduzir lactose..."
+                  />
+                  <Button
+                    className="w-full"
+                    onClick={() => generateMut.mutate()}
+                    disabled={generateMut.isPending}
+                  >
+                    {generateMut.isPending ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando cardápio...</>
+                    ) : (
+                      <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio ratificando a orientação</>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!result && !advice && (
             <Card>
               <CardContent className="py-16 text-center text-muted-foreground text-sm">
-                Preencha o briefing e clique em <span className="font-medium">Gerar cardápio</span> para começar.
+                Puxe macros/protocolo do aluno, gere a <span className="font-medium">orientação de consulta</span> e depois o <span className="font-medium">cardápio</span>.
               </CardContent>
             </Card>
           )}
