@@ -462,6 +462,26 @@ const AdminDietAI = () => {
                   <Button size="sm" variant="outline" className="w-full" onClick={() => applyStudentMacros(selectedStudent)}>
                     <Download className="w-3 h-3 mr-1" /> Puxar macros do aluno para o briefing
                   </Button>
+                  <Button size="sm" variant="outline" className="w-full" onClick={pullProtocol}>
+                    <FileText className="w-3 h-3 mr-1" /> Puxar protocolo do aluno
+                  </Button>
+                  {protocolText && (
+                    <div className="rounded border border-border bg-background/60 p-2 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-medium truncate">{protocolTitle}</p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-muted-foreground">Usar</span>
+                          <Switch checked={useProtocol} onCheckedChange={setUseProtocol} />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground max-h-24 overflow-y-auto whitespace-pre-wrap">
+                        {protocolText.slice(0, 900)}
+                      </p>
+                      <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => { setProtocolText(""); setProtocolTitle(""); }}>
+                        Remover protocolo
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -529,6 +549,18 @@ const AdminDietAI = () => {
                 />
               </div>
 
+              <Button
+                variant="secondary"
+                onClick={() => adviceMut.mutate()}
+                disabled={adviceMut.isPending}
+                className="w-full"
+              >
+                {adviceMut.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Consultando...</>
+                ) : (
+                  <><Stethoscope className="w-4 h-4 mr-2" /> Gerar orientação — consulta STHIA</>
+                )}
+              </Button>
               <Button
                 onClick={() => generateMut.mutate()}
                 disabled={generateMut.isPending}
