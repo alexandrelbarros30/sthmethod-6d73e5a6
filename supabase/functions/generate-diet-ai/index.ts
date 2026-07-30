@@ -401,6 +401,24 @@ REGRAS:
             },
           },
         }
+      : isAdvice
+      ? {
+          type: "function",
+          function: {
+            name: "return_diet_advice",
+            description: "Return a consultative nutrition strategy (no menu)",
+            parameters: {
+              type: "object",
+              properties: {
+                advice_html: { type: "string", description: "Orientação de consulta em HTML simples" },
+                key_points: { type: "array", items: { type: "string" } },
+                cautions: { type: "array", items: { type: "string" } },
+              },
+              required: ["advice_html"],
+              additionalProperties: false,
+            },
+          },
+        }
       : {
           type: "function",
           function: {
@@ -447,13 +465,13 @@ REGRAS:
           },
         };
 
-    const targetsForRetry: MacroTargets | null = !isReview ? {
+    const targetsForRetry: MacroTargets | null = (!isReview && !isAdvice) ? {
       energy_kcal: numericTarget((brief as any)?.kcal_alvo),
       protein_g: numericTarget((brief as any)?.proteina_g_alvo),
       carbs_g: numericTarget((brief as any)?.carboidrato_g_alvo),
       fat_g: numericTarget((brief as any)?.lipidio_g_alvo),
     } : null;
-    const expectedMeals = !isReview ? Math.max(1, Math.min(10, Math.round(Number((brief as any)?.numero_refeicoes) || 5))) : null;
+    const expectedMeals = (!isReview && !isAdvice) ? Math.max(1, Math.min(10, Math.round(Number((brief as any)?.numero_refeicoes) || 5))) : null;
 
     const callModel = async (messages: any[]) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -562,12 +580,12 @@ REGRAS:
     }
     // Non-target flows (or review==false without targets) still benefit from reconciling
     // so the numbers shown match the student diet screen.
-    if (!isReview && !targetsForRetry) {
+    if (!isReview && !isAdvice && !targetsForRetry) {
       await reconcileWithAnalyzer(parsed);
     }
-    normalizeGeneratedMacros(parsed);
+    if (!isAdvice) normalizeGeneratedMacros(parsed);
     // Validate against admin targets and expose deviation so the client can warn.
-    if (!isReview && parsed?.total) {
+    if (!isReview && !isAdvice && parsed?.total) {
       const gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
       parsed.targets = targetsForRetry;
       parsed.deviation_pct = gate.deviation_pct;
