@@ -302,10 +302,39 @@ const AdminDietAI = () => {
       if ((data as any)?.error) throw new Error((data as any).error);
       return data as AdviceResult;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setAdvice(data);
       setUseAdvice(true);
       toast.success("Orientação de consulta gerada pela STHIA");
+      // Grava no histórico da conta do aluno (visível apenas para admin/consultor)
+      if (selectedStudent?.user_id && user?.id && data?.advice_html) {
+        const { error } = await supabase.from("diet_consultations").insert({
+          student_id: selectedStudent.user_id,
+          created_by: user.id,
+          title: `Orientação — consulta STHIA (${new Date().toLocaleDateString("pt-BR")})`,
+          advice_html: data.advice_html,
+          key_points: (data.key_points || []) as any,
+          cautions: (data.cautions || []) as any,
+          brief: {
+            objetivo: objective,
+            kcal_alvo: kcalTarget ? Number(kcalTarget) : null,
+            proteina_g_alvo: proteinTarget ? Number(proteinTarget) : null,
+            carboidrato_g_alvo: carbsTarget ? Number(carbsTarget) : null,
+            lipidio_g_alvo: fatTarget ? Number(fatTarget) : null,
+            numero_refeicoes: Number(numMeals) || 5,
+            restricoes: restrictions,
+            preferencias: preferences,
+            observacoes: freeText,
+          } as any,
+          protocol_title: useProtocol && protocolTitle ? protocolTitle : null,
+        });
+        if (error) {
+          toast.error("Orientação gerada, mas falhou ao gravar no histórico do aluno.");
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["diet-consultations", selectedStudent.user_id] });
+          toast.success("Orientação registrada na ficha do aluno (acesso restrito à equipe)");
+        }
+      }
     },
     onError: (e: any) => toast.error(e.message || "Falha ao gerar orientação"),
   });
