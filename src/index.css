@@ -1319,15 +1319,64 @@ html, body {
 }
 /* Colunas do quadro de interpretação laboratorial */
 .clinical-report th:first-child,
-.clinical-report td:first-child { min-width: 130px; }
+.clinical-report td:first-child,
+.clinical-table-wrap th:first-child,
+.clinical-table-wrap td:first-child { min-width: 130px; }
 .clinical-report th:nth-child(2),
 .clinical-report td:nth-child(2),
 .clinical-report th:nth-child(3),
-.clinical-report td:nth-child(3) { min-width: 96px; white-space: nowrap; }
+.clinical-report td:nth-child(3),
+.clinical-table-wrap th:nth-child(2),
+.clinical-table-wrap td:nth-child(2),
+.clinical-table-wrap th:nth-child(3),
+.clinical-table-wrap td:nth-child(3) { min-width: 96px; white-space: nowrap; }
 .clinical-report th:nth-child(4),
-.clinical-report td:nth-child(4) { min-width: 70px; white-space: nowrap; }
+.clinical-report td:nth-child(4),
+.clinical-table-wrap th:nth-child(4),
+.clinical-table-wrap td:nth-child(4) { min-width: 70px; white-space: nowrap; }
 .clinical-report th:nth-child(5),
-.clinical-report td:nth-child(5) { min-width: 220px; }
+.clinical-report td:nth-child(5),
+.clinical-table-wrap th:nth-child(5),
+.clinical-table-wrap td:nth-child(5) { min-width: 220px; }
+
+/* Títulos das colunas nunca quebram no meio da palavra */
+.clinical-report thead th,
+.clinical-table-wrap thead th,
+.clinical-report tr:first-child th,
+.clinical-table-wrap tr:first-child th {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  vertical-align: middle;
+  text-align: left;
+}
+
+/* Garante que a tabela dentro do wrapper (aluno) tenha a mesma estrutura */
+.clinical-table-wrap {
+  width: 100%;
+}
+.clinical-table-wrap > table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: auto;
+}
+.clinical-table-wrap th,
+.clinical-table-wrap td {
+  border: 1px solid hsl(var(--border));
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: normal;
+  overflow-wrap: break-word;
+  line-height: 1.5;
+}
+.clinical-table-wrap th {
+  background: hsl(var(--muted) / 0.5);
+  font-weight: 600;
+}
 @media (max-width: 640px) {
   .clinical-report table { font-size: 12px; }
   .clinical-report th,
