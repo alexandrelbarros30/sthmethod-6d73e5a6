@@ -223,7 +223,10 @@ export default function AdminStudentAnalysis() {
     mutationFn: async () => {
       if (!studentId) throw new Error("Selecione um aluno");
       const existingPaths = includeExistingExams
-        ? (existingExams as any[]).map((d) => d.storage_path).filter(Boolean)
+        ? (existingExams as any[])
+            .filter((d) => selectedExamIds.includes(d.id))
+            .map((d) => d.storage_path)
+            .filter(Boolean)
         : [];
       const mergedExamPaths = Array.from(
         new Set([...existingPaths, ...extraExamPaths.map((f) => f.path)])
