@@ -458,10 +458,43 @@ export default function AdminStudentAnalysis() {
                           </Label>
                         </div>
                       </div>
-                      <ul className="space-y-0.5">
-                        {(existingExams as any[]).slice(0, 5).map((d) => (
-                          <li key={d.id} className="text-[10px] text-muted-foreground flex items-center justify-between gap-2">
-                            <span className="truncate">
+                      {includeExistingExams && (existingExams as any[]).length > 1 && (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] text-muted-foreground">
+                            {selectedExamIds.length} de {(existingExams as any[]).length} selecionado(s)
+                          </span>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 text-[10px] px-2"
+                              onClick={() => setSelectedExamIds((existingExams as any[]).map((d) => d.id))}
+                            >
+                              Todos
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 text-[10px] px-2"
+                              onClick={() => setSelectedExamIds([])}
+                            >
+                              Nenhum
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      <ul className="space-y-0.5 max-h-40 overflow-y-auto pr-1">
+                        {(existingExams as any[]).map((d) => (
+                          <li key={d.id} className="text-[10px] text-muted-foreground flex items-center gap-2">
+                            {includeExistingExams && (
+                              <Checkbox
+                                checked={selectedExamIds.includes(d.id)}
+                                onCheckedChange={() => toggleExam(d.id)}
+                                className="h-3.5 w-3.5 shrink-0"
+                                aria-label="Usar este exame na análise"
+                              />
+                            )}
+                            <span className="truncate flex-1">
                               {d.storage_path?.split("/").pop() || "exame.pdf"}
                             </span>
                             <span className="opacity-70 shrink-0">
@@ -471,9 +504,11 @@ export default function AdminStudentAnalysis() {
                         ))}
                       </ul>
                       <p className="text-[9px] text-muted-foreground">
-                        {includeExistingExams
-                          ? "STHIA fará OCR desses arquivos automaticamente."
-                          : "Estes exames não serão considerados nesta análise."}
+                        {!includeExistingExams
+                          ? "Estes exames não serão considerados nesta análise."
+                          : selectedExamIds.length === 0
+                          ? "Nenhum exame marcado — a STHIA usará apenas o texto e anexos novos."
+                          : "STHIA fará OCR apenas dos exames marcados."}
                       </p>
                     </div>
                   )}
