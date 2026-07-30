@@ -821,14 +821,11 @@ const StudentGuidedWorkout = () => {
                 {idx < exList.length - 1 && (
                   inGroup && !isGroupEnd ? (
                     <div
-                      className="flex justify-center items-center gap-2 pt-1 text-[10px] font-black uppercase tracking-[0.25em]"
-                      style={{ color: "#39FF14", textShadow: "0 0 8px rgba(57,255,20,0.7)" }}
+                      className="flex justify-center items-center gap-2 pt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground"
                     >
-                      <span className="h-px flex-1" style={{ background: "#39FF14", boxShadow: "0 0 6px #39FF14" }} />
-                      <ChevronsDown className="w-4 h-4" />
+                      <span className="h-px flex-1 bg-border/70" />
                       sem descanso · próximo do {groupKind.toLowerCase()}
-                      <ChevronsDown className="w-4 h-4" />
-                      <span className="h-px flex-1" style={{ background: "#39FF14", boxShadow: "0 0 6px #39FF14" }} />
+                      <span className="h-px flex-1 bg-border/70" />
                     </div>
                   ) : (
                     <div className="flex justify-center pt-1 text-muted-foreground/50">
@@ -839,16 +836,9 @@ const StudentGuidedWorkout = () => {
                 </div>
                 {isGroupEnd && (
                   <div
-                    className="relative rounded-b-2xl px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.3em] border-2 border-t-0 -mt-1"
-                    style={{
-                      color: "#39FF14",
-                      borderColor: "#39FF14",
-                      background: "linear-gradient(90deg, rgba(57,255,20,0.06), rgba(57,255,20,0.22))",
-                      textShadow: "0 0 8px rgba(57,255,20,0.7)",
-                      boxShadow: "0 0 26px rgba(57,255,20,0.55), inset 0 0 14px rgba(57,255,20,0.2)",
-                    }}
+                    className="relative rounded-b-2xl px-4 py-2.5 text-center text-[10px] font-medium uppercase tracking-[0.22em] border border-t-0 border-border/60 bg-muted/40 text-muted-foreground -mt-3"
                   >
-                    ▲ fim do {groupKind.toLowerCase()} — descanse ▲
+                    fim do {groupKind.toLowerCase()} — descanse
                   </div>
                 )}
               </div>
