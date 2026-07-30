@@ -3033,17 +3033,18 @@ Gere a mensagem final agora.`;
       }
       else if (trimmed === '4') {
         await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
-        const flowStep = getFlowStep('comercial_sucesso_handoff');
-        await sendMessage(String(flowStep?.message || 'Redirecionando para o Sucesso do Aluno...'), 'com_sucesso_redirect', null, undefined, {}, flowStep);
-        
-        // Transferência real de fila
+        // Canal Sucesso do Aluno suspenso: tratar "já sou aluno" no próprio Comercial.
+        const renewalLink = profile?.user_id
+          ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}`
+          : 'https://sthmethod.com.br/renovacao';
+        await sendMessage(
+          `Perfeito! 👊\n\nSe sua consultoria está *ativa*, o atendimento técnico é pelo canal *Fale com o Nutri*.\n\nSe está *vencida* e você quer voltar, a renovação é 100% automatizada:\n\n🔗 ${renewalLink}\n\nMe conta o que você precisa que eu te ajudo por aqui.`,
+          'comercial_ja_sou_aluno',
+        );
         await admin.from('crm_conversations').update({
-          queue_type: 'sucesso',
-          flow_state: 'sucesso_main_menu'
+          queue_type: 'comercial',
+          flow_state: 'comercial_renovacao',
         }).eq('id', conv.id);
-        
-        const flowStepSucesso = getFlowStep('sucesso_main_menu');
-        await sendMessage(String(flowStepSucesso?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso', {}, flowStepSucesso);
       }
       else { 
         // Fallback inteligente: em vez de repetir o menu, deixar a AI responder
