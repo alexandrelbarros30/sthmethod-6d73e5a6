@@ -2813,12 +2813,24 @@ Gere a mensagem final agora.`;
               });
               autoReply = { sent: r.sent, engine: 'flow', transfer: 'comercial->nutri' };
             } else {
-              // Vencido / Ex-aluno continuam encaminhados para Sucesso do Aluno.
-              await sendMessage(String(flowStepIdent?.message || 'Redirecionando para Sucesso...'), step, null, undefined, {}, flowStepIdent);
-              const flowStepMain = getFlowStep('sucesso_main_menu');
-              const r = await sendMessage(String(flowStepMain?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStepMain);
-              await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
-              autoReply = { sent: r.sent, engine: 'flow' };
+              // Vencido / Ex-aluno: RENOVAÇÃO 100% automatizada NO PRÓPRIO Comercial.
+              // (Canal Sucesso do Aluno está suspenso — encaminhar para lá travava o fluxo.)
+              const renewalLink = profile?.user_id
+                ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}`
+                : 'https://sthmethod.com.br/renovacao';
+              let msg = String(flowStepIdent?.message || '');
+              if (!msg) {
+                msg = `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nLocalizamos seu cadastro na STH METHOD e sua consultoria está *inativa*.\n\nVocê pode renovar agora, de forma 100% automatizada, em poucos cliques:\n\n🔗 Renovação: ${renewalLink}\n\nSe quiser, me diga qual plano faz mais sentido pra você que eu te oriento. 💪`;
+              } else if (!msg.includes('renovacao')) {
+                msg += `\n\n🔗 Renovação: ${renewalLink}`;
+              }
+              const r = await sendMessage(msg, step, null, undefined, { link_renovacao: renewalLink }, flowStepIdent);
+              await admin.from('crm_conversations').update({
+                flow_state: 'comercial_renovacao',
+                queue_type: 'comercial',
+                pipeline_stage: 'renovacao_pendente',
+              }).eq('id', conv.id);
+              autoReply = { sent: r.sent, engine: 'flow', mode: 'renovacao_comercial' };
             }
           } else {
             autoReply = { sent: false, reason: 'duplicate_prevented' };
