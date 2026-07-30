@@ -643,6 +643,11 @@ const StudentGuidedWorkout = () => {
               ? exList.filter((e: any, i: number) => e.group_id === ex.group_id && i <= idx).length
               : 0;
             const groupKind = groupSize === 3 ? "TRISET" : groupSize === 2 ? "BISET" : "CONJUGADO";
+            const groupHue = groupSize === 3 ? 255 : groupSize === 2 ? 195 : 35;
+            const groupColor = `hsla(${groupHue}, 85%, 58%, 1)`;
+            const groupBg = `hsla(${groupHue}, 70%, 55%, 0.08)`;
+            const groupBorder = `hsla(${groupHue}, 70%, 55%, 0.28)`;
+            const groupBadgeBg = `hsla(${groupHue}, 80%, 52%, 0.14)`;
             const posLabel = inGroup ? `A${groupIndex}` : "";
             return (
               <div
@@ -655,9 +660,21 @@ const StudentGuidedWorkout = () => {
                 }
               >
                 {isGroupStart && (
-                  <div className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2.5 border border-b-0 border-border/60 bg-muted/40 -mb-3">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-foreground/60" />
-                    <span className="font-medium tracking-[0.16em] uppercase text-[11px] text-foreground">
+                  <div
+                    className="relative rounded-t-2xl px-4 py-2.5 flex items-center gap-2.5 border border-b-0 -mb-3"
+                    style={{
+                      borderColor: groupBorder,
+                      background: groupBg,
+                    }}
+                  >
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full"
+                      style={{ background: groupColor }}
+                    />
+                    <span
+                      className="font-medium tracking-[0.16em] uppercase text-[11px]"
+                      style={{ color: groupColor }}
+                    >
                       {groupKind}{ex.group_name ? ` · ${ex.group_name}` : ""}
                     </span>
                     <span className="text-[10px] tracking-wide text-muted-foreground ml-auto">
@@ -670,8 +687,8 @@ const StudentGuidedWorkout = () => {
                   style={
                     inGroup
                       ? {
-                          borderLeft: "1px solid hsl(var(--border) / 0.6)",
-                          borderRight: "1px solid hsl(var(--border) / 0.6)",
+                          borderLeft: `1px solid ${groupBorder}`,
+                          borderRight: `1px solid ${groupBorder}`,
                           borderTop: "none",
                           borderBottom: "none",
                           paddingTop: isGroupStart ? 16 : 0,
@@ -680,13 +697,19 @@ const StudentGuidedWorkout = () => {
                           borderTopRightRadius: 0,
                           borderBottomLeftRadius: 0,
                           borderBottomRightRadius: 0,
-                          background: "hsl(var(--muted) / 0.25)",
+                          background: groupBg,
                         }
                       : undefined
                   }
                 >
                 {inGroup && (
-                  <span className="absolute left-2 top-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground/90 text-background">
+                  <span
+                    className="absolute left-2 top-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                    style={{
+                      background: groupBadgeBg,
+                      color: groupColor,
+                    }}
+                  >
                     {posLabel}
                   </span>
                 )}
