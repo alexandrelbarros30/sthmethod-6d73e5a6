@@ -64,7 +64,8 @@ const FloatingDock = () => {
 
   return (
     <>
-      <div className="h-24" />
+      {/* Reserva de área para o dock — nenhum card fica coberto */}
+      <div className="h-32" />
 
       <div className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md" style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}>
         <motion.div

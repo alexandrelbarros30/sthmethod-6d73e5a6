@@ -77,16 +77,18 @@ const NextWorkoutCard = () => {
     >
       <div className="relative">
         {template.image_url ? (
-          <div className="relative h-32 overflow-hidden">
+          <div className="relative h-40 overflow-hidden">
             <img
               src={template.image_url}
               alt={template.title}
               className="w-full h-full object-cover"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-            <div className="absolute top-3 left-4 text-[10px] font-medium tracking-[0.25em] uppercase text-white/90 flex items-center gap-1.5">
-              <Dumbbell className="w-3 h-3" /> Próximo treino
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute top-3 left-4">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase text-white bg-primary/90 px-2 py-1 rounded-md">
+                <Dumbbell className="w-3 h-3" /> Próximo treino
+              </span>
             </div>
           </div>
         ) : (
