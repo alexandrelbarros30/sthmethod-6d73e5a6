@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Pause, Play } from "lucide-react";
+import { Dumbbell, Pause, Play } from "lucide-react";
 
 // Extrai o ID do YouTube a partir da URL de embed/watch/short.
 const getYoutubeId = (url: string) => {
@@ -178,10 +178,20 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
 
       return (
         <div className={`relative h-full w-full overflow-hidden bg-card ${className || ""}`}>
+          {thumbSrc && !thumbUnavailable && (
+            <img
+              src={thumbSrc}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-2xl"
+              draggable={false}
+              referrerPolicy="no-referrer"
+            />
+          )}
           <video
             ref={fileVideoRef}
             src={url}
-            className="sth-workout-video absolute inset-0 h-full w-full object-contain"
+            className="sth-workout-video absolute inset-x-0 top-0 bottom-11 h-[calc(100%-2.75rem)] w-full object-contain sm:bottom-12 sm:h-[calc(100%-3rem)]"
             style={{ objectFit: "contain" }}
             playsInline
             {...({ "webkit-playsinline": "true" } as Record<string, string>)}
