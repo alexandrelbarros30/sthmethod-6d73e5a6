@@ -582,3 +582,21 @@ export const syncStudentDietMeals = async (
 
   return { mealsCount: meals.length, foodsCount };
 };
+
+/**
+ * The faithful HTML of a meal is stored in the `notes` of ONE of its foods
+ * (prefixed with __RAW_HTML__). PostgREST does not guarantee the order of the
+ * embedded `diet_foods` array, so it may not be the first item — search all.
+ */
+export function extractMealRawHtml(
+  foods: Array<{ notes?: string | null } | null | undefined> | null | undefined
+): string | null {
+  if (!foods) return null;
+  for (const f of foods) {
+    const notes = f?.notes || "";
+    if (typeof notes === "string" && notes.startsWith("__RAW_HTML__")) {
+      return notes.slice("__RAW_HTML__".length);
+    }
+  }
+  return null;
+}

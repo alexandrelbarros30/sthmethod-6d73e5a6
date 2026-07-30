@@ -9,6 +9,7 @@ import type { MealWithFoods } from "@/hooks/useMealTracking";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { twemojify } from "@/lib/twemoji";
+import { extractMealRawHtml } from "@/lib/diet-meal-sync";
 
 interface MealDetailPanelProps {
   meal: MealWithFoods;
@@ -163,10 +164,7 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
 
           {/* Food Items - prefer faithful HTML render when available */}
           {(() => {
-            const firstNotes = meal.diet_foods[0]?.notes || "";
-            const rawHtmlMatch = firstNotes.startsWith("__RAW_HTML__")
-              ? firstNotes.slice("__RAW_HTML__".length)
-              : null;
+            const rawHtmlMatch = extractMealRawHtml(meal.diet_foods as any);
 
             if (rawHtmlMatch) {
               const isHtml = /<[a-z!\/][^>]*>/i.test(rawHtmlMatch);

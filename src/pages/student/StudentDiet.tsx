@@ -10,6 +10,7 @@ import PreviewAsBanner from "@/components/student/PreviewAsBanner";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import PreviewLockedCard from "@/components/student/PreviewLockedCard";
 import { useMealTracking } from "@/hooks/useMealTracking";
+import { extractMealRawHtml } from "@/lib/diet-meal-sync";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
 import MealCard from "@/components/student/MealCard";
@@ -208,9 +209,8 @@ const StudentDiet = () => {
         ? meals
             .map((meal) => {
               const heading = meal.sort_order <= 5 ? `REFEIÇÃO ${meal.sort_order + 1} - ${meal.name}` : meal.name;
-              const firstNotes = (meal.diet_foods[0] as any)?.notes || "";
-              if (typeof firstNotes === "string" && firstNotes.startsWith("__RAW_HTML__")) {
-                const html = firstNotes.slice("__RAW_HTML__".length);
+              const html = extractMealRawHtml(meal.diet_foods as any);
+              if (html) {
                 return `${heading}\n__HTML_BLOCK_START__\n${html}\n__HTML_BLOCK_END__`;
               }
               const foods = meal.diet_foods.map((food) => `${food.quantity} - ${food.item}`).join("\n");
