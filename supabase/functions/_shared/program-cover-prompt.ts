@@ -1,7 +1,7 @@
 // Prompt oficial para geração de capas de programas de treino STH METHOD.
-// Estética Apple pura: fundo preto profundo, iluminação cinematográfica,
-// personagem realista em movimento (homem = faixa azul, mulher = faixa rosa),
-// escudo oficial STH METHOD no topo e nome do programa dentro da faixa.
+// MODELO OFICIAL (Opção 3): moldura verde fina, escudo STH METHOD no canto
+// superior direito, atleta real fotográfico em fundo escuro premium e barra
+// verde oficial na base (corte diagonal) com o nome do treino em branco.
 export function buildProgramCoverPrompt(title: string, gender: 'F' | 'M'): string {
   const isF = gender === 'F';
 
@@ -26,8 +26,11 @@ export function buildProgramCoverPrompt(title: string, gender: 'F' | 'M'): strin
     'ESTILO: Ultra Photorealistic, Fitness Commercial Photography, Premium Sports Campaign, Luxury Fitness Brand, Cinematic Lighting, Professional Studio Photography, Hyper Detailed, HDR, 8K, High Contrast, Professional Color Grading, Natural Skin, Sharp Focus, Magazine Cover Quality, Luxury Branding.',
     'PROIBIDO: aparência de IA, cartoon, ilustração, desenho, render 3D estilizado. SEMPRE fotografia hiper-realista.',
 
-    // Formato
-    'FORMATO: vertical 9:16, 1080x1920. O atleta deve ocupar aproximadamente 80% da composição. Os ~20% inferiores da imagem devem ficar como fundo LIMPO, escuro e sem elementos — reservados para o sistema STH METHOD inserir depois faixa, nome do programa e logomarca. NÃO desenhar essa faixa. NÃO inserir nenhum texto, letra, número, logotipo, marca, watermark, moldura, banner ou placa.',
+    // Formato / LAYOUT OFICIAL (Opção 3)
+    'FORMATO: vertical 9:16, 1080x1920.',
+    'LAYOUT OFICIAL OBRIGATÓRIO (modelo aprovado): (1) moldura/contorno fino em verde oficial STH METHOD acompanhando as bordas do card; (2) escudo oficial STH METHOD no CANTO SUPERIOR DIREITO, fiel à logomarca — escudo verde #22A05E com as letras "STH" vazadas e a palavra "METHOD" abaixo, sem alterar formato, proporção ou cor; (3) o atleta ocupando o centro da composição; (4) na BASE, uma BARRA SÓLIDA em VERDE OFICIAL da logomarca, largura total, com um leve CORTE DIAGONAL na borda superior da barra.',
+    `TEXTO: exatamente e somente o nome do treino "${title.toUpperCase()}" escrito sobre a barra verde, em caixa alta, sans-serif bold, branco puro, bem centralizado e totalmente contido na barra (sem cortar letras, sem sobrepor a imagem).`,
+    'NENHUM outro texto, número, watermark, banner ou marca deve aparecer na imagem.',
 
     // Atleta
     athlete,
@@ -45,13 +48,13 @@ export function buildProgramCoverPrompt(title: string, gender: 'F' | 'M'): strin
     'PALETA: predominância de preto, cinza escuro e grafite, com detalhes verdes discretos. Nunca usar cores vibrantes em excesso.',
 
     // Composição
-    'COMPOSIÇÃO: plano médio ou plano americano, leve ângulo inferior (visual heroico), olhar poderoso, postura perfeita, corpo ocupando quase toda a imagem, com os ~20% inferiores limpos para a arte do card.',
+    'COMPOSIÇÃO: plano médio ou plano americano, leve ângulo inferior (visual heroico), postura perfeita, corpo ocupando quase toda a imagem, deixando a base livre para a barra verde com o nome do treino.',
 
     // Qualidade
     'QUALIDADE: Ultra Realistic, Photorealistic, Commercial Fitness Campaign, Award Winning Photography, Professional Sports Photography, High Detail, Natural Skin Texture, Perfect Anatomy, Professional Gym Lighting, Extremely Detailed Muscles, Hyper Realistic, 8K, HDR, Sharp Focus, Magazine Cover.',
 
     // Regras rígidas
-    'REGRAS RÍGIDAS: sem texto, sem letras, sem números, sem logotipos, sem marcas, sem watermark, sem molduras, sem banners, sem placas, sem camisetas com escrita. Não cortar mãos nem pés, não gerar dedos extras, não deformar músculos, anatomia perfeitamente correta. O resultado final deve parecer uma fotografia profissional feita para uma campanha oficial da STH METHOD, digna de capa de aplicativo fitness premium.',
+    'REGRAS RÍGIDAS: os ÚNICOS elementos gráficos permitidos são a moldura verde fina, o escudo STH METHOD no canto superior direito e a barra verde inferior com o nome do treino. Sem watermark, sem outros logotipos, sem escritas em roupas, sem placas. Não cortar mãos nem pés, não gerar dedos extras, não deformar músculos, anatomia perfeitamente correta. O resultado final deve parecer uma fotografia profissional de campanha oficial da STH METHOD, digna de capa de aplicativo fitness premium.',
   ].join(' ');
 }
 
