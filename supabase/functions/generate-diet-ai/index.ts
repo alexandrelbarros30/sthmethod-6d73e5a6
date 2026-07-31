@@ -431,6 +431,9 @@ REGRAS:
           const correctionBlock =
             correction && String(correction).trim()
               ? `\n\n🔁 CONTRA-RESPOSTA DO CONSULTOR (prioridade máxima sobre o cardápio anterior):\n${String(correction).trim()}\n\n` +
+                (Object.keys(correctionTargets).length
+                  ? `⚠️ METAS REDEFINIDAS PELA CONTRA-RESPOSTA (substituem as metas anteriores do briefing): ${JSON.stringify(correctionTargets)}. Recalcule TODAS as gramagens para fechar nestas novas metas.\n\n`
+                  : "") +
                 (previousDiet
                   ? `CARDÁPIO ANTERIOR GERADO (corrija-o, não recomece do zero — mantenha o que está correto e aplique somente os ajustes pedidos):\n${String(previousDiet).slice(0, 20000)}\n\n`
                   : "") +
