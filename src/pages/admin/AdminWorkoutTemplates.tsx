@@ -309,6 +309,22 @@ const AdminWorkoutTemplates = () => {
     ]);
   };
 
+  const addFromLibraryQuick = (items: any[]) => {
+    setExerciseRows(prev => [
+      ...prev,
+      ...items.map((lib, i) => ({
+        exercise_id: lib.id,
+        custom_name: lib.name,
+        custom_description: lib.description || "",
+        sets: "", reps: "", rest_interval: "", load_suggestion: "",
+        video_url: lib.video_url || "",
+        image_url: lib.image_url || "",
+        sort_order: prev.length + i,
+        _uid: crypto.randomUUID(),
+      })) as ExerciseRow[],
+    ]);
+  };
+
   const getAssignedCount = (templateId: string) =>
     (assignments || []).filter((a: any) => a.template_id === templateId && a.active).length;
 
@@ -401,8 +417,17 @@ const AdminWorkoutTemplates = () => {
                       )}
                     </div>
                   )}
+                  <div className="mb-3">
+                    <ExerciseSpotlightAdd
+                      libraryExercises={libraryExercises || []}
+                      onAddLibrary={addFromLibraryQuick}
+                      onAddSuperCoach={addFromSuperCoach}
+                    />
+                  </div>
                   {exerciseRows.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Clique em "Adicionar".</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhum exercício ainda. Passo 1: busque acima e tecle Enter. Passo 2: ajuste séries/reps na linha. Passo 3: selecione 2+ e agrupe em Biset/Triset.
+                    </p>
                   )}
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={exerciseRows.map(r => r._uid)} strategy={verticalListSortingStrategy}>
