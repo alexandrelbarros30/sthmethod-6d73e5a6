@@ -12,6 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Trash2, GripVertical, ChevronsUpDown, Check, Video, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExerciseMediaPreview, { getExerciseMediaSource } from "@/components/admin/ExerciseMediaPreview";
+import SuperCoachExercisePicker, { PickedScExercise } from "@/components/admin/SuperCoachExercisePicker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,7 @@ interface Props {
   onRemove: (idx: number) => void;
   onUpdate: (idx: number, field: keyof ExerciseRow, value: string | null) => void;
   onSelectFromLibrary: (idx: number, exerciseId: string) => void;
+  onSelectFromSuperCoach?: (idx: number, item: PickedScExercise) => void;
   selected?: boolean;
   onToggleSelected?: (idx: number) => void;
 }
@@ -58,7 +60,7 @@ const MUSCLE_GROUPS = [
   "Posterior", "Glúteos", "Panturrilha", "Abdômen", "Cardio", "Outro"
 ];
 
-const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, onSelectFromLibrary, selected, onToggleSelected }: Props) => {
+const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, onSelectFromLibrary, onSelectFromSuperCoach, selected, onToggleSelected }: Props) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row._uid });
   const [libGroup, setLibGroup] = useState("all");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -190,9 +192,17 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
       <>
       <div className="space-y-2">
         <>
-            <Label className="text-xs">
-              {selectedExercise ? "Trocar exercício da Biblioteca" : "Da Biblioteca"}
-            </Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label className="text-xs">
+                {selectedExercise ? "Trocar exercício" : "Escolher exercício"}
+              </Label>
+              {onSelectFromSuperCoach && (
+                <SuperCoachExercisePicker
+                  buttonLabel="Banco ST Coach (vídeos)"
+                  onAdd={(items) => { if (items?.[0]) onSelectFromSuperCoach(idx, items[0]); }}
+                />
+              )}
+            </div>
             <div className="flex flex-col sm:flex-row gap-2">
           <Select value={libGroup} onValueChange={setLibGroup}>
             <SelectTrigger className="w-full sm:w-32 h-9 text-xs">
@@ -212,7 +222,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
                 className="flex-1 justify-between h-9 text-xs font-normal min-w-0"
               >
                 <span className="truncate text-left">
-                  {selectedExercise ? selectedExercise.name : "Selecionar exercício..."}
+                  {selectedExercise ? selectedExercise.name : "Biblioteca (GIFs)..."}
                 </span>
                 <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
               </Button>

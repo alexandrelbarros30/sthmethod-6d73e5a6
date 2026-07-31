@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
+import SuperCoachExercisePicker, { PickedScExercise } from "@/components/admin/SuperCoachExercisePicker";
 
 const MUSCLE_GROUPS = [
   "Peito", "Costas", "Ombros", "Bíceps", "Tríceps", "Quadríceps",
@@ -89,6 +90,20 @@ const QuickExerciseEditDialog = ({ open, onOpenChange, exercise, invalidateKeys 
     setPickerOpen(false);
   };
 
+  const pickFromSuperCoach = (sc: PickedScExercise) => {
+    setForm(p => ({
+      ...p,
+      exercise_id: null,
+      custom_name: sc.name || p.custom_name,
+      custom_description: sc.description || p.custom_description,
+      sets: sc.sets || p.sets,
+      reps: sc.reps || p.reps,
+      rest_interval: sc.rest_interval || p.rest_interval,
+      load_suggestion: sc.load_suggestion || p.load_suggestion,
+      video_url: sc.video_url || sc.image_url || "",
+    }));
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!exercise?.id) throw new Error("Exercício inválido");
@@ -126,16 +141,22 @@ const QuickExerciseEditDialog = ({ open, onOpenChange, exercise, invalidateKeys 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
+      <DialogContent className="w-[96vw] sm:max-w-2xl max-h-[92vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Editar Exercício</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <Label className="text-xs flex items-center gap-1">
-              <Library className="w-3 h-3" /> Substituir por exercício da Biblioteca
-            </Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label className="text-xs flex items-center gap-1">
+                <Library className="w-3 h-3" /> Substituir exercício — Biblioteca (GIFs)
+              </Label>
+              <SuperCoachExercisePicker
+                buttonLabel="Banco ST Coach (vídeos)"
+                onAdd={(items) => { if (items?.[0]) pickFromSuperCoach(items[0]); }}
+              />
+            </div>
             <div className="flex flex-col sm:flex-row gap-2 mt-1">
               <Select value={libGroup} onValueChange={setLibGroup}>
                 <SelectTrigger className="w-full sm:w-32 h-9 text-xs">
@@ -150,7 +171,7 @@ const QuickExerciseEditDialog = ({ open, onOpenChange, exercise, invalidateKeys 
                 <PopoverTrigger asChild>
                   <Button variant="outline" role="combobox" className="flex-1 justify-between h-9 text-xs font-normal min-w-0">
                     <span className="truncate text-left">
-                      {selectedLib ? selectedLib.name : "Selecionar da biblioteca..."}
+                      {selectedLib ? selectedLib.name : "Biblioteca (GIFs)..."}
                     </span>
                     <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                   </Button>
