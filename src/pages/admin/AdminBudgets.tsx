@@ -49,6 +49,7 @@ const AdminBudgets = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewBudget, setPreviewBudget] = useState<any>(null);
+  const [sendPreview, setSendPreview] = useState<{ budget: any; mode: "form" | "existing" } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Budget form
