@@ -849,6 +849,50 @@ const AdminDietAI = () => {
                 </CardContent>
               </Card>
 
+              <Card className="border-primary/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-display text-base flex items-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-primary" /> Contra-resposta — corrigir este cardápio
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Achou erro no cardápio ratificado? Descreva o que está errado e a STHIA refaz corrigindo, mantendo o restante.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {counterHistory.length > 0 && (
+                    <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
+                      <p className="text-xs font-medium">Correções já aplicadas</p>
+                      <ol className="list-decimal list-inside text-xs text-muted-foreground space-y-1">
+                        {counterHistory.map((c, i) => <li key={i}>{c}</li>)}
+                      </ol>
+                    </div>
+                  )}
+                  <Textarea
+                    rows={3}
+                    value={counterNote}
+                    onChange={(e) => setCounterNote(e.target.value)}
+                    placeholder="Ex: a refeição 3 está com carboidrato acima do combinado; trocar o whey da ceia por ovos; retirar lactose da refeição 1..."
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => generateMut.mutate({ correction: counterNote })}
+                      disabled={generateMut.isPending || !counterNote.trim()}
+                    >
+                      {generateMut.isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Corrigindo cardápio...</>
+                      ) : (
+                        <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio corrigido</>
+                      )}
+                    </Button>
+                    {counterNote.trim() && (
+                      <Button variant="ghost" onClick={() => setCounterNote("")} disabled={generateMut.isPending}>
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               {review && (
                 <Card>
                   <CardHeader>
