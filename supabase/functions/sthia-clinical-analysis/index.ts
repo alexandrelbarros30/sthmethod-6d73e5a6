@@ -186,6 +186,8 @@ serve(async (req) => {
       studentId,
       examText = "",
       consultantNotes = "",
+      protocolText = "",
+      protocolTitle = "",
       focus = "full",
       save = true,
       bodyImageIds = null,
@@ -240,7 +242,18 @@ serve(async (req) => {
 
     const systemPrompt = `${STHIA_IDENTITY}\n\n${STHIA_LAYERS}\n\n${FORMAT_SPEC}\n\nAplique silenciosamente as 12 camadas durante o raciocínio. Se dados críticos faltarem, sinalize no summary o que precisa ser coletado antes de escalar decisões.`;
 
-    const userText = `FOCO SOLICITADO: ${focus}\n\nDOSSIÊ ATUAL DO ALUNO:\n${JSON.stringify(dossier, null, 2)}\n\nEXAMES / RESULTADOS FORNECIDOS (texto colado ou OCR):\n${examText || "(nenhum texto colado — usar apenas dossiê, imagens e arquivos anexados)"}\n\nOBSERVAÇÕES DO CONSULTOR:\n${consultantNotes || "(nenhuma)"}\n\nARQUIVOS DE EXAMES ANEXADOS: ${examMeta.length ? examMeta.join("; ") : "nenhum"}. Leia (OCR quando necessário) e integre todos os marcadores encontrados na seção 🩸 INTERPRETAÇÃO LABORATORIAL.\n\nIMAGENS DE REFERÊNCIA/EVOLUÇÃO ANEXADAS: ${extraImgMeta.length ? extraImgMeta.join("; ") : "nenhuma além das oficiais do dossiê"}. Use na 📸 COMPOSIÇÃO VISUAL.\n\nGere agora o parecer completo no formato HTML especificado, cruzando exames + composição visual + bioimpedância + protocolo/dieta atuais + histórico. Se não houver dados para uma seção, omita-a explicitando "sem dados suficientes".`;
+    if (protocolText && String(protocolText).trim()) {
+      (dossier as any).protocol_override = {
+        title: String(protocolTitle || "Protocolo informado pelo consultor"),
+        content: String(protocolText).slice(0, 12000),
+        source: "manual/consultor",
+      };
+    }
+    const protocolBlock = protocolText && String(protocolText).trim()
+      ? `\n\nPROTOCOLO ATUAL INFORMADO PELO CONSULTOR (${protocolTitle || "sem titulo"}) - PRIORIDADE SOBRE O PROTOCOLO DO DOSSIE (tratar como protocolo vigente, inclusive para aluno externo sem cadastro):\n${String(protocolText).slice(0, 12000)}`
+      : "";
+
+    const userText = `FOCO SOLICITADO: ${focus}\n\nDOSSIÊ ATUAL DO ALUNO:\n${JSON.stringify(dossier, null, 2)}${protocolBlock}\n\nEXAMES / RESULTADOS FORNECIDOS (texto colado ou OCR):\n${examText || "(nenhum texto colado — usar apenas dossiê, imagens e arquivos anexados)"}\n\nOBSERVAÇÕES DO CONSULTOR:\n${consultantNotes || "(nenhuma)"}\n\nARQUIVOS DE EXAMES ANEXADOS: ${examMeta.length ? examMeta.join("; ") : "nenhum"}. Leia (OCR quando necessário) e integre todos os marcadores encontrados na seção 🩸 INTERPRETAÇÃO LABORATORIAL.\n\nIMAGENS DE REFERÊNCIA/EVOLUÇÃO ANEXADAS: ${extraImgMeta.length ? extraImgMeta.join("; ") : "nenhuma além das oficiais do dossiê"}. Use na 📸 COMPOSIÇÃO VISUAL.\n\nGere agora o parecer completo no formato HTML especificado, cruzando exames + composição visual + bioimpedância + protocolo/dieta atuais + histórico. Se não houver dados para uma seção, omita-a explicitando "sem dados suficientes".`;
 
     const allParts = [...imageParts, ...examParts];
     const userMessage = allParts.length
@@ -323,7 +336,7 @@ serve(async (req) => {
         created_by: actorId,
         title: args.title || "Análise STHIA",
         scope: focus,
-        brief: { examText, consultantNotes, focus },
+        brief: { examText, consultantNotes, focus, protocolTitle, protocolText },
         exam_input: examText || null,
         report_html: args.report_html,
         summary: args.summary || null,
