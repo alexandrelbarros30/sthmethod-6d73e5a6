@@ -233,6 +233,8 @@ serve(async (req) => {
       includePhotos = true,
       protocolText = "",
       adviceText = "",
+      previousDiet = "",
+      correction = "",
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -370,7 +372,15 @@ REGRAS:
                 `DISTRIBUIÇÃO DE REFERÊNCIA POR REFEIÇÃO (use como ponto de partida e ajuste as gramagens até a soma fechar):\n${buildMealBudget({ energy_kcal: kcal, protein_g: p, carbs_g: c, fat_g: g }, nMeals)}\n\n` +
                 `Antes de fechar, SOME os macros das BASES de cada refeição e confirme que o TOTAL bate com as metas acima (±3%). Se não bater, AJUSTE as quantidades (gramagem dos alimentos) e recalcule até bater. NUNCA entregue um cardápio fora das metas do admin. Se foi pedido ${nMeals} refeições, entregue exatamente ${nMeals}.`
               : "";
-          return `Brief estruturado:\n${JSON.stringify(brief, null, 2)}${targetsBlock}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}\n\nMonte o cardápio agora respeitando as metas acima ao pé da letra.`;
+          const correctionBlock =
+            correction && String(correction).trim()
+              ? `\n\n🔁 CONTRA-RESPOSTA DO CONSULTOR (prioridade máxima sobre o cardápio anterior):\n${String(correction).trim()}\n\n` +
+                (previousDiet
+                  ? `CARDÁPIO ANTERIOR GERADO (corrija-o, não recomece do zero — mantenha o que está correto e aplique somente os ajustes pedidos):\n${String(previousDiet).slice(0, 20000)}\n\n`
+                  : "") +
+                `Ao final, garanta que os erros apontados foram corrigidos e que as metas continuam fechando (±3%).`
+              : "";
+          return `Brief estruturado:\n${JSON.stringify(brief, null, 2)}${targetsBlock}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}${correctionBlock}\n\nMonte o cardápio agora respeitando as metas acima ao pé da letra.`;
         })();
 
     // Build multimodal user content when photos are available
