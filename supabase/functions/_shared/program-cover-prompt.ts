@@ -27,7 +27,7 @@ export function buildProgramCoverPrompt(title: string, gender: 'F' | 'M'): strin
     'PROIBIDO: aparência de IA, cartoon, ilustração, desenho, render 3D estilizado. SEMPRE fotografia hiper-realista.',
 
     // Formato / LAYOUT OFICIAL (Opção 3)
-    'FORMATO: vertical 9:16, 1080x1920.',
+    'FORMATO OBRIGATÓRIO: imagem VERTICAL retrato, proporção 9:16 (1080x1920). NUNCA gerar imagem quadrada ou horizontal.',
     'LAYOUT OFICIAL OBRIGATÓRIO (modelo aprovado): (1) moldura/contorno fino em verde oficial STH METHOD acompanhando as bordas do card; (2) escudo oficial STH METHOD no CANTO SUPERIOR DIREITO, fiel à logomarca — escudo verde #22A05E com as letras "STH" vazadas e a palavra "METHOD" abaixo, sem alterar formato, proporção ou cor; (3) o atleta ocupando o centro da composição; (4) na BASE, uma BARRA SÓLIDA em VERDE OFICIAL da logomarca, largura total, com um leve CORTE DIAGONAL na borda superior da barra.',
     `TEXTO: exatamente e somente o nome do treino "${title.toUpperCase()}" escrito sobre a barra verde, em caixa alta, sans-serif bold, branco puro, bem centralizado e totalmente contido na barra (sem cortar letras, sem sobrepor a imagem).`,
     'NENHUM outro texto, número, watermark, banner ou marca deve aparecer na imagem.',
