@@ -43,6 +43,9 @@ export default function AdminStudentAnalysis() {
   const [focus, setFocus] = useState("full");
   const [examText, setExamText] = useState("");
   const [consultantNotes, setConsultantNotes] = useState("");
+  const [protocolText, setProtocolText] = useState("");
+  const [protocolTitle, setProtocolTitle] = useState("");
+  const [pullingProtocol, setPullingProtocol] = useState(false);
   const [current, setCurrent] = useState<Analysis | null>(null);
   const [selectedBodyIds, setSelectedBodyIds] = useState<string[]>([]);
   const [extraImagePaths, setExtraImagePaths] = useState<{ path: string; name: string }[]>([]);
@@ -149,6 +152,41 @@ export default function AdminStudentAnalysis() {
   const toggleExam = (id: string) =>
     setSelectedExamIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const htmlToPlain = (html: string) =>
+    (html || "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "• ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+  const pullProtocol = async () => {
+    if (!studentId) { toast.error("Selecione um aluno"); return; }
+    setPullingProtocol(true);
+    try {
+      const { data, error } = await supabase
+        .from("student_protocols")
+        .select("title, content, updated_at")
+        .eq("user_id", studentId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      const plain = htmlToPlain((data as any)?.content || "");
+      if (!plain) { toast.message("Este aluno não tem protocolo com conteúdo salvo."); return; }
+      setProtocolText(plain.slice(0, 8000));
+      setProtocolTitle((data as any)?.title || "Protocolo atual");
+      toast.success(`Protocolo puxado: ${(data as any)?.title || "sem título"}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar protocolo");
+    } finally {
+      setPullingProtocol(false);
+    }
+  };
+
   const uploadExamFiles = async (files: FileList | null) => {
     if (!files || !studentId) return;
     setUploading(true);
@@ -236,6 +274,8 @@ export default function AdminStudentAnalysis() {
           studentId,
           examText,
           consultantNotes,
+          protocolText: protocolText.trim() || null,
+          protocolTitle: protocolTitle.trim() || null,
           focus,
           save: true,
           bodyImageIds: selectedBodyIds.length ? selectedBodyIds : null,
@@ -252,6 +292,8 @@ export default function AdminStudentAnalysis() {
       setCurrent(data);
       setExamText("");
       setConsultantNotes("");
+      setProtocolText("");
+      setProtocolTitle("");
       setExtraExamPaths([]);
       setExtraImagePaths([]);
       setSelectedBodyIds([]);
