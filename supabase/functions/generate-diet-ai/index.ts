@@ -288,6 +288,17 @@ serve(async (req) => {
     const isReview = mode === "review";
     const isAdvice = mode === "advice";
 
+    // Contra-resposta pode redefinir metas (ex.: "corrigir kcal para 2300").
+    // Aplicamos ANTES de montar prompt e validador, senão o gate continua
+    // exigindo o alvo antigo e a IA devolve o cardápio original.
+    const correctionTargets = (!isReview && !isAdvice && correction)
+      ? extractCorrectionTargets(String(correction))
+      : {};
+    if (Object.keys(correctionTargets).length) {
+      Object.assign(brief as any, correctionTargets);
+      console.log("generate-diet-ai correction targets applied", correctionTargets);
+    }
+
     // ---------- Fetch student body photos (latest per angle + previous for comparison) ----------
     type PhotoItem = { label: string; url: string; taken_at: string };
     const photos: PhotoItem[] = [];
