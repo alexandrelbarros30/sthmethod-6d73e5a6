@@ -108,6 +108,10 @@ const AdminDietAI = () => {
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Contra-resposta (correção do cardápio já gerado)
+  const [counterNote, setCounterNote] = useState("");
+  const [counterHistory, setCounterHistory] = useState<string[]>([]);
+
   // Histórico de orientações (restrito a admin/consultor)
   const { data: consultHistory = [], refetch: refetchHistory } = useQuery({
     queryKey: ["diet-consultations", selectedStudent?.user_id],
