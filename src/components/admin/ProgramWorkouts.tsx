@@ -22,6 +22,7 @@ import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialo
 import ExerciseMediaPreview, { getExerciseMediaSource } from "@/components/admin/ExerciseMediaPreview";
 import QuickExerciseEditDialog from "@/components/admin/QuickExerciseEditDialog";
 import SuperCoachExercisePicker, { PickedScExercise } from "@/components/admin/SuperCoachExercisePicker";
+import ExerciseSpotlightAdd from "@/components/admin/ExerciseSpotlightAdd";
 
 const GROUP_COLOR_PRESETS = [
   { name: "Biset", color: "#f59e0b" },
@@ -1037,8 +1038,17 @@ const ProgramWorkouts = ({ programId }: Props) => {
                   Marque os checkboxes dos exercícios para agrupar como Biset, Triset, Drop-set etc.
                 </p>
               )}
+              <div className="mb-3">
+                <ExerciseSpotlightAdd
+                  libraryExercises={libraryExercises || []}
+                  onAddLibrary={addFromLibrary}
+                  onAddSuperCoach={addFromSuperCoach}
+                />
+              </div>
               {exerciseRows.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Use "Adicionar" ou "Biblioteca".</p>
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhum exercício ainda. Passo 1: busque acima e tecle Enter. Passo 2: ajuste séries/reps na linha. Passo 3: selecione 2+ e clique em Biset/Triset.
+                </p>
               )}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExerciseDragEnd}>
                 <SortableContext items={exerciseRows.map(r => r._uid)} strategy={verticalListSortingStrategy}>
