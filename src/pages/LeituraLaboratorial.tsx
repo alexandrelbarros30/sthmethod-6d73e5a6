@@ -83,6 +83,12 @@ export default function LeituraLaboratorial() {
             <p className="text-[13px] leading-relaxed text-foreground/85">{data.summary}</p>
           </div>
         )}
+        {intro && (
+          <div
+            className="clinical-report rounded-xl border border-border bg-card/40 px-4 py-4"
+            dangerouslySetInnerHTML={{ __html: intro }}
+          />
+        )}
         <LabInterpretationPanel html={data.report_html} />
       </main>
     </div>
