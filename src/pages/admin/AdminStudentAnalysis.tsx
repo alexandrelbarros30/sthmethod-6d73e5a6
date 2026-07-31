@@ -43,6 +43,9 @@ export default function AdminStudentAnalysis() {
   const [focus, setFocus] = useState("full");
   const [examText, setExamText] = useState("");
   const [consultantNotes, setConsultantNotes] = useState("");
+  const [protocolText, setProtocolText] = useState("");
+  const [protocolTitle, setProtocolTitle] = useState("");
+  const [pullingProtocol, setPullingProtocol] = useState(false);
   const [current, setCurrent] = useState<Analysis | null>(null);
   const [selectedBodyIds, setSelectedBodyIds] = useState<string[]>([]);
   const [extraImagePaths, setExtraImagePaths] = useState<{ path: string; name: string }[]>([]);
@@ -149,6 +152,41 @@ export default function AdminStudentAnalysis() {
   const toggleExam = (id: string) =>
     setSelectedExamIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const htmlToPlain = (html: string) =>
+    (html || "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "• ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+  const pullProtocol = async () => {
+    if (!studentId) { toast.error("Selecione um aluno"); return; }
+    setPullingProtocol(true);
+    try {
+      const { data, error } = await supabase
+        .from("student_protocols")
+        .select("title, content, updated_at")
+        .eq("user_id", studentId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      const plain = htmlToPlain((data as any)?.content || "");
+      if (!plain) { toast.message("Este aluno não tem protocolo com conteúdo salvo."); return; }
+      setProtocolText(plain.slice(0, 8000));
+      setProtocolTitle((data as any)?.title || "Protocolo atual");
+      toast.success(`Protocolo puxado: ${(data as any)?.title || "sem título"}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao puxar protocolo");
+    } finally {
+      setPullingProtocol(false);
+    }
+  };
+
   const uploadExamFiles = async (files: FileList | null) => {
     if (!files || !studentId) return;
     setUploading(true);
@@ -236,6 +274,8 @@ export default function AdminStudentAnalysis() {
           studentId,
           examText,
           consultantNotes,
+          protocolText: protocolText.trim() || null,
+          protocolTitle: protocolTitle.trim() || null,
           focus,
           save: true,
           bodyImageIds: selectedBodyIds.length ? selectedBodyIds : null,
@@ -252,6 +292,8 @@ export default function AdminStudentAnalysis() {
       setCurrent(data);
       setExamText("");
       setConsultantNotes("");
+      setProtocolText("");
+      setProtocolTitle("");
       setExtraExamPaths([]);
       setExtraImagePaths([]);
       setSelectedBodyIds([]);
@@ -385,28 +427,65 @@ export default function AdminStudentAnalysis() {
                 )}
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid md:grid-cols-[220px_1fr] gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Foco da análise</Label>
-                    <Select value={focus} onValueChange={setFocus}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="full">Análise completa</SelectItem>
-                        <SelectItem value="labs">Só exames laboratoriais</SelectItem>
-                        <SelectItem value="visual">Só composição visual</SelectItem>
-                        <SelectItem value="protocol_review">Revisão do protocolo atual</SelectItem>
-                        <SelectItem value="diet_review">Revisão da dieta atual</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-1 md:max-w-[260px]">
+                  <Label className="text-xs">Foco da análise</Label>
+                  <Select value={focus} onValueChange={setFocus}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full">Análise completa</SelectItem>
+                      <SelectItem value="labs">Só exames laboratoriais</SelectItem>
+                      <SelectItem value="visual">Só composição visual</SelectItem>
+                      <SelectItem value="protocol_review">Revisão do protocolo atual</SelectItem>
+                      <SelectItem value="diet_review">Revisão da dieta atual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Observações do consultor (opcional)</Label>
+                  <Textarea
+                    rows={7}
+                    placeholder="Ex: aluno relatou queda de libido, dor lombar leve, sono ruim, queixas recentes, contexto clínico, histórico relevante…"
+                    value={consultantNotes}
+                    onChange={(e) => setConsultantNotes(e.target.value)}
+                    className="min-h-[150px] text-sm leading-relaxed"
+                  />
+                  <p className="text-[10px] text-muted-foreground">{consultantNotes.length} caracteres</p>
+                </div>
+
+                {/* Protocolo atual: puxar do sistema ou descrever livremente (aluno externo) */}
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <ClipboardList className="w-3.5 h-3.5" /> Protocolo atual (opcional)
+                    </Label>
+                    <div className="flex items-center gap-1.5">
+                      <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={pullingProtocol || !studentId} onClick={pullProtocol}>
+                        {pullingProtocol ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                        Puxar do sistema
+                      </Button>
+                      {(protocolText || protocolTitle) && (
+                        <Button size="sm" variant="ghost" className="h-7 gap-1.5" onClick={() => { setProtocolText(""); setProtocolTitle(""); }}>
+                          <X className="w-3.5 h-3.5" /> Limpar
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Observações do consultor (opcional)</Label>
-                    <Input
-                      placeholder="Ex: aluno relatou queda de libido, dor lombar leve, sono ruim…"
-                      value={consultantNotes}
-                      onChange={(e) => setConsultantNotes(e.target.value)}
-                    />
-                  </div>
+                  <Input
+                    placeholder="Título do protocolo (ex: Protocolo atual / Ciclo externo relatado)"
+                    value={protocolTitle}
+                    onChange={(e) => setProtocolTitle(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Textarea
+                    rows={8}
+                    placeholder={`Puxe do sistema ou descreva livremente (aluno externo). Ex.:\nTestosterona cipionato 250mg/sem (seg/qui)\nOxandrolona 20mg/dia\nHCG 500UI 2x/sem\nTirzepatida 5mg/sem\nSuplementos: creatina 5g, ômega 3, vit D 5000UI`}
+                    value={protocolText}
+                    onChange={(e) => setProtocolText(e.target.value)}
+                    className="min-h-[170px] font-mono text-xs leading-relaxed"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Quando preenchido, a STHIA usa este protocolo como referência principal — inclusive para alunos externos sem protocolo cadastrado.
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Exames (cole o texto/valores) — opcional</Label>
