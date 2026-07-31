@@ -239,7 +239,8 @@ const AdminDietAI = () => {
   };
 
   const generateMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { correction?: string }) => {
+      const correction = (opts?.correction || "").trim();
       const brief = {
         aluno: selectedStudent?.full_name || null,
         peso_kg: selectedStudent?.weight || null,
@@ -263,16 +264,25 @@ const AdminDietAI = () => {
           includePhotos: usePhotos,
           protocolText: useProtocol ? protocolText : "",
           adviceText: useAdvice && advice?.advice_html ? htmlToPlain(advice.advice_html) : "",
+          correction,
+          previousDiet: correction ? htmlToPlain(result?.diet_text || "").slice(0, 20000) : "",
         },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      return data as GenResult;
+      return { ...(data as GenResult), _correction: correction } as GenResult & { _correction?: string };
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setResult({ ...data, diet_text: stripMealMacroLines(data.diet_text) });
       setReview(null);
-      toast.success("Cardápio gerado pela STHIA");
+      if (data?._correction) {
+        setCounterHistory((h) => [...h, data._correction]);
+        setCounterNote("");
+        toast.success("Cardápio corrigido com a sua contra-resposta");
+      } else {
+        setCounterHistory([]);
+        toast.success("Cardápio gerado pela STHIA");
+      }
     },
     onError: (e: any) => toast.error(e.message || "Falha ao gerar"),
   });
