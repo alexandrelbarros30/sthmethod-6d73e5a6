@@ -622,7 +622,7 @@ const AdminDietAI = () => {
                 )}
               </Button>
               <Button
-                onClick={() => generateMut.mutate()}
+                onClick={() => generateMut.mutate({})}
                 disabled={generateMut.isPending}
                 className="w-full"
               >
@@ -759,7 +759,7 @@ const AdminDietAI = () => {
                   />
                   <Button
                     className="w-full"
-                    onClick={() => generateMut.mutate()}
+                    onClick={() => generateMut.mutate({})}
                     disabled={generateMut.isPending}
                   >
                     {generateMut.isPending ? (
@@ -790,7 +790,7 @@ const AdminDietAI = () => {
                       <Sparkles className="w-4 h-4 text-primary" /> Cardápio gerado
                     </CardTitle>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => generateMut.mutate()} disabled={generateMut.isPending}>
+                      <Button size="sm" variant="outline" onClick={() => generateMut.mutate({})} disabled={generateMut.isPending}>
                         <RefreshCw className="w-4 h-4 mr-1" /> Regerar
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => reviewMut.mutate()} disabled={reviewMut.isPending}>
