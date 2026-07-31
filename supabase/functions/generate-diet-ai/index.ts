@@ -120,6 +120,51 @@ const computeQualityGate = (parsed: any, targets: MacroTargets | null, expectedM
 };
 
 const buildMealBudget = (targets: MacroTargets, nMeals: number) => {
+  // (mantido abaixo)
+  return buildMealBudgetImpl(targets, nMeals);
+};
+
+// Extrai novas metas numéricas pedidas pelo consultor na contra-resposta
+// (ex.: "corrigir kcal para 2300", "proteína 180g", "2300 calorias").
+// Sem isso, o validador continuava usando o kcal_alvo antigo do briefing
+// e a IA devolvia o cardápio com as calorias originais.
+const extractCorrectionTargets = (text: string) => {
+  const t = String(text || "").toLowerCase().replace(/\./g, "").replace(/,/g, ".");
+  const out: Partial<Record<"kcal_alvo" | "proteina_g_alvo" | "carboidrato_g_alvo" | "lipidio_g_alvo", number>> = {};
+  const grab = (patterns: RegExp[]) => {
+    for (const re of patterns) {
+      const m = t.match(re);
+      if (m) {
+        const n = Number(m[1] ?? m[2]);
+        if (Number.isFinite(n) && n > 0) return Math.round(n);
+      }
+    }
+    return null;
+  };
+  const kcal = grab([
+    /(?:kcal|calorias?|energia)[^0-9]{0,20}(\d{3,5})/,
+    /(\d{3,5})\s*(?:kcal|calorias?)/,
+  ]);
+  const prot = grab([
+    /(?:prote[íi]nas?)[^0-9]{0,20}(\d{2,4})/,
+    /(\d{2,4})\s*g?\s*(?:de\s*)?prote[íi]na/,
+  ]);
+  const carb = grab([
+    /(?:carboidratos?|carbo)[^0-9]{0,20}(\d{2,4})/,
+    /(\d{2,4})\s*g?\s*(?:de\s*)?carboidratos?/,
+  ]);
+  const fat = grab([
+    /(?:lip[íi]dios?|gorduras?)[^0-9]{0,20}(\d{2,4})/,
+    /(\d{2,4})\s*g?\s*(?:de\s*)?(?:lip[íi]dios?|gorduras?)/,
+  ]);
+  if (kcal) out.kcal_alvo = kcal;
+  if (prot) out.proteina_g_alvo = prot;
+  if (carb) out.carboidrato_g_alvo = carb;
+  if (fat) out.lipidio_g_alvo = fat;
+  return out;
+};
+
+const buildMealBudgetImpl = (targets: MacroTargets, nMeals: number) => {
   const presets: Record<number, number[]> = {
     3: [30, 40, 30],
     4: [25, 35, 25, 15],
