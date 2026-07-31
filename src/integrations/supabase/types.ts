@@ -5117,6 +5117,8 @@ export type Database = {
           updated_at: string
           user_id: string
           visual_composition: Json
+          visual_share_enabled: boolean
+          visual_share_expires_at: string | null
         }
         Insert: {
           brief?: Json
@@ -5137,6 +5139,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           visual_composition?: Json
+          visual_share_enabled?: boolean
+          visual_share_expires_at?: string | null
         }
         Update: {
           brief?: Json
@@ -5157,6 +5161,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visual_composition?: Json
+          visual_share_enabled?: boolean
+          visual_share_expires_at?: string | null
         }
         Relationships: []
       }
