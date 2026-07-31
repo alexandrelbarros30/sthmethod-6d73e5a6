@@ -78,7 +78,7 @@ export default function LeituraLaboratorial() {
         <p className="text-[11px] text-muted-foreground tracking-tight">
           {data.scope ? `${data.scope} · ` : ""}{dateLabel}
         </p>
-        {data.summary && (
+        {data.summary && !intro && (
           <div className="rounded-xl border border-border bg-card/60 px-4 py-3">
             <p className="text-[13px] leading-relaxed text-foreground/85">{data.summary}</p>
           </div>
