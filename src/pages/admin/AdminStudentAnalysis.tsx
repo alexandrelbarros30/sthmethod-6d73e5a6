@@ -783,7 +783,36 @@ export default function AdminStudentAnalysis() {
                 </Card>
               )}
 
-              <LabInterpretationPanel html={current.report_html} className="no-print" />
+              <div className="space-y-2 no-print">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1.5"
+                    onClick={() => window.open(`/leitura-laboratorial/${current.id}`, "_blank", "noopener")}
+                  >
+                    🌐 Abrir no navegador (imprimir)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 gap-1.5"
+                    onClick={() => {
+                      const url = `${window.location.origin}/leitura-laboratorial/${current.id}`;
+                      navigator.clipboard.writeText(url);
+                      toast.success("Link da leitura visual copiado");
+                    }}
+                  >
+                    🔗 Copiar link para o aluno
+                  </Button>
+                  {!current.released_to_student && (
+                    <span className="text-[11px] text-muted-foreground">
+                      Libere o parecer para que o aluno consiga abrir o link.
+                    </span>
+                  )}
+                </div>
+                <LabInterpretationPanel html={current.report_html} />
+              </div>
 
               <Card>
                 <CardHeader className="pb-2">

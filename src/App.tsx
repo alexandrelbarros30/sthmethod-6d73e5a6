@@ -177,6 +177,7 @@ const AdminDietAudit = lazy(() => import("./pages/admin/AdminDietAudit"));
 const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
 const AdminProtocolAI = lazy(() => import("./pages/admin/AdminProtocolAI"));
 const AdminStudentAnalysis = lazy(() => import("./pages/admin/AdminStudentAnalysis"));
+const LeituraLaboratorial = lazy(() => import("./pages/LeituraLaboratorial"));
 const AdminAIHistory = lazy(() => import("./pages/admin/AdminAIHistory"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
@@ -237,6 +238,7 @@ const App = () => (
             <Route path="/como-funciona" element={<ComoFunciona />} />
             <Route path="/free" element={<Free />} />
             <Route path="/tendencias" element={<Tendencias />} />
+            <Route path="/leitura-laboratorial/:id" element={<Suspense fallback={<LazyFallback />}><LeituraLaboratorial /></Suspense>} />
             <Route path="/tendencias/cenario-fitness-2026" element={<FitnessCenario2026 />} />
             <Route path="/tendencias/quarteto-magico" element={<QuartetoMagico />} />
             <Route path="/tendencias/recomposicao-avancada" element={<RecomposicaoAvancada />} />
