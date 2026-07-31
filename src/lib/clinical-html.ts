@@ -67,3 +67,28 @@ function wrapTables(html: string): string {
   });
   return host.innerHTML;
 }
+
+/**
+ * Retorna apenas o texto introdutório do parecer — tudo o que vem ANTES do
+ * primeiro quadro (tabela). Usado na leitura visual liberada ao aluno, que
+ * não deve exibir as tabelas/anexos do parecer completo.
+ */
+export function extractClinicalIntro(raw: string | null | undefined): string {
+  const clean = normalizeClinicalHtml(raw);
+  if (!clean || typeof document === "undefined") return clean;
+  const host = document.createElement("div");
+  host.innerHTML = clean;
+
+  const out = document.createElement("div");
+  for (const node of Array.from(host.childNodes)) {
+    const el = node as HTMLElement;
+    const isTable =
+      el.nodeType === 1 &&
+      (el.tagName === "TABLE" ||
+        el.classList?.contains("clinical-table-wrap") ||
+        !!el.querySelector?.("table"));
+    if (isTable) break;
+    out.appendChild(node.cloneNode(true));
+  }
+  return out.innerHTML.trim();
+}

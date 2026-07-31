@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import LabInterpretationPanel from "@/components/shared/LabInterpretationPanel";
-import ClinicalReport from "@/components/shared/ClinicalReport";
+import { extractClinicalIntro } from "@/lib/clinical-html";
 import { Button } from "@/components/ui/button";
 import { Printer, AlertCircle } from "lucide-react";
 
@@ -20,7 +20,7 @@ export default function LeituraLaboratorial() {
     (async () => {
       const { data, error } = await supabase
         .from("student_clinical_analyses")
-        .select("id, title, scope, summary, report_html, created_at")
+        .select("id, title, scope, summary, report_html, created_at, visual_share_enabled, visual_share_expires_at")
         .eq("id", id!)
         .maybeSingle();
       if (!active) return;
@@ -35,6 +35,8 @@ export default function LeituraLaboratorial() {
     () => (data?.created_at ? new Date(data.created_at).toLocaleDateString("pt-BR") : ""),
     [data]
   );
+
+  const intro = useMemo(() => extractClinicalIntro(data?.report_html), [data]);
 
   useEffect(() => {
     document.title = data?.title ? `${data.title} · Leitura laboratorial` : "Leitura laboratorial · STH METHOD";
@@ -81,8 +83,13 @@ export default function LeituraLaboratorial() {
             <p className="text-[13px] leading-relaxed text-foreground/85">{data.summary}</p>
           </div>
         )}
+        {intro && (
+          <div
+            className="clinical-report rounded-xl border border-border bg-card/40 px-4 py-4"
+            dangerouslySetInnerHTML={{ __html: intro }}
+          />
+        )}
         <LabInterpretationPanel html={data.report_html} />
-        <ClinicalReport html={data.report_html} className="rounded-xl border border-border bg-card/40 px-4 py-4" />
       </main>
     </div>
   );

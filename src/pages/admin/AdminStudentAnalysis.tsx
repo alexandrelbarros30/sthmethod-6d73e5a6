@@ -86,7 +86,7 @@ export default function AdminStudentAnalysis() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_clinical_analyses")
-        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at")
+        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at")
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false })
         .limit(30);
@@ -361,6 +361,28 @@ export default function AdminStudentAnalysis() {
       if (current) setCurrent({ ...current, released_to_student: next, released_at: next ? new Date().toISOString() : null });
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao atualizar liberação"),
+  });
+
+  const [shareDays, setShareDays] = useState<string>("7");
+  const setVisualShare = useMutation({
+    mutationFn: async ({ a, enabled, days }: { a: Analysis; enabled: boolean; days: string }) => {
+      const expires =
+        enabled && days !== "0"
+          ? new Date(Date.now() + Number(days) * 86400000).toISOString()
+          : null;
+      const { error } = await supabase
+        .from("student_clinical_analyses")
+        .update({ visual_share_enabled: enabled, visual_share_expires_at: expires })
+        .eq("id", a.id);
+      if (error) throw error;
+      return { enabled, expires };
+    },
+    onSuccess: ({ enabled, expires }) => {
+      toast.success(enabled ? "Leitura visual liberada" : "Leitura visual bloqueada");
+      refetchHistory();
+      if (current) setCurrent({ ...(current as any), visual_share_enabled: enabled, visual_share_expires_at: expires } as any);
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar liberação da leitura visual"),
   });
 
   const selectedStudent = students.find((s) => s.user_id === studentId);
@@ -805,12 +827,53 @@ export default function AdminStudentAnalysis() {
                   >
                     🔗 Copiar link para o aluno
                   </Button>
-                  {!current.released_to_student && (
-                    <span className="text-[11px] text-muted-foreground">
-                      Libere o parecer para que o aluno consiga abrir o link.
-                    </span>
-                  )}
                 </div>
+
+                <div className="rounded-xl border border-border bg-card/50 p-3 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mr-1">
+                    Liberação do link
+                  </span>
+                  <Select value={shareDays} onValueChange={setShareDays}>
+                    <SelectTrigger className="h-8 w-[190px]">
+                      <SelectValue placeholder="Período" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Visível por 24 horas</SelectItem>
+                      <SelectItem value="3">Visível por 3 dias</SelectItem>
+                      <SelectItem value="7">Visível por 7 dias</SelectItem>
+                      <SelectItem value="15">Visível por 15 dias</SelectItem>
+                      <SelectItem value="30">Visível por 30 dias</SelectItem>
+                      <SelectItem value="0">Sem prazo (até revogar)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    className="h-8 gap-1.5"
+                    disabled={setVisualShare.isPending}
+                    onClick={() => setVisualShare.mutate({ a: current, enabled: true, days: shareDays })}
+                  >
+                    <Eye className="w-3.5 h-3.5" /> Liberar leitura visual
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5"
+                    disabled={setVisualShare.isPending}
+                    onClick={() => setVisualShare.mutate({ a: current, enabled: false, days: "0" })}
+                  >
+                    <EyeOff className="w-3.5 h-3.5" /> Bloquear
+                  </Button>
+                  <span className="text-[11px] text-muted-foreground">
+                    {(current as any).visual_share_enabled
+                      ? (current as any).visual_share_expires_at
+                        ? `Liberada até ${new Date((current as any).visual_share_expires_at).toLocaleString("pt-BR")}`
+                        : "Liberada sem prazo"
+                      : current.released_to_student
+                        ? "Acessível pelo parecer liberado ao aluno"
+                        : "Bloqueada — o aluno não consegue abrir o link"}
+                  </span>
+                </div>
+
                 <LabInterpretationPanel html={current.report_html} />
               </div>
 
