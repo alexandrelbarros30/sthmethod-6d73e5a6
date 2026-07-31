@@ -363,6 +363,28 @@ export default function AdminStudentAnalysis() {
     onError: (e: any) => toast.error(e?.message || "Falha ao atualizar liberação"),
   });
 
+  const [shareDays, setShareDays] = useState<string>("7");
+  const setVisualShare = useMutation({
+    mutationFn: async ({ a, enabled, days }: { a: Analysis; enabled: boolean; days: string }) => {
+      const expires =
+        enabled && days !== "0"
+          ? new Date(Date.now() + Number(days) * 86400000).toISOString()
+          : null;
+      const { error } = await supabase
+        .from("student_clinical_analyses")
+        .update({ visual_share_enabled: enabled, visual_share_expires_at: expires })
+        .eq("id", a.id);
+      if (error) throw error;
+      return { enabled, expires };
+    },
+    onSuccess: ({ enabled, expires }) => {
+      toast.success(enabled ? "Leitura visual liberada" : "Leitura visual bloqueada");
+      refetchHistory();
+      if (current) setCurrent({ ...(current as any), visual_share_enabled: enabled, visual_share_expires_at: expires } as any);
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar liberação da leitura visual"),
+  });
+
   const selectedStudent = students.find((s) => s.user_id === studentId);
 
   return (
