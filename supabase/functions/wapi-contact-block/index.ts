@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       if (!digits) return '';
       // LID (): identificador interno do WhatsApp, NAO e MSISDN.
       // Enviar como jid @lid; prefixar 55 aqui fazia a mensagem nunca chegar.
-      if (raw.includes('@lid') || digits.length >= 14) return `@lid`;
+      if (raw.includes('@lid') || digits.length >= 14) return digits + "@lid";
       if (raw.startsWith('+')) return digits;
       if (digits.startsWith('00') && digits.length > 11) return digits.slice(2);
       if (digits.startsWith('55')) return digits;
