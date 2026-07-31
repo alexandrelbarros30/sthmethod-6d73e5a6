@@ -3,8 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Database, Download, Loader2, Trash2, RefreshCw, ImageOff } from "lucide-react";
+import { Database, Download, Loader2, Trash2, RefreshCw, ImageOff, Send } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ArtRow {
   id: string;
@@ -40,6 +50,8 @@ export default function EvolutionArtsGallery({
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [sendTarget, setSendTarget] = useState<ArtRow | null>(null);
+  const [sending, setSending] = useState(false);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -130,6 +142,52 @@ export default function EvolutionArtsGallery({
     }
   };
 
+  // Libera a arte de evolução no WhatsApp pelo canal "Fale com o Nutri" (W-API).
+  const handleReleaseToNutri = async () => {
+    const row = sendTarget;
+    if (!row) return;
+    setSending(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("user_id", row.user_id)
+        .maybeSingle();
+      const phone = (profile as any)?.phone;
+      if (!phone) {
+        toast.error("Aluno sem telefone cadastrado.");
+        return;
+      }
+
+      // Link assinado longo (7 dias) para o WhatsApp conseguir baixar a imagem.
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("evolution-arts")
+        .createSignedUrl(row.storage_path, 60 * 60 * 24 * 7);
+      if (signErr || !signed?.signedUrl) throw signErr || new Error("Falha ao gerar link da imagem");
+
+      const firstName = String((profile as any)?.full_name || studentName || row.student_name || "")
+        .trim()
+        .split(/\s+/)[0];
+      const caption = `${firstName ? `${firstName}, s` : "S"}ua evolução (${TYPE_LABELS[row.art_type] || row.art_type}) — ${fmtDate(row.before_date)} → ${fmtDate(row.after_date)}.\n\nSTH METHOD`;
+
+      const { data, error } = await supabase.functions.invoke("send-wapi", {
+        body: { phone, message: caption, image_url: signed.signedUrl },
+      });
+      if (error) throw error;
+      if ((data as any)?.ok === false) {
+        toast.error((data as any)?.error || "Falha ao enviar pelo canal Nutri.");
+        return;
+      }
+      toast.success("Foto liberada no WhatsApp (Fale com o Nutri).");
+      setSendTarget(null);
+    } catch (err: any) {
+      console.warn("[EvolutionArtsGallery] release", err);
+      toast.error("Erro ao liberar a foto no WhatsApp.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -176,6 +234,14 @@ export default function EvolutionArtsGallery({
                         <Badge className="text-[10px]">{TYPE_LABELS[row.art_type] || row.art_type}</Badge>
                       </div>
                       <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setSendTarget(row)}
+                          title="Liberar no WhatsApp (Fale com o Nutri)"
+                        >
+                          <Send className="w-3 h-3" />
+                        </Button>
                         <Button size="sm" variant="secondary" onClick={() => handleDownload(row)} title="Baixar">
                           <Download className="w-3 h-3" />
                         </Button>
@@ -197,6 +263,28 @@ export default function EvolutionArtsGallery({
           );
         })}
       </CardContent>
+
+      <AlertDialog open={!!sendTarget} onOpenChange={(open) => !open && !sending && setSendTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Liberar foto no WhatsApp?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A arte de evolução ({sendTarget ? TYPE_LABELS[sendTarget.art_type] || sendTarget.art_type : ""}) será
+              enviada ao aluno pelo canal <strong>Fale com o Nutri</strong>. Exceção autorizada à política de bloqueio
+              de imagens no WhatsApp.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleReleaseToNutri(); }}
+              disabled={sending}
+            >
+              {sending ? "Enviando..." : "Liberar e enviar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
