@@ -54,6 +54,7 @@ export default function AdminStudentAnalysis() {
   const [selectedExamIds, setSelectedExamIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [revalCriteria, setRevalCriteria] = useState("");
   const examInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -300,6 +301,35 @@ export default function AdminStudentAnalysis() {
       qc.invalidateQueries({ queryKey: ["clinical-analyses", studentId] });
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao gerar parecer"),
+  });
+
+  const revalidate = useMutation({
+    mutationFn: async () => {
+      if (!studentId || !current) throw new Error("Nenhum parecer selecionado");
+      const { data, error } = await supabase.functions.invoke("sthia-clinical-analysis", {
+        body: {
+          studentId,
+          examText: "",
+          consultantNotes,
+          protocolText: protocolText.trim() || null,
+          protocolTitle: protocolTitle.trim() || null,
+          focus: current.scope || focus,
+          save: true,
+          previousReportHtml: current.report_html,
+          revalidationCriteria: revalCriteria.trim(),
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as Analysis;
+    },
+    onSuccess: (data) => {
+      toast.success("Parecer revalidado pela STHIA");
+      setCurrent(data);
+      setRevalCriteria("");
+      qc.invalidateQueries({ queryKey: ["clinical-analyses", studentId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao revalidar parecer"),
   });
 
   const removeAnalysis = useMutation({
@@ -776,6 +806,38 @@ export default function AdminStudentAnalysis() {
                     </p>
                   </div>
                   <ClinicalReport html={current.report_html} />
+                </CardContent>
+              </Card>
+
+              <Card className="no-print border-primary/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" /> Revalidar / Reanalisar parecer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    A STHIA relê o parecer acima e gera uma nova versão, mantendo o que está correto, corrigindo o que estiver equivocado e destacando "O que mudou nesta revalidação".
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Critérios, sugestões ou pedidos livres</Label>
+                    <Textarea
+                      rows={5}
+                      placeholder={"Ex.: revise a interpretação de TSH e ferritina; considere que o aluno está em cutting agressivo; sugira ajustes de dose fracionada; seja mais objetivo nas recomendações..."}
+                      value={revalCriteria}
+                      onChange={(e) => setRevalCriteria(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button onClick={() => revalidate.mutate()} disabled={revalidate.isPending} className="gap-2">
+                      {revalidate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      Gerar nova análise em cima desta
+                    </Button>
+                    <span className="text-[11px] text-muted-foreground">
+                      O parecer atual permanece salvo no histórico.
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             </div>
