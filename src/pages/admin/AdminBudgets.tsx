@@ -431,7 +431,7 @@ const AdminBudgets = () => {
     return students?.find((s: any) => s.user_id === userId)?.full_name || "Aluno";
   };
 
-  const copyBudgetText = (budget: any) => {
+  const buildBudgetText = (budget: any) => {
     const items = (budget.items as BudgetItem[]) || [];
     let text = `📋 ${budget.title}\n`;
     if (budget.duration) text += `⏳ Plano: ${budget.duration}\n`;
@@ -460,7 +460,11 @@ const AdminBudgets = () => {
     });
     text += `\n💰 Total: R$ ${Number(budget.total).toFixed(2)}`;
     if (budget.notes) text += `\n\n📝 ${budget.notes}`;
-    navigator.clipboard.writeText(text);
+    return text;
+  };
+
+  const copyBudgetText = (budget: any) => {
+    navigator.clipboard.writeText(buildBudgetText(budget));
     toast.success("Orçamento copiado!");
   };
 
