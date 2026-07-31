@@ -770,6 +770,33 @@ const AdminBudgets = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Send Preview Dialog */}
+        <Dialog open={!!sendPreview} onOpenChange={(o) => { if (!o) setSendPreview(null); }}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" /> Pré-visualização do envio
+              </DialogTitle>
+            </DialogHeader>
+            {sendPreview && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Confira o conteúdo abaixo — é exatamente o que será enviado no WhatsApp.
+                </p>
+                <pre className="text-xs whitespace-pre-wrap font-mono bg-muted/50 rounded-lg p-3 border border-border text-foreground">
+                  {buildBudgetText(sendPreview.budget)}
+                </pre>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setSendPreview(null)}>Voltar e editar</Button>
+                  <Button onClick={confirmSend}>
+                    <Send className="w-4 h-4 mr-1.5" /> Confirmar e Enviar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Preview Dialog */}
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-lg">
