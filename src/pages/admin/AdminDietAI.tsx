@@ -108,6 +108,10 @@ const AdminDietAI = () => {
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Contra-resposta (correção do cardápio já gerado)
+  const [counterNote, setCounterNote] = useState("");
+  const [counterHistory, setCounterHistory] = useState<string[]>([]);
+
   // Histórico de orientações (restrito a admin/consultor)
   const { data: consultHistory = [], refetch: refetchHistory } = useQuery({
     queryKey: ["diet-consultations", selectedStudent?.user_id],
@@ -235,7 +239,8 @@ const AdminDietAI = () => {
   };
 
   const generateMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { correction?: string }) => {
+      const correction = (opts?.correction || "").trim();
       const brief = {
         aluno: selectedStudent?.full_name || null,
         peso_kg: selectedStudent?.weight || null,
@@ -259,16 +264,25 @@ const AdminDietAI = () => {
           includePhotos: usePhotos,
           protocolText: useProtocol ? protocolText : "",
           adviceText: useAdvice && advice?.advice_html ? htmlToPlain(advice.advice_html) : "",
+          correction,
+          previousDiet: correction ? htmlToPlain(result?.diet_text || "").slice(0, 20000) : "",
         },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      return data as GenResult;
+      return { ...(data as GenResult), _correction: correction } as GenResult & { _correction?: string };
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setResult({ ...data, diet_text: stripMealMacroLines(data.diet_text) });
       setReview(null);
-      toast.success("Cardápio gerado pela STHIA");
+      if (data?._correction) {
+        setCounterHistory((h) => [...h, data._correction]);
+        setCounterNote("");
+        toast.success("Cardápio corrigido com a sua contra-resposta");
+      } else {
+        setCounterHistory([]);
+        toast.success("Cardápio gerado pela STHIA");
+      }
     },
     onError: (e: any) => toast.error(e.message || "Falha ao gerar"),
   });
@@ -608,7 +622,7 @@ const AdminDietAI = () => {
                 )}
               </Button>
               <Button
-                onClick={() => generateMut.mutate()}
+                onClick={() => generateMut.mutate({})}
                 disabled={generateMut.isPending}
                 className="w-full"
               >
@@ -745,7 +759,7 @@ const AdminDietAI = () => {
                   />
                   <Button
                     className="w-full"
-                    onClick={() => generateMut.mutate()}
+                    onClick={() => generateMut.mutate({})}
                     disabled={generateMut.isPending}
                   >
                     {generateMut.isPending ? (
@@ -776,7 +790,7 @@ const AdminDietAI = () => {
                       <Sparkles className="w-4 h-4 text-primary" /> Cardápio gerado
                     </CardTitle>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => generateMut.mutate()} disabled={generateMut.isPending}>
+                      <Button size="sm" variant="outline" onClick={() => generateMut.mutate({})} disabled={generateMut.isPending}>
                         <RefreshCw className="w-4 h-4 mr-1" /> Regerar
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => reviewMut.mutate()} disabled={reviewMut.isPending}>
@@ -832,6 +846,50 @@ const AdminDietAI = () => {
                   {result.notes && (
                     <p className="mt-3 text-xs text-muted-foreground italic">{result.notes}</p>
                   )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-display text-base flex items-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-primary" /> Contra-resposta — corrigir este cardápio
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Achou erro no cardápio ratificado? Descreva o que está errado e a STHIA refaz corrigindo, mantendo o restante.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {counterHistory.length > 0 && (
+                    <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
+                      <p className="text-xs font-medium">Correções já aplicadas</p>
+                      <ol className="list-decimal list-inside text-xs text-muted-foreground space-y-1">
+                        {counterHistory.map((c, i) => <li key={i}>{c}</li>)}
+                      </ol>
+                    </div>
+                  )}
+                  <Textarea
+                    rows={3}
+                    value={counterNote}
+                    onChange={(e) => setCounterNote(e.target.value)}
+                    placeholder="Ex: a refeição 3 está com carboidrato acima do combinado; trocar o whey da ceia por ovos; retirar lactose da refeição 1..."
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => generateMut.mutate({ correction: counterNote })}
+                      disabled={generateMut.isPending || !counterNote.trim()}
+                    >
+                      {generateMut.isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Corrigindo cardápio...</>
+                      ) : (
+                        <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio corrigido</>
+                      )}
+                    </Button>
+                    {counterNote.trim() && (
+                      <Button variant="ghost" onClick={() => setCounterNote("")} disabled={generateMut.isPending}>
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
