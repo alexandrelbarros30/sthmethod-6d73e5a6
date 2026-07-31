@@ -222,7 +222,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
                 className="flex-1 justify-between h-9 text-xs font-normal min-w-0"
               >
                 <span className="truncate text-left">
-                  {selectedExercise ? selectedExercise.name : "Selecionar exercício..."}
+                  {selectedExercise ? selectedExercise.name : "Biblioteca (GIFs)..."}
                 </span>
                 <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
               </Button>
