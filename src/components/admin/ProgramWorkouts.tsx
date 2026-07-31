@@ -59,37 +59,42 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className="hover:shadow-sm transition-shadow">
-        <CardContent className="py-3 px-3 sm:py-4 sm:px-6">
-          <div className="flex items-start gap-2">
-            <button type="button" className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0 mt-1" {...attributes} {...listeners}>
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="py-4 px-4 sm:py-5 sm:px-6">
+          <div className="flex items-start gap-3">
+            <button type="button" className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0 mt-1.5" {...attributes} {...listeners}>
               <GripVertical className="w-4 h-4" />
             </button>
             <button className="flex-1 min-w-0 text-left" onClick={onToggle}>
-              <div className="flex items-start gap-2">
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10 text-primary text-sm font-bold shrink-0">
                   {wIdx + 1}
                 </span>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm truncate">{w.title}</p>
+                    <p className="font-semibold text-base truncate">{w.title}</p>
                     {!w.released && <Badge variant="secondary" className="text-[10px]">Bloqueado</Badge>}
                   </div>
                   {w.subtitle && <p className="text-xs text-muted-foreground truncate">{w.subtitle}</p>}
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    <Badge variant="outline" className="text-[10px]">{exs.length} ex.</Badge>
-                    {w.weeks && <Badge variant="outline" className="text-[10px]">{w.weeks} sem</Badge>}
-                    {w.supercoach_training_id && <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ST Coach</Badge>}
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant="outline" className="text-[11px]">{exs.length} exercício(s)</Badge>
+                    {w.weeks && <Badge variant="outline" className="text-[11px]">{w.weeks} semana(s)</Badge>}
+                    {w.supercoach_training_id && <Badge variant="outline" className="text-[11px] border-primary/40 text-primary">ST Coach</Badge>}
                   </div>
                 </div>
               </div>
             </button>
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              <Switch
-                checked={w.released ?? true}
-                onCheckedChange={(checked) => onToggleReleased(checked)}
-              />
-              <div className="flex items-center gap-0.5">
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline text-[11px] text-muted-foreground">
+                  {(w.released ?? true) ? "Liberado" : "Bloqueado"}
+                </span>
+                <Switch
+                  checked={w.released ?? true}
+                  onCheckedChange={(checked) => onToggleReleased(checked)}
+                />
+              </div>
+              <div className="flex items-center gap-1 rounded-lg border bg-muted/30 px-1 py-0.5">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button size="icon" variant="ghost" className="h-7 w-7"><Copy className="w-3.5 h-3.5" /></Button>
