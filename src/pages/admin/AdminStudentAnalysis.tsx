@@ -427,28 +427,65 @@ export default function AdminStudentAnalysis() {
                 )}
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid md:grid-cols-[220px_1fr] gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Foco da análise</Label>
-                    <Select value={focus} onValueChange={setFocus}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="full">Análise completa</SelectItem>
-                        <SelectItem value="labs">Só exames laboratoriais</SelectItem>
-                        <SelectItem value="visual">Só composição visual</SelectItem>
-                        <SelectItem value="protocol_review">Revisão do protocolo atual</SelectItem>
-                        <SelectItem value="diet_review">Revisão da dieta atual</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-1 md:max-w-[260px]">
+                  <Label className="text-xs">Foco da análise</Label>
+                  <Select value={focus} onValueChange={setFocus}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full">Análise completa</SelectItem>
+                      <SelectItem value="labs">Só exames laboratoriais</SelectItem>
+                      <SelectItem value="visual">Só composição visual</SelectItem>
+                      <SelectItem value="protocol_review">Revisão do protocolo atual</SelectItem>
+                      <SelectItem value="diet_review">Revisão da dieta atual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Observações do consultor (opcional)</Label>
+                  <Textarea
+                    rows={7}
+                    placeholder="Ex: aluno relatou queda de libido, dor lombar leve, sono ruim, queixas recentes, contexto clínico, histórico relevante…"
+                    value={consultantNotes}
+                    onChange={(e) => setConsultantNotes(e.target.value)}
+                    className="min-h-[150px] text-sm leading-relaxed"
+                  />
+                  <p className="text-[10px] text-muted-foreground">{consultantNotes.length} caracteres</p>
+                </div>
+
+                {/* Protocolo atual: puxar do sistema ou descrever livremente (aluno externo) */}
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <ClipboardList className="w-3.5 h-3.5" /> Protocolo atual (opcional)
+                    </Label>
+                    <div className="flex items-center gap-1.5">
+                      <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={pullingProtocol || !studentId} onClick={pullProtocol}>
+                        {pullingProtocol ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                        Puxar do sistema
+                      </Button>
+                      {(protocolText || protocolTitle) && (
+                        <Button size="sm" variant="ghost" className="h-7 gap-1.5" onClick={() => { setProtocolText(""); setProtocolTitle(""); }}>
+                          <X className="w-3.5 h-3.5" /> Limpar
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Observações do consultor (opcional)</Label>
-                    <Input
-                      placeholder="Ex: aluno relatou queda de libido, dor lombar leve, sono ruim…"
-                      value={consultantNotes}
-                      onChange={(e) => setConsultantNotes(e.target.value)}
-                    />
-                  </div>
+                  <Input
+                    placeholder="Título do protocolo (ex: Protocolo atual / Ciclo externo relatado)"
+                    value={protocolTitle}
+                    onChange={(e) => setProtocolTitle(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Textarea
+                    rows={8}
+                    placeholder={`Puxe do sistema ou descreva livremente (aluno externo). Ex.:\nTestosterona cipionato 250mg/sem (seg/qui)\nOxandrolona 20mg/dia\nHCG 500UI 2x/sem\nTirzepatida 5mg/sem\nSuplementos: creatina 5g, ômega 3, vit D 5000UI`}
+                    value={protocolText}
+                    onChange={(e) => setProtocolText(e.target.value)}
+                    className="min-h-[170px] font-mono text-xs leading-relaxed"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Quando preenchido, a STHIA usa este protocolo como referência principal — inclusive para alunos externos sem protocolo cadastrado.
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Exames (cole o texto/valores) — opcional</Label>
