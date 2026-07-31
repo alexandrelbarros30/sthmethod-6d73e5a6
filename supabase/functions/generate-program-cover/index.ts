@@ -58,7 +58,7 @@ async function fetchAiImage(params: {
     : {
         model: params.model,
         prompt: params.prompt,
-        size: '1024x1024',
+        size: '1024x1536',
         n: 1,
         ...(params.bodyExtras || {}),
       };
@@ -105,17 +105,17 @@ async function generateAiCover(params: {
 }): Promise<{ bytes: Uint8Array | null; model: string; attempts: Attempt[] }> {
   const attempts: Attempt[] = [];
   const providers: Provider[] = params.cascade
-    ? (params.provider === 'gemini' ? ['gemini', 'openai'] : ['openai', 'gemini'])
+    ? (params.provider === 'openai' ? ['openai', 'gemini'] : ['gemini', 'openai'])
     : [params.provider];
 
   for (const provider of providers) {
-    const model = provider === 'gemini' ? 'google/gemini-3.1-flash-image' : 'openai/gpt-image-2';
+    const model = provider === 'gemini' ? 'google/gemini-3-pro-image' : 'openai/gpt-image-2';
     const bytes = await fetchAiImage({
       model,
       prompt: params.prompt,
       lovableKey: params.lovableKey,
-      timeoutMs: provider === 'gemini' ? 38000 : 42000,
-      bodyExtras: provider === 'openai' ? { quality: 'low' } : undefined,
+      timeoutMs: provider === 'gemini' ? 55000 : 55000,
+      bodyExtras: provider === 'openai' ? { quality: 'high' } : undefined,
       attempts,
     });
     if (bytes) return { bytes, model, attempts };
@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
 
     const lovableKey = Deno.env.get('LOVABLE_API_KEY') || '';
     const prompt = buildProgramCoverPrompt(prog.title, gender);
-    const requestedProvider: Provider = providerIn === 'gemini' ? 'gemini' : 'openai';
+    const requestedProvider: Provider = providerIn === 'openai' ? 'openai' : 'gemini';
 
     if (!lovableKey) {
       return jsonResponse({
@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
         status: 'processing',
         programId,
         gender,
-        model: requestedProvider === 'gemini' ? 'google/gemini-3.1-flash-image → openai/gpt-image-2' : 'openai/gpt-image-2 → google/gemini-3.1-flash-image',
+        model: requestedProvider === 'openai' ? 'openai/gpt-image-2 → google/gemini-3-pro-image' : 'google/gemini-3-pro-image → openai/gpt-image-2',
         when: new Date().toISOString(),
       }, 202);
     }
