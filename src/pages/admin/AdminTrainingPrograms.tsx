@@ -616,25 +616,25 @@ const AdminTrainingPrograms = () => {
   if (selectedProgram) {
     return (
       <DashboardLayout role={(role as any) || "admin"} title={selectedProgram.title} subtitle="Gerencie os treinos deste programa.">
-        <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           {/* LEFT: sticky programs list */}
-          <aside className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+          <aside className="rounded-2xl border bg-card/40 p-3 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Programas</p>
-              <Button size="icon" variant="ghost" className="h-7 w-7" title="Novo programa" onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.12em]">Programas</p>
+              <Button size="icon" variant="ghost" className="h-8 w-8" title="Novo programa" onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="relative mb-2">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <div className="relative mb-3">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-7 h-8 text-xs"
+                className="pl-8 h-9 text-sm"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {filteredPrograms.map((p: any) => {
                 const active = p.id === selectedProgramId;
                 const wCount = workoutCounts?.[p.id] || 0;
@@ -643,20 +643,20 @@ const AdminTrainingPrograms = () => {
                   <button
                     key={p.id}
                     onClick={() => setSelectedProgramId(p.id)}
-                    className={`w-full text-left rounded-lg border p-2 transition-all flex items-center gap-2 ${active ? "border-primary bg-primary/10 shadow-sm" : "border-border/60 hover:border-primary/40 hover:bg-muted/40"}`}
+                    className={`w-full text-left rounded-xl border p-2.5 transition-all flex items-center gap-3 ${active ? "border-primary bg-primary/10 shadow-sm" : "border-border/60 hover:border-primary/40 hover:bg-muted/40"}`}
                   >
                     {p.poster_url ? (
-                      <img src={p.poster_url} alt="" className="w-9 h-9 rounded-md object-cover shrink-0" loading="lazy" />
+                      <img src={p.poster_url} alt="" className="w-11 h-11 rounded-lg object-cover shrink-0" loading="lazy" />
                     ) : (
-                      <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                        <Layers className="w-4 h-4 text-primary" />
+                      <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Layers className="w-5 h-5 text-primary" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-medium truncate ${active ? "text-primary" : ""}`}>{p.title}</p>
-                      <p className="text-[10px] text-muted-foreground">{wCount} treino(s) · {assigned} aluno(s)</p>
+                      <p className={`text-sm font-medium truncate leading-tight ${active ? "text-primary" : ""}`}>{p.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{wCount} treino(s) · {assigned} aluno(s)</p>
                     </div>
-                    {active && <ChevronRight className="w-3.5 h-3.5 text-primary shrink-0" />}
+                    {active && <ChevronRight className="w-4 h-4 text-primary shrink-0" />}
                   </button>
                 );
               })}
@@ -664,28 +664,31 @@ const AdminTrainingPrograms = () => {
           </aside>
 
           {/* RIGHT: workouts + inline exercises pane */}
-          <div className="min-w-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mb-3"
-              onClick={() => {
-                setSelectedProgramId(null);
-                if (searchParams.get("program")) {
-                  const next = new URLSearchParams(searchParams);
-                  next.delete("program");
-                  setSearchParams(next, { replace: true });
-                }
-              }}
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" /> Todos os programas
-            </Button>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <Badge variant="outline">{getObjectiveLabel(selectedProgram.objective || "general")}</Badge>
-              <Badge variant="outline" className={getDifficultyInfo(selectedProgram.difficulty || "intermediate").color}>
-                {getDifficultyInfo(selectedProgram.difficulty || "intermediate").label}
-              </Badge>
-              {selectedProgram.status === "draft" && <Badge variant="secondary">Rascunho</Badge>}
+          <div className="min-w-0 space-y-5">
+            <div className="rounded-2xl border bg-card/40 p-4 flex flex-wrap items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-2"
+                onClick={() => {
+                  setSelectedProgramId(null);
+                  if (searchParams.get("program")) {
+                    const next = new URLSearchParams(searchParams);
+                    next.delete("program");
+                    setSearchParams(next, { replace: true });
+                  }
+                }}
+              >
+                <ArrowLeft className="w-4 h-4 mr-1.5" /> Todos os programas
+              </Button>
+              <div className="hidden sm:block h-5 w-px bg-border" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">{getObjectiveLabel(selectedProgram.objective || "general")}</Badge>
+                <Badge variant="outline" className={getDifficultyInfo(selectedProgram.difficulty || "intermediate").color}>
+                  {getDifficultyInfo(selectedProgram.difficulty || "intermediate").label}
+                </Badge>
+                {selectedProgram.status === "draft" && <Badge variant="secondary">Rascunho</Badge>}
+              </div>
             </div>
             <ProgramWorkouts programId={selectedProgram.id} />
           </div>
