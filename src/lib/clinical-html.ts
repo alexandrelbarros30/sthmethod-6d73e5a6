@@ -90,5 +90,22 @@ export function extractClinicalIntro(raw: string | null | undefined): string {
     if (isTable) break;
     out.appendChild(node.cloneNode(true));
   }
-  return out.innerHTML.trim();
+
+  // Remove títulos "órfãos" no fim (ex.: "🩸 INTERPRETAÇÃO LABORATORIAL" sem tabela abaixo)
+  while (out.lastElementChild) {
+    const last = out.lastElementChild as HTMLElement;
+    const text = (last.textContent || "").trim();
+    const isHeadingOnly =
+      !text ||
+      (text.length < 80 &&
+        (/^(H[1-6])$/.test(last.tagName) ||
+          last.querySelector("strong")?.textContent?.trim() === text));
+    if (!isHeadingOnly) break;
+    last.remove();
+  }
+
+  // Padroniza o título do parecer
+  return out.innerHTML
+    .replace(/PARECER GERAL(?!\s+RESUMIDO)/gi, "PARECER GERAL RESUMIDO")
+    .trim();
 }
