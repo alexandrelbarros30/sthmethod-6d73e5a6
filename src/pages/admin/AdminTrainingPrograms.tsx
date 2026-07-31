@@ -796,10 +796,10 @@ const AdminTrainingPrograms = () => {
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onClick={async () => {
-                    if (!confirm(`Regerar capas com IA para ${filteredPrograms.length} programa(s) visíveis? Consome créditos de IA.`)) return;
-                    const list = [...filteredPrograms];
+                    const list = (filteredPrograms as any[]).filter((p: any) => !p.supercoach_program_id);
+                    if (!list.length) { toast.info("Nenhum programa próprio (não ST Coach) na lista."); return; }
+                    if (!confirm(`Regerar capas com IA para ${list.length} programa(s) criados aqui (ST Coach ignorados)? Consome créditos de IA.`)) return;
                     const total = list.length;
-                    if (!total) return;
                     const toastId = toast.loading(`Regenerando capas 0/${total}...`);
                     let ok = 0, fail = 0;
                     for (let i = 0; i < list.length; i++) {
@@ -815,7 +815,7 @@ const AdminTrainingPrograms = () => {
                     toast.success(`Regeração concluída · ${ok} capas OK · ${fail} falhas`, { id: toastId });
                   }}
                 >
-                  <ImageIcon className="w-4 h-4 mr-2" /> Regerar TODAS as capas (IA)
+                  <ImageIcon className="w-4 h-4 mr-2" /> Regerar capas próprias (IA)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
