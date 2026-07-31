@@ -193,6 +193,8 @@ serve(async (req) => {
       bodyImageIds = null,
       extraImagePaths = [],
       extraExamPaths = [],
+      previousReportHtml = "",
+      revalidationCriteria = "",
     } = await req.json();
     if (!studentId) return new Response(JSON.stringify({ error: "studentId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -253,7 +255,11 @@ serve(async (req) => {
       ? `\n\nPROTOCOLO ATUAL INFORMADO PELO CONSULTOR (${protocolTitle || "sem titulo"}) - PRIORIDADE SOBRE O PROTOCOLO DO DOSSIE (tratar como protocolo vigente, inclusive para aluno externo sem cadastro):\n${String(protocolText).slice(0, 12000)}`
       : "";
 
-    const userText = `FOCO SOLICITADO: ${focus}\n\nDOSSIÊ ATUAL DO ALUNO:\n${JSON.stringify(dossier, null, 2)}${protocolBlock}\n\nEXAMES / RESULTADOS FORNECIDOS (texto colado ou OCR):\n${examText || "(nenhum texto colado — usar apenas dossiê, imagens e arquivos anexados)"}\n\nOBSERVAÇÕES DO CONSULTOR:\n${consultantNotes || "(nenhuma)"}\n\nARQUIVOS DE EXAMES ANEXADOS: ${examMeta.length ? examMeta.join("; ") : "nenhum"}. Leia (OCR quando necessário) e integre todos os marcadores encontrados na seção 🩸 INTERPRETAÇÃO LABORATORIAL.\n\nIMAGENS DE REFERÊNCIA/EVOLUÇÃO ANEXADAS: ${extraImgMeta.length ? extraImgMeta.join("; ") : "nenhuma além das oficiais do dossiê"}. Use na 📸 COMPOSIÇÃO VISUAL.\n\nGere agora o parecer completo no formato HTML especificado, cruzando exames + composição visual + bioimpedância + protocolo/dieta atuais + histórico. Se não houver dados para uma seção, omita-a explicitando "sem dados suficientes".`;
+    const revalBlock = previousReportHtml && String(previousReportHtml).trim()
+      ? `\n\n===== REVALIDACAO / REANALISE =====\nEste pedido e uma REANALISE em cima de um parecer ja emitido. Leia o parecer anterior abaixo, mantenha o que continua correto, corrija o que estiver equivocado e aprofunde conforme os criterios do consultor. Inicie o HTML com uma secao curta "\u{1F504} O QUE MUDOU NESTA REVALIDACAO".\n\nPARECER ANTERIOR (HTML):\n${String(previousReportHtml).slice(0, 30000)}\n\nCRITERIOS / SUGESTOES DO CONSULTOR PARA ESTA REANALISE:\n${String(revalidationCriteria || "(livre - reavalie criticamente todo o parecer)").slice(0, 8000)}\n===== FIM DA REVALIDACAO =====`
+      : "";
+
+    const userText = `FOCO SOLICITADO: ${focus}${revalBlock}\n\nDOSSIÊ ATUAL DO ALUNO:\n${JSON.stringify(dossier, null, 2)}${protocolBlock}\n\nEXAMES / RESULTADOS FORNECIDOS (texto colado ou OCR):\n${examText || "(nenhum texto colado — usar apenas dossiê, imagens e arquivos anexados)"}\n\nOBSERVAÇÕES DO CONSULTOR:\n${consultantNotes || "(nenhuma)"}\n\nARQUIVOS DE EXAMES ANEXADOS: ${examMeta.length ? examMeta.join("; ") : "nenhum"}. Leia (OCR quando necessário) e integre todos os marcadores encontrados na seção 🩸 INTERPRETAÇÃO LABORATORIAL.\n\nIMAGENS DE REFERÊNCIA/EVOLUÇÃO ANEXADAS: ${extraImgMeta.length ? extraImgMeta.join("; ") : "nenhuma além das oficiais do dossiê"}. Use na 📸 COMPOSIÇÃO VISUAL.\n\nGere agora o parecer completo no formato HTML especificado, cruzando exames + composição visual + bioimpedância + protocolo/dieta atuais + histórico. Se não houver dados para uma seção, omita-a explicitando "sem dados suficientes".`;
 
     const allParts = [...imageParts, ...examParts];
     const userMessage = allParts.length
@@ -336,7 +342,7 @@ serve(async (req) => {
         created_by: actorId,
         title: args.title || "Análise STHIA",
         scope: focus,
-        brief: { examText, consultantNotes, focus, protocolTitle, protocolText },
+        brief: { examText, consultantNotes, focus, protocolTitle, protocolText, revalidationCriteria: revalidationCriteria || null, revalidated: !!(previousReportHtml && String(previousReportHtml).trim()) },
         exam_input: examText || null,
         report_html: args.report_html,
         summary: args.summary || null,
