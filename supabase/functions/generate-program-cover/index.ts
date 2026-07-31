@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
 
     const lovableKey = Deno.env.get('LOVABLE_API_KEY') || '';
     const prompt = buildProgramCoverPrompt(prog.title, gender);
-    const requestedProvider: Provider = providerIn === 'gemini' ? 'gemini' : 'openai';
+    const requestedProvider: Provider = providerIn === 'openai' ? 'openai' : 'gemini';
 
     if (!lovableKey) {
       return jsonResponse({
@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
         status: 'processing',
         programId,
         gender,
-        model: requestedProvider === 'gemini' ? 'google/gemini-3.1-flash-image → openai/gpt-image-2' : 'openai/gpt-image-2 → google/gemini-3.1-flash-image',
+        model: requestedProvider === 'openai' ? 'openai/gpt-image-2 → google/gemini-3-pro-image' : 'google/gemini-3-pro-image → openai/gpt-image-2',
         when: new Date().toISOString(),
       }, 202);
     }

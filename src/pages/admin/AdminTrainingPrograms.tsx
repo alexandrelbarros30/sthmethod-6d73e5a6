@@ -535,7 +535,7 @@ const AdminTrainingPrograms = () => {
           ...body,
           error: body?.error || error?.message || "Falha ao iniciar a geração de capa.",
           code: body?.code || "EDGE_INVOKE_FAILED",
-          model: body?.model || (provider === "openai" ? "openai/gpt-image-2" : "google/gemini-3.1-flash-image"),
+          model: body?.model || (provider === "openai" ? "openai/gpt-image-2" : "google/gemini-3-pro-image"),
           details: error ? { name: error.name, message: error.message, context: (error as any).context } : undefined,
           when: body?.when || new Date().toISOString(),
         };
@@ -558,7 +558,7 @@ const AdminTrainingPrograms = () => {
     program: any,
     onProgress?: (elapsedSec: number) => void,
   ) => {
-    const first = await generateCoverAttempt(program, "openai");
+    const first = await generateCoverAttempt(program, "gemini");
     if (first?.error || !first?.accepted) {
       return first;
     }
@@ -591,7 +591,7 @@ const AdminTrainingPrograms = () => {
           posterUrl,
           accepted: true,
           elapsedMs: Date.now() - startedAt,
-          model: first.model || "openai/gpt-image-2 → google/gemini-3.1-flash-image",
+          model: first.model || "google/gemini-3-pro-image → openai/gpt-image-2",
         };
       }
     }
@@ -599,7 +599,7 @@ const AdminTrainingPrograms = () => {
     return {
       error: "A geração foi aceita, mas a capa ainda não ficou disponível. Tente atualizar a lista em alguns segundos.",
       code: "ASYNC_COVER_TIMEOUT",
-      model: first.model || "openai/gpt-image-2 → google/gemini-3.1-flash-image",
+      model: first.model || "google/gemini-3-pro-image → openai/gpt-image-2",
       attempts: [first],
       when: new Date().toISOString(),
     };
