@@ -476,6 +476,36 @@ const AdminBudgets = () => {
 
   const filteredBudgets = budgets || [];
 
+  const buildFormBudget = () => ({
+    id: editingId || undefined,
+    user_id: selectedStudent?.user_id,
+    title: budgetTitle,
+    items: budgetItems,
+    total: totalBudget,
+    notes: budgetNotes,
+    duration: budgetDuration,
+  });
+
+  const confirmSend = () => {
+    if (!sendPreview) return;
+    const b = sendPreview.budget;
+    if (sendPreview.mode === "form") {
+      saveMutation.mutate({
+        id: b.id || undefined,
+        userId: b.user_id,
+        title: b.title,
+        items: b.items,
+        total: b.total,
+        notes: b.notes,
+        duration: b.duration,
+        status: "sent",
+      });
+    } else {
+      updateStatusMutation.mutate({ id: b.id, status: "sent" });
+    }
+    setSendPreview(null);
+  };
+
   return (
     <DashboardLayout role="admin" title="Orçamentos">
       <div className="space-y-6">
