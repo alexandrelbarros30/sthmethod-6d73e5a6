@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/utils";
 import { normalizeClinicalHtml } from "@/lib/clinical-html";
 import ClinicalReport from "@/components/shared/ClinicalReport";
+import LabInterpretationPanel from "@/components/shared/LabInterpretationPanel";
 import { isRealPdf, INVALID_PDF_MESSAGE } from "@/lib/pdf-validate";
 import { toast } from "sonner";
 
@@ -781,6 +782,8 @@ export default function AdminStudentAnalysis() {
                   </CardContent>
                 </Card>
               )}
+
+              <LabInterpretationPanel html={current.report_html} className="no-print" />
 
               <Card>
                 <CardHeader className="pb-2">
