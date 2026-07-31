@@ -278,6 +278,9 @@ const AdminDietAI = () => {
       if (data?._correction) {
         setCounterHistory((h) => [...h, data._correction]);
         setCounterNote("");
+        // A contra-resposta pode redefinir metas (ex.: kcal 2300) — reflete no briefing.
+        const t = (data as any)?.targets;
+        if (t?.energy_kcal) setKcalTarget(String(t.energy_kcal));
         toast.success("Cardápio corrigido com a sua contra-resposta");
       } else {
         setCounterHistory([]);
