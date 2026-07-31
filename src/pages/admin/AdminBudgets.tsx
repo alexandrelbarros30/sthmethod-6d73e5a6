@@ -49,6 +49,7 @@ const AdminBudgets = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewBudget, setPreviewBudget] = useState<any>(null);
+  const [sendPreview, setSendPreview] = useState<{ budget: any; mode: "form" | "existing" } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Budget form
@@ -431,7 +432,7 @@ const AdminBudgets = () => {
     return students?.find((s: any) => s.user_id === userId)?.full_name || "Aluno";
   };
 
-  const copyBudgetText = (budget: any) => {
+  const buildBudgetText = (budget: any) => {
     const items = (budget.items as BudgetItem[]) || [];
     let text = `📋 ${budget.title}\n`;
     if (budget.duration) text += `⏳ Plano: ${budget.duration}\n`;
@@ -460,7 +461,11 @@ const AdminBudgets = () => {
     });
     text += `\n💰 Total: R$ ${Number(budget.total).toFixed(2)}`;
     if (budget.notes) text += `\n\n📝 ${budget.notes}`;
-    navigator.clipboard.writeText(text);
+    return text;
+  };
+
+  const copyBudgetText = (budget: any) => {
+    navigator.clipboard.writeText(buildBudgetText(budget));
     toast.success("Orçamento copiado!");
   };
 
@@ -470,6 +475,36 @@ const AdminBudgets = () => {
   });
 
   const filteredBudgets = budgets || [];
+
+  const buildFormBudget = () => ({
+    id: editingId || undefined,
+    user_id: selectedStudent?.user_id,
+    title: budgetTitle,
+    items: budgetItems,
+    total: totalBudget,
+    notes: budgetNotes,
+    duration: budgetDuration,
+  });
+
+  const confirmSend = () => {
+    if (!sendPreview) return;
+    const b = sendPreview.budget;
+    if (sendPreview.mode === "form") {
+      saveMutation.mutate({
+        id: b.id || undefined,
+        userId: b.user_id,
+        title: b.title,
+        items: b.items,
+        total: b.total,
+        notes: b.notes,
+        duration: b.duration,
+        status: "sent",
+      });
+    } else {
+      updateStatusMutation.mutate({ id: b.id, status: "sent" });
+    }
+    setSendPreview(null);
+  };
 
   return (
     <DashboardLayout role="admin" title="Orçamentos">
@@ -527,7 +562,7 @@ const AdminBudgets = () => {
                           <Copy className="w-4 h-4" />
                         </Button>
                         {b.status === "draft" && (
-                          <Button size="sm" variant="ghost" onClick={() => updateStatusMutation.mutate({ id: b.id, status: "sent" })}>
+                          <Button size="sm" variant="ghost" title="Pré-visualizar e enviar" onClick={() => setSendPreview({ budget: b, mode: "existing" })}>
                             <Send className="w-4 h-4" />
                           </Button>
                         )}
@@ -707,6 +742,13 @@ const AdminBudgets = () => {
                       {editingId ? "Atualizar Rascunho" : "Salvar Rascunho"}
                     </Button>
                     <Button
+                      variant="outline"
+                      onClick={() => setSendPreview({ budget: buildFormBudget(), mode: "form" })}
+                      disabled={budgetItems.length === 0}
+                    >
+                      <Eye className="w-4 h-4 mr-1.5" /> Pré-visualizar
+                    </Button>
+                    <Button
                       onClick={() => saveMutation.mutate({
                         id: editingId || undefined,
                         userId: selectedStudent.user_id,
@@ -725,6 +767,33 @@ const AdminBudgets = () => {
                 </>
               )}
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Send Preview Dialog */}
+        <Dialog open={!!sendPreview} onOpenChange={(o) => { if (!o) setSendPreview(null); }}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" /> Pré-visualização do envio
+              </DialogTitle>
+            </DialogHeader>
+            {sendPreview && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Confira o conteúdo abaixo — é exatamente o que será enviado no WhatsApp.
+                </p>
+                <pre className="text-xs whitespace-pre-wrap font-mono bg-muted/50 rounded-lg p-3 border border-border text-foreground">
+                  {buildBudgetText(sendPreview.budget)}
+                </pre>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setSendPreview(null)}>Voltar e editar</Button>
+                  <Button onClick={confirmSend}>
+                    <Send className="w-4 h-4 mr-1.5" /> Confirmar e Enviar
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
 
