@@ -883,10 +883,13 @@ const ProgramWorkouts = ({ programId }: Props) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-muted-foreground">{(workouts || []).length} treino(s)</p>
-        <div className="flex gap-2 flex-wrap">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 rounded-2xl border bg-card/40 p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold">Treinos do programa</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{(workouts || []).length} treino(s) · arraste para reordenar</p>
+        </div>
+        <div className="flex gap-2 flex-wrap lg:justify-end">
           <Button
             size="sm"
             variant="outline"
