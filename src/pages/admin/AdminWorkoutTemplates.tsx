@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
+import SuperCoachExercisePicker, { PickedScExercise } from "@/components/admin/SuperCoachExercisePicker";
 import { normalizeSearch } from "@/lib/utils";
 import { invokeSuperCoachEdge } from "@/lib/supercoach-edge";
 import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
@@ -274,6 +275,40 @@ const AdminWorkoutTemplates = () => {
     } : r));
   };
 
+  const selectFromSuperCoach = (idx: number, sc: PickedScExercise) => {
+    setExerciseRows(prev => prev.map((r, i) => i === idx ? {
+      ...r,
+      exercise_id: null,
+      custom_name: sc.name || r.custom_name,
+      custom_description: sc.description || r.custom_description,
+      sets: sc.sets || r.sets,
+      reps: sc.reps || r.reps,
+      rest_interval: sc.rest_interval || r.rest_interval,
+      load_suggestion: sc.load_suggestion || r.load_suggestion,
+      video_url: sc.video_url || "",
+      image_url: sc.image_url || "",
+    } : r));
+  };
+
+  const addFromSuperCoach = (items: PickedScExercise[]) => {
+    setExerciseRows(prev => [
+      ...prev,
+      ...items.map((sc, i) => ({
+        exercise_id: null,
+        custom_name: sc.name,
+        custom_description: sc.description || "",
+        sets: sc.sets || "",
+        reps: sc.reps || "",
+        rest_interval: sc.rest_interval || "",
+        load_suggestion: sc.load_suggestion || "",
+        video_url: sc.video_url || "",
+        image_url: sc.image_url || "",
+        sort_order: prev.length + i,
+        _uid: crypto.randomUUID(),
+      })) as ExerciseRow[],
+    ]);
+  };
+
   const getAssignedCount = (templateId: string) =>
     (assignments || []).filter((a: any) => a.template_id === templateId && a.active).length;
 
@@ -288,7 +323,7 @@ const AdminWorkoutTemplates = () => {
             <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-1" /> Novo Modelo</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[96vw] sm:max-w-4xl max-h-[92vh] overflow-y-auto overflow-x-hidden">
               <DialogHeader>
                 <DialogTitle>{editingTemplate ? "Editar Modelo" : "Novo Modelo de Treino"}</DialogTitle>
               </DialogHeader>
@@ -320,9 +355,12 @@ const AdminWorkoutTemplates = () => {
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center mb-3">
                     <Label className="text-base font-semibold">Exercícios</Label>
-                    <Button size="sm" variant="outline" onClick={addExerciseRow}>
-                      <Plus className="w-3 h-3 mr-1" /> Adicionar
-                    </Button>
+                    <div className="flex flex-wrap gap-1.5 justify-end">
+                      <Button size="sm" variant="outline" onClick={addExerciseRow}>
+                        <Plus className="w-3 h-3 mr-1" /> Adicionar
+                      </Button>
+                      <SuperCoachExercisePicker onAdd={addFromSuperCoach} />
+                    </div>
                   </div>
                   {exerciseRows.length > 0 && (
                     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
@@ -378,6 +416,7 @@ const AdminWorkoutTemplates = () => {
                             onRemove={removeExerciseRow}
                             onUpdate={updateExerciseRow}
                             onSelectFromLibrary={selectFromLibrary}
+                            onSelectFromSuperCoach={selectFromSuperCoach}
                             selected={selectedRowUids.has(row._uid)}
                             onToggleSelected={toggleSelected}
                           />
