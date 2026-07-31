@@ -866,6 +866,20 @@ const ProgramWorkouts = ({ programId }: Props) => {
       custom_description: lib.description || "", video_url: lib.video_url || "", image_url: lib.image_url || "",
     } : r));
   };
+  const selectFromSuperCoach = (idx: number, sc: PickedScExercise) => {
+    setExerciseRows(prev => prev.map((r, i) => i === idx ? {
+      ...r,
+      exercise_id: null,
+      custom_name: sc.name || r.custom_name,
+      custom_description: sc.description || r.custom_description,
+      sets: sc.sets || r.sets,
+      reps: sc.reps || r.reps,
+      rest_interval: sc.rest_interval || r.rest_interval,
+      load_suggestion: sc.load_suggestion || r.load_suggestion,
+      video_url: sc.video_url || "",
+      image_url: sc.image_url || "",
+    } : r));
+  };
 
   return (
     <div className="space-y-4">
@@ -936,7 +950,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
 
       {/* Workout Create/Edit Dialog */}
       <Dialog open={workoutDialog} onOpenChange={v => { if (!v) closeWorkoutDialog(); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[96vw] sm:max-w-4xl max-h-[92vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{editingWorkout ? "Editar Treino" : "Novo Treino"}</DialogTitle>
           </DialogHeader>
@@ -1038,6 +1052,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
                         onRemove={removeExerciseRow}
                         onUpdate={updateExerciseRow}
                         onSelectFromLibrary={selectFromLibrary}
+                        onSelectFromSuperCoach={selectFromSuperCoach}
                         selected={selectedRowUids.has(row._uid)}
                         onToggleSelected={toggleRowSelected}
                       />
