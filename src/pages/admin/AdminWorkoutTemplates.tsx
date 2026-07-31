@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
+import ExerciseSpotlightAdd from "@/components/admin/ExerciseSpotlightAdd";
 import SuperCoachExercisePicker, { PickedScExercise } from "@/components/admin/SuperCoachExercisePicker";
 import { normalizeSearch } from "@/lib/utils";
 import { invokeSuperCoachEdge } from "@/lib/supercoach-edge";
