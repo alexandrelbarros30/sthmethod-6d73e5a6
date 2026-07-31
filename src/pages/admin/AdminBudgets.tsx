@@ -562,7 +562,7 @@ const AdminBudgets = () => {
                           <Copy className="w-4 h-4" />
                         </Button>
                         {b.status === "draft" && (
-                          <Button size="sm" variant="ghost" onClick={() => updateStatusMutation.mutate({ id: b.id, status: "sent" })}>
+                          <Button size="sm" variant="ghost" title="Pré-visualizar e enviar" onClick={() => setSendPreview({ budget: b, mode: "existing" })}>
                             <Send className="w-4 h-4" />
                           </Button>
                         )}
@@ -740,6 +740,13 @@ const AdminBudgets = () => {
                       disabled={budgetItems.length === 0}
                     >
                       {editingId ? "Atualizar Rascunho" : "Salvar Rascunho"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setSendPreview({ budget: buildFormBudget(), mode: "form" })}
+                      disabled={budgetItems.length === 0}
+                    >
+                      <Eye className="w-4 h-4 mr-1.5" /> Pré-visualizar
                     </Button>
                     <Button
                       onClick={() => saveMutation.mutate({
