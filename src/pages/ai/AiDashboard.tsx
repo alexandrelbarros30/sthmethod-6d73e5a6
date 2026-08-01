@@ -17,7 +17,6 @@ import {
   HeartPulse,
   UserRound,
   UtensilsCrossed,
-  CheckCircle2,
 } from "lucide-react";
 
 const ROUTES: Record<AiKind, string> = {
