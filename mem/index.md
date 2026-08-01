@@ -87,6 +87,7 @@
 - [Fechamento Evolução D-5](mem://features/lembrete-fechamento-evolucao) — Lembrete 5 dias antes do fim da consultoria para fechar evolução
 
 ### Marketing & Communication
+- [STH METHOD COACH](mem://features/sth-method-coach) — SaaS multi-tenant em /coach para personal/academias, tabelas coach_*, sem IA e sem consultoria
 - [Consulting Methodology](mem://marketing/metodologia-consultoria) — 7 interactive cards, swipe navigation
 - [Âncora Plano 90D Comercial](mem://features/estrategia-vendas-90d) — IA Comercial ancora novos leads no Plano 90D (Trimestral) como ideal
 - [Núcleo Cognitivo Superagente](mem://features/nucleo-cognitivo-superagente) — Diretiva interna de raciocínio para TODOS os canais IA

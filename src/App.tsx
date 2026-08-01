@@ -71,6 +71,17 @@ import CasAdmin from "./pages/cas/CasAdmin";
 import { CasAuthProvider } from "@/contexts/CasAuthContext";
 import CasProtectedRoute from "@/components/cas/CasProtectedRoute";
 import PreviewTemaVerde from "./pages/PreviewTemaVerde";
+import CoachLanding from "./pages/coach/CoachLanding";
+import CoachAuth from "./pages/coach/CoachAuth";
+import CoachOnboarding from "./pages/coach/CoachOnboarding";
+import CoachRoute from "@/components/coach/CoachRoute";
+const CoachDashboard = lazy(() => import("./pages/coach/CoachDashboard"));
+const CoachStudents = lazy(() => import("./pages/coach/CoachStudents"));
+const CoachInvites = lazy(() => import("./pages/coach/CoachInvites"));
+const CoachPlans = lazy(() => import("./pages/coach/CoachPlans"));
+const CoachSettings = lazy(() => import("./pages/coach/CoachSettings"));
+const CoachPublicInvite = lazy(() => import("./pages/coach/CoachPublicInvite"));
+const CoachStudentHome = lazy(() => import("./pages/coach/CoachStudentHome"));
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
 import StudentRecipes from "./pages/student/StudentRecipes";
@@ -290,6 +301,18 @@ const App = () => (
             <Route path="/cas/perfil" element={<CasAuthProvider><CasProtectedRoute><CasProfile /></CasProtectedRoute></CasAuthProvider>} />
             <Route path="/cas/admin" element={<CasAuthProvider><CasProtectedRoute><CasAdmin /></CasProtectedRoute></CasAuthProvider>} />
             <Route path="/cas" element={<CasAuthProvider><CasProtectedRoute><Cas /></CasProtectedRoute></CasAuthProvider>} />
+
+            {/* STH METHOD COACH */}
+            <Route path="/coach" element={<CoachLanding />} />
+            <Route path="/coach/entrar" element={<CoachAuth />} />
+            <Route path="/coach/comecar" element={<CoachOnboarding />} />
+            <Route path="/coach/convite/:token" element={<CoachPublicInvite />} />
+            <Route path="/coach/painel" element={<CoachRoute audience="professional"><CoachDashboard /></CoachRoute>} />
+            <Route path="/coach/alunos" element={<CoachRoute audience="professional"><CoachStudents /></CoachRoute>} />
+            <Route path="/coach/convites" element={<CoachRoute audience="professional"><CoachInvites /></CoachRoute>} />
+            <Route path="/coach/planos" element={<CoachRoute audience="professional"><CoachPlans /></CoachRoute>} />
+            <Route path="/coach/configuracoes" element={<CoachRoute audience="professional"><CoachSettings /></CoachRoute>} />
+            <Route path="/coach/aluno" element={<CoachRoute audience="student"><CoachStudentHome /></CoachRoute>} />
             {/* MEAD aliases — landing oficial */}
             <Route path="/mead/login" element={<CasAuthProvider><CasLogin /></CasAuthProvider>} />
             <Route path="/mead/cadastro" element={<CasAuthProvider><CasRegister /></CasAuthProvider>} />
