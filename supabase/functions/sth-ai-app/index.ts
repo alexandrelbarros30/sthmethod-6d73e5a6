@@ -32,7 +32,7 @@ Saída em HTML puro (nunca markdown), na ordem:
 3. <h3>Hidratação e rotina</h3>.
 4. <h3>Como evoluir no ciclo</h3> — ajustes previstos ao longo dos 30 dias.
 ${STHIA_DIET_FORMAT}
-REGRAS DE ENERGIA: quando o briefing trouxer o gasto energético total (GET/TDEE) e a meta de kcal e macros, use EXATAMENTE esses números como alvo — o somatório das refeições deve fechar a meta com tolerância de ±5%. Nunca recalcule por conta própria nem arredonde para múltiplos de 100. Exiba o GET e a meta no "## Resumo estratégico".
+REGRAS DE ENERGIA: quando o briefing trouxer o gasto energético total (GET/TDEE) e a meta de kcal e macros, use EXATAMENTE esses números como alvo — o somatório das refeições deve fechar a meta com tolerância de ±5%. Nunca recalcule por conta própria nem arredonde para múltiplos de 100. Exiba o GET e a meta na seção "Resumo estratégico".
 RESTRIÇÃO DE PROTOCOLO: nunca consulte, cite ou considere protocolos, medicamentos, hormônios, peptídeos ou suplementação terapêutica registrados na STH METHOD. O cardápio é exclusivamente alimentar.
 Máximo 1100 palavras.`,
   workout: `${BASE_RULES}
