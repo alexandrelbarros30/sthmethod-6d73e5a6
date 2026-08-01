@@ -6876,7 +6876,7 @@ export type Database = {
         | "cancelled"
         | "no_show"
       coach_member_role: "owner" | "professor"
-      coach_plan: "start" | "pro" | "business" | "enterprise"
+      coach_plan: "free" | "start" | "pro" | "business" | "enterprise"
       coach_student_status: "pending" | "active" | "inactive"
       medical_record_section:
         | "anamnese"
@@ -7045,7 +7045,7 @@ export const Constants = {
         "no_show",
       ],
       coach_member_role: ["owner", "professor"],
-      coach_plan: ["start", "pro", "business", "enterprise"],
+      coach_plan: ["free", "start", "pro", "business", "enterprise"],
       coach_student_status: ["pending", "active", "inactive"],
       medical_record_section: [
         "anamnese",
