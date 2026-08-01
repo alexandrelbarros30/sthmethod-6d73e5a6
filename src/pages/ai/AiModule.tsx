@@ -12,6 +12,7 @@ import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks
 import AiFeedbackCard from "@/components/ai/AiFeedbackCard";
 import AiExamAttach from "@/components/ai/AiExamAttach";
 import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
+import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 
@@ -125,6 +126,12 @@ export default function AiModule() {
       </Card>
 
       {current && (
+        <>
+        {kind === "workout" && (
+          <div className="mt-5">
+            <AiWorkoutProgram content={current.content} />
+          </div>
+        )}
         <Card className="mt-5 p-5">
           <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-table:text-xs">
             <ReactMarkdown>{current.content}</ReactMarkdown>
@@ -133,6 +140,7 @@ export default function AiModule() {
             Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
           </p>
         </Card>
+        </>
       )}
 
       {current && (
