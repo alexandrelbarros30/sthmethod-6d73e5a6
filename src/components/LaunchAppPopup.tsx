@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import marketingHero from "@/assets/marketing-launch-hero.png";
 
 const STORAGE_KEY = "sth:launch-popup-v1-dismissed";
-const HIDDEN_PREFIXES = ["/dashboard", "/admin", "/login", "/cadastro", "/reset-password", "/forgot-password", "/questionario", "/install", "/baixar-app", "/download", "/sobre", "/coach"];
+const HIDDEN_PREFIXES = ["/dashboard", "/admin", "/login", "/cadastro", "/reset-password", "/forgot-password", "/questionario", "/install", "/baixar-app", "/download", "/sobre", "/coach", "/ai"];
 
 interface Props {
   /** show only on public site (Landing) when true; else show only inside dashboard */
