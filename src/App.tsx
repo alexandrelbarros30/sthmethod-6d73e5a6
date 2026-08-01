@@ -150,6 +150,7 @@ import AdminFoodAI from "./pages/admin/AdminFoodAI";
 import AdminFoodAILogs from "./pages/admin/AdminFoodAILogs";
 import AdminFoodAIDashboard from "./pages/admin/AdminFoodAIDashboard";
 import AdminAiMetrics from "./pages/admin/AdminAiMetrics";
+import AdminAiAccess from "./pages/admin/AdminAiAccess";
 import AdminSthia from "./pages/admin/AdminSthia";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminCrm from "./pages/admin/AdminCrm";
@@ -423,6 +424,8 @@ const App = () => (
             <Route path="/admin/food-ai/logs" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFoodAILogs /></ProtectedRoute>} />
             <Route path="/admin/food-ai/dashboard" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminFoodAIDashboard /></ProtectedRoute>} />
             <Route path="/admin/ai-metricas" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAiMetrics /></ProtectedRoute>} />
+            <Route path="/admin/ai-acessos" element={<ProtectedRoute allowedRoles={["admin", "consultor"]}><AdminAiAccess /></ProtectedRoute>} />
+            <Route path="/consultor/ai-acessos" element={<ProtectedRoute allowedRoles={["admin", "consultor"]}><AdminAiAccess /></ProtectedRoute>} />
             <Route path="/admin/sthia" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSthia /></ProtectedRoute>} />
             <Route path="/admin/emails" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEmails /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrm /></ProtectedRoute>} />

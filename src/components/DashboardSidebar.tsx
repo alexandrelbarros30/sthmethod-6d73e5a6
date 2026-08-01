@@ -138,6 +138,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/feedback", icon: History, label: "Feedback dos Alunos" },
         { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
         { to: "/admin/sthia", icon: Brain, label: "STHIA (IA)" },
+        { to: "/admin/ai-acessos", icon: Sparkles, label: "Acessos STH AI" },
       ],
     },
     {
@@ -198,6 +199,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
     { to: "/consultor/image-consents", icon: ImageIcon, label: "Autorização de Imagens" },
     { to: "/consultor/ia-historico", icon: Sparkles, label: "Histórico IA" },
+    { to: "/consultor/ai-acessos", icon: Sparkles, label: "Acessos STH AI" },
     {
       group: "Nutrição",
       icon: Salad,
