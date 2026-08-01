@@ -225,7 +225,40 @@ Deno.serve(async (req) => {
       ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}\nVersão atual:\n${last!.content}\n\nAjuste pedido: ${instruction}\n\nPreserve a estrutura principal e altere apenas o necessário. Adicione ao final a seção "## O que mudou nesta revisão".`
       : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
 
-    const content = await callAi(PROMPTS[kind], userPrompt);
+    // ===== Anexos de exame laboratorial (somente Central de Análise) =====
+    const parts: unknown[] = [];
+    if (kind === 'analysis' && fileIds.length) {
+      const { data: attachRows } = await supabase
+        .from('ai_app_files')
+        .select('id, file_name, storage_path')
+        .eq('user_id', userId)
+        .eq('kind', 'exam')
+        .in('id', fileIds);
+      for (const row of attachRows ?? []) {
+        try {
+          const { data: blob, error: dlErr } = await supabase.storage.from('sth-ai').download(row.storage_path);
+          if (dlErr || !blob) continue;
+          const buf = new Uint8Array(await blob.arrayBuffer());
+          if (buf.byteLength > 8 * 1024 * 1024) continue;
+          let binary = '';
+          for (let i = 0; i < buf.length; i += 8192) binary += String.fromCharCode(...buf.subarray(i, i + 8192));
+          const b64 = btoa(binary);
+          const name = String(row.file_name ?? 'exame');
+          const mime = blob.type || (name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+          if (mime.startsWith('image/')) {
+            parts.push({ type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } });
+          } else {
+            parts.push({ type: 'file', file: { filename: name, file_data: `data:${mime};base64,${b64}` } });
+          }
+        } catch (_e) { /* ignora anexo inválido */ }
+      }
+    }
+
+    const aiInput = parts.length
+      ? [{ type: 'text', text: `${userPrompt}\n\nExames laboratoriais anexados pelo usuário estão em anexo. Leia todos integralmente.` }, ...parts]
+      : userPrompt;
+
+    const content = await callAi(PROMPTS[kind], aiInput);
 
 
     let saved;
