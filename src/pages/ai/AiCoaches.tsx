@@ -30,7 +30,7 @@ export default function AiCoaches() {
   const [draft, setDraft] = useState("");
 
   useEffect(() => {
-    if (!loading && !user) navigate("/login?next=/ai/app/coaches");
+    if (!loading && !user) navigate("/ai/login?next=/ai/app/coaches");
   }, [loading, user, navigate]);
 
   useEffect(() => {

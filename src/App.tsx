@@ -198,6 +198,7 @@ const LeituraLaboratorial = lazyWithRetry(() => import("./pages/LeituraLaborator
 const AdminAIHistory = lazyWithRetry(() => import("./pages/admin/AdminAIHistory"));
 const AiLanding = lazyWithRetry(() => import("./pages/ai/AiLanding"));
 const AiOnboarding = lazyWithRetry(() => import("./pages/ai/AiOnboarding"));
+const AiLogin = lazyWithRetry(() => import("./pages/ai/AiLogin"));
 const AiDashboard = lazyWithRetry(() => import("./pages/ai/AiDashboard"));
 const AiModule = lazyWithRetry(() => import("./pages/ai/AiModule"));
 const AiProgress = lazyWithRetry(() => import("./pages/ai/AiProgress"));
@@ -253,6 +254,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/ai" element={<Suspense fallback={<LazyFallback />}><AiLanding /></Suspense>} />
+            <Route path="/ai/login" element={<Suspense fallback={<LazyFallback />}><AiLogin /></Suspense>} />
             <Route path="/ai/onboarding" element={<Suspense fallback={<LazyFallback />}><AiOnboarding /></Suspense>} />
             <Route path="/ai/app" element={<Suspense fallback={<LazyFallback />}><AiDashboard /></Suspense>} />
             <Route path="/ai/app/progresso" element={<Suspense fallback={<LazyFallback />}><AiProgress /></Suspense>} />

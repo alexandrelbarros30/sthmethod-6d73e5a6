@@ -29,7 +29,7 @@ export default function AiSubscription() {
   }, [params, refresh]);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/login?next=/ai/assinatura");
+    if (!loading && !user) navigate("/ai/login?next=/ai/assinatura");
   }, [loading, user, navigate]);
 
   async function subscribe(plan: string) {

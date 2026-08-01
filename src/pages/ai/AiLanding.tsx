@@ -20,7 +20,7 @@ export default function AiLanding() {
           <span className="text-sm font-semibold tracking-tight">STH METHOD AI</span>
         </div>
         <Button asChild variant="ghost" size="sm">
-          <Link to="/login?next=/ai/app">Entrar</Link>
+          <Link to="/ai/login?next=/ai/app">Entrar</Link>
         </Button>
       </header>
 
