@@ -3,6 +3,7 @@
 // (cardápio/treino, 30 dias) e 1 análise completa a cada 60 dias.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { STHIA_TRAINING_DOCTRINE } from '../_shared/sthia-training-doctrine.ts';
 
 const GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const MODEL = 'openai/gpt-5.6-sol';
@@ -37,13 +38,13 @@ Tarefa: montar um PROGRAMA DE TREINO periodizado de 30 dias.
 Estrutura obrigatória:
 1. "## Resumo estratégico" (divisão, frequência, volume semanal e justificativa).
 2. "## Treinos" — um bloco por sessão com título no formato "### Treino A — Peito e Tríceps". Dentro de cada sessão, uma tabela markdown com EXATAMENTE as colunas: | Exercício | Séries | Repetições | Descanso | Observação |
-3. "## Cardio" — OBRIGATÓRIO sempre que o usuário informar que faz cardio. Respeite exatamente a frequência, duração e intensidade informadas (ex.: 3x de 20 minutos). Use uma tabela markdown com as colunas: | Sessão | Modalidade | Duração | Intensidade | Quando fazer |. Deixe explícito que o cardio é somado ao tempo da sessão de musculação (ex.: 60 min de musculação + 20 min de cardio = 80 min de sessão) e ajuste a modalidade/posição (pós-treino, dia alternado) conforme a intensidade.
-4. "## Abdominal e core" — OBRIGATÓRIO em todo programa. Tabela markdown com as mesmas colunas dos treinos (| Exercício | Séries | Repetições | Descanso | Observação |), distribuída em 2 a 3 sessões na semana, usando somente exercícios da biblioteca oficial.
-5. "## Progressão semanal" — semanas 1 a 4.
-6. "## Cuidados e adaptações" — equipamentos limitados, dor, tempo curto.
+3. O cardio e o abdominal/core entram DENTRO das tabelas dos treinos (A, B, C...), conforme a doutrina STHIA abaixo. Não crie seção separada "## Cardio".
+4. "## Progressão semanal" — semanas 1 a 4.
+5. "## Cuidados e adaptações" — equipamentos limitados, dor, tempo curto.
 Respeite o nível de treinamento, os equipamentos e a disponibilidade informados.
 REGRA CRÍTICA DE BIBLIOTECA: na coluna "Exercício" use SOMENTE nomes que existam, escritos de forma idêntica (mesma grafia e acentuação), na BIBLIOTECA OFICIAL ST COACH enviada no contexto. É proibido inventar nomes ou usar variações não listadas — todo exercício precisa ter vídeo do ST Coach para ser exibido ao aluno. Se faltar o exercício ideal, escolha o mais próximo que exista na biblioteca.
-Máximo 1300 palavras.`,
+${STHIA_TRAINING_DOCTRINE}
+Máximo 1500 palavras.`,
   analysis: `${BASE_RULES}
 
 Tarefa: gerar um RELATÓRIO INTELIGENTE DE EVOLUÇÃO.

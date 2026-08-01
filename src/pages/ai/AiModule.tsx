@@ -133,25 +133,20 @@ export default function AiModule() {
             <AiWorkoutProgram content={current.content} />
           </div>
         )}
-        <Card className="mt-5 p-5">
-          {kind === "workout" ? (
-            <details>
-              <summary className="cursor-pointer text-sm font-semibold text-foreground">
-                Ver plano completo em texto
-              </summary>
-              <article className="prose prose-sm mt-3 max-w-none dark:prose-invert prose-headings:font-semibold prose-table:text-xs">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{current.content}</ReactMarkdown>
-              </article>
-            </details>
-          ) : (
-            <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-table:text-xs">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{current.content}</ReactMarkdown>
-            </article>
-          )}
+        {kind === "workout" ? (
           <p className="mt-4 text-[11px] text-muted-foreground">
             Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
           </p>
-        </Card>
+        ) : (
+          <Card className="mt-5 p-5">
+            <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-table:text-xs">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{current.content}</ReactMarkdown>
+            </article>
+            <p className="mt-4 text-[11px] text-muted-foreground">
+              Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
+            </p>
+          </Card>
+        )}
         </>
       )}
 
