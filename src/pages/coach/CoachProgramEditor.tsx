@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronUp, GripVertical, Link2, Plus, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Eye, GripVertical, Link2, Plus, Trash2, UserPlus } from "lucide-react";
 import CoachLayout from "@/components/coach/CoachLayout";
 import CoachExerciseSearch, { PickedExercise } from "@/components/coach/CoachExerciseSearch";
+import StudentWorkoutView from "@/components/coach/StudentWorkoutView";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ const CoachProgramEditor = () => {
   const tenantId = tenant?.id;
   const [openWorkout, setOpenWorkout] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [assignForm, setAssignForm] = useState({ start_date: today(), end_date: "" });
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -201,6 +203,27 @@ const CoachProgramEditor = () => {
           <Button asChild variant="ghost" className="rounded-xl">
             <Link to="/coach/treinos"><ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar</Link>
           </Button>
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="rounded-xl">
+                <Eye className="h-4 w-4 mr-1.5" /> Ver como aluno
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md p-0 overflow-hidden">
+              <DialogHeader className="px-5 pt-5">
+                <DialogTitle className="text-[15px]">Como o aluno vê este treino</DialogTitle>
+              </DialogHeader>
+              <div className="px-5 pb-5 mt-2 max-h-[75vh] overflow-y-auto bg-muted/30">
+                <div className="py-4">
+                  <StudentWorkoutView
+                    program={program}
+                    workouts={data?.workouts || []}
+                    exercises={data?.exercises || []}
+                  />
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="rounded-xl">
