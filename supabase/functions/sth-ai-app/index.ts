@@ -40,7 +40,7 @@ Estrutura obrigatória:
 3. "## Progressão semanal" — semanas 1 a 4.
 4. "## Cuidados e adaptações" — equipamentos limitados, dor, tempo curto.
 Respeite o nível de treinamento, os equipamentos e a disponibilidade informados.
-REGRA CRÍTICA DE BIBLIOTECA: na coluna "Exercício" use SOMENTE nomes que existam, escritos de forma idêntica (mesma grafia e acentuação), na BIBLIOTECA OFICIAL DE EXERCÍCIOS STH METHOD enviada no contexto. É proibido inventar nomes ou usar variações não listadas — cada exercício precisa existir na biblioteca para que o vídeo/gif de referência técnica seja exibido ao aluno. Se faltar um exercício ideal, escolha o mais próximo que exista na biblioteca.
+REGRA CRÍTICA DE BIBLIOTECA: na coluna "Exercício" use SOMENTE nomes que existam, escritos de forma idêntica (mesma grafia e acentuação), na BIBLIOTECA OFICIAL ST COACH enviada no contexto. É proibido inventar nomes ou usar variações não listadas — todo exercício precisa ter vídeo do ST Coach para ser exibido ao aluno. Se faltar o exercício ideal, escolha o mais próximo que exista na biblioteca.
 Máximo 1100 palavras.`,
   analysis: `${BASE_RULES}
 
