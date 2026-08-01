@@ -50,6 +50,7 @@ Estrutura obrigatória:
 3. "## Pontos fortes" e "## Pontos de atenção".
 4. "## Plano dos próximos 60 dias" — 3 a 5 ações objetivas.
 Se houver exames citados pelo usuário, faça apenas leitura educativa de contexto, sem conduta terapêutica.
+Se arquivos de exame laboratorial forem anexados, leia-os integralmente e inclua a seção "## Leitura laboratorial" com os marcadores encontrados, valor, referência e interpretação educativa. Se o laudo parecer incompleto (marcadores ausentes ou páginas faltando), avise explicitamente que a análise foi feita com dados parciais e que o exame completo deve ser solicitado ao laboratório.
 Máximo 900 palavras.`,
 };
 
@@ -61,7 +62,7 @@ function daysBetween(a: Date, b: Date) {
   return Math.floor((b.getTime() - a.getTime()) / 86_400_000);
 }
 
-async function callAi(system: string, user: string) {
+async function callAi(system: string, user: string | unknown[]) {
   const key = Deno.env.get('LOVABLE_API_KEY');
   if (!key) throw new Error('LOVABLE_API_KEY ausente');
   const res = await fetch(GATEWAY, {
@@ -152,6 +153,7 @@ Deno.serve(async (req) => {
     const mode = (body?.mode as 'create' | 'revise') ?? 'create';
     const instruction = typeof body?.instruction === 'string' ? body.instruction.slice(0, 2000) : '';
     const exceptionReason = typeof body?.exception_reason === 'string' ? body.exception_reason.slice(0, 400) : '';
+    const fileIds: string[] = Array.isArray(body?.file_ids) ? body.file_ids.filter((x: unknown) => typeof x === 'string').slice(0, 4) : [];
     if (!kind || !PROMPTS[kind]) return json({ error: 'kind inválido' }, 400);
 
     // ===== Admin bypass (testes internos) =====
@@ -223,7 +225,41 @@ Deno.serve(async (req) => {
       ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}\nVersão atual:\n${last!.content}\n\nAjuste pedido: ${instruction}\n\nPreserve a estrutura principal e altere apenas o necessário. Adicione ao final a seção "## O que mudou nesta revisão".`
       : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
 
-    const content = await callAi(PROMPTS[kind], userPrompt);
+    // ===== Anexos de exame laboratorial (somente Central de Análise) =====
+    const parts: unknown[] = [];
+    if (kind === 'analysis' && fileIds.length) {
+      const { data: attachRows } = await supabase
+        .from('ai_app_files')
+        .select('id, file_name, storage_path')
+        .eq('user_id', userId)
+        .eq('kind', 'exam')
+        .in('id', fileIds);
+      for (const row of attachRows ?? []) {
+        try {
+          const { data: blob, error: dlErr } = await supabase.storage.from('sth-ai').download(row.storage_path);
+          if (dlErr || !blob) continue;
+          const buf = new Uint8Array(await blob.arrayBuffer());
+          if (buf.byteLength > 8 * 1024 * 1024) continue;
+          let binary = '';
+          for (let i = 0; i < buf.length; i += 8192) binary += String.fromCharCode(...buf.subarray(i, i + 8192));
+          const b64 = btoa(binary);
+          const name = String(row.file_name ?? 'exame');
+          const mime = blob.type || (name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+          if (mime.startsWith('image/')) {
+            parts.push({ type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } });
+          } else {
+            parts.push({ type: 'file', file: { filename: name, file_data: `data:${mime};base64,${b64}` } });
+          }
+        } catch (_e) { /* ignora anexo inválido */ }
+      }
+    }
+
+    const aiInput = parts.length
+      ? [{ type: 'text', text: `${userPrompt}\n\nExames laboratoriais anexados pelo usuário estão em anexo. Leia todos integralmente.` }, ...parts]
+      : userPrompt;
+
+    const content = await callAi(PROMPTS[kind], aiInput);
+
 
     let saved;
     if (mode === 'revise') {
