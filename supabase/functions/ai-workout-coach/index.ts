@@ -5,6 +5,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { buildStudentContext } from '../_shared/student-context.ts';
 import { getSuperCoachLibrary } from '../_shared/supercoach-library.ts';
+import { STHIA_TRAINING_DOCTRINE } from '../_shared/sthia-training-doctrine.ts';
 
 type Mode = 'generate' | 'copilot' | 'analyze';
 
@@ -175,6 +176,8 @@ Deno.serve(async (req) => {
     // Reforço no system prompt — a IA precisa entender que a fonte é o banco do ST Coach.
     const reinforcedSystem = [
       systemPrompt,
+      '',
+      STHIA_TRAINING_DOCTRINE,
       '',
       studentGenderDirective,
       '',
