@@ -2,12 +2,17 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound } from "lucide-react";
+import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed } from "lucide-react";
 
 const NAV = [
   { to: "/ai/app", label: "Início", icon: LayoutGrid },
+  { to: "/ai/app/diario", label: "Diário", icon: UtensilsCrossed },
   { to: "/ai/app/cardapio", label: "Cardápio", icon: Salad },
   { to: "/ai/app/treino", label: "Treino", icon: Dumbbell },
+  { to: "/ai/app/perfil", label: "Perfil", icon: UserRound },
+];
+
+const SECONDARY_NAV = [
   { to: "/ai/app/analise", label: "Análise", icon: LineChart },
   { to: "/ai/app/progresso", label: "Evolução", icon: Flame },
   { to: "/ai/app/saude", label: "Saúde", icon: HeartPulse },
@@ -41,6 +46,26 @@ export default function AiShell({ children, title, subtitle }: { children: React
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+        <div className="mx-auto flex max-w-5xl gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {SECONDARY_NAV.map((item) => {
+            const active = location.pathname === item.to;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  active
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border/60 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
       </header>
 
