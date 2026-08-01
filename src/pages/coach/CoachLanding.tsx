@@ -84,7 +84,7 @@ const CoachLanding = () => {
             Escolha pelo número de alunos ativos. Troque de plano quando quiser.
           </p>
         </div>
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           {COACH_PLANS.map((plan) => (
             <Card
               key={plan.id}
@@ -93,6 +93,11 @@ const CoachLanding = () => {
                 plan.highlight && "border-primary/50 shadow-lg shadow-primary/5"
               )}
             >
+              {plan.id === "free" && (
+                <Badge variant="secondary" className="absolute -top-2.5 left-6 rounded-full text-[10px] px-2.5">
+                  Grátis
+                </Badge>
+              )}
               {plan.highlight && (
                 <Badge className="absolute -top-2.5 left-6 rounded-full text-[10px] px-2.5">Mais escolhido</Badge>
               )}
@@ -117,7 +122,9 @@ const CoachLanding = () => {
                 variant={plan.highlight ? "default" : "outline"}
                 className="mt-6 w-full rounded-full"
               >
-                <Link to={`/coach/comecar?plano=${plan.id}`}>Começar</Link>
+                <Link to={`/coach/comecar?plano=${plan.id}`}>
+                  {plan.id === "free" ? "Começar grátis" : "Começar"}
+                </Link>
               </Button>
             </Card>
           ))}
