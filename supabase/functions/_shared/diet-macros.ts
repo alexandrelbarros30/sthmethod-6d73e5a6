@@ -175,11 +175,13 @@ export function computeBaseMacros(baseText: string): { macro: Macro; coverage: n
     if (!g || !food) continue;
     matched++;
     const k = g / 100;
-    total.kcal += food.kcal * k;
     total.p += food.p * k;
     total.c += food.c * k;
     total.f += food.f * k;
   }
+  // Coerência energética (Atwater): as kcal exibidas devem bater exatamente
+  // com os macros exibidos — 4 kcal/g proteína e carboidrato, 9 kcal/g gordura.
+  total.kcal = total.p * 4 + total.c * 4 + total.f * 9;
   return { macro: total, coverage: items.length ? matched / items.length : 0 };
 }
 
