@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Clock, Utensils, ChevronDown, ChevronRight, Star } from "lucide-react";
+import { Clock, Utensils, ChevronDown, ChevronRight, Star, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 
@@ -25,6 +25,8 @@ const HEADER_RE = /^\s*Refei[çc][ãa]o\s*(\d+)\s*[:\-–]\s*([^(—\-]+?)(?:\s*
 // Fallback: cabeçalhos markdown do tipo "### 1. Café da manhã" / "### Almoço (Sustentação) — 12:30 · 750 kcal"
 const MD_HEADER_RE = /^#{2,4}\s*(?:(\d+)[.)]\s*)?([^(—–|]+?)(?:\s*\(([^)]*)\))?\s*(?:[—–]\s*(.*))?$/;
 const MEAL_WORDS = /(desjejum|caf[ée]|cola[çc][ãa]o|almo[çc]o|lanche|pr[ée][- ]?treino|p[óo]s[- ]?treino|jantar|ceia|refei[çc][ãa]o)/i;
+// Seções que NÃO são refeições (orientações gerais, hidratação, suplementação etc.)
+const NOTE_WORDS = /(orienta[çc][õo]e?s|observa[çc][õo]e?s|hidrata[çc][ãa]o|suplementa[çc][ãa]o|suplementos|import(ante|ância)|dicas?|estrat[ée]gia|recomenda[çc][õo]es|considera[çc][õo]es|resumo|treino|aviso|notas?)/i;
 
 function stripTags(html: string) {
   return html
