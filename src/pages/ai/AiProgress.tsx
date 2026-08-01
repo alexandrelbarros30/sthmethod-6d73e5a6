@@ -222,6 +222,10 @@ export default function AiProgress() {
         </Card>
       </div>
 
+      <div className="mt-4">
+        <AiInsightCard />
+      </div>
+
       <Card className="mt-4 p-5">
         <h2 className="text-base font-semibold">Histórico</h2>
         {measurements.length === 0 && checkins.length === 0 ? (
