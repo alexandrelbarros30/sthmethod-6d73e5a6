@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { ClipboardList, Pencil, SlidersHorizontal } from "lucide-react";
+import { ClipboardList, Pencil, SlidersHorizontal, Timer } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { AiProfile } from "@/hooks/useAiApp";
 import {
@@ -168,6 +176,21 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
 
   const missing = visible.filter((f) => !values[f.key]);
 
+  // Cardio somado ao relógio da musculação
+  const cardioOn = values.does_cardio === "sim";
+  const strengthMin = Number(values.training_duration_minutes || 0);
+  const cardioMin = Number(values.cardio_duration_minutes || 0);
+  const cardioDays = values.cardio_days_per_week;
+  const cardioIntensity = cardioIntensityOptions.find((o) => o.value === values.cardio_intensity)?.label;
+  const [cardioDialog, setCardioDialog] = useState(false);
+
+  function handleSelect(key: string, v: string) {
+    setValues((s) => ({ ...s, [key]: v }));
+    if ((key === "does_cardio" && v === "sim") || (key === "cardio_duration_minutes" && values.does_cardio === "sim")) {
+      setCardioDialog(true);
+    }
+  }
+
   // Monta o briefing e persiste as respostas no perfil (os dados da STH AI alimentam a STH METHOD)
   useEffect(() => {
     const lines = visible
@@ -176,6 +199,20 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
         const opt = f.options.find((o) => o.value === values[f.key]);
         return `- ${f.label}: ${opt?.label ?? values[f.key]}`;
       });
+    if (cardioOn && cardioMin) {
+      lines.push(
+        `- Composição da sessão: ${strengthMin || "?"} min de musculação + ${cardioMin} min de cardio = ${
+          (strengthMin || 0) + cardioMin
+        } min de tempo total por sessão (o cardio entra no mesmo relógio do treino).`,
+      );
+      lines.push(
+        `- OBRIGATÓRIO: incluir a seção "## Cardio" com ${cardioDays ?? "?"}x por semana de ${cardioMin} minutos${
+          cardioIntensity ? ` em intensidade ${cardioIntensity}` : ""
+        }, além da seção "## Abdominal e core".`,
+      );
+    } else {
+      lines.push('- OBRIGATÓRIO: incluir a seção "## Abdominal e core" no programa.');
+    }
     onChange(lines.length ? `Rotina confirmada pelo usuário (padrão STH METHOD):\n${lines.join("\n")}` : "");
 
     if (!hydrated.current) {
@@ -248,7 +285,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
                 {f.label}
                 {!values[f.key] && <Badge variant="outline" className="h-4 px-1.5 text-[10px]">falta</Badge>}
               </Label>
-              <Select value={values[f.key] ?? ""} onValueChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))}>
+              <Select value={values[f.key] ?? ""} onValueChange={(v) => handleSelect(f.key, v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {f.options.map((o) => (
@@ -259,7 +296,44 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
             </div>
           ))}
         </div>
+
+        {cardioOn && cardioMin > 0 && (
+          <div className="mt-4 flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+            <Timer className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p className="text-xs text-muted-foreground">
+              O cardio é somado ao relógio do treino: <strong className="text-foreground">{strengthMin || 0} min</strong> de
+              musculação + <strong className="text-foreground">{cardioMin} min</strong> de cardio ={" "}
+              <strong className="text-foreground">{(strengthMin || 0) + cardioMin} min</strong> por sessão
+              {cardioDays ? `, ${cardioDays}x por semana` : ""}
+              {cardioIntensity ? ` em intensidade ${cardioIntensity}` : ""}.
+            </p>
+          </div>
+        )}
       </Card>
+
+      <Dialog open={cardioDialog} onOpenChange={setCardioDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-4 w-4 text-primary" /> Cardio entra no relógio do treino
+            </DialogTitle>
+            <DialogDescription>
+              O tempo de cardio é acrescentado à duração da musculação na composição da sessão. Ex.: 60 minutos de
+              musculação + 20 minutos de cardio = 80 minutos de treino, com a modalidade e o posicionamento ajustados
+              pela intensidade escolhida.
+            </DialogDescription>
+          </DialogHeader>
+          {cardioMin > 0 && (
+            <p className="rounded-lg border border-border/60 p-3 text-sm">
+              Sua sessão: <strong>{strengthMin || 0} min</strong> musculação + <strong>{cardioMin} min</strong> cardio ={" "}
+              <strong>{(strengthMin || 0) + cardioMin} min</strong>.
+            </p>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setCardioDialog(false)}>Entendi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
