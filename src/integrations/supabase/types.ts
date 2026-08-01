@@ -182,6 +182,210 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_app_files: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          id: string
+          kind: string
+          position: string | null
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          kind: string
+          position?: string | null
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          kind?: string
+          position?: string | null
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_app_generations: {
+        Row: {
+          content: string
+          created_at: string
+          cycle_start: string
+          exception_reason: string | null
+          id: string
+          kind: string
+          meta: Json
+          revisions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          cycle_start?: string
+          exception_reason?: string | null
+          id?: string
+          kind: string
+          meta?: Json
+          revisions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          cycle_start?: string
+          exception_reason?: string | null
+          id?: string
+          kind?: string
+          meta?: Json
+          revisions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_app_measurements: {
+        Row: {
+          arm_cm: number | null
+          chest_cm: number | null
+          created_at: string
+          hip_cm: number | null
+          id: string
+          measured_on: string
+          notes: string | null
+          thigh_cm: number | null
+          user_id: string
+          waist_cm: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          arm_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          hip_cm?: number | null
+          id?: string
+          measured_on?: string
+          notes?: string | null
+          thigh_cm?: number | null
+          user_id: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          arm_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          hip_cm?: number | null
+          id?: string
+          measured_on?: string
+          notes?: string | null
+          thigh_cm?: number | null
+          user_id?: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      ai_app_profiles: {
+        Row: {
+          age: number | null
+          answers: Json
+          created_at: string
+          full_name: string | null
+          goal: string | null
+          height_cm: number | null
+          phase1_complete: boolean
+          phase2_complete: boolean
+          sex: string | null
+          step: number
+          training_level: string | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          age?: number | null
+          answers?: Json
+          created_at?: string
+          full_name?: string | null
+          goal?: string | null
+          height_cm?: number | null
+          phase1_complete?: boolean
+          phase2_complete?: boolean
+          sex?: string | null
+          step?: number
+          training_level?: string | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          age?: number | null
+          answers?: Json
+          created_at?: string
+          full_name?: string | null
+          goal?: string | null
+          height_cm?: number | null
+          phase1_complete?: boolean
+          phase2_complete?: boolean
+          sex?: string | null
+          step?: number
+          training_level?: string | null
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      ai_app_subscriptions: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string | null
+          external_reference: string | null
+          id: string
+          plan: string
+          provider: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at?: string | null
+          external_reference?: string | null
+          id?: string
+          plan: string
+          provider?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string | null
+          external_reference?: string | null
+          id?: string
+          plan?: string
+          provider?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anamnesis_entries: {
         Row: {
           created_at: string
