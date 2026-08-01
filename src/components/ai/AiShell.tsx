@@ -31,9 +31,14 @@ export default function AiShell({ children, title, subtitle }: { children: React
             </span>
             <span className="text-sm font-semibold tracking-tight">STH METHOD AI</span>
           </Link>
-          <Button variant="ghost" size="sm" onClick={logout} aria-label="Sair">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/ai/assinatura">Plano</Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={logout} aria-label="Sair">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
