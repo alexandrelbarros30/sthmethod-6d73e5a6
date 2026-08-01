@@ -226,7 +226,7 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
               <MetricInfo
                 label="GET (TDEE)"
                 value={`${macros.tdee} kcal`}
-                tip="Gasto Energético Total: soma da TMB com tudo o que você gasta no dia a dia (trabalho, passos, treinos, cardio e atividades rotineiras). É o seu "queimar total" real."
+                tip="Gasto Energético Total: soma da TMB com tudo o que você gasta no dia a dia (trabalho, passos, treinos, cardio e atividades rotineiras). É o seu 'queimar total' real."
               />
               <MetricInfo
                 label="Meta diária"
