@@ -235,7 +235,7 @@ export default function AiDashboard() {
         </Link>
 
         {/* Leitura STHIA */}
-        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-3`}>
+        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-6`}>
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               <BrainCircuit className="h-3.5 w-3.5" /> Leitura preditiva
