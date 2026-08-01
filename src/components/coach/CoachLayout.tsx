@@ -13,14 +13,15 @@ type Item = { to: string; icon: any; label: string };
 const PRO_ITEMS: Item[] = [
   { to: "/coach/painel", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/coach/alunos", icon: Users, label: "Alunos" },
+  { to: "/coach/treinos", icon: Dumbbell, label: "Treinos" },
   { to: "/coach/convites", icon: UserPlus, label: "Convites" },
   { to: "/coach/planos", icon: CreditCard, label: "Plano" },
   { to: "/coach/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
 const STUDENT_ITEMS: Item[] = [
-  { to: "/coach/aluno", icon: LayoutDashboard, label: "Meu Treino" },
-  { to: "/coach/aluno/ficha", icon: Users, label: "Minha Ficha" },
+  { to: "/coach/aluno", icon: LayoutDashboard, label: "Início" },
+  { to: "/coach/aluno/treinos", icon: Dumbbell, label: "Meus treinos" },
 ];
 
 interface Props {
@@ -65,7 +66,9 @@ const CoachLayout = ({ children, title, subtitle, audience = "professional", act
   const Nav = ({ onNavigate }: { onNavigate?: () => void }) => (
     <nav className="flex-1 px-3 space-y-1">
       {items.map((item) => {
-        const active = location.pathname === item.to;
+        const active =
+          location.pathname === item.to ||
+          (item.to !== "/coach/painel" && item.to !== "/coach/aluno" && location.pathname.startsWith(`${item.to}/`));
         return (
           <Link
             key={item.to}
