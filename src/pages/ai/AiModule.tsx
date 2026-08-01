@@ -49,6 +49,43 @@ export default function AiModule() {
   const isWorkoutGuided = kind === "workout" && Boolean(current);
   const canRequest = !cycleLocked || revisionsLeft > 0;
 
+  const requestForm = (
+    <>
+      {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
+      {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
+      {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} />}
+      <Card className="space-y-3 p-5">
+        <Textarea
+          rows={3}
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          placeholder={
+            current
+              ? "O que deseja ajustar? Ex: trocar o jantar por opções mais rápidas."
+              : "Quer acrescentar alguma observação antes de gerar? (opcional)"
+          }
+        />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button className="flex-1" onClick={() => run("create")} disabled={busy || cycleLocked}>
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : cycleLocked ? <Lock className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            {current ? "Gerar novo ciclo" : "Gerar agora"}
+          </Button>
+          {current && (
+            <Button className="flex-1" variant="outline" onClick={() => run("revise")} disabled={busy || revisionsLeft === 0}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Revisar
+            </Button>
+          )}
+        </div>
+        {cycleLocked && (
+          <p className="text-xs text-muted-foreground">
+            A estrutura principal é preservada durante o ciclo — é assim que a metodologia gera adaptação real. Use uma
+            revisão para ajustes pontuais.
+          </p>
+        )}
+      </Card>
+    </>
+  );
+
   async function run(mode: "create" | "revise") {
     if (!subscription) {
       navigate("/ai/assinatura");
