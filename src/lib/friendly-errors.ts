@@ -63,6 +63,21 @@ export function toFriendlyError(err: unknown): FriendlyError {
   const { raw, status, code } = rawOf(err);
   const r = raw.toLowerCase();
 
+  // --- Versão nova publicada (chunk antigo em cache) ---
+  if (
+    r.includes("dynamically imported module") ||
+    r.includes("importing a module script failed") ||
+    r.includes("chunkloaderror") ||
+    r.includes("loading chunk")
+  ) {
+    return {
+      code: "STH-101",
+      title: "Nova versão disponível",
+      message:
+        "Publicamos uma atualização enquanto você navegava. Toque em Recarregar tela para continuar com a versão mais recente.",
+    };
+  }
+
   // --- Rede / conexão ---
   if (
     r.includes("failed to fetch") ||
