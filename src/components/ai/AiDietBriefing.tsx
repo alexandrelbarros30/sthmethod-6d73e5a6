@@ -6,10 +6,38 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Flame, Pencil, Sparkles, ShieldCheck } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ClipboardList, Flame, HelpCircle, Pencil, Sparkles, ShieldCheck } from "lucide-react";
 import type { AiProfile } from "@/hooks/useAiApp";
 import { calculateMacros } from "@/lib/macro-calculator";
 import { objectiveLabels } from "@/lib/form-constants";
+
+interface MetricInfoProps {
+  label: string;
+  value: string;
+  tip: string;
+}
+
+function MetricInfo({ label, value, tip }: MetricInfoProps) {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-help rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/30">
+            <div className="flex items-center gap-1">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+              <HelpCircle className="h-3 w-3 text-muted-foreground/70" />
+            </div>
+            <p className="mt-0.5 text-sm font-semibold">{value}</p>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[260px] text-xs leading-relaxed">
+          {tip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 interface Props {
   profile: AiProfile | null;
