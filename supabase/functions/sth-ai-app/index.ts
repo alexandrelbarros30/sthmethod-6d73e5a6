@@ -4,6 +4,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { STHIA_TRAINING_DOCTRINE } from '../_shared/sthia-training-doctrine.ts';
+import { STHIA_DIET_FORMAT } from '../_shared/sthia-diet-format.ts';
 
 const GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const MODEL = 'openai/gpt-5.6-sol';
@@ -24,14 +25,14 @@ Regras invioláveis:
 const PROMPTS: Record<Kind, string> = {
   diet: `${BASE_RULES}
 
-Tarefa: montar um PLANEJAMENTO ALIMENTAR completo de 30 dias.
-Estrutura obrigatória:
-1. "## Resumo estratégico" (objetivo, calorias-alvo, distribuição de macros e justificativa técnica).
-2. "## Refeições" — de 4 a 6 refeições, cada uma com alimentos, quantidades em g/ml e kcal/PTN/CHO/GOR da refeição.
-3. "## Substituições inteligentes" — 3 alternativas por refeição, equivalentes em macros.
-4. "## Hidratação e rotina".
-5. "## Como evoluir no ciclo" — ajustes previstos ao longo dos 30 dias.
-REGRAS DE ENERGIA: quando o briefing trouxer o gasto energético total (GET/TDEE) e a meta de kcal e macros, use EXATAMENTE esses números como alvo — o somatório das refeições deve fechar a meta com tolerância de ±5%. Nunca recalcule por conta própria nem arredonde para múltiplos de 100. Exiba o GET e a meta no "## Resumo estratégico".
+Tarefa: montar um PLANEJAMENTO ALIMENTAR completo de 30 dias, com a MESMA identidade visual e textual do cardápio do portal STH METHOD.
+Saída em HTML puro (nunca markdown), na ordem:
+1. <h3>Resumo estratégico</h3> — objetivo, GET, meta de kcal, distribuição de macros e justificativa técnica.
+2. As refeições (4 a 6), cada uma com refeição BASE + 4 opções, exatamente no formato abaixo.
+3. <h3>Hidratação e rotina</h3>.
+4. <h3>Como evoluir no ciclo</h3> — ajustes previstos ao longo dos 30 dias.
+${STHIA_DIET_FORMAT}
+REGRAS DE ENERGIA: quando o briefing trouxer o gasto energético total (GET/TDEE) e a meta de kcal e macros, use EXATAMENTE esses números como alvo — o somatório das refeições deve fechar a meta com tolerância de ±5%. Nunca recalcule por conta própria nem arredonde para múltiplos de 100. Exiba o GET e a meta na seção "Resumo estratégico".
 RESTRIÇÃO DE PROTOCOLO: nunca consulte, cite ou considere protocolos, medicamentos, hormônios, peptídeos ou suplementação terapêutica registrados na STH METHOD. O cardápio é exclusivamente alimentar.
 Máximo 1100 palavras.`,
   workout: `${BASE_RULES}
