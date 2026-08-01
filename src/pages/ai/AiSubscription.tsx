@@ -1,0 +1,94 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import AiShell from "@/components/ai/AiShell";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { AI_PLANS, useAiApp } from "@/hooks/useAiApp";
+import { Loader2, Check } from "lucide-react";
+
+export default function AiSubscription() {
+  const { subscription, loading, user, refresh } = useAiApp();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    const status = params.get("status");
+    if (status === "approved") {
+      toast.success("Pagamento aprovado. Ativando seu plano...");
+      setTimeout(refresh, 2500);
+    } else if (status === "failed") {
+      toast.error("Pagamento não aprovado.");
+    }
+  }, [params, refresh]);
+
+  useEffect(() => {
+    if (!loading && !user) navigate("/login?next=/ai/assinatura");
+  }, [loading, user, navigate]);
+
+  async function subscribe(plan: string) {
+    setBusy(plan);
+    try {
+      const { data, error } = await supabase.functions.invoke("sth-ai-subscribe", { body: { plan } });
+      if (error) throw error;
+      const url = (data as any)?.init_point;
+      if (!url) throw new Error((data as any)?.error || "Checkout indisponível");
+      window.location.href = url;
+    } catch (e) {
+      toast.error((e as Error)?.message || "Não foi possível iniciar o pagamento.");
+      setBusy(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <AiShell title="Seu plano" subtitle="Assinatura do STH METHOD AI, sem fidelidade.">
+      {subscription && (
+        <Card className="mb-5 flex items-center justify-between gap-3 border-primary/30 bg-primary/5 p-5">
+          <div>
+            <p className="text-sm font-semibold capitalize">Plano {subscription.plan} ativo</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Válido até {subscription.expires_at ? new Date(subscription.expires_at).toLocaleDateString("pt-BR") : "—"}
+            </p>
+          </div>
+          <Badge>Ativo</Badge>
+        </Card>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {AI_PLANS.map((plan) => (
+          <Card key={plan.id} className="flex flex-col justify-between gap-4 p-5">
+            <div>
+              <p className="text-sm text-muted-foreground">{plan.label}</p>
+              <p className="mt-1 text-3xl font-semibold tracking-tight">{plan.price}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{plan.note}</p>
+              <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
+                <li className="flex gap-2"><Check className="h-4 w-4 text-primary" /> Cardápio inteligente por ciclo</li>
+                <li className="flex gap-2"><Check className="h-4 w-4 text-primary" /> Treino periodizado por ciclo</li>
+                <li className="flex gap-2"><Check className="h-4 w-4 text-primary" /> Central de análise a cada 60 dias</li>
+              </ul>
+            </div>
+            <Button onClick={() => subscribe(plan.id)} disabled={busy !== null}>
+              {busy === plan.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Assinar
+            </Button>
+          </Card>
+        ))}
+      </div>
+
+      <p className="mt-6 text-xs text-muted-foreground">
+        Pagamento processado pelo Mercado Pago. A liberação é automática após a aprovação.
+      </p>
+    </AiShell>
+  );
+}
