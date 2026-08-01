@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Plus, Search, Users } from "lucide-react";
+import { CalendarClock, KeyRound, Plus, Search, Users } from "lucide-react";
 import CoachLayout from "@/components/coach/CoachLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,10 +58,12 @@ const CoachStudents = () => {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [period, setPeriod] = useState({ start_date: "", end_date: "" });
+  const [access, setAccess] = useState<any>(null);
+  const [accessForm, setAccessForm] = useState({ email: "", password: "" });
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", birth_date: "", gender: "",
     height_cm: "", weight_kg: "", goal: "", notes: "",
-    start_date: today(), end_date: "",
+    start_date: today(), end_date: "", password: "",
   });
 
   const { data: students } = useQuery({
@@ -70,7 +72,7 @@ const CoachStudents = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coach_students")
-        .select("id, full_name, email, phone, goal, status, created_at, start_date, end_date")
+        .select("id, full_name, email, phone, goal, status, created_at, start_date, end_date, user_id")
         .eq("tenant_id", tenantId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -91,7 +93,13 @@ const CoachStudents = () => {
     if (!tenantId) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("coach_students").insert({
+      if (form.password && form.password.length < 8) {
+        throw new Error("A senha de acesso precisa ter no mínimo 8 caracteres");
+      }
+      if (form.password && !form.email.trim()) {
+        throw new Error("Informe o e-mail para criar o acesso do aluno");
+      }
+      const { data: inserted, error } = await supabase.from("coach_students").insert({
         tenant_id: tenantId,
         full_name: form.full_name.trim(),
         email: form.email.trim() || null,
@@ -104,15 +112,76 @@ const CoachStudents = () => {
         notes: form.notes.trim() || null,
         start_date: form.start_date || null,
         end_date: form.end_date || null,
-      });
+      }).select("id").single();
       if (error) throw error;
-      toast.success("Aluno cadastrado");
+
+      if (form.password && inserted?.id) {
+        const { data: res, error: fnErr } = await supabase.functions.invoke("coach-student-access", {
+          body: {
+            action: "create_login",
+            student_id: inserted.id,
+            email: form.email.trim(),
+            password: form.password,
+          },
+        });
+        if (fnErr || (res as any)?.error) {
+          toast.warning((res as any)?.error || "Aluno criado, mas o acesso não pôde ser gerado");
+        } else {
+          toast.success("Aluno cadastrado com acesso de login");
+        }
+      } else {
+        toast.success("Aluno cadastrado");
+      }
       setOpen(false);
-      setForm({ full_name: "", email: "", phone: "", birth_date: "", gender: "", height_cm: "", weight_kg: "", goal: "", notes: "", start_date: today(), end_date: "" });
+      setForm({ full_name: "", email: "", phone: "", birth_date: "", gender: "", height_cm: "", weight_kg: "", goal: "", notes: "", start_date: today(), end_date: "", password: "" });
       qc.invalidateQueries({ queryKey: ["coach-students"] });
       qc.invalidateQueries({ queryKey: ["coach-dashboard"] });
     } catch (err: any) {
       toast.error(err?.message || "Não foi possível cadastrar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openAccess = (s: any) => {
+    setAccess(s);
+    setAccessForm({ email: s.email || "", password: "" });
+  };
+
+  const runAccess = async (action: "create_login" | "reset_password" | "send_reset_email") => {
+    if (!access) return;
+    if (action !== "send_reset_email" && accessForm.password.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres");
+      return;
+    }
+    if (action === "create_login" && !accessForm.email.trim()) {
+      toast.error("Informe o e-mail de login");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("coach-student-access", {
+        body: {
+          action,
+          student_id: access.id,
+          email: accessForm.email.trim(),
+          password: accessForm.password,
+          redirect_to: `${window.location.origin}/reset-password`,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(
+        action === "create_login"
+          ? "Acesso criado — envie o e-mail e a senha ao aluno"
+          : action === "reset_password"
+            ? "Senha redefinida"
+            : "E-mail de redefinição enviado"
+      );
+      setAccess(null);
+      qc.invalidateQueries({ queryKey: ["coach-students"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível concluir");
     } finally {
       setSaving(false);
     }
@@ -246,6 +315,26 @@ const CoachStudents = () => {
                 </div>
                 <p className="text-[11px] text-muted-foreground font-light">Datas livres — defina o período conforme o contrato do aluno.</p>
               </div>
+              <div className="rounded-xl border border-border/60 p-3.5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+                  <Label className="text-[12px]">Acesso do aluno (login)</Label>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Senha inicial (mín. 8 caracteres)</Label>
+                  <Input
+                    type="text"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="Deixe vazio para criar depois"
+                    minLength={8}
+                    maxLength={72}
+                  />
+                </div>
+                <p className="text-[11px] text-muted-foreground font-light">
+                  O aluno entra em <span className="font-medium">/coach/entrar</span> com o e-mail acima e essa senha — e pode alterá-la depois.
+                </p>
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-[12px]">Observações</Label>
                 <Textarea rows={4} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={2000} />
@@ -283,6 +372,9 @@ const CoachStudents = () => {
                   {s.status === "active" ? "Ativo" : s.status}
                 </Badge>
               </div>
+              <Badge variant={s.user_id ? "secondary" : "outline"} className="mt-2 rounded-full text-[10px]">
+                {s.user_id ? "Login ativo" : "Sem login"}
+              </Badge>
               {s.goal && <p className="mt-3 text-[12px] text-muted-foreground font-light">Objetivo: {s.goal}</p>}
               <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
                 <div className="min-w-0">
@@ -299,6 +391,11 @@ const CoachStudents = () => {
                 </div>
                 <Button variant="ghost" size="sm" className="rounded-full text-[11px] shrink-0" onClick={() => openPeriod(s)}>
                   <CalendarClock className="mr-1 h-3.5 w-3.5" /> Vigência
+                </Button>
+              </div>
+              <div className="mt-2">
+                <Button variant="outline" size="sm" className="w-full rounded-full text-[11px]" onClick={() => openAccess(s)}>
+                  <KeyRound className="mr-1 h-3.5 w-3.5" /> {s.user_id ? "Gerenciar acesso" : "Criar acesso"}
                 </Button>
               </div>
             </Card>
@@ -344,6 +441,56 @@ const CoachStudents = () => {
             <Button onClick={savePeriod} disabled={saving} className="w-full rounded-full">
               {saving ? "Salvando..." : "Salvar vigência"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!access} onOpenChange={(v) => !v && setAccess(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="tracking-[-0.02em]">
+              {access?.user_id ? "Gerenciar acesso" : "Criar acesso do aluno"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-[12px] text-muted-foreground font-light">{access?.full_name}</p>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-muted-foreground">E-mail de login</Label>
+              <Input
+                type="email"
+                value={accessForm.email}
+                onChange={(e) => setAccessForm({ ...accessForm, email: e.target.value })}
+                disabled={!!access?.user_id}
+                maxLength={255}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-muted-foreground">
+                {access?.user_id ? "Nova senha" : "Senha inicial"} (mín. 8 caracteres)
+              </Label>
+              <Input
+                type="text"
+                value={accessForm.password}
+                onChange={(e) => setAccessForm({ ...accessForm, password: e.target.value })}
+                minLength={8}
+                maxLength={72}
+              />
+            </div>
+            <Button
+              onClick={() => runAccess(access?.user_id ? "reset_password" : "create_login")}
+              disabled={saving}
+              className="w-full rounded-full"
+            >
+              {saving ? "Aguarde..." : access?.user_id ? "Redefinir senha" : "Criar acesso"}
+            </Button>
+            {access?.user_id && (
+              <Button variant="outline" onClick={() => runAccess("send_reset_email")} disabled={saving} className="w-full rounded-full text-[12px]">
+                Enviar e-mail de redefinição ao aluno
+              </Button>
+            )}
+            <p className="text-[11px] text-muted-foreground font-light">
+              O aluno acessa em <span className="font-medium">/coach/entrar</span> e pode trocar a própria senha na área dele.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
