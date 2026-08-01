@@ -15,7 +15,6 @@ import AiExamAttach from "@/components/ai/AiExamAttach";
 import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
 import AiDietBriefing from "@/components/ai/AiDietBriefing";
 import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
-import DietContentRenderer from "@/components/student/DietContentRenderer";
 import AiDietPlan from "@/components/ai/AiDietPlan";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
