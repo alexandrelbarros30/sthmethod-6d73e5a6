@@ -1,17 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CornerDownLeft, ImageIcon, Plus, Search, Video } from "lucide-react";
+import { CornerDownLeft, ImageIcon, Loader2, Plus, Search, Video } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeSuperCoachEdge } from "@/lib/supercoach-edge";
 
 const normalize = (v: string) =>
   (v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 export interface PickedExercise {
   name: string;
-  source: "library" | "manual";
+  source: "library" | "manual" | "stcoach";
   media_url: string | null;
   thumb_url: string | null;
   muscle_group: string | null;
@@ -22,9 +23,14 @@ interface Props {
   disabled?: boolean;
 }
 
+type SourceKind = "library" | "stcoach";
+
 const CoachExerciseSearch = ({ onPick, disabled }: Props) => {
+  const [source, setSource] = useState<SourceKind>("library");
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
+  const [scLibrary, setScLibrary] = useState<any[] | null>(null);
+  const [loadingSc, setLoadingSc] = useState(false);
 
   const { data: library } = useQuery({
     queryKey: ["coach-exercise-library"],
@@ -39,18 +45,42 @@ const CoachExerciseSearch = ({ onPick, disabled }: Props) => {
     },
   });
 
+  // carrega o banco de vídeos ST Coach sob demanda
+  useEffect(() => {
+    if (source !== "stcoach" || scLibrary !== null || loadingSc) return;
+    setLoadingSc(true);
+    invokeSuperCoachEdge<any>("supercoach-import-workout", { action: "list-library" })
+      .then((data) => setScLibrary(data?.exercises || []))
+      .catch(() => setScLibrary([]))
+      .finally(() => setLoadingSc(false));
+  }, [source, scLibrary, loadingSc]);
+
+  useEffect(() => setCursor(0), [query, source]);
+
   const hits = useMemo(() => {
     const q = normalize(query.trim());
     if (q.length < 2) return [];
+    if (source === "stcoach") {
+      return (scLibrary || [])
+        .filter((e: any) => normalize(e.name || "").includes(q))
+        .slice(0, 10)
+        .map((e: any) => ({
+          id: `sc-${e.id}`,
+          name: e.name,
+          muscle_group: e.muscle_group || null,
+          image_url: e.cover_url || null,
+          video_url: e.video_url || null,
+        }));
+    }
     return (library || [])
       .filter((e: any) => normalize(`${e.name} ${e.muscle_group || ""}`).includes(q))
       .slice(0, 10);
-  }, [query, library]);
+  }, [query, library, scLibrary, source]);
 
   const add = (e: any) => {
     onPick({
       name: e.name,
-      source: "library",
+      source,
       media_url: e.video_url || e.image_url || null,
       thumb_url: e.image_url || null,
       muscle_group: e.muscle_group || null,
@@ -68,6 +98,34 @@ const CoachExerciseSearch = ({ onPick, disabled }: Props) => {
 
   return (
     <div className="rounded-xl border border-primary/25 bg-primary/[0.03] p-3">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="text-[11px] text-muted-foreground">Buscar em:</span>
+        <div className="inline-flex rounded-lg border bg-background p-0.5">
+          <button
+            type="button"
+            onClick={() => setSource("library")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors ${
+              source === "library" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ImageIcon className="h-3.5 w-3.5" /> Biblioteca (GIFs)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSource("stcoach")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors ${
+              source === "stcoach" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Video className="h-3.5 w-3.5" /> Vídeos (ST Coach)
+          </button>
+        </div>
+        {source === "stcoach" && loadingSc && (
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" /> carregando banco…
+          </span>
+        )}
+      </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -84,13 +142,22 @@ const CoachExerciseSearch = ({ onPick, disabled }: Props) => {
             else if (e.key === "Enter") { e.preventDefault(); add(hits[cursor]); }
             else if (e.key === "Escape") setQuery("");
           }}
-          placeholder="Buscar exercício na biblioteca (GIFs/vídeos) ou digitar um nome livre…"
+          placeholder={
+            source === "library"
+              ? "Buscar na biblioteca (GIFs) ou digitar um nome livre…"
+              : "Buscar no banco de vídeos ST Coach ou digitar um nome livre…"
+          }
           className="pl-9 h-11 rounded-xl text-[13px]"
         />
       </div>
 
       {query.trim().length >= 2 && (
         <div className="mt-2 space-y-1">
+          {!hits.length && (
+            <p className="px-2.5 py-1 text-[12px] text-muted-foreground">
+              {source === "stcoach" && loadingSc ? "Carregando exercícios do ST Coach…" : "Nenhum exercício encontrado."}
+            </p>
+          )}
           {hits.map((e: any, i: number) => (
             <button
               key={e.id}
