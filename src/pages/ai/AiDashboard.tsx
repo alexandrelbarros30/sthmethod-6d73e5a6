@@ -8,7 +8,6 @@ import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks
 import { useAiProgress } from "@/hooks/useAiProgress";
 import { useAiOffer } from "@/hooks/useAiGrowth";
 import AiOfferCard from "@/components/ai/AiOfferCard";
-import AiInsightCard from "@/components/ai/AiInsightCard";
 import { Loader2, ArrowRight, Sparkles, ShieldCheck, Flame } from "lucide-react";
 
 const ROUTES: Record<AiKind, string> = {
