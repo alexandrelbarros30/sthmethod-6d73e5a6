@@ -1,0 +1,1 @@
+update crm_settings set value = jsonb_set(value::jsonb, '{webhook}', '"https://tthahgwkkdyvxdbhsgyb.supabase.co/functions/v1/crm-inbound-webhook?provider=comercial"') where key = 'wapi_comercial';
