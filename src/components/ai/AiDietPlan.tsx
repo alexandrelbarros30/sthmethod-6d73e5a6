@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Clock, Utensils, ChevronDown, ChevronRight, Star } from "lucide-react";
+import { Clock, Utensils, ChevronDown, ChevronRight, Star, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 
@@ -25,6 +25,8 @@ const HEADER_RE = /^\s*Refei[çc][ãa]o\s*(\d+)\s*[:\-–]\s*([^(—\-]+?)(?:\s*
 // Fallback: cabeçalhos markdown do tipo "### 1. Café da manhã" / "### Almoço (Sustentação) — 12:30 · 750 kcal"
 const MD_HEADER_RE = /^#{2,4}\s*(?:(\d+)[.)]\s*)?([^(—–|]+?)(?:\s*\(([^)]*)\))?\s*(?:[—–]\s*(.*))?$/;
 const MEAL_WORDS = /(desjejum|caf[ée]|cola[çc][ãa]o|almo[çc]o|lanche|pr[ée][- ]?treino|p[óo]s[- ]?treino|jantar|ceia|refei[çc][ãa]o)/i;
+// Seções que NÃO são refeições (orientações gerais, hidratação, suplementação etc.)
+const NOTE_WORDS = /(orienta[çc][õo]e?s|observa[çc][õo]e?s|hidrata[çc][ãa]o|suplementa[çc][ãa]o|suplementos|import(ante|ância)|dicas?|estrat[ée]gia|recomenda[çc][õo]es|considera[çc][õo]es|resumo|treino|aviso|notas?)/i;
 
 function stripTags(html: string) {
   return html
@@ -49,6 +51,10 @@ function applyMeta(meal: ParsedMeal, meta: string) {
 }
 
 export function parseMeals(content: string): ParsedMeal[] {
+  return parseDiet(content).meals;
+}
+
+export function parseDiet(content: string): { meals: ParsedMeal[]; notes: string[] } {
   const blocks = content
     .split(/<\/p>|<\/h[1-6]>|<br\s*\/?>|\n/gi)
     .map((b) => stripTags(b))
@@ -57,7 +63,9 @@ export function parseMeals(content: string): ParsedMeal[] {
     .filter(Boolean);
 
   const meals: ParsedMeal[] = [];
+  const notes: string[] = [];
   let currentMeal: ParsedMeal | null = null;
+  let inNotes = false;
 
   for (const raw of blocks) {
     const line = raw.replace(/^"+|"+$/g, "").trim();
@@ -66,6 +74,7 @@ export function parseMeals(content: string): ParsedMeal[] {
     const mdh = !h && /^#{2,4}\s/.test(line) ? line.match(MD_HEADER_RE) : null;
     const isMealHeader = h || (mdh && MEAL_WORDS.test(mdh[2] ?? ""));
     if (isMealHeader) {
+      inNotes = false;
       const g = (h ?? mdh)!;
       currentMeal = {
         index: parseInt(g[1] ?? "", 10) || meals.length + 1,
@@ -79,6 +88,21 @@ export function parseMeals(content: string): ParsedMeal[] {
       };
       applyMeta(currentMeal, g[4] ?? "");
       meals.push(currentMeal);
+      continue;
+    }
+    // Início de uma seção de orientações (não é alimento)
+    const isNoteHeading =
+      (/^#{2,4}\s/.test(line) && NOTE_WORDS.test(line)) ||
+      /^(⚠️|💧|💊|📌|ℹ️)/.test(line) ||
+      (NOTE_WORDS.test(line) && /^[^a-z0-9]*[A-ZÀ-Ú][^.!?]{0,60}:?\s*$/.test(line.replace(/^#{2,4}\s*/, "")));
+    if (isNoteHeading) {
+      inNotes = true;
+      currentMeal = null;
+      notes.push(line.replace(/^#{2,4}\s*/, ""));
+      continue;
+    }
+    if (inNotes) {
+      notes.push(line);
       continue;
     }
     if (!currentMeal) continue;
@@ -106,7 +130,7 @@ export function parseMeals(content: string): ParsedMeal[] {
     }
   }
 
-  return meals.filter((m) => m.options.length > 0);
+  return { meals: meals.filter((m) => m.options.length > 0), notes };
 }
 
 const MacroChip = ({ label, value, tone }: { label: string; value: number; tone: "prot" | "carb" | "fat" }) => {
@@ -128,8 +152,9 @@ const MacroChip = ({ label, value, tone }: { label: string; value: number; tone:
 };
 
 const AiDietPlan: React.FC<{ content: string }> = ({ content }) => {
-  const meals = useMemo(() => parseMeals(content), [content]);
+  const { meals, notes } = useMemo(() => parseDiet(content), [content]);
   const [open, setOpen] = useState<number | null>(null);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   if (meals.length === 0) {
     return <DietContentRenderer content={content} showHeader={false} />;
@@ -243,6 +268,37 @@ const AiDietPlan: React.FC<{ content: string }> = ({ content }) => {
           </div>
         );
       })}
+
+      {notes.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-border bg-muted/20">
+          <button
+            type="button"
+            onClick={() => setNotesOpen((v) => !v)}
+            className="flex w-full items-center gap-3 p-4 text-left"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Info className="h-4 w-4" />
+            </div>
+            <p className="flex-1 font-display text-sm font-bold uppercase tracking-tight text-foreground">
+              Orientações gerais
+            </p>
+            {notesOpen ? (
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+          </button>
+          {notesOpen && (
+            <div className="space-y-2 border-t border-border px-4 pb-4 pt-4">
+              {notes.map((n, i) => (
+                <p key={i} className="text-sm leading-relaxed text-muted-foreground">
+                  {n.replace(/^[-•*]\s+/, "• ")}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
