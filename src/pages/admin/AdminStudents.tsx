@@ -32,6 +32,7 @@ import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import StudentPlanHistory from "@/components/admin/StudentPlanHistory";
 import StudentWorkoutAlertCard from "@/components/admin/StudentWorkoutAlertCard";
+import StudentAiPanel from "@/components/admin/StudentAiPanel";
 import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
@@ -1693,6 +1694,10 @@ const AdminStudents = () => {
                     userId={selected.user_id}
                     onOpenAssign={() => { setViewOpen(false); setProgramsOpen(true); }}
                   />
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">STH METHOD AI</h3>
+                  <StudentAiPanel userId={selected.user_id} />
                 </section>
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
