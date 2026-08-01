@@ -13,6 +13,7 @@ import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks
 import AiFeedbackCard from "@/components/ai/AiFeedbackCard";
 import AiExamAttach from "@/components/ai/AiExamAttach";
 import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
+import AiDietBriefing from "@/components/ai/AiDietBriefing";
 import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
@@ -34,6 +35,7 @@ export default function AiModule() {
   const [busy, setBusy] = useState(false);
   const [examIds, setExamIds] = useState<string[]>([]);
   const [workoutBrief, setWorkoutBrief] = useState("");
+  const [dietBrief, setDietBrief] = useState("");
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
@@ -52,7 +54,7 @@ export default function AiModule() {
       return;
     }
     setBusy(true);
-    const fullInstruction = [kind === "workout" ? workoutBrief : "", instruction.trim()]
+    const fullInstruction = [kind === "workout" ? workoutBrief : kind === "diet" ? dietBrief : "", instruction.trim()]
       .filter(Boolean)
       .join("\n\n");
     try {
@@ -95,6 +97,8 @@ export default function AiModule() {
       {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
 
       {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
+
+      {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} />}
 
       <Card className="space-y-3 p-5">
         <Textarea
