@@ -6,10 +6,38 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Flame, Pencil, Sparkles, ShieldCheck } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ClipboardList, Flame, HelpCircle, Pencil, Sparkles, ShieldCheck } from "lucide-react";
 import type { AiProfile } from "@/hooks/useAiApp";
 import { calculateMacros } from "@/lib/macro-calculator";
 import { objectiveLabels } from "@/lib/form-constants";
+
+interface MetricInfoProps {
+  label: string;
+  value: string;
+  tip: string;
+}
+
+function MetricInfo({ label, value, tip }: MetricInfoProps) {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-help rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/30">
+            <div className="flex items-center gap-1">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+              <HelpCircle className="h-3 w-3 text-muted-foreground/70" />
+            </div>
+            <p className="mt-0.5 text-sm font-semibold">{value}</p>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[260px] text-xs leading-relaxed">
+          {tip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 interface Props {
   profile: AiProfile | null;
@@ -190,10 +218,22 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
         ) : (
           <>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <MetricInfo
+                label="TMB"
+                value={`${macros.bmr} kcal`}
+                tip="Taxa Metabólica Basal: é a energia mínima que seu corpo gasta em repouso absoluto para manter funções vitais como respiração, batimento cardíaco e temperatura."
+              />
+              <MetricInfo
+                label="GET (TDEE)"
+                value={`${macros.tdee} kcal`}
+                tip="Gasto Energético Total: soma da TMB com tudo o que você gasta no dia a dia (trabalho, passos, treinos, cardio e atividades rotineiras). É o seu 'queimar total' real."
+              />
+              <MetricInfo
+                label="Meta diária"
+                value={`${macros.dailyCalories} kcal`}
+                tip="Kcal-alvo ajustada ao seu objetivo: levemente abaixo do GET para perda de gordura, acima para ganho de massa ou igual para manutenção."
+              />
               {[
-                { label: "TMB", value: `${macros.bmr} kcal` },
-                { label: "GET (TDEE)", value: `${macros.tdee} kcal` },
-                { label: "Meta diária", value: `${macros.dailyCalories} kcal` },
                 { label: "Proteína", value: `${macros.proteinG} g` },
                 { label: "Carboidrato", value: `${macros.carbsG} g` },
                 { label: "Gordura", value: `${macros.fatG} g` },
