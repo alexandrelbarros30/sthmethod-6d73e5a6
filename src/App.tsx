@@ -202,6 +202,8 @@ const AiDashboard = lazyWithRetry(() => import("./pages/ai/AiDashboard"));
 const AiModule = lazyWithRetry(() => import("./pages/ai/AiModule"));
 const AiProgress = lazyWithRetry(() => import("./pages/ai/AiProgress"));
 const AiSubscription = lazyWithRetry(() => import("./pages/ai/AiSubscription"));
+const AiHealth = lazyWithRetry(() => import("./pages/ai/AiHealth"));
+const AiCoaches = lazyWithRetry(() => import("./pages/ai/AiCoaches"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
@@ -252,6 +254,8 @@ const App = () => (
             <Route path="/ai/onboarding" element={<Suspense fallback={<LazyFallback />}><AiOnboarding /></Suspense>} />
             <Route path="/ai/app" element={<Suspense fallback={<LazyFallback />}><AiDashboard /></Suspense>} />
             <Route path="/ai/app/progresso" element={<Suspense fallback={<LazyFallback />}><AiProgress /></Suspense>} />
+            <Route path="/ai/app/saude" element={<Suspense fallback={<LazyFallback />}><AiHealth /></Suspense>} />
+            <Route path="/ai/app/coaches" element={<Suspense fallback={<LazyFallback />}><AiCoaches /></Suspense>} />
             <Route path="/ai/app/:slug" element={<Suspense fallback={<LazyFallback />}><AiModule /></Suspense>} />
             <Route path="/ai/assinatura" element={<Suspense fallback={<LazyFallback />}><AiSubscription /></Suspense>} />
             <Route path="/login" element={<Login />} />
