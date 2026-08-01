@@ -1263,6 +1263,114 @@ export type Database = {
           },
         ]
       }
+      coach_programs: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          goal: string | null
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string
+          updated_at: string
+          weeks: number
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id: string
+          updated_at?: string
+          weeks?: number
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+          weeks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_programs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coach_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_student_programs: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_date: string | null
+          id: string
+          program_id: string
+          start_date: string | null
+          student_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          program_id: string
+          start_date?: string | null
+          student_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          program_id?: string
+          start_date?: string | null
+          student_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_student_programs_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "coach_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_student_programs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "coach_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_student_programs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coach_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_students: {
         Row: {
           birth_date: string | null
@@ -1415,6 +1523,138 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      coach_workout_exercises: {
+        Row: {
+          created_at: string
+          group_key: string | null
+          group_type: string
+          id: string
+          load_text: string | null
+          media_url: string | null
+          muscle_group: string | null
+          name: string
+          notes: string | null
+          order_index: number
+          reps: string
+          rest_seconds: number
+          sets: number
+          source: string
+          tempo: string | null
+          tenant_id: string
+          thumb_url: string | null
+          updated_at: string
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_key?: string | null
+          group_type?: string
+          id?: string
+          load_text?: string | null
+          media_url?: string | null
+          muscle_group?: string | null
+          name: string
+          notes?: string | null
+          order_index?: number
+          reps?: string
+          rest_seconds?: number
+          sets?: number
+          source?: string
+          tempo?: string | null
+          tenant_id: string
+          thumb_url?: string | null
+          updated_at?: string
+          workout_id: string
+        }
+        Update: {
+          created_at?: string
+          group_key?: string | null
+          group_type?: string
+          id?: string
+          load_text?: string | null
+          media_url?: string | null
+          muscle_group?: string | null
+          name?: string
+          notes?: string | null
+          order_index?: number
+          reps?: string
+          rest_seconds?: number
+          sets?: number
+          source?: string
+          tempo?: string | null
+          tenant_id?: string
+          thumb_url?: string | null
+          updated_at?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_workout_exercises_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coach_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_workout_exercises_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "coach_workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_workouts: {
+        Row: {
+          created_at: string
+          day_label: string | null
+          id: string
+          name: string
+          notes: string | null
+          order_index: number
+          program_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_label?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          order_index?: number
+          program_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_label?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          order_index?: number
+          program_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_workouts_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "coach_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_workouts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coach_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultant_students: {
         Row: {
@@ -6700,6 +6940,14 @@ export type Database = {
       coach_redeem_invite: {
         Args: { _full_name: string; _token: string }
         Returns: Json
+      }
+      coach_student_can_view_program: {
+        Args: { _program_id: string }
+        Returns: boolean
+      }
+      coach_student_owns_record: {
+        Args: { _student_id: string }
+        Returns: boolean
       }
       confirm_authorized_contact: {
         Args: {
