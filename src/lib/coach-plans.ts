@@ -1,4 +1,4 @@
-export type CoachPlanId = "start" | "pro" | "business" | "enterprise";
+export type CoachPlanId = "free" | "start" | "pro" | "business" | "enterprise";
 
 export interface CoachPlan {
   id: CoachPlanId;
@@ -12,6 +12,23 @@ export interface CoachPlan {
 }
 
 export const COACH_PLANS: CoachPlan[] = [
+  {
+    id: "free",
+    name: "Free",
+    price: "R$ 0",
+    priceNote: "/mês",
+    studentLimit: 1,
+    tagline: "Teste o método com 1 aluno e conheça a plataforma sem custo.",
+    features: [
+      "1 aluno ativo",
+      "Editor completo de treinos",
+      "Biblioteca oficial de exercícios",
+      "Banco ST Coach (vídeos)",
+      "Convite de aluno por link ou QR",
+      "App do aluno",
+      "Sem cartão de crédito",
+    ],
+  },
   {
     id: "start",
     name: "Start",
