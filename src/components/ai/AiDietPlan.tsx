@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Clock, Utensils, ChevronDown, ChevronRight, Star, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
+import { computeBaseMacros } from "../../../supabase/functions/_shared/diet-macros";
 
 interface ParsedOption {
   label: string;
@@ -135,7 +136,13 @@ export function parseDiet(content: string): { meals: ParsedMeal[]; notes: string
   for (const meal of meals) {
     const base = meal.options.find((o) => o.isBase) ?? meal.options[0];
     if (!base) continue;
-    if (!meal.kcal || !meal.protein || !meal.carbs || !meal.fat) {
+    const computed = computeBaseMacros(base.text);
+    if (computed.coverage >= 0.7 && computed.macro.kcal > 0) {
+      meal.kcal = Math.round(computed.macro.kcal);
+      meal.protein = Math.round(computed.macro.p);
+      meal.carbs = Math.round(computed.macro.c);
+      meal.fat = Math.round(computed.macro.f);
+    } else if (!meal.kcal || !meal.protein || !meal.carbs || !meal.fat) {
       applyMeta(meal, base.text);
     }
   }
