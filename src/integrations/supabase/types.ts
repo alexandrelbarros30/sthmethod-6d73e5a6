@@ -1147,6 +1147,269 @@ export type Database = {
         }
         Relationships: []
       }
+      coach_invites: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          expires_at: string
+          full_name: string | null
+          id: string
+          max_uses: number
+          phone: string | null
+          revoked_at: string | null
+          tenant_id: string
+          token: string
+          trainer_id: string | null
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          max_uses?: number
+          phone?: string | null
+          revoked_at?: string | null
+          tenant_id: string
+          token?: string
+          trainer_id?: string | null
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          max_uses?: number
+          phone?: string | null
+          revoked_at?: string | null
+          tenant_id?: string
+          token?: string
+          trainer_id?: string | null
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_invites_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coach_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_invites_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_members: {
+        Row: {
+          active: boolean
+          created_at: string
+          cref: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["coach_member_role"]
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          cref?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["coach_member_role"]
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          cref?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["coach_member_role"]
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coach_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_students: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          gender: string | null
+          goal: string | null
+          height_cm: number | null
+          id: string
+          injuries: string | null
+          last_access_at: string | null
+          notes: string | null
+          onboarding_completed_at: string | null
+          pathologies: string | null
+          phone: string | null
+          photos: Json
+          status: Database["public"]["Enums"]["coach_student_status"]
+          tenant_id: string
+          terms_accepted_at: string | null
+          trainer_id: string | null
+          updated_at: string
+          user_id: string | null
+          weight_kg: number | null
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          gender?: string | null
+          goal?: string | null
+          height_cm?: number | null
+          id?: string
+          injuries?: string | null
+          last_access_at?: string | null
+          notes?: string | null
+          onboarding_completed_at?: string | null
+          pathologies?: string | null
+          phone?: string | null
+          photos?: Json
+          status?: Database["public"]["Enums"]["coach_student_status"]
+          tenant_id: string
+          terms_accepted_at?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          weight_kg?: number | null
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          gender?: string | null
+          goal?: string | null
+          height_cm?: number | null
+          id?: string
+          injuries?: string | null
+          last_access_at?: string | null
+          notes?: string | null
+          onboarding_completed_at?: string | null
+          pathologies?: string | null
+          phone?: string | null
+          photos?: Json
+          status?: Database["public"]["Enums"]["coach_student_status"]
+          tenant_id?: string
+          terms_accepted_at?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_students_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coach_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_students_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_tenants: {
+        Row: {
+          active: boolean
+          business_name: string
+          created_at: string
+          cref: string | null
+          email: string | null
+          id: string
+          legal_name: string | null
+          logo_url: string | null
+          owner_id: string
+          phone: string | null
+          plan: Database["public"]["Enums"]["coach_plan"]
+          primary_color: string
+          secondary_color: string
+          student_limit: number
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_name: string
+          created_at?: string
+          cref?: string | null
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          owner_id: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["coach_plan"]
+          primary_color?: string
+          secondary_color?: string
+          student_limit?: number
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_name?: string
+          created_at?: string
+          cref?: string | null
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          owner_id?: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["coach_plan"]
+          primary_color?: string
+          secondary_color?: string
+          student_limit?: number
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       consultant_students: {
         Row: {
           consultant_id: string
@@ -6425,6 +6688,13 @@ export type Database = {
         }
         Returns: Json
       }
+      coach_invite_preview: { Args: { _token: string }; Returns: Json }
+      coach_is_member: { Args: { _tenant_id: string }; Returns: boolean }
+      coach_is_owner: { Args: { _tenant_id: string }; Returns: boolean }
+      coach_redeem_invite: {
+        Args: { _full_name: string; _token: string }
+        Returns: Json
+      }
       confirm_authorized_contact: {
         Args: {
           _authorized: boolean
@@ -6605,6 +6875,9 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_show"
+      coach_member_role: "owner" | "professor"
+      coach_plan: "start" | "pro" | "business" | "enterprise"
+      coach_student_status: "pending" | "active" | "inactive"
       medical_record_section:
         | "anamnese"
         | "evolucao_clinica"
@@ -6771,6 +7044,9 @@ export const Constants = {
         "cancelled",
         "no_show",
       ],
+      coach_member_role: ["owner", "professor"],
+      coach_plan: ["start", "pro", "business", "enterprise"],
+      coach_student_status: ["pending", "active", "inactive"],
       medical_record_section: [
         "anamnese",
         "evolucao_clinica",
