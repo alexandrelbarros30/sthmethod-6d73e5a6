@@ -372,6 +372,9 @@ const CoachStudents = () => {
                   {s.status === "active" ? "Ativo" : s.status}
                 </Badge>
               </div>
+              <Badge variant={s.user_id ? "secondary" : "outline"} className="mt-2 rounded-full text-[10px]">
+                {s.user_id ? "Login ativo" : "Sem login"}
+              </Badge>
               {s.goal && <p className="mt-3 text-[12px] text-muted-foreground font-light">Objetivo: {s.goal}</p>}
               <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
                 <div className="min-w-0">
@@ -388,6 +391,11 @@ const CoachStudents = () => {
                 </div>
                 <Button variant="ghost" size="sm" className="rounded-full text-[11px] shrink-0" onClick={() => openPeriod(s)}>
                   <CalendarClock className="mr-1 h-3.5 w-3.5" /> Vigência
+                </Button>
+              </div>
+              <div className="mt-2">
+                <Button variant="outline" size="sm" className="w-full rounded-full text-[11px]" onClick={() => openAccess(s)}>
+                  <KeyRound className="mr-1 h-3.5 w-3.5" /> {s.user_id ? "Gerenciar acesso" : "Criar acesso"}
                 </Button>
               </div>
             </Card>
