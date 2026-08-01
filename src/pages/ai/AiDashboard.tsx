@@ -119,7 +119,20 @@ export default function AiDashboard() {
   const weight = measurements?.[0]?.weight_kg ?? profile?.weight_kg ?? null;
   const prevWeight = measurements?.[1]?.weight_kg ?? null;
   const weightDelta = weight != null && prevWeight != null ? Number((weight - prevWeight).toFixed(1)) : null;
-  const insightText = insight?.content?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "";
+  const insightText =
+    insight?.content
+      ?.replace(/```[\s\S]*?```/g, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/^\s{0,3}#{1,6}\s*/gm, "")
+      .replace(/^\s{0,3}>\s?/gm, "")
+      .replace(/^\s{0,3}([-*+]|\d+\.)\s+/gm, "")
+      .replace(/^\s*([-*_]\s*){3,}\s*$/gm, " ")
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/(\*\*\*|\*\*|__|[*_~`])/g, "")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim() ?? "";
 
   return (
     <AiShell title={`Olá, ${firstName}`} subtitle="Sua inteligência de nutrição, treino e evolução.">
@@ -242,7 +255,7 @@ export default function AiDashboard() {
             </span>
             <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-3 line-clamp-3 max-w-[70ch] text-[15px] font-light leading-[1.7] tracking-[0.01em] text-muted-foreground">
             {insightText || "Registre alguns dias e a inteligência gera sua leitura de tendência automaticamente."}
           </p>
         </Link>
