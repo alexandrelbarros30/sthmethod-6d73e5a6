@@ -102,7 +102,7 @@ const WeeklyInsightCard = () => {
   const weightColor = wd == null ? "text-muted-foreground" : wd < 0 ? "text-emerald-500" : wd > 0 ? "text-amber-500" : "text-muted-foreground";
 
   return (
-    <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden relative animate-fade-in">
+    <div className="mb-6 rounded-3xl border border-border/40 bg-card overflow-hidden relative animate-fade-in">
       <button
         onClick={dismiss}
         aria-label="Fechar resumo semanal"

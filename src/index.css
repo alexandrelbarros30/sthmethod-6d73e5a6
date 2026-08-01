@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@500;600;700&family=Manrope:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -209,6 +209,98 @@ html, body {
 
     background: hsl(240 9% 96%);
     color-scheme: light;
+  }
+
+  /* ── Graphite Pulse — home do aluno, tech dark + neon green ── */
+  .theme-graphite-pulse {
+    --background: 0 0% 7%;             /* #111111 */
+    --foreground: 0 0% 88%;            /* #e0e0e0 */
+
+    --card: 0 0% 10%;                  /* #1a1a1a */
+    --card-foreground: 0 0% 92%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 92%;
+
+    --primary: 158 100% 41%;           /* #00d084 */
+    --primary-foreground: 0 0% 7%;
+
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 0 0% 82%;
+
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 166 76% 64%;            /* #5eead4 */
+    --accent-foreground: 0 0% 7%;
+
+    --destructive: 0 65% 52%;
+    --destructive-foreground: 0 0% 96%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 16%;
+    --ring: 158 100% 41%;
+
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 158 100% 41%;
+    --sidebar-primary-foreground: 0 0% 7%;
+    --sidebar-accent: 0 0% 13%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 158 100% 41%;
+
+    --glow: 158 100% 41%;
+    --surface: 0 0% 10%;
+    --surface-hover: 0 0% 14%;
+    --gradient-start: 158 100% 41%;
+    --gradient-end: 166 76% 64%;
+    --text-subtle: 0 0% 50%;
+
+    --success: 158 100% 41%;
+    --success-foreground: 0 0% 7%;
+    --warning: 35 80% 55%;
+    --warning-foreground: 0 0% 7%;
+    --info: 166 76% 64%;
+    --info-foreground: 0 0% 7%;
+
+    --plan-entry: 185 55% 42%;
+    --plan-mid: 42 80% 48%;
+    --plan-premium: 270 50% 55%;
+
+    --gold: 42 70% 50%;
+    --gold-light: 42 60% 65%;
+    --gold-dark: 38 72% 38%;
+
+    --brand: 158 100% 41%;
+    --brand-foreground: 0 0% 7%;
+
+    background: hsl(var(--background));
+    color-scheme: dark;
+  }
+
+  /* ── Graphite Pulse overrides — neutraliza regras do STH light premium
+       quando a home do aluno está no tema dark tech. ── */
+  html.theme-sth-green .theme-graphite-pulse,
+  html.theme-sth-green .theme-graphite-pulse [role="dialog"],
+  html.theme-sth-green .theme-graphite-pulse [data-radix-popper-content-wrapper] {
+    font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  html.theme-sth-green .theme-graphite-pulse h1,
+  html.theme-sth-green .theme-graphite-pulse h2,
+  html.theme-sth-green .theme-graphite-pulse h3,
+  html.theme-sth-green .theme-graphite-pulse h4 {
+    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  html.theme-sth-green .theme-graphite-pulse .rounded-3xl.border.bg-background,
+  html.theme-sth-green .theme-graphite-pulse .rounded-2xl.border.bg-card,
+  html.theme-sth-green .theme-graphite-pulse .rounded-xl.border.bg-card,
+  html.theme-sth-green .theme-graphite-pulse .rounded-lg.border.bg-card {
+    background: hsl(var(--card)) !important;
+    border-color: hsl(var(--border)) !important;
+    box-shadow: none !important;
   }
 }
 

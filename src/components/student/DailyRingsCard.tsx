@@ -61,7 +61,7 @@ const DailyRingsCard = ({ kcalConsumed, kcalGoal, proteinConsumed, proteinGoal, 
   ];
 
   return (
-    <div className="mb-6 rounded-3xl border border-border/40 bg-background p-4 sm:p-6">
+    <div className="mb-6 rounded-3xl border border-border/40 bg-card p-4 sm:p-6">
       <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-4">Anéis do dia</p>
       <div className="flex items-center gap-3 sm:gap-6">
         <div className="relative shrink-0" style={{ width: RING_SIZE, height: RING_SIZE }}>

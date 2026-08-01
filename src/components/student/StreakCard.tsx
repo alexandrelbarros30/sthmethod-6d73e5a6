@@ -51,7 +51,7 @@ const StreakCard = () => {
   const best = Math.max(streak, data?.best ?? 0);
 
   return (
-    <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden">
+    <div className="mb-6 rounded-3xl border border-border/40 bg-card overflow-hidden">
       <div className="p-6 flex items-center gap-5">
         <div className="relative w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-rose-500/20 border border-orange-500/30">
           <Flame className="w-6 h-6 text-orange-500" strokeWidth={2} fill={streak > 0 ? "currentColor" : "none"} />

@@ -78,21 +78,21 @@ const DailyHeroCard = ({ nextMeal, isMealCompleted, waterConsumedMl, waterGoalL,
   const Icon = action.icon;
   return (
     <Link to={action.href} className="block mb-6 group">
-      <div className="rounded-3xl bg-foreground text-background overflow-hidden relative shadow-[0_18px_40px_-20px_hsl(var(--foreground)/0.5)]">
+      <div className="rounded-3xl bg-card text-card-foreground border border-border/40 overflow-hidden relative">
         <div className="p-6 flex items-center gap-5">
           <div className="w-14 h-14 shrink-0 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center group-hover:scale-105 transition-transform">
             <Icon className="w-6 h-6" strokeWidth={1.8} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-background/55 flex items-center gap-1.5">
+            <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-1.5">
               <Clock className="w-3 h-3" /> {action.eyebrow}
             </p>
-            <h2 className="text-[18px] font-semibold text-background tracking-[-0.02em] leading-tight mt-1.5 truncate">
+            <h2 className="text-[18px] font-semibold text-card-foreground tracking-[-0.02em] leading-tight mt-1.5 truncate">
               {action.title}
             </h2>
-            <p className="text-[12px] text-background/60 font-light mt-1 truncate">{action.sub}</p>
+            <p className="text-[12px] text-muted-foreground font-light mt-1 truncate">{action.sub}</p>
           </div>
-          <div className="shrink-0 flex items-center gap-1 text-[12px] font-medium text-background">
+          <div className="shrink-0 flex items-center gap-1 text-[12px] font-medium text-card-foreground">
             <span className="hidden sm:inline">{action.cta}</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
           </div>
