@@ -444,6 +444,56 @@ const CoachStudents = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!access} onOpenChange={(v) => !v && setAccess(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="tracking-[-0.02em]">
+              {access?.user_id ? "Gerenciar acesso" : "Criar acesso do aluno"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-[12px] text-muted-foreground font-light">{access?.full_name}</p>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-muted-foreground">E-mail de login</Label>
+              <Input
+                type="email"
+                value={accessForm.email}
+                onChange={(e) => setAccessForm({ ...accessForm, email: e.target.value })}
+                disabled={!!access?.user_id}
+                maxLength={255}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-muted-foreground">
+                {access?.user_id ? "Nova senha" : "Senha inicial"} (mín. 8 caracteres)
+              </Label>
+              <Input
+                type="text"
+                value={accessForm.password}
+                onChange={(e) => setAccessForm({ ...accessForm, password: e.target.value })}
+                minLength={8}
+                maxLength={72}
+              />
+            </div>
+            <Button
+              onClick={() => runAccess(access?.user_id ? "reset_password" : "create_login")}
+              disabled={saving}
+              className="w-full rounded-full"
+            >
+              {saving ? "Aguarde..." : access?.user_id ? "Redefinir senha" : "Criar acesso"}
+            </Button>
+            {access?.user_id && (
+              <Button variant="outline" onClick={() => runAccess("send_reset_email")} disabled={saving} className="w-full rounded-full text-[12px]">
+                Enviar e-mail de redefinição ao aluno
+              </Button>
+            )}
+            <p className="text-[11px] text-muted-foreground font-light">
+              O aluno acessa em <span className="font-medium">/coach/entrar</span> e pode trocar a própria senha na área dele.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </CoachLayout>
   );
 };
