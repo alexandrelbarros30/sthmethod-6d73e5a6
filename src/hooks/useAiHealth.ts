@@ -22,6 +22,7 @@ export interface HealthSource {
 
 export const HEALTH_PROVIDERS = [
   { id: "apple_health", label: "Apple Saúde", hint: "iPhone e Apple Watch", icon: "" },
+  { id: "samsung_health", label: "Samsung Health (Galaxy Watch)", hint: "Galaxy Watch 4/5/6/7 e Ultra via Health Connect", icon: "⌚" },
   { id: "google_fit", label: "Google Fit / Health Connect", hint: "Android e Wear OS", icon: "🤖" },
   { id: "garmin", label: "Garmin Connect", hint: "Relógios Garmin", icon: "⌚" },
   { id: "manual", label: "Registro manual", hint: "Você digita seus dados", icon: "✍️" },
@@ -122,29 +123,60 @@ export function useAiHealth() {
   return { user, loading, days, sources, refresh, connect, disconnect, saveDay, importRows };
 }
 
+/** Aliases de cabeçalho aceitos (inclui exportações do Samsung Health / Health Connect). */
+const HEADER_ALIASES: Record<keyof Omit<HealthDay, "id" | "provider">, string[]> = {
+  day: ["day", "date", "data", "start_time", "create_time", "com.samsung.health.step_count.create_time"],
+  steps: ["steps", "passos", "step_count", "count", "com.samsung.health.step_count.count", "total_steps"],
+  active_kcal: ["active_kcal", "calorie", "calories", "active_calorie", "com.samsung.health.step_count.calorie", "kcal"],
+  sleep_minutes: ["sleep_minutes", "sleep", "sono", "duration_min", "com.samsung.health.sleep.duration"],
+  resting_hr: ["resting_hr", "heart_rate", "fc", "com.samsung.health.heart_rate.heart_rate", "resting_heart_rate"],
+  weight_kg: ["weight_kg", "weight", "peso", "com.samsung.health.weight.weight"],
+};
+
 /** Converte CSV simples em linhas de saúde. Cabeçalho aceito: day,steps,active_kcal,sleep_minutes,resting_hr,weight_kg */
 export function parseHealthCsv(text: string) {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+  let lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+  // Samsung Health exporta uma primeira linha de metadados antes do cabeçalho real.
+  if (lines.length > 1 && !/day|date|data|steps|count|weight|heart|sleep/i.test(lines[0])) lines = lines.slice(1);
   if (lines.length < 2) return [];
-  const header = lines[0].split(/[,;]/).map((h) => h.trim().toLowerCase());
-  const idx = (name: string) => header.indexOf(name);
+  const header = lines[0].split(/[,;]/).map((h) => h.trim().toLowerCase().replace(/^"|"$/g, ""));
+  const idx = (key: keyof typeof HEADER_ALIASES) => {
+    for (const alias of HEADER_ALIASES[key]) {
+      const i = header.indexOf(alias);
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
   const num = (v?: string) => {
-    const n = Number((v ?? "").replace(",", ".").trim());
+    const n = Number((v ?? "").replace(/"/g, "").replace(",", ".").trim());
     return Number.isFinite(n) && (v ?? "").trim() !== "" ? n : null;
   };
+  const toDay = (raw: string) => {
+    const v = raw.replace(/"/g, "").trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+    const br = v.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+    return null;
+  };
   const out: (Partial<HealthDay> & { day: string })[] = [];
+  const dayIdx = idx("day");
   for (const line of lines.slice(1)) {
     const cols = line.split(/[,;]/);
-    const rawDay = (cols[idx("day") >= 0 ? idx("day") : 0] ?? "").trim();
-    const day = /^\d{4}-\d{2}-\d{2}$/.test(rawDay) ? rawDay : null;
+    const day = toDay(cols[dayIdx >= 0 ? dayIdx : 0] ?? "");
     if (!day) continue;
+    const pick = (key: keyof typeof HEADER_ALIASES) => {
+      const i = idx(key);
+      return i >= 0 ? (num(cols[i]) as number | null) : null;
+    };
+    const sleepRaw = pick("sleep_minutes");
     out.push({
       day,
-      steps: idx("steps") >= 0 ? (num(cols[idx("steps")]) as number | null) : null,
-      active_kcal: idx("active_kcal") >= 0 ? (num(cols[idx("active_kcal")]) as number | null) : null,
-      sleep_minutes: idx("sleep_minutes") >= 0 ? (num(cols[idx("sleep_minutes")]) as number | null) : null,
-      resting_hr: idx("resting_hr") >= 0 ? (num(cols[idx("resting_hr")]) as number | null) : null,
-      weight_kg: idx("weight_kg") >= 0 ? (num(cols[idx("weight_kg")]) as number | null) : null,
+      steps: pick("steps"),
+      active_kcal: pick("active_kcal"),
+      // valores acima de 24h vêm em milissegundos (padrão Samsung Health)
+      sleep_minutes: sleepRaw != null && sleepRaw > 1440 ? Math.round(sleepRaw / 60000) : sleepRaw,
+      resting_hr: pick("resting_hr"),
+      weight_kg: pick("weight_kg"),
     });
   }
   return out;
