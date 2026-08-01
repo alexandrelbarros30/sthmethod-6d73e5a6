@@ -83,6 +83,9 @@ const CoachPlans = lazyWithRetry(() => import("./pages/coach/CoachPlans"));
 const CoachSettings = lazyWithRetry(() => import("./pages/coach/CoachSettings"));
 const CoachPublicInvite = lazyWithRetry(() => import("./pages/coach/CoachPublicInvite"));
 const CoachStudentHome = lazyWithRetry(() => import("./pages/coach/CoachStudentHome"));
+const CoachPrograms = lazyWithRetry(() => import("./pages/coach/CoachPrograms"));
+const CoachProgramEditor = lazyWithRetry(() => import("./pages/coach/CoachProgramEditor"));
+const CoachStudentWorkouts = lazyWithRetry(() => import("./pages/coach/CoachStudentWorkouts"));
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
 import StudentRecipes from "./pages/student/StudentRecipes";
@@ -311,10 +314,13 @@ const App = () => (
             <Route path="/coach/convite/:token" element={<CoachPublicInvite />} />
             <Route path="/coach/painel" element={<CoachRoute audience="professional"><CoachDashboard /></CoachRoute>} />
             <Route path="/coach/alunos" element={<CoachRoute audience="professional"><CoachStudents /></CoachRoute>} />
+            <Route path="/coach/treinos" element={<CoachRoute audience="professional"><CoachPrograms /></CoachRoute>} />
+            <Route path="/coach/treinos/:programId" element={<CoachRoute audience="professional"><CoachProgramEditor /></CoachRoute>} />
             <Route path="/coach/convites" element={<CoachRoute audience="professional"><CoachInvites /></CoachRoute>} />
             <Route path="/coach/planos" element={<CoachRoute audience="professional"><CoachPlans /></CoachRoute>} />
             <Route path="/coach/configuracoes" element={<CoachRoute audience="professional"><CoachSettings /></CoachRoute>} />
             <Route path="/coach/aluno" element={<CoachRoute audience="student"><CoachStudentHome /></CoachRoute>} />
+            <Route path="/coach/aluno/treinos" element={<CoachRoute audience="student"><CoachStudentWorkouts /></CoachRoute>} />
             {/* MEAD aliases — landing oficial */}
             <Route path="/mead/login" element={<CasAuthProvider><CasLogin /></CasAuthProvider>} />
             <Route path="/mead/cadastro" element={<CasAuthProvider><CasRegister /></CasAuthProvider>} />
