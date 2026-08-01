@@ -153,6 +153,7 @@ Deno.serve(async (req) => {
     const mode = (body?.mode as 'create' | 'revise') ?? 'create';
     const instruction = typeof body?.instruction === 'string' ? body.instruction.slice(0, 2000) : '';
     const exceptionReason = typeof body?.exception_reason === 'string' ? body.exception_reason.slice(0, 400) : '';
+    const fileIds: string[] = Array.isArray(body?.file_ids) ? body.file_ids.filter((x: unknown) => typeof x === 'string').slice(0, 4) : [];
     if (!kind || !PROMPTS[kind]) return json({ error: 'kind inválido' }, 400);
 
     // ===== Admin bypass (testes internos) =====
@@ -225,6 +226,7 @@ Deno.serve(async (req) => {
       : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
 
     const content = await callAi(PROMPTS[kind], userPrompt);
+
 
     let saved;
     if (mode === 'revise') {
