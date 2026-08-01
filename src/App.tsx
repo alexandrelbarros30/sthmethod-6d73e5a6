@@ -208,6 +208,7 @@ const AiHealth = lazyWithRetry(() => import("./pages/ai/AiHealth"));
 const AiCoaches = lazyWithRetry(() => import("./pages/ai/AiCoaches"));
 const AiFood = lazyWithRetry(() => import("./pages/ai/AiFood"));
 const AiProfile = lazyWithRetry(() => import("./pages/ai/AiProfile"));
+const AiLeituraVisual = lazyWithRetry(() => import("./pages/ai/AiLeituraVisual"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
@@ -263,6 +264,7 @@ const App = () => (
             <Route path="/ai/app/coaches" element={<Suspense fallback={<LazyFallback />}><AiCoaches /></Suspense>} />
             <Route path="/ai/app/diario" element={<Suspense fallback={<LazyFallback />}><AiFood /></Suspense>} />
             <Route path="/ai/app/perfil" element={<Suspense fallback={<LazyFallback />}><AiProfile /></Suspense>} />
+            <Route path="/ai/leitura/:id" element={<Suspense fallback={<LazyFallback />}><AiLeituraVisual /></Suspense>} />
             <Route path="/ai/app/:slug" element={<Suspense fallback={<LazyFallback />}><AiModule /></Suspense>} />
             <Route path="/ai/assinatura" element={<Suspense fallback={<LazyFallback />}><AiSubscription /></Suspense>} />
             <Route path="/login" element={<Login />} />
