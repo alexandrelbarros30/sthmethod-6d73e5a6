@@ -317,16 +317,6 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
               placeholder="Gosta de tapioca, salmão, ovos..."
             />
           </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Observações livres (prompt)</Label>
-            <Textarea
-              rows={4}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ex: dividir carbo em 4 refeições, colocar pré-treino sólido, ceia com whey + pasta de amendoim..."
-            />
-          </div>
         </div>
 
         <div className="mt-4 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-3">
