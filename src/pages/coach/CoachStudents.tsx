@@ -63,7 +63,7 @@ const CoachStudents = () => {
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", birth_date: "", gender: "",
     height_cm: "", weight_kg: "", goal: "", notes: "",
-    start_date: today(), end_date: "",
+    start_date: today(), end_date: "", password: "",
   });
 
   const { data: students } = useQuery({
@@ -72,7 +72,7 @@ const CoachStudents = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coach_students")
-        .select("id, full_name, email, phone, goal, status, created_at, start_date, end_date")
+        .select("id, full_name, email, phone, goal, status, created_at, start_date, end_date, user_id")
         .eq("tenant_id", tenantId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -93,7 +93,13 @@ const CoachStudents = () => {
     if (!tenantId) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("coach_students").insert({
+      if (form.password && form.password.length < 8) {
+        throw new Error("A senha de acesso precisa ter no mínimo 8 caracteres");
+      }
+      if (form.password && !form.email.trim()) {
+        throw new Error("Informe o e-mail para criar o acesso do aluno");
+      }
+      const { data: inserted, error } = await supabase.from("coach_students").insert({
         tenant_id: tenantId,
         full_name: form.full_name.trim(),
         email: form.email.trim() || null,
@@ -106,15 +112,76 @@ const CoachStudents = () => {
         notes: form.notes.trim() || null,
         start_date: form.start_date || null,
         end_date: form.end_date || null,
-      });
+      }).select("id").single();
       if (error) throw error;
-      toast.success("Aluno cadastrado");
+
+      if (form.password && inserted?.id) {
+        const { data: res, error: fnErr } = await supabase.functions.invoke("coach-student-access", {
+          body: {
+            action: "create_login",
+            student_id: inserted.id,
+            email: form.email.trim(),
+            password: form.password,
+          },
+        });
+        if (fnErr || (res as any)?.error) {
+          toast.warning((res as any)?.error || "Aluno criado, mas o acesso não pôde ser gerado");
+        } else {
+          toast.success("Aluno cadastrado com acesso de login");
+        }
+      } else {
+        toast.success("Aluno cadastrado");
+      }
       setOpen(false);
-      setForm({ full_name: "", email: "", phone: "", birth_date: "", gender: "", height_cm: "", weight_kg: "", goal: "", notes: "", start_date: today(), end_date: "" });
+      setForm({ full_name: "", email: "", phone: "", birth_date: "", gender: "", height_cm: "", weight_kg: "", goal: "", notes: "", start_date: today(), end_date: "", password: "" });
       qc.invalidateQueries({ queryKey: ["coach-students"] });
       qc.invalidateQueries({ queryKey: ["coach-dashboard"] });
     } catch (err: any) {
       toast.error(err?.message || "Não foi possível cadastrar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openAccess = (s: any) => {
+    setAccess(s);
+    setAccessForm({ email: s.email || "", password: "" });
+  };
+
+  const runAccess = async (action: "create_login" | "reset_password" | "send_reset_email") => {
+    if (!access) return;
+    if (action !== "send_reset_email" && accessForm.password.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres");
+      return;
+    }
+    if (action === "create_login" && !accessForm.email.trim()) {
+      toast.error("Informe o e-mail de login");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("coach-student-access", {
+        body: {
+          action,
+          student_id: access.id,
+          email: accessForm.email.trim(),
+          password: accessForm.password,
+          redirect_to: `${window.location.origin}/reset-password`,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(
+        action === "create_login"
+          ? "Acesso criado — envie o e-mail e a senha ao aluno"
+          : action === "reset_password"
+            ? "Senha redefinida"
+            : "E-mail de redefinição enviado"
+      );
+      setAccess(null);
+      qc.invalidateQueries({ queryKey: ["coach-students"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível concluir");
     } finally {
       setSaving(false);
     }
