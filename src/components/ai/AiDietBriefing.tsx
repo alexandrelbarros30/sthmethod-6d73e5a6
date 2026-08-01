@@ -42,6 +42,8 @@ function MetricInfo({ label, value, tip }: MetricInfoProps) {
 interface Props {
   profile: AiProfile | null;
   onChange: (brief: string) => void;
+  /** Quando true, exibe apenas o card de Gasto energético total. */
+  compact?: boolean;
 }
 
 const GOAL_TO_OBJECTIVE: Record<string, string> = {
@@ -62,7 +64,7 @@ const GOAL_LABELS: Record<string, string> = {
   saude: "Saúde e rotina",
 };
 
-export default function AiDietBriefing({ profile, onChange }: Props) {
+export default function AiDietBriefing({ profile, onChange, compact = false }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
 
   const [objective, setObjective] = useState("");
@@ -162,6 +164,7 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
 
   return (
     <div className="mb-4 space-y-4">
+      {!compact && (
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -195,6 +198,7 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
           </dl>
         )}
       </Card>
+      )}
 
       <Card className="p-5">
         <div className="flex items-center gap-2">
@@ -242,13 +246,16 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
                 </div>
               ))}
             </div>
+            {!compact && (
             <p className="mt-3 text-xs text-muted-foreground">
               Estes números pré-preenchem o briefing abaixo — você pode ajustar manualmente.
             </p>
+            )}
           </>
         )}
       </Card>
 
+      {!compact && (
       <Card className="p-5">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
@@ -326,6 +333,7 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
           </p>
         </div>
       </Card>
+      )}
     </div>
   );
 }
