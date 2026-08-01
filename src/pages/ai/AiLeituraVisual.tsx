@@ -5,6 +5,7 @@ import LabInterpretationPanel from "@/components/shared/LabInterpretationPanel";
 import { Button } from "@/components/ui/button";
 import { Printer, AlertCircle } from "lucide-react";
 import { aiReportToHtml } from "@/lib/ai-report-html";
+import { extractLabMarkers } from "@/lib/lab-markers";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 
 /**
@@ -37,6 +38,7 @@ export default function AiLeituraVisual() {
   }, [id]);
 
   const html = useMemo(() => aiReportToHtml(row?.content), [row]);
+  const markers = useMemo(() => extractLabMarkers(html), [html]);
 
   useEffect(() => {
     document.title = "Leitura laboratorial · STH METHOD AI";
@@ -80,7 +82,14 @@ export default function AiLeituraVisual() {
         <p className="text-[11px] text-muted-foreground">
           Atualizado em {new Date(row.updated_at).toLocaleString("pt-BR")}
         </p>
-        <LabInterpretationPanel html={html} />
+        {markers.length > 0 ? (
+          <LabInterpretationPanel html={html} />
+        ) : (
+          <p className="rounded-xl border border-border bg-card/60 px-4 py-3 text-[12.5px] font-light leading-relaxed text-muted-foreground">
+            Esta análise não possui quadro laboratorial. Anexe o exame completo ao gerar a análise no app para liberar a
+            interpretação visual.
+          </p>
+        )}
         <p className="text-[11px] font-light leading-relaxed text-muted-foreground">
           Disponível enquanto sua conta permanecer ativa no app. Toda análise e interpretação têm caráter educativo e
           não substituem o acompanhamento com um profissional de saúde.

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
@@ -6,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LabInterpretationPanel from "@/components/shared/LabInterpretationPanel";
 import { aiReportToHtml, cleanAiReport } from "@/lib/ai-report-html";
+import { extractLabMarkers } from "@/lib/lab-markers";
 import { ShieldAlert } from "lucide-react";
 
 interface Props {
@@ -24,20 +26,39 @@ interface Props {
 export default function AiAnalysisReport({ content, generationId, updatedAt }: Props) {
   const clean = useMemo(() => cleanAiReport(content), [content]);
   const html = useMemo(() => aiReportToHtml(content), [content]);
+  const markers = useMemo(() => extractLabMarkers(html), [html]);
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   const url = `${window.location.origin}/ai/leitura/${generationId}`;
+  const openReading = () => {
+    const win = window.open(`/ai/leitura/${generationId}`, "_blank", "noopener");
+    if (!win) navigate(`/ai/leitura/${generationId}`);
+  };
 
   return (
     <div className="mt-5 space-y-5">
-      <LabInterpretationPanel html={html} />
+      {markers.length > 0 ? (
+        <LabInterpretationPanel html={html} />
+      ) : (
+        <Card className="p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground">
+            STHIA · Leitura visual
+          </p>
+          <p className="mt-1.5 text-[12.5px] font-light leading-relaxed text-muted-foreground">
+            Os quadros animados da interpretação laboratorial aparecem quando um exame é anexado na geração da análise.
+            Anexe o exame completo em PDF ou imagem e gere novamente para liberar esta visualização.
+          </p>
+        </Card>
+      )}
 
+      {markers.length > 0 && (
       <div className="flex flex-wrap items-center gap-2">
         <Button
           size="sm"
           variant="outline"
           className="h-8 gap-1.5"
-          onClick={() => window.open(`/ai/leitura/${generationId}`, "_blank", "noopener")}
+          onClick={openReading}
         >
           🌐 Abrir no navegador (imprimir)
         </Button>
@@ -59,6 +80,7 @@ export default function AiAnalysisReport({ content, generationId, updatedAt }: P
           🔗 {copied ? "Link copiado" : "Copiar link"}
         </Button>
       </div>
+      )}
 
       <Card className="p-6 sm:p-8">
         <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground">

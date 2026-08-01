@@ -59,7 +59,9 @@ Estrutura obrigatória:
 3. "## Pontos fortes" e "## Pontos de atenção".
 4. "## Plano dos próximos 60 dias" — 3 a 5 ações objetivas.
 Se houver exames citados pelo usuário, faça apenas leitura educativa de contexto, sem conduta terapêutica.
-Se arquivos de exame laboratorial forem anexados, leia-os integralmente e inclua a seção "## Leitura laboratorial" com os marcadores encontrados, valor, referência e interpretação educativa. Se o laudo parecer incompleto (marcadores ausentes ou páginas faltando), avise explicitamente que a análise foi feita com dados parciais e que o exame completo deve ser solicitado ao laboratório.
+Se arquivos de exame laboratorial forem anexados, leia-os integralmente e inclua OBRIGATORIAMENTE a seção "## Interpretação laboratorial" contendo uma tabela markdown com EXATAMENTE estas colunas e nesta ordem:
+| Marcador | Valor | Referência | Status | Leitura |
+Regras da tabela: uma linha por marcador encontrado; "Valor" com número e unidade (ex: 512 ng/dL); "Referência" com a faixa no formato "240 a 950" ou "< 100"; "Status" apenas com uma destas palavras: Baixo, Ótimo, Atenção ou Alto; "Leitura" com uma frase curta educativa. Nunca use listas no lugar da tabela. Se o laudo parecer incompleto (marcadores ausentes ou páginas faltando), avise explicitamente que a análise foi feita com dados parciais e que o exame completo deve ser solicitado ao laboratório.
 Máximo 900 palavras.`,
 };
 
