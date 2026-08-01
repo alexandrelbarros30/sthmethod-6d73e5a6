@@ -16,6 +16,7 @@ import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
 import AiDietBriefing from "@/components/ai/AiDietBriefing";
 import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import AiDietPlan from "@/components/ai/AiDietPlan";
+import AiAnalysisReport from "@/components/ai/AiAnalysisReport";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -178,14 +179,11 @@ export default function AiModule() {
             Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
           </p>
         ) : (
-          <Card className="mt-5 p-5">
-            <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-table:text-xs">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{current.content}</ReactMarkdown>
-            </article>
-            <p className="mt-4 text-[11px] text-muted-foreground">
-              Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
-            </p>
-          </Card>
+          <AiAnalysisReport
+            content={current.content}
+            generationId={current.id}
+            updatedAt={current.updated_at}
+          />
         )}
         </>
       )}
