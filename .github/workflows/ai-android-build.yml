@@ -89,6 +89,12 @@ jobs:
           console.log(`Android version set to ${versionName} (${versionCode})`);
           NODE
 
+      - name: Use STH AI icon
+        run: |
+          mkdir -p resources
+          cp public/pwa-ai-1024.png resources/icon.png
+          cp public/pwa-ai-1024.png resources/splash.png
+
       - name: Generate app icons & splash
         run: |
           npm install --no-save --legacy-peer-deps @capacitor/assets@^3
