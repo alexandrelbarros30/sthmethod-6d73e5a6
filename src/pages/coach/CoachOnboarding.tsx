@@ -28,7 +28,7 @@ const CoachOnboarding = () => {
   const [phone, setPhone] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#22A05E");
   const [secondaryColor, setSecondaryColor] = useState("#0A0A0A");
-  const [plan, setPlan] = useState<CoachPlanId>((params.get("plano") as CoachPlanId) || "start");
+  const [plan, setPlan] = useState<CoachPlanId>((params.get("plano") as CoachPlanId) || "free");
   const [saving, setSaving] = useState(false);
 
   if (!authLoading && !user) {
@@ -134,7 +134,8 @@ const CoachOnboarding = () => {
                 <SelectContent>
                   {COACH_PLANS.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.name} — {p.price}{p.priceNote} · até {p.studentLimit.toLocaleString("pt-BR")} alunos
+                      {p.name} — {p.price}{p.priceNote} · até {p.studentLimit.toLocaleString("pt-BR")}{" "}
+                      {p.studentLimit === 1 ? "aluno" : "alunos"}
                     </SelectItem>
                   ))}
                 </SelectContent>
