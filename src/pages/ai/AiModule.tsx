@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
