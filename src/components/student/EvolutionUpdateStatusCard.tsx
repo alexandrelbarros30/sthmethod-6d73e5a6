@@ -49,8 +49,8 @@ const EvolutionUpdateStatusCard = () => {
 
   return (
     <Link to="/dashboard/evolution" className="block mb-6 group">
-      <div className="rounded-3xl border border-foreground/30 bg-foreground/[0.04] p-5 flex items-center gap-4 hover:bg-foreground/[0.06] transition-colors">
-        <div className="w-11 h-11 rounded-2xl bg-foreground/10 flex items-center justify-center shrink-0">
+      <div className="rounded-3xl border border-border/40 bg-card p-5 flex items-center gap-4 hover:bg-surface transition-colors">
+        <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
           <Icon className={`w-5 h-5 ${config.accent}`} strokeWidth={1.8} />
         </div>
         <div className="flex-1 min-w-0">
@@ -64,7 +64,7 @@ const EvolutionUpdateStatusCard = () => {
             {config.desc}
           </p>
         </div>
-        <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
+        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
       </div>
     </Link>
   );

@@ -152,7 +152,7 @@ export default function STHFlowCard() {
   }
 
   return (
-    <div className="mb-10 rounded-3xl border border-border/40 bg-background p-7">
+    <div className="mb-10 rounded-3xl border border-border/40 bg-card p-7">
       <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-2">
         <Zap className="w-3 h-3" /> STH Flow
       </div>
