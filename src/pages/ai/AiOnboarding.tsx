@@ -39,6 +39,7 @@ const EMPTY: FormState = {
 };
 
 export default function AiOnboarding() {
+  useSthAiTheme();
   const { user, loading: authLoading } = useAuth() as { user: { id: string } | null; loading?: boolean };
   const navigate = useNavigate();
   const [form, setForm] = useState<FormState>(EMPTY);

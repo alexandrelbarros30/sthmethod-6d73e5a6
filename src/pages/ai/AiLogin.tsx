@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function AiLogin() {
+  useSthAiTheme();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next") || "/ai/app";

@@ -11,6 +11,7 @@ const PILLARS = [
 ];
 
 export default function AiLanding() {
+  useSthAiTheme();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
