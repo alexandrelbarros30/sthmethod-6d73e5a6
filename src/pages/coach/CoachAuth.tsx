@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const CoachAuth = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const redirect = params.get("redirect") || "/coach";
+  const redirect = params.get("redirect") || "/coach/painel";
   const [mode, setMode] = useState<"signin" | "signup">(params.get("modo") === "criar" ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +30,7 @@ const CoachAuth = () => {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { data: { full_name: fullName.trim() }, emailRedirectTo: window.location.origin + "/coach" },
+          options: { data: { full_name: fullName.trim() }, emailRedirectTo: window.location.origin + "/coach/painel" },
         });
         if (error) throw error;
         toast.success("Conta criada. Verifique seu e-mail se a confirmação estiver ativa.");

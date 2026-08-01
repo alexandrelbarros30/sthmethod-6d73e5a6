@@ -38,7 +38,7 @@ const CoachRoute = ({ children, audience }: Props) => {
   }
 
   if (!student) {
-    return <Navigate to={member ? "/coach" : "/coach/comecar"} replace />;
+    return <Navigate to={member ? "/coach/painel" : "/coach/comecar"} replace />;
   }
   return <>{children}</>;
 };

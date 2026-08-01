@@ -34,7 +34,7 @@ const CoachOnboarding = () => {
   if (!authLoading && !user) {
     navigate(`/coach/entrar?modo=criar&redirect=${encodeURIComponent("/coach/comecar")}`, { replace: true });
   }
-  if (!loading && member) navigate("/coach", { replace: true });
+  if (!loading && member) navigate("/coach/painel", { replace: true });
   if (!loading && !member && student) navigate("/coach/aluno", { replace: true });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +59,7 @@ const CoachOnboarding = () => {
       if (error) throw error;
       await qc.invalidateQueries({ queryKey: ["coach-context"] });
       toast.success("Ambiente criado");
-      navigate("/coach", { replace: true });
+      navigate("/coach/painel", { replace: true });
     } catch (err: any) {
       toast.error(err?.message || "Não foi possível criar o ambiente");
     } finally {

@@ -11,7 +11,7 @@ import { useCoachContext } from "@/hooks/useCoachTenant";
 type Item = { to: string; icon: any; label: string };
 
 const PRO_ITEMS: Item[] = [
-  { to: "/coach", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/coach/painel", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/coach/alunos", icon: Users, label: "Alunos" },
   { to: "/coach/convites", icon: UserPlus, label: "Convites" },
   { to: "/coach/planos", icon: CreditCard, label: "Plano" },
