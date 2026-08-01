@@ -130,6 +130,16 @@ export function parseDiet(content: string): { meals: ParsedMeal[]; notes: string
     }
   }
 
+  // Metodologia STH METHOD: kcal/macros da refeição vêm SEMPRE da refeição BASE.
+  // As opções são equivalentes e nunca somam ao total do dia.
+  for (const meal of meals) {
+    const base = meal.options.find((o) => o.isBase) ?? meal.options[0];
+    if (!base) continue;
+    if (!meal.kcal || !meal.protein || !meal.carbs || !meal.fat) {
+      applyMeta(meal, base.text);
+    }
+  }
+
   return { meals: meals.filter((m) => m.options.length > 0), notes };
 }
 
