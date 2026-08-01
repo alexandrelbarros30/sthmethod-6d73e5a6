@@ -48,7 +48,7 @@ function applyMeta(meal: ParsedMeal, meta: string) {
   meal.fat = meal.fat || num(/(?:G|GOR|Gordura)\s*:?\s*(\d+)\s*g/i, meta) || num(/(\d+)\s*g\s*(?:GOR|gordura)/i, meta);
 }
 
-function parseMeals(content: string): ParsedMeal[] {
+export function parseMeals(content: string): ParsedMeal[] {
   const blocks = content
     .split(/<\/p>|<\/h[1-6]>|<br\s*\/?>|\n/gi)
     .map((b) => stripTags(b))
