@@ -18,6 +18,7 @@ REGRAS DE FORMATAÇÃO (invioláveis):
 - Abre aspas dupla no BASE (<strong>"⭐ BASE:</strong>) e fecha aspas dupla no fim da última opção (Opção 6), com <strong>"</strong></p>.
 - CÁLCULO (metodologia STH METHOD): as kcal e os macros do cabeçalho são calculados EXCLUSIVAMENTE sobre a refeição BASE. As opções são construídas para reproduzir esses mesmos valores (±5%) e NUNCA trazem kcal/macros próprios escritos no texto.
 - O somatório das kcal e macros das refeições BASE deve fechar a meta diária informada no briefing (tolerância ±5%). Confira a soma antes de responder.
+- COERÊNCIA ENERGÉTICA (Atwater, obrigatória): em cada cabeçalho, kcal = (P x 4) + (C x 4) + (G x 9). Nunca declare kcal incoerente com os macros da própria refeição.
 - Quantidades sempre explícitas em g/ml/unidades, alimentos em português BR, valores inteiros (sem casas decimais).
 - Nomes típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia.
 - Subtítulos estratégicos entre parênteses (ex.: Ativação Metabólica, Sustentação Anabólica, Carga de Glicogênio, Recuperação Noturna).
