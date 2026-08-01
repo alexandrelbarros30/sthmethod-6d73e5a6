@@ -18,6 +18,7 @@ import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import AiDietPlan from "@/components/ai/AiDietPlan";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const SLUG_TO_KIND: Record<string, AiKind> = {
   cardapio: "diet",
@@ -37,6 +38,7 @@ export default function AiModule() {
   const [examIds, setExamIds] = useState<string[]>([]);
   const [workoutBrief, setWorkoutBrief] = useState("");
   const [dietBrief, setDietBrief] = useState("");
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
@@ -44,63 +46,14 @@ export default function AiModule() {
   const maxRevisions = kind === "analysis" ? 1 : 2;
   const revisionsLeft = current ? Math.max(0, maxRevisions - current.revisions) : maxRevisions;
   const cycleLocked = Boolean(current) && daysLeft > 0;
+  const isWorkoutGuided = kind === "workout" && Boolean(current);
+  const canRequest = !cycleLocked || revisionsLeft > 0;
 
-  async function run(mode: "create" | "revise") {
-    if (!subscription) {
-      navigate("/ai/assinatura");
-      return;
-    }
-    if (mode === "revise" && !instruction.trim()) {
-      toast.error("Descreva o que deseja ajustar.");
-      return;
-    }
-    setBusy(true);
-    const fullInstruction = [kind === "workout" ? workoutBrief : kind === "diet" ? dietBrief : "", instruction.trim()]
-      .filter(Boolean)
-      .join("\n\n");
-    try {
-      const { data, error } = await supabase.functions.invoke("sth-ai-app", {
-        body: { kind, mode, instruction: fullInstruction, file_ids: kind === "analysis" ? examIds : [] },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
-      setInstruction("");
-      await refresh();
-      toast.success(mode === "create" ? "Plano gerado." : "Revisão aplicada.");
-    } catch (e) {
-      toast.error((e as Error)?.message || "Não foi possível gerar agora.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-background">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  return (
-    <AiShell title={mod.title} subtitle={mod.short}>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {current ? (
-          <>
-            <Badge variant="secondary">{daysLeft > 0 ? `${daysLeft} dia(s) no ciclo` : "Novo ciclo liberado"}</Badge>
-            <Badge variant="outline">{revisionsLeft} revisão(ões) disponível(is)</Badge>
-          </>
-        ) : (
-          <Badge variant="outline">Primeira geração</Badge>
-        )}
-      </div>
-
+  const requestForm = (
+    <>
       {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
-
       {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
-
       {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} />}
-
       <Card className="space-y-3 p-5">
         <Textarea
           rows={3}
@@ -130,11 +83,86 @@ export default function AiModule() {
           </p>
         )}
       </Card>
+    </>
+  );
 
+  async function run(mode: "create" | "revise") {
+    if (!subscription) {
+      navigate("/ai/assinatura");
+      return;
+    }
+    if (mode === "revise" && !instruction.trim()) {
+      toast.error("Descreva o que deseja ajustar.");
+      return;
+    }
+    setBusy(true);
+    const fullInstruction = [kind === "workout" ? workoutBrief : kind === "diet" ? dietBrief : "", instruction.trim()]
+      .filter(Boolean)
+      .join("\n\n");
+    try {
+      const { data, error } = await supabase.functions.invoke("sth-ai-app", {
+        body: { kind, mode, instruction: fullInstruction, file_ids: kind === "analysis" ? examIds : [] },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
+      setInstruction("");
+      await refresh();
+      setRequestOpen(false);
+      toast.success(mode === "create" ? "Plano gerado." : "Revisão aplicada.");
+    } catch (e) {
+      toast.error((e as Error)?.message || "Não foi possível gerar agora.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <AiShell title={mod.title} subtitle={mod.short}>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {current ? (
+          <>
+            <Badge variant="secondary">{daysLeft > 0 ? `${daysLeft} dia(s) no ciclo` : "Novo ciclo liberado"}</Badge>
+            <Badge variant="outline">{revisionsLeft} revisão(ões) disponível(is)</Badge>
+          </>
+        ) : (
+          <Badge variant="outline">Primeira geração</Badge>
+        )}
+      </div>
+
+      {isWorkoutGuided ? (
+        <>
+          <div className="mb-4 flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setRequestOpen(true)} disabled={!canRequest}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Solicitar novo treino ou revisão
+            </Button>
+          </div>
+          <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+            <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Novo treino ou revisão</DialogTitle>
+                <DialogDescription>
+                  Revise seu cadastro e a rotina de treino/cardio antes de solicitar.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">{requestForm}</div>
+            </DialogContent>
+          </Dialog>
+        </>
+      ) : (
+        requestForm
+      )}
       {current && (
         <>
         {kind === "workout" && (
-          <div className="mt-5">
+          <div>
             <AiWorkoutProgram content={current.content} />
           </div>
         )}
