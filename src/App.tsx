@@ -75,13 +75,14 @@ import CoachLanding from "./pages/coach/CoachLanding";
 import CoachAuth from "./pages/coach/CoachAuth";
 import CoachOnboarding from "./pages/coach/CoachOnboarding";
 import CoachRoute from "@/components/coach/CoachRoute";
-const CoachDashboard = lazy(() => import("./pages/coach/CoachDashboard"));
-const CoachStudents = lazy(() => import("./pages/coach/CoachStudents"));
-const CoachInvites = lazy(() => import("./pages/coach/CoachInvites"));
-const CoachPlans = lazy(() => import("./pages/coach/CoachPlans"));
-const CoachSettings = lazy(() => import("./pages/coach/CoachSettings"));
-const CoachPublicInvite = lazy(() => import("./pages/coach/CoachPublicInvite"));
-const CoachStudentHome = lazy(() => import("./pages/coach/CoachStudentHome"));
+import { lazyWithRetry } from "@/lib/lazy-retry";
+const CoachDashboard = lazyWithRetry(() => import("./pages/coach/CoachDashboard"));
+const CoachStudents = lazyWithRetry(() => import("./pages/coach/CoachStudents"));
+const CoachInvites = lazyWithRetry(() => import("./pages/coach/CoachInvites"));
+const CoachPlans = lazyWithRetry(() => import("./pages/coach/CoachPlans"));
+const CoachSettings = lazyWithRetry(() => import("./pages/coach/CoachSettings"));
+const CoachPublicInvite = lazyWithRetry(() => import("./pages/coach/CoachPublicInvite"));
+const CoachStudentHome = lazyWithRetry(() => import("./pages/coach/CoachStudentHome"));
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
 import StudentRecipes from "./pages/student/StudentRecipes";
@@ -183,14 +184,14 @@ import LaunchAppPopup from "@/components/LaunchAppPopup";
 import NativeUpdateBanner from "@/components/NativeUpdateBanner";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
-const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
-const AdminDietAI = lazy(() => import("./pages/admin/AdminDietAI"));
-const AdminDietAudit = lazy(() => import("./pages/admin/AdminDietAudit"));
-const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
-const AdminProtocolAI = lazy(() => import("./pages/admin/AdminProtocolAI"));
-const AdminStudentAnalysis = lazy(() => import("./pages/admin/AdminStudentAnalysis"));
-const LeituraLaboratorial = lazy(() => import("./pages/LeituraLaboratorial"));
-const AdminAIHistory = lazy(() => import("./pages/admin/AdminAIHistory"));
+const AdminDiet = lazyWithRetry(() => import("./pages/admin/AdminDiet"));
+const AdminDietAI = lazyWithRetry(() => import("./pages/admin/AdminDietAI"));
+const AdminDietAudit = lazyWithRetry(() => import("./pages/admin/AdminDietAudit"));
+const AdminProtocol = lazyWithRetry(() => import("./pages/admin/AdminProtocol"));
+const AdminProtocolAI = lazyWithRetry(() => import("./pages/admin/AdminProtocolAI"));
+const AdminStudentAnalysis = lazyWithRetry(() => import("./pages/admin/AdminStudentAnalysis"));
+const LeituraLaboratorial = lazyWithRetry(() => import("./pages/LeituraLaboratorial"));
+const AdminAIHistory = lazyWithRetry(() => import("./pages/admin/AdminAIHistory"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
