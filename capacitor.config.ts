@@ -8,9 +8,17 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // direto do preview para hot-reload no celular/emulador.
 const isProduction = process.env.CAP_ENV === 'production';
 
+// Alvo do build nativo. `APP_TARGET=ai` gera o app STH AI (appId/ícone/nome
+// próprios, abre direto em /ai). Sem a variável, gera o app STH METHOD.
+const isAiApp = process.env.APP_TARGET === 'ai';
+
+const previewUrl = isAiApp
+  ? 'https://b584eea6-c842-4d93-86ab-554e2c58d9fb.lovableproject.com/ai?forceHideBadge=true'
+  : 'https://b584eea6-c842-4d93-86ab-554e2c58d9fb.lovableproject.com?forceHideBadge=true';
+
 const config: CapacitorConfig = {
-  appId: 'com.sthmethod.app',
-  appName: 'STH METHOD',
+  appId: isAiApp ? 'com.sthmethod.ai' : 'com.sthmethod.app',
+  appName: isAiApp ? 'STH AI' : 'STH METHOD',
   webDir: 'dist',
   android: {
     // Permite carregar imagens/recursos http legados dentro do WebView
@@ -31,7 +39,7 @@ const config: CapacitorConfig = {
     ? {}
     : {
         server: {
-          url: 'https://b584eea6-c842-4d93-86ab-554e2c58d9fb.lovableproject.com?forceHideBadge=true',
+          url: previewUrl,
           cleartext: true,
         },
       }),

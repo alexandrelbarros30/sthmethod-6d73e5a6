@@ -33,11 +33,15 @@ const isNativeApp = () => {
   return (proto === "capacitor:") || (host === "localhost" && (proto === "https:" || proto === "capacitor:"));
 };
 
+// Alvo do build web/nativo: "ai" = app STH AI (abre direto no /ai).
+const APP_TARGET = (import.meta.env.VITE_APP_TARGET as string | undefined) || "sthmethod";
+const IS_AI_APP = APP_TARGET === "ai";
+
 if (isNativeApp()) {
   const path = window.location.pathname;
   const rootLike = path === "/" || path === "/index.html" || path === "";
   if (rootLike) {
-    window.history.replaceState(null, "", "/login");
+    window.history.replaceState(null, "", IS_AI_APP ? "/ai/app" : "/login");
   }
   // Ativa modo edge-to-edge (tela cheia) no app nativo.
   void enableNativeFullscreen();

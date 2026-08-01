@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useAiManifest } from "./useAiManifest";
 
 /**
  * Aplica a identidade visual oficial do STH METHOD (Apple Light Premium
@@ -6,6 +7,9 @@ import { useEffect } from "react";
  * dialogs/popovers portalizados — igual ao portal do aluno.
  */
 export function useSthAiTheme() {
+  // Identidade PWA própria (STH AI) em todas as telas /ai
+  useAiManifest();
+
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("dark");
