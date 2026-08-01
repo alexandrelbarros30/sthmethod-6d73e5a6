@@ -46,6 +46,8 @@ export default function AiModule() {
   const maxRevisions = kind === "analysis" ? 1 : 2;
   const revisionsLeft = current ? Math.max(0, maxRevisions - current.revisions) : maxRevisions;
   const cycleLocked = Boolean(current) && daysLeft > 0;
+  const isWorkoutGuided = kind === "workout" && Boolean(current);
+  const canRequest = !cycleLocked || revisionsLeft > 0;
 
   async function run(mode: "create" | "revise") {
     if (!subscription) {
@@ -87,6 +89,7 @@ export default function AiModule() {
 
   return (
     <AiShell title={mod.title} subtitle={mod.short}>
+      {/* eslint-disable-next-line */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {current ? (
           <>
