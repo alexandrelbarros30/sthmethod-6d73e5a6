@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Plus, Search, Users } from "lucide-react";
+import { CalendarClock, KeyRound, Plus, Search, Users } from "lucide-react";
 import CoachLayout from "@/components/coach/CoachLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ const CoachStudents = () => {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [period, setPeriod] = useState({ start_date: "", end_date: "" });
+  const [access, setAccess] = useState<any>(null);
+  const [accessForm, setAccessForm] = useState({ email: "", password: "" });
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", birth_date: "", gender: "",
     height_cm: "", weight_kg: "", goal: "", notes: "",
