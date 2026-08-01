@@ -154,6 +154,9 @@ Deno.serve(async (req) => {
     const exceptionReason = typeof body?.exception_reason === 'string' ? body.exception_reason.slice(0, 400) : '';
     if (!kind || !PROMPTS[kind]) return json({ error: 'kind inválido' }, 400);
 
+    // ===== Admin bypass (testes internos) =====
+    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+
     // ===== Assinatura ativa =====
     const { data: sub } = await supabase
       .from('ai_app_subscriptions')
@@ -164,7 +167,7 @@ Deno.serve(async (req) => {
       .order('expires_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!sub) return json({ error: 'subscription_required', message: 'Assinatura do STH Method AI inativa.' }, 402);
+    if (!sub && !isAdmin) return json({ error: 'subscription_required', message: 'Assinatura do STH Method AI inativa.' }, 402);
 
     // ===== Perfil =====
     const { data: profile } = await supabase.from('ai_app_profiles').select('*').eq('user_id', userId).maybeSingle();
