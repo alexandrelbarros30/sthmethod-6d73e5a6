@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
 import { useAiProgress } from "@/hooks/useAiProgress";
+import { useAiOffer } from "@/hooks/useAiGrowth";
+import AiOfferCard from "@/components/ai/AiOfferCard";
 import { Loader2, ArrowRight, Sparkles, ShieldCheck, Flame } from "lucide-react";
 
 const ROUTES: Record<AiKind, string> = {
@@ -17,6 +19,7 @@ const ROUTES: Record<AiKind, string> = {
 export default function AiDashboard() {
   const { profile, subscription, generations, loading, user } = useAiApp();
   const { streak, today, last7 } = useAiProgress();
+  const { offer, dismiss } = useAiOffer();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,7 +60,13 @@ export default function AiDashboard() {
         </Button>
       </Card>
 
-      {!subscription && (
+      {offer && (
+        <div className="mb-4">
+          <AiOfferCard offer={offer} onDismiss={dismiss} />
+        </div>
+      )}
+
+      {!subscription && !offer && (
         <Card className="mb-5 flex flex-col gap-3 border-primary/30 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold">Ative seu plano para gerar seus programas</p>

@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     const email = (auth?.claims as any)?.email as string | undefined;
     if (!userId) return json({ error: 'Unauthorized' }, 401);
 
-    const { plan } = await req.json().catch(() => ({}));
+    const { plan, offer_id: offerId } = await req.json().catch(() => ({}));
     const config = AI_PLANS[plan];
     if (!config) return json({ error: 'Plano inválido' }, 400);
 
@@ -36,9 +36,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY')!,
     );
 
+    // Desconto só é aplicado a partir de uma oferta ativa do próprio usuário (validada no servidor).
+    let discountPct = 0;
+    let offer: { id: string; discount_pct: number } | null = null;
+    if (offerId) {
+      const { data: o } = await admin
+        .from('ai_app_offers')
+        .select('id, plan, discount_pct, status, expires_at')
+        .eq('id', offerId)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (o && o.plan === plan && new Date(o.expires_at) > new Date()) {
+        discountPct = Math.min(30, Math.max(0, Number(o.discount_pct) || 0));
+        offer = { id: o.id, discount_pct: discountPct };
+      }
+    }
+    const amount = Number((config.amount * (1 - discountPct / 100)).toFixed(2));
+
     const { data: record, error } = await admin
       .from('ai_app_subscriptions')
-      .insert({ user_id: userId, plan, amount: config.amount, status: 'pending' })
+      .insert({ user_id: userId, plan, amount, status: 'pending' })
       .select()
       .single();
     if (error) throw error;
@@ -49,10 +67,10 @@ Deno.serve(async (req) => {
     const origin = req.headers.get('origin') || 'https://sthmethod.com.br';
     const preference = {
       items: [{
-        title: config.label,
+        title: discountPct > 0 ? `${config.label} (-${discountPct}%)` : config.label,
         description: 'Assinatura STH METHOD AI',
         quantity: 1,
-        unit_price: config.amount,
+        unit_price: amount,
         currency_id: 'BRL',
       }],
       payer: { email: email || 'usuario@sthmethod.com.br' },
@@ -78,8 +96,11 @@ Deno.serve(async (req) => {
     }
 
     await admin.from('ai_app_subscriptions').update({ external_reference: String(mpData.id) }).eq('id', record.id);
+    if (offer) {
+      await admin.from('ai_app_offers').update({ status: 'used', updated_at: new Date().toISOString() }).eq('id', offer.id);
+    }
 
-    return json({ init_point: mpData.init_point, subscription_id: record.id });
+    return json({ init_point: mpData.init_point, subscription_id: record.id, amount, discount_pct: discountPct });
   } catch (err) {
     console.error('sth-ai-subscribe', err);
     return json({ error: String((err as Error)?.message ?? err) }, 500);

@@ -7,10 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AI_PLANS, useAiApp } from "@/hooks/useAiApp";
+import { useAiOffer } from "@/hooks/useAiGrowth";
+import AiOfferCard from "@/components/ai/AiOfferCard";
 import { Loader2, Check } from "lucide-react";
 
 export default function AiSubscription() {
   const { subscription, loading, user, refresh } = useAiApp();
+  const { offer, dismiss } = useAiOffer();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
@@ -53,6 +56,12 @@ export default function AiSubscription() {
 
   return (
     <AiShell title="Seu plano" subtitle="Assinatura do STH METHOD AI, sem fidelidade.">
+      {offer && (
+        <div className="mb-5">
+          <AiOfferCard offer={offer} onDismiss={dismiss} />
+        </div>
+      )}
+
       {subscription && (
         <Card className="mb-5 flex items-center justify-between gap-3 border-primary/30 bg-primary/5 p-5">
           <div>
