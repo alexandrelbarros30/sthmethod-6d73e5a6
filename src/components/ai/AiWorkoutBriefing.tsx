@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,28 +6,89 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
 import { ClipboardList, Pencil, SlidersHorizontal } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import type { AiProfile } from "@/hooks/useAiApp";
+import {
+  activityLabels,
+  cardioIntensityOptions,
+  objectiveLabels,
+  physicalActivityLevelOptions,
+  trainingIntensityOptions,
+} from "@/lib/form-constants";
 
 interface Props {
   profile: AiProfile | null;
   onChange: (brief: string) => void;
 }
 
-const FIELDS: { key: string; label: string; options: { value: string; label: string }[] }[] = [
+type Field = { key: string; label: string; options: { value: string; label: string }[]; when?: (v: Record<string, string>) => boolean };
+
+const numberOptions = (from: number, to: number, step: number, suffix: string) => {
+  const out: { value: string; label: string }[] = [];
+  for (let i = from; i <= to; i += step) out.push({ value: String(i), label: `${i} ${suffix}` });
+  return out;
+};
+
+// Espelha fielmente a rotina cadastrada na plataforma STH METHOD (src/lib/form-constants.ts)
+const FIELDS: Field[] = [
   {
-    key: "training_days",
-    label: "Dias de treino por semana",
-    options: ["2", "3", "4", "5", "6"].map((v) => ({ value: v, label: `${v}x por semana` })),
+    key: "objective",
+    label: "Objetivo",
+    options: Object.entries(objectiveLabels).map(([value, label]) => ({ value, label })),
   },
   {
-    key: "session_minutes",
-    label: "Tempo por sessão",
+    key: "physical_activity_level",
+    label: "Nível de atividade física (NEAT)",
+    options: physicalActivityLevelOptions.map((o) => ({ value: o.value, label: `${o.label} — ${o.desc}` })),
+  },
+  {
+    key: "activity_type",
+    label: "Atividade física praticada",
+    options: Object.entries(activityLabels).map(([value, label]) => ({ value, label })),
+  },
+  {
+    key: "training_days_per_week",
+    label: "Dias de treino por semana",
+    options: numberOptions(1, 7, 1, "x por semana"),
+    when: (v) => v.activity_type !== "nenhuma",
+  },
+  {
+    key: "training_duration_minutes",
+    label: "Duração do treino",
+    options: numberOptions(15, 180, 15, "minutos"),
+    when: (v) => v.activity_type !== "nenhuma",
+  },
+  {
+    key: "training_intensity",
+    label: "Intensidade do treino",
+    options: trainingIntensityOptions.map((o) => ({ value: o.value, label: `${o.label} — ${o.desc}` })),
+    when: (v) => v.activity_type !== "nenhuma",
+  },
+  {
+    key: "does_cardio",
+    label: "Faz cardio?",
     options: [
-      { value: "30", label: "Até 30 minutos" },
-      { value: "45", label: "45 minutos" },
-      { value: "60", label: "60 minutos" },
-      { value: "90", label: "90 minutos ou mais" },
+      { value: "sim", label: "Sim" },
+      { value: "nao", label: "Não" },
     ],
+  },
+  {
+    key: "cardio_days_per_week",
+    label: "Dias de cardio por semana",
+    options: numberOptions(1, 7, 1, "x por semana"),
+    when: (v) => v.does_cardio === "sim",
+  },
+  {
+    key: "cardio_duration_minutes",
+    label: "Duração do cardio",
+    options: numberOptions(10, 120, 10, "minutos"),
+    when: (v) => v.does_cardio === "sim",
+  },
+  {
+    key: "cardio_intensity",
+    label: "Intensidade do cardio",
+    options: cardioIntensityOptions.map((o) => ({ value: o.value, label: `${o.label} — ${o.desc}` })),
+    when: (v) => v.does_cardio === "sim",
   },
   {
     key: "training_place",
@@ -38,49 +99,6 @@ const FIELDS: { key: string; label: string; options: { value: string; label: str
       { value: "casa_halteres", label: "Em casa com halteres/elásticos" },
       { value: "casa_peso_corpo", label: "Em casa só com peso do corpo" },
       { value: "ar_livre", label: "Ar livre / calistenia" },
-    ],
-  },
-  {
-    key: "split_pref",
-    label: "Divisão preferida",
-    options: [
-      { value: "indiferente", label: "Deixar a IA escolher" },
-      { value: "fullbody", label: "Full body" },
-      { value: "upper_lower", label: "Superior / Inferior" },
-      { value: "push_pull_legs", label: "Push, Pull, Legs" },
-      { value: "abcd", label: "ABCD por grupo muscular" },
-    ],
-  },
-  {
-    key: "muscle_focus",
-    label: "Prioridade muscular",
-    options: [
-      { value: "equilibrado", label: "Equilibrado" },
-      { value: "gluteos_posterior", label: "Glúteos e posterior" },
-      { value: "pernas", label: "Pernas" },
-      { value: "costas_ombros", label: "Costas e ombros" },
-      { value: "peito_bracos", label: "Peito e braços" },
-      { value: "core_cintura", label: "Core e cintura" },
-    ],
-  },
-  {
-    key: "cardio_pref",
-    label: "Cardio na semana",
-    options: [
-      { value: "nenhum", label: "Sem cardio" },
-      { value: "leve", label: "Leve (caminhada)" },
-      { value: "moderado", label: "Moderado (3x por semana)" },
-      { value: "hiit", label: "Intenso / HIIT" },
-    ],
-  },
-  {
-    key: "training_time",
-    label: "Horário do treino",
-    options: [
-      { value: "manha", label: "Manhã" },
-      { value: "tarde", label: "Tarde" },
-      { value: "noite", label: "Noite" },
-      { value: "variavel", label: "Varia bastante" },
     ],
   },
   {
@@ -114,6 +132,7 @@ const LEVEL_LABELS: Record<string, string> = {
 export default function AiWorkoutBriefing({ profile, onChange }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
   const [values, setValues] = useState<Record<string, string>>({});
+  const hydrated = useRef(false);
 
   useEffect(() => {
     const initial: Record<string, string> = {};
@@ -122,8 +141,11 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
       if (raw && f.options.some((o) => o.value === raw)) initial[f.key] = raw;
     }
     setValues(initial);
+    hydrated.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.user_id]);
+
+  const visible = useMemo(() => FIELDS.filter((f) => !f.when || f.when(values)), [values]);
 
   const review = useMemo(
     () =>
@@ -144,16 +166,33 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
     [profile, answers],
   );
 
-  const missing = FIELDS.filter((f) => !values[f.key]);
+  const missing = visible.filter((f) => !values[f.key]);
 
+  // Monta o briefing e persiste as respostas no perfil (os dados da STH AI alimentam a STH METHOD)
   useEffect(() => {
-    const lines = FIELDS.filter((f) => values[f.key]).map((f) => {
-      const opt = f.options.find((o) => o.value === values[f.key]);
-      return `- ${f.label}: ${opt?.label ?? values[f.key]}`;
-    });
-    onChange(lines.length ? `Preferências de treino confirmadas pelo usuário:\n${lines.join("\n")}` : "");
+    const lines = visible
+      .filter((f) => values[f.key])
+      .map((f) => {
+        const opt = f.options.find((o) => o.value === values[f.key]);
+        return `- ${f.label}: ${opt?.label ?? values[f.key]}`;
+      });
+    onChange(lines.length ? `Rotina confirmada pelo usuário (padrão STH METHOD):\n${lines.join("\n")}` : "");
+
+    if (!hydrated.current) {
+      hydrated.current = true;
+      return;
+    }
+    if (!profile?.user_id || !Object.keys(values).length) return;
+    const timer = setTimeout(() => {
+      supabase
+        .from("ai_app_profiles")
+        .update({ answers: { ...(profile.answers ?? {}), ...values } as Record<string, string> })
+        .eq("user_id", profile.user_id)
+        .then(() => undefined);
+    }, 800);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [values]);
+  }, [values, visible]);
 
   return (
     <div className="mb-4 space-y-4">
@@ -195,7 +234,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
             <SlidersHorizontal className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-base font-semibold">Complete para um treino mais preciso</h2>
+            <h2 className="text-base font-semibold">Rotina de treino e cardio</h2>
             <p className="text-xs text-muted-foreground">
               {missing.length ? `${missing.length} campo(s) ainda sem resposta.` : "Todos os campos preenchidos."}
             </p>
@@ -203,7 +242,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {FIELDS.map((f) => (
+          {visible.map((f) => (
             <div key={f.key} className="space-y-1.5">
               <Label className="flex items-center gap-2 text-xs">
                 {f.label}
