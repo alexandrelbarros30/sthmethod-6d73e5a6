@@ -195,6 +195,11 @@ const AdminProtocolAI = lazyWithRetry(() => import("./pages/admin/AdminProtocolA
 const AdminStudentAnalysis = lazyWithRetry(() => import("./pages/admin/AdminStudentAnalysis"));
 const LeituraLaboratorial = lazyWithRetry(() => import("./pages/LeituraLaboratorial"));
 const AdminAIHistory = lazyWithRetry(() => import("./pages/admin/AdminAIHistory"));
+const AiLanding = lazyWithRetry(() => import("./pages/ai/AiLanding"));
+const AiOnboarding = lazyWithRetry(() => import("./pages/ai/AiOnboarding"));
+const AiDashboard = lazyWithRetry(() => import("./pages/ai/AiDashboard"));
+const AiModule = lazyWithRetry(() => import("./pages/ai/AiModule"));
+const AiSubscription = lazyWithRetry(() => import("./pages/ai/AiSubscription"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
@@ -241,6 +246,11 @@ const App = () => (
           <FriendlyErrorBoundary>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/ai" element={<Suspense fallback={<LazyFallback />}><AiLanding /></Suspense>} />
+            <Route path="/ai/onboarding" element={<Suspense fallback={<LazyFallback />}><AiOnboarding /></Suspense>} />
+            <Route path="/ai/app" element={<Suspense fallback={<LazyFallback />}><AiDashboard /></Suspense>} />
+            <Route path="/ai/app/:slug" element={<Suspense fallback={<LazyFallback />}><AiModule /></Suspense>} />
+            <Route path="/ai/assinatura" element={<Suspense fallback={<LazyFallback />}><AiSubscription /></Suspense>} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
