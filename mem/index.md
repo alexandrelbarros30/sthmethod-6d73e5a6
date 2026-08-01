@@ -34,6 +34,7 @@
 - [CAS Engine Architecture](mem://tech/cas-engine-arquitetura) — Direct Gemini API, 7-day cache, FTS+TOC hybrid search, multimodal OCR
 
 ### Features & Modules
+- [STH METHOD AI](mem://features/sth-method-ai-app) — Produto autônomo em /ai: onboarding 2 fases, Cardápio/Treino IA, Central de Análise, paywall MP, tabelas ai_app_*
 - [Student Record](mem://features/prontuario-aluno) — Required NEAT, dynamic training frequency, quick copy
 - [Student Plan History](mem://features/admin/historico-jornada-aluno) — Admin view of current plan, first adhesion, and renewal timeline
 - [Macro Calculator](mem://features/calculadora-macros) — Mifflin-St Jeor, dynamic NEAT, and EAT calculations
