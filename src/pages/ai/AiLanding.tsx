@@ -27,7 +27,7 @@ export default function AiLanding() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Background tech layer */}
-      <div className="ai-tech-grid pointer-events-none absolute inset-0 opacity-[0.03]" />
+      <div className="ai-tech-grid pointer-events-none absolute inset-0 opacity-[0.05]" />
       <div className="pointer-events-none absolute -right-[10%] -top-[10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[120px]" />
       <div className="pointer-events-none absolute -bottom-[10%] -left-[10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[120px]" />
 
