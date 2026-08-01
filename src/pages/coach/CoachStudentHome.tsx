@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, Dumbbell, KeyRound, Target, User } from "lucide-react";
 import CoachLayout from "@/components/coach/CoachLayout";
