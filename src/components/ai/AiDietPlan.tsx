@@ -22,6 +22,9 @@ interface ParsedMeal {
 }
 
 const HEADER_RE = /^\s*Refei[çc][ãa]o\s*(\d+)\s*[:\-–]\s*([^(—\-]+?)(?:\s*\(([^)]*)\))?\s*(?:[—–-]\s*(.*))?$/i;
+// Fallback: cabeçalhos markdown do tipo "### 1. Café da manhã" / "### Almoço (Sustentação) — 12:30 · 750 kcal"
+const MD_HEADER_RE = /^#{2,4}\s*(?:(\d+)[.)]\s*)?([^(—–|]+?)(?:\s*\(([^)]*)\))?\s*(?:[—–]\s*(.*))?$/;
+const MEAL_WORDS = /(desjejum|caf[ée]|cola[çc][ãa]o|almo[çc]o|lanche|pr[ée][- ]?treino|p[óo]s[- ]?treino|jantar|ceia|refei[çc][ãa]o)/i;
 
 function stripTags(html: string) {
   return html
@@ -37,10 +40,20 @@ function num(re: RegExp, s: string) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+function applyMeta(meal: ParsedMeal, meta: string) {
+  meal.time = meal.time ?? meta.match(/(\d{1,2}:\d{2})/)?.[1];
+  meal.kcal = meal.kcal || num(/(\d+)\s*kcal/i, meta);
+  meal.protein = meal.protein || num(/(?:P|PTN|Prote[íi]na)\s*:?\s*(\d+)\s*g/i, meta) || num(/(\d+)\s*g\s*(?:PTN|prote[íi]na)/i, meta);
+  meal.carbs = meal.carbs || num(/(?:C|CHO|Carbo\w*)\s*:?\s*(\d+)\s*g/i, meta) || num(/(\d+)\s*g\s*(?:CHO|carbo\w*)/i, meta);
+  meal.fat = meal.fat || num(/(?:G|GOR|Gordura)\s*:?\s*(\d+)\s*g/i, meta) || num(/(\d+)\s*g\s*(?:GOR|gordura)/i, meta);
+}
+
 function parseMeals(content: string): ParsedMeal[] {
   const blocks = content
-    .split(/<\/p>|\n/gi)
+    .split(/<\/p>|<\/h[1-6]>|<br\s*\/?>|\n/gi)
     .map((b) => stripTags(b))
+    .flatMap((b) => b.split("\n"))
+    .map((b) => b.replace(/\*\*/g, "").trim())
     .filter(Boolean);
 
   const meals: ParsedMeal[] = [];
@@ -50,23 +63,31 @@ function parseMeals(content: string): ParsedMeal[] {
     const line = raw.replace(/^"+|"+$/g, "").trim();
     if (!line) continue;
     const h = line.match(HEADER_RE);
-    if (h) {
+    const mdh = !h && /^#{2,4}\s/.test(line) ? line.match(MD_HEADER_RE) : null;
+    const isMealHeader = h || (mdh && MEAL_WORDS.test(mdh[2] ?? ""));
+    if (isMealHeader) {
+      const g = (h ?? mdh)!;
       const meta = h[4] ?? "";
       currentMeal = {
-        index: parseInt(h[1], 10),
-        name: h[2].trim(),
-        subtitle: h[3]?.trim(),
-        time: meta.match(/(\d{1,2}:\d{2})/)?.[1],
-        kcal: num(/(\d+)\s*kcal/i, meta),
-        protein: num(/P\s*(\d+)\s*g/i, meta),
-        carbs: num(/C\s*(\d+)\s*g/i, meta),
-        fat: num(/G\s*(\d+)\s*g/i, meta),
+        index: parseInt(g[1] ?? "", 10) || meals.length + 1,
+        name: (g[2] ?? "").trim(),
+        subtitle: g[3]?.trim(),
+        kcal: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
         options: [],
       };
+      applyMeta(currentMeal, g[4] ?? "");
       meals.push(currentMeal);
       continue;
     }
     if (!currentMeal) continue;
+    // Linha de totais da refeição (formato markdown): "Total: 766 kcal | 34 g PTN | 94 g CHO | 30 g GOR"
+    if (/^total\b/i.test(line)) {
+      applyMeta(currentMeal, line);
+      continue;
+    }
     const optMatch = line.match(/^"?\s*(⭐?\s*BASE|Op[çc][ãa]o\s*\d+)\s*[:\-]\s*(.*)$/i);
     if (optMatch) {
       currentMeal.options.push({
@@ -74,6 +95,12 @@ function parseMeals(content: string): ParsedMeal[] {
         text: optMatch[2].replace(/^"+|"+$/g, "").trim(),
         isBase: /base/i.test(optMatch[1]),
       });
+    } else if (/^[-•*]\s+/.test(line)) {
+      // Itens em lista compõem a refeição BASE
+      const item = line.replace(/^[-•*]\s+/, "").trim();
+      const base = currentMeal.options.find((o) => o.isBase);
+      if (base) base.text = `${base.text} + ${item}`;
+      else currentMeal.options.push({ label: "BASE", text: item, isBase: true });
     } else if (currentMeal.options.length > 0) {
       const last = currentMeal.options[currentMeal.options.length - 1];
       last.text = `${last.text} ${line.replace(/^"+|"+$/g, "")}`.trim();
