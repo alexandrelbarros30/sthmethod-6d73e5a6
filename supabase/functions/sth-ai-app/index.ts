@@ -36,10 +36,11 @@ Máximo 1100 palavras.`,
 Tarefa: montar um PROGRAMA DE TREINO periodizado de 30 dias.
 Estrutura obrigatória:
 1. "## Resumo estratégico" (divisão, frequência, volume semanal e justificativa).
-2. "## Treinos" — um bloco por sessão (Treino A, B, C...), tabela com exercício, séries, repetições, descanso e observação técnica.
+2. "## Treinos" — um bloco por sessão com título no formato "### Treino A — Peito e Tríceps". Dentro de cada sessão, uma tabela markdown com EXATAMENTE as colunas: | Exercício | Séries | Repetições | Descanso | Observação |
 3. "## Progressão semanal" — semanas 1 a 4.
 4. "## Cuidados e adaptações" — equipamentos limitados, dor, tempo curto.
 Respeite o nível de treinamento, os equipamentos e a disponibilidade informados.
+REGRA CRÍTICA DE BIBLIOTECA: na coluna "Exercício" use SOMENTE nomes que existam, escritos de forma idêntica (mesma grafia e acentuação), na BIBLIOTECA OFICIAL DE EXERCÍCIOS STH METHOD enviada no contexto. É proibido inventar nomes ou usar variações não listadas — cada exercício precisa existir na biblioteca para que o vídeo/gif de referência técnica seja exibido ao aluno. Se faltar um exercício ideal, escolha o mais próximo que exista na biblioteca.
 Máximo 1100 palavras.`,
   analysis: `${BASE_RULES}
 
@@ -221,9 +222,34 @@ Deno.serve(async (req) => {
 
     const context = profileBlock(profile, measurements ?? []);
     const fbContext = feedbackBlock(feedbacks ?? []);
+
+    // ===== Biblioteca oficial de exercícios (ST Coach) — obrigatória no treino =====
+    let libraryBlock = '';
+    let libraryNames: string[] = [];
+    if (kind === 'workout') {
+      const { data: lib } = await supabase
+        .from('exercise_library')
+        .select('name, muscle_group')
+        .order('muscle_group')
+        .order('name')
+        .limit(600);
+      libraryNames = (lib ?? []).map((e: any) => String(e.name));
+      if (libraryNames.length) {
+        const byGroup = new Map<string, string[]>();
+        for (const e of lib ?? []) {
+          const g = String((e as any).muscle_group ?? 'Outros');
+          if (!byGroup.has(g)) byGroup.set(g, []);
+          byGroup.get(g)!.push(String((e as any).name));
+        }
+        libraryBlock = ['BIBLIOTECA OFICIAL DE EXERCÍCIOS STH METHOD (use apenas estes nomes, grafia idêntica):']
+          .concat(Array.from(byGroup.entries()).map(([g, names]) => `${g}: ${names.join('; ')}`))
+          .join('\n');
+      }
+    }
+
     const userPrompt = mode === 'revise'
-      ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}\nVersão atual:\n${last!.content}\n\nAjuste pedido: ${instruction}\n\nPreserve a estrutura principal e altere apenas o necessário. Adicione ao final a seção "## O que mudou nesta revisão".`
-      : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
+      ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}\nVersão atual:\n${last!.content}\n\nAjuste pedido: ${instruction}\n\nPreserve a estrutura principal e altere apenas o necessário. Adicione ao final a seção "## O que mudou nesta revisão".`
+      : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
 
     // ===== Anexos de exame laboratorial (somente Central de Análise) =====
     const parts: unknown[] = [];
@@ -260,6 +286,11 @@ Deno.serve(async (req) => {
 
     const content = await callAi(PROMPTS[kind], aiInput);
 
+    // Quais exercícios da biblioteca foram efetivamente usados (para render em cards com vídeo).
+    const usedExercises = kind === 'workout'
+      ? libraryNames.filter((n) => content.toLowerCase().includes(n.toLowerCase())).slice(0, 120)
+      : [];
+
 
     let saved;
     if (mode === 'revise') {
@@ -280,7 +311,7 @@ Deno.serve(async (req) => {
           content,
           revisions: 0,
           exception_reason: exceptionReason || null,
-          meta: { plan: sub.plan, model: MODEL },
+          meta: { plan: sub?.plan ?? 'admin', model: MODEL, library_exercises: usedExercises },
         })
         .select()
         .single();

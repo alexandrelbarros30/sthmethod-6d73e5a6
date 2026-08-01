@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks
 import AiFeedbackCard from "@/components/ai/AiFeedbackCard";
 import AiExamAttach from "@/components/ai/AiExamAttach";
 import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
+import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 
@@ -125,14 +127,21 @@ export default function AiModule() {
       </Card>
 
       {current && (
+        <>
+        {kind === "workout" && (
+          <div className="mt-5">
+            <AiWorkoutProgram content={current.content} />
+          </div>
+        )}
         <Card className="mt-5 p-5">
           <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-table:text-xs">
-            <ReactMarkdown>{current.content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{current.content}</ReactMarkdown>
           </article>
           <p className="mt-4 text-[11px] text-muted-foreground">
             Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
           </p>
         </Card>
+        </>
       )}
 
       {current && (
