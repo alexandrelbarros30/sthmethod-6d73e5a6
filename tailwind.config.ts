@@ -24,6 +24,16 @@ export default {
           "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
           "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", "Android Emoji",
         ],
+        space: [
+          "Space Grotesk",
+          "-apple-system", "BlinkMacSystemFont", "Inter",
+          "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+        ],
+        dm: [
+          "DM Sans",
+          "-apple-system", "BlinkMacSystemFont", "Inter",
+          "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+        ],
       },
       colors: {
         border: "hsl(var(--border))",
