@@ -21,7 +21,7 @@ export default function AiHealth() {
   const [form, setForm] = useState({ day: todayISO(), steps: "", active_kcal: "", sleep_minutes: "", resting_hr: "", weight_kg: "" });
 
   useEffect(() => {
-    if (!loading && !user) navigate("/login?next=/ai/app/saude");
+    if (!loading && !user) navigate("/ai/login?next=/ai/app/saude");
   }, [loading, user, navigate]);
 
   const last7 = useMemo(() => days.slice(0, 7), [days]);

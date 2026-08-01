@@ -48,7 +48,7 @@ export default function AiOnboarding() {
   useEffect(() => {
     if (authLoading) return;
     if (!user?.id) {
-      navigate("/login?next=/ai/onboarding");
+      navigate("/ai/login?next=/ai/onboarding");
       return;
     }
     (async () => {

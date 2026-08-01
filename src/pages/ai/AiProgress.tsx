@@ -22,7 +22,7 @@ export default function AiProgress() {
   const [form, setForm] = useState({ weight_kg: "", waist_cm: "", arm_cm: "", thigh_cm: "", notes: "" });
 
   useEffect(() => {
-    if (!loading && !user) navigate("/login?next=/ai/app/progresso");
+    if (!loading && !user) navigate("/ai/login?next=/ai/app/progresso");
   }, [loading, user, navigate]);
 
   if (loading) {

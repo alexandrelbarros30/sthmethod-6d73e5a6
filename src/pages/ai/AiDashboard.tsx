@@ -24,7 +24,7 @@ export default function AiDashboard() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) navigate("/login?next=/ai/app");
+    if (!user) navigate("/ai/login?next=/ai/app");
     else if (!profile?.phase1_complete) navigate("/ai/onboarding");
   }, [loading, user, profile, navigate]);
 
