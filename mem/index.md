@@ -39,6 +39,7 @@
 - [Student Plan History](mem://features/admin/historico-jornada-aluno) — Admin view of current plan, first adhesion, and renewal timeline
 - [Macro Calculator](mem://features/calculadora-macros) — Mifflin-St Jeor, dynamic NEAT, and EAT calculations
 - [Guided Workouts](mem://features/modulo-treino-guiado) — ST Coach deep linking (stcoach://) with app store fallbacks
+- [Doutrina STHIA de Treino](mem://features/doutrina-treino-sthia) — Mín. 6 reps, cardio dentro das sessões A-G, cardio livre da biblioteca ST Coach
 - [Body Evolution Generator](mem://features/gerador-evolucao-corporal) — DNA Tech frame, canvas drawImageContain logic
 - [Nutritional Menu](mem://features/cardapio-nutricional) — TACO/TBCA macros, recalculated from 100g/ml
 - [Diet Interactive Tracking](mem://features/acompanhamento-dieta-interativo) — Next meal widget, hydration goals (25/50/75/100%)
