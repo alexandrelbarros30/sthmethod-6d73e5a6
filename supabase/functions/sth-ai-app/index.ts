@@ -30,7 +30,7 @@ ATENÇÃO — SOBREPOSIÇÃO DE FORMATO: para o CARDÁPIO, a regra de "markdown"
 Tarefa: montar um PLANEJAMENTO ALIMENTAR completo de 30 dias, com a MESMA identidade visual e textual do cardápio do portal STH METHOD.
 Saída em HTML puro (nunca markdown), na ordem:
 1. <h3>Resumo estratégico</h3> — objetivo, GET, meta de kcal, distribuição de macros e justificativa técnica.
-2. As refeições (4 a 6), cada uma com refeição BASE + 4 opções, exatamente no formato abaixo.
+2. As refeições (4 a 6), cada uma com refeição BASE + 5 opções (Opção 2 a 6), exatamente no formato abaixo.
 3. <h3>Hidratação e rotina</h3>.
 4. <h3>Como evoluir no ciclo</h3> — ajustes previstos ao longo dos 30 dias.
 ${STHIA_DIET_FORMAT}
