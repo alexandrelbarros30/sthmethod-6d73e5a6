@@ -315,6 +315,26 @@ const CoachStudents = () => {
                 </div>
                 <p className="text-[11px] text-muted-foreground font-light">Datas livres — defina o período conforme o contrato do aluno.</p>
               </div>
+              <div className="rounded-xl border border-border/60 p-3.5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+                  <Label className="text-[12px]">Acesso do aluno (login)</Label>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Senha inicial (mín. 8 caracteres)</Label>
+                  <Input
+                    type="text"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="Deixe vazio para criar depois"
+                    minLength={8}
+                    maxLength={72}
+                  />
+                </div>
+                <p className="text-[11px] text-muted-foreground font-light">
+                  O aluno entra em <span className="font-medium">/coach/entrar</span> com o e-mail acima e essa senha — e pode alterá-la depois.
+                </p>
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-[12px]">Observações</Label>
                 <Textarea rows={4} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={2000} />
