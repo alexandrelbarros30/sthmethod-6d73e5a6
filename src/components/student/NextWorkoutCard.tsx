@@ -73,7 +73,7 @@ const NextWorkoutCard = () => {
   return (
     <Link
       to={trainingHref}
-      className="block mb-6 rounded-3xl border border-border/40 bg-card overflow-hidden active:scale-[0.99] transition-transform"
+      className="block mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden active:scale-[0.99] transition-transform"
     >
       <div className="relative">
         {template.image_url ? (
@@ -114,8 +114,8 @@ const NextWorkoutCard = () => {
                 </p>
               )}
             </div>
-            <span className="shrink-0 w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-              <Play className="w-4 h-4 fill-primary-foreground" strokeWidth={2} />
+            <span className="shrink-0 w-11 h-11 rounded-full bg-foreground text-background flex items-center justify-center">
+              <Play className="w-4 h-4 fill-background" strokeWidth={2} />
             </span>
           </div>
         </div>

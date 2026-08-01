@@ -140,7 +140,7 @@ const SthiaFoodWeeklyCard = () => {
       : "A melhorar";
 
   return (
-    <div className="mb-6 rounded-3xl border border-border/40 bg-card overflow-hidden animate-fade-in">
+    <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden animate-fade-in">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-1.5">
