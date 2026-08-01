@@ -845,13 +845,13 @@ Deno.serve(async (req) => {
     // WhatsApp, NÃO é telefone). Se usarmos o LID como telefone, o envio de
     // resposta nunca chega ao contato. Preferimos sempre um candidato com
     // número real (@s.whatsapp.net / @c.us) e só caímos no LID se não houver.
-    const phoneCandidates = [
+    const inboundPhoneCandidates = [
       payload?.data?.senderPhone, payload?.senderPhone, payload?.sender?.phone,
       payload?.data?.from, payload?.phone, payload?.from, payload?.message?.from,
       payload?.data?.chatId, payload?.chatId, payload?.chat?.id, payload?.sender?.id,
     ].map((v) => String(v || '').trim()).filter(Boolean);
     const isLidJid = (v: string) => v.includes('@lid') || String(v).split('@')[0].replace(/\D/g, '').length >= 14;
-    const phoneRaw = phoneCandidates.find((v) => !isLidJid(v)) || phoneCandidates[0] || '';
+    const phoneRaw = inboundPhoneCandidates.find((v) => !isLidJid(v)) || inboundPhoneCandidates[0] || '';
     const phone = normalizePhone(phoneRaw);
     const waId = String(phoneRaw || '').split('@')[0]; // Usamos o ID puramente numérico como waId
     
