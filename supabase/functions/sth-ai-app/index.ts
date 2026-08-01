@@ -169,8 +169,11 @@ Deno.serve(async (req) => {
     const fileIds: string[] = Array.isArray(body?.file_ids) ? body.file_ids.filter((x: unknown) => typeof x === 'string').slice(0, 4) : [];
     if (!kind || !PROMPTS[kind]) return json({ error: 'kind inválido' }, 400);
 
-    // ===== Admin bypass (testes internos) =====
+    // ===== Admin / contas demo bypass (testes internos e apresentação) =====
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+    const DEMO_EMAILS = ['alexandrelbarros30@gmail.com'];
+    const claimEmail = String((auth?.claims as any)?.email ?? '').toLowerCase();
+    const unlimited = Boolean(isAdmin) || DEMO_EMAILS.includes(claimEmail);
 
     // ===== Assinatura ativa =====
     const { data: sub } = await supabase
@@ -182,7 +185,7 @@ Deno.serve(async (req) => {
       .order('expires_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!sub && !isAdmin) return json({ error: 'subscription_required', message: 'Assinatura do STH Method AI inativa.' }, 402);
+    if (!sub && !unlimited) return json({ error: 'subscription_required', message: 'Assinatura do STH Method AI inativa.' }, 402);
 
     // ===== Perfil =====
     const { data: profile } = await supabase.from('ai_app_profiles').select('*').eq('user_id', userId).maybeSingle();
@@ -215,7 +218,7 @@ Deno.serve(async (req) => {
     const cycle = CYCLE_DAYS[kind];
     const elapsed = last ? daysBetween(new Date(last.cycle_start + 'T00:00:00Z'), new Date()) : cycle;
 
-    if (mode === 'create' && last && elapsed < cycle && !exceptionReason) {
+    if (mode === 'create' && last && elapsed < cycle && !exceptionReason && !unlimited) {
       return json({
         error: 'cycle_locked',
         message: `Seu ciclo atual ainda tem ${cycle - elapsed} dia(s). Use uma revisão para ajustar o que precisa — a estrutura principal é preservada por decisão metodológica.`,
@@ -226,7 +229,7 @@ Deno.serve(async (req) => {
     }
     if (mode === 'revise') {
       if (!last) return json({ error: 'nothing_to_revise', message: 'Nada gerado ainda neste módulo.' }, 400);
-      if (last.revisions >= MAX_REVISIONS[kind]) {
+      if (last.revisions >= MAX_REVISIONS[kind] && !unlimited) {
         return json({ error: 'revisions_exhausted', message: 'As revisões deste ciclo foram utilizadas. A próxima criação libera no novo ciclo.' }, 409);
       }
       if (!instruction) return json({ error: 'instruction_required', message: 'Descreva o que deseja ajustar.' }, 400);
