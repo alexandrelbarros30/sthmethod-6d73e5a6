@@ -1,0 +1,332 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AiShell from "@/components/ai/AiShell";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { FileText, Loader2, LogOut, Trash2, Upload } from "lucide-react";
+
+interface Form {
+  full_name: string; age: string; sex: string; weight_kg: string; height_cm: string;
+  goal: string; training_level: string; routine: string; meals_per_day: string;
+  restrictions: string; dislikes: string; budget: string; training_days: string;
+  equipment: string; limitations: string; sleep: string; stress: string;
+}
+
+const EMPTY: Form = {
+  full_name: "", age: "", sex: "", weight_kg: "", height_cm: "", goal: "", training_level: "",
+  routine: "", meals_per_day: "", restrictions: "", dislikes: "", budget: "",
+  training_days: "", equipment: "", limitations: "", sleep: "", stress: "",
+};
+
+interface AiFile { id: string; file_name: string | null; storage_path: string; kind: string; created_at: string }
+
+export default function AiProfile() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [form, setForm] = useState<Form>(EMPTY);
+  const [sub, setSub] = useState<{ plan: string; status: string; expires_at: string | null } | null>(null);
+  const [files, setFiles] = useState<AiFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const load = useCallback(async () => {
+    if (!user?.id) { setLoading(false); return; }
+    setLoading(true);
+    const [{ data: p }, { data: s }, { data: f }] = await Promise.all([
+      supabase.from("ai_app_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("ai_app_subscriptions").select("plan, status, expires_at").eq("user_id", user.id)
+        .eq("status", "active").order("expires_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("ai_app_files").select("id, file_name, storage_path, kind, created_at")
+        .eq("user_id", user.id).eq("kind", "exam").order("created_at", { ascending: false }),
+    ]);
+    if (p) {
+      const a = ((p.answers ?? {}) as Record<string, string>);
+      setForm({
+        ...EMPTY,
+        full_name: p.full_name ?? "", age: p.age?.toString() ?? "", sex: p.sex ?? "",
+        weight_kg: p.weight_kg?.toString() ?? "", height_cm: p.height_cm?.toString() ?? "",
+        goal: p.goal ?? "", training_level: p.training_level ?? "",
+        ...a,
+      });
+    }
+    setSub((s as any) ?? null);
+    setFiles(((f ?? []) as unknown) as AiFile[]);
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const set = <K extends keyof Form>(k: K, v: string) => setForm((prev) => ({ ...prev, [k]: v }));
+
+  async function save() {
+    if (!user?.id) return;
+    if (!form.full_name || !form.age || !form.sex || !form.weight_kg || !form.height_cm || !form.goal || !form.training_level) {
+      toast.error("Preencha todos os dados essenciais.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("ai_app_profiles").upsert({
+      user_id: user.id,
+      full_name: form.full_name,
+      age: Number(form.age) || null,
+      sex: form.sex || null,
+      weight_kg: Number(form.weight_kg) || null,
+      height_cm: Number(form.height_cm) || null,
+      goal: form.goal || null,
+      training_level: form.training_level || null,
+      answers: {
+        routine: form.routine, meals_per_day: form.meals_per_day, restrictions: form.restrictions,
+        dislikes: form.dislikes, budget: form.budget, training_days: form.training_days,
+        equipment: form.equipment, limitations: form.limitations, sleep: form.sleep, stress: form.stress,
+      },
+      phase1_complete: true,
+      phase2_complete: true,
+      step: 2,
+    }, { onConflict: "user_id" });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Perfil atualizado — a IA já usa esses dados no próximo ciclo.");
+  }
+
+  async function upload(file: File | null) {
+    if (!file || !user?.id) return;
+    if (file.size > 15 * 1024 * 1024) { toast.error("Arquivo acima de 15 MB."); return; }
+    setUploading(true);
+    try {
+      const path = `${user.id}/exams/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("sth-ai").upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("ai_app_files").insert({
+        user_id: user.id, kind: "exam", file_name: file.name, storage_path: path,
+      });
+      if (error) throw error;
+      toast.success("Documento enviado.");
+      await load();
+    } catch (e) {
+      toast.error((e as Error)?.message || "Falha no envio.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function openFile(f: AiFile) {
+    const { data, error } = await supabase.storage.from("sth-ai").createSignedUrl(f.storage_path, 300);
+    if (error || !data?.signedUrl) { toast.error("Não foi possível abrir o arquivo."); return; }
+    window.open(data.signedUrl, "_blank", "noopener");
+  }
+
+  async function removeFile(f: AiFile) {
+    await supabase.storage.from("sth-ai").remove([f.storage_path]);
+    const { error } = await supabase.from("ai_app_files").delete().eq("id", f.id);
+    if (error) { toast.error("Não foi possível excluir."); return; }
+    setFiles((prev) => prev.filter((x) => x.id !== f.id));
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    navigate("/ai");
+  }
+
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <AiShell title="Perfil" subtitle="Seus dados, objetivos e documentos — a base de tudo que a IA constrói.">
+      <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-5">
+        <div>
+          <p className="text-xs text-muted-foreground">Assinatura</p>
+          <p className="text-sm font-medium capitalize">{sub ? sub.plan : "Sem plano ativo"}</p>
+          {sub?.expires_at && (
+            <p className="text-xs text-muted-foreground">Válida até {new Date(sub.expires_at).toLocaleDateString("pt-BR")}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={sub ? "secondary" : "outline"}>{sub ? "Ativa" : "Inativa"}</Badge>
+          <Button variant="outline" size="sm" onClick={() => navigate("/ai/assinatura")}>Gerenciar</Button>
+        </div>
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <h2 className="text-base font-semibold tracking-tight">Dados essenciais</h2>
+        <div className="space-y-1.5">
+          <Label>Nome completo</Label>
+          <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Idade</Label>
+            <Input inputMode="numeric" value={form.age} onChange={(e) => set("age", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Sexo</Label>
+            <Select value={form.sex} onValueChange={(v) => set("sex", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="masculino">Masculino</SelectItem>
+                <SelectItem value="feminino">Feminino</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Peso (kg)</Label>
+            <Input inputMode="decimal" value={form.weight_kg} onChange={(e) => set("weight_kg", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Altura (cm)</Label>
+            <Input inputMode="numeric" value={form.height_cm} onChange={(e) => set("height_cm", e.target.value)} />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Objetivo</Label>
+            <Select value={form.goal} onValueChange={(v) => set("goal", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                <SelectItem value="recomposicao">Recomposição corporal</SelectItem>
+                <SelectItem value="performance">Performance</SelectItem>
+                <SelectItem value="saude">Saúde e rotina</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Nível de treino</Label>
+            <Select value={form.training_level} onValueChange={(v) => set("training_level", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="iniciante">Iniciante</SelectItem>
+                <SelectItem value="intermediario">Intermediário</SelectItem>
+                <SelectItem value="avancado">Avançado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="mt-5 space-y-4 p-5">
+        <h2 className="text-base font-semibold tracking-tight">Perfil avançado</h2>
+        <div className="space-y-1.5">
+          <Label>Rotina do dia a dia</Label>
+          <Textarea rows={2} value={form.routine} onChange={(e) => set("routine", e.target.value)} />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Refeições por dia</Label>
+            <Input inputMode="numeric" value={form.meals_per_day} onChange={(e) => set("meals_per_day", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Dias de treino por semana</Label>
+            <Input inputMode="numeric" value={form.training_days} onChange={(e) => set("training_days", e.target.value)} />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Restrições alimentares / alergias</Label>
+          <Input value={form.restrictions} onChange={(e) => set("restrictions", e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Alimentos que você não gosta</Label>
+          <Input value={form.dislikes} onChange={(e) => set("dislikes", e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Orçamento para alimentação</Label>
+          <Select value={form.budget} onValueChange={(v) => set("budget", v)}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="economico">Econômico</SelectItem>
+              <SelectItem value="moderado">Moderado</SelectItem>
+              <SelectItem value="livre">Sem restrição</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Equipamentos disponíveis</Label>
+          <Input value={form.equipment} onChange={(e) => set("equipment", e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Limitações físicas / lesões</Label>
+          <Input value={form.limitations} onChange={(e) => set("limitations", e.target.value)} />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Horas de sono</Label>
+            <Input inputMode="numeric" value={form.sleep} onChange={(e) => set("sleep", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Nível de estresse</Label>
+            <Select value={form.stress} onValueChange={(v) => set("stress", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="baixo">Baixo</SelectItem>
+                <SelectItem value="medio">Médio</SelectItem>
+                <SelectItem value="alto">Alto</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <Button className="w-full" onClick={save} disabled={saving}>
+          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Salvar perfil
+        </Button>
+      </Card>
+
+      <Card className="mt-5 space-y-4 p-5">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">Documentos e exames</h2>
+          <p className="text-xs text-muted-foreground">
+            Arquivos privados. Servem de contexto para a leitura educativa da Central de Análise — nunca para conduta terapêutica.
+          </p>
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf,image/*"
+          className="hidden"
+          onChange={(e) => upload(e.target.files?.[0] || null)}
+        />
+        <Button variant="outline" className="w-full" onClick={() => inputRef.current?.click()} disabled={uploading}>
+          {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+          Enviar documento
+        </Button>
+        {files.length > 0 && (
+          <ul className="space-y-2">
+            {files.map((f) => (
+              <li key={f.id} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 text-sm">
+                <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => openFile(f)}>
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{f.file_name || "Documento"}</span>
+                </button>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {new Date(f.created_at).toLocaleDateString("pt-BR")}
+                </span>
+                <Button variant="ghost" size="icon" onClick={() => removeFile(f)} aria-label="Excluir documento">
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Button variant="ghost" className="mt-5 w-full text-muted-foreground" onClick={logout}>
+        <LogOut className="mr-2 h-4 w-4" /> Sair da conta
+      </Button>
+    </AiShell>
+  );
+}
