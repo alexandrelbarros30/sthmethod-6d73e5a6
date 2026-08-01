@@ -224,6 +224,136 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_app_coach_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          request_id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          request_id: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_app_coach_messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "ai_app_coach_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_app_coach_requests: {
+        Row: {
+          coach_id: string
+          created_at: string
+          goal: string | null
+          id: string
+          message: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          goal?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          goal?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_app_coach_requests_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "ai_app_coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_app_coaches: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
+          contact_whatsapp: string | null
+          created_at: string
+          display_name: string
+          headline: string | null
+          id: string
+          is_active: boolean
+          is_approved: boolean
+          price_month: number | null
+          rating: number | null
+          specialties: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          display_name: string
+          headline?: string | null
+          id?: string
+          is_active?: boolean
+          is_approved?: boolean
+          price_month?: number | null
+          rating?: number | null
+          specialties?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          display_name?: string
+          headline?: string | null
+          id?: string
+          is_active?: boolean
+          is_approved?: boolean
+          price_month?: number | null
+          rating?: number | null
+          specialties?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_app_files: {
         Row: {
           created_at: string
@@ -288,6 +418,81 @@ export type Database = {
           kind?: string
           meta?: Json
           revisions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_app_health_days: {
+        Row: {
+          active_kcal: number | null
+          created_at: string
+          day: string
+          id: string
+          provider: string
+          resting_hr: number | null
+          sleep_minutes: number | null
+          steps: number | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          active_kcal?: number | null
+          created_at?: string
+          day: string
+          id?: string
+          provider?: string
+          resting_hr?: number | null
+          sleep_minutes?: number | null
+          steps?: number | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          active_kcal?: number | null
+          created_at?: string
+          day?: string
+          id?: string
+          provider?: string
+          resting_hr?: number | null
+          sleep_minutes?: number | null
+          steps?: number | null
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      ai_app_health_sources: {
+        Row: {
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          meta: Json
+          provider: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          meta?: Json
+          provider: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          meta?: Json
+          provider?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
