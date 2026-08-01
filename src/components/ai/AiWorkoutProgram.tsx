@@ -1,13 +1,24 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import LazyVideoEmbed from "@/components/student/LazyVideoEmbed";
-import { Dumbbell, Timer, Repeat } from "lucide-react";
+import WorkoutChronometer from "@/components/student/WorkoutChronometer";
+import StCoachCredit from "@/components/shared/StCoachCredit";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronsDown,
+  Dumbbell,
+  Eraser,
+  Save,
+  VideoOff,
+} from "lucide-react";
+import { toast } from "sonner";
 
 type Row = { name: string; sets: string; reps: string; rest: string; note: string };
-type Session = { title: string; rows: Row[] };
+type Session = { title: string; subtitle: string; rows: Row[] };
 
 const norm = (s: string) =>
   s
@@ -29,14 +40,21 @@ export function parseWorkoutSessions(markdown: string): Session[] {
     if (heading) {
       const title = heading[1].replace(/[*_`]/g, "").trim();
       if (/^treino\b/i.test(title) || /^(dia|sess[aã]o)\b/i.test(title)) {
-        current = { title, rows: [] };
+        current = { title, subtitle: "", rows: [] };
         sessions.push(current);
       } else {
         current = null;
       }
       continue;
     }
-    if (!current || !line.startsWith("|")) continue;
+    if (!current) continue;
+    if (!line.startsWith("|")) {
+      // primeira linha de texto após o título vira subtítulo (ex.: "Ênfase em Peitoral Superior")
+      if (line && !current.rows.length && !current.subtitle && !line.startsWith("#")) {
+        current.subtitle = line.replace(/[*_`>]/g, "").trim().slice(0, 140);
+      }
+      continue;
+    }
     const cells = line.split("|").slice(1, -1).map((c) => c.replace(/[*`]/g, "").trim());
     if (cells.length < 2) continue;
     if (cells.every((c) => /^:?-{2,}:?$/.test(c))) continue;
@@ -52,8 +70,40 @@ export function parseWorkoutSessions(markdown: string): Session[] {
   return sessions.filter((s) => s.rows.length > 0);
 }
 
+const seriesLabel = (row: Row) => {
+  const s = row.sets.replace(/[^0-9x×\-\s]/gi, "").trim();
+  const r = row.reps.trim();
+  if (s && r) return `${s}x${r}`;
+  return s || r || "";
+};
+
+const restToSeconds = (rest: string): number => {
+  const m = rest.match(/(\d+)\s*(m|min|s|seg)?/i);
+  if (!m) return 60;
+  const n = parseInt(m[1], 10);
+  const unit = (m[2] || "").toLowerCase();
+  if (unit.startsWith("m")) return n * 60;
+  if (!unit && n <= 5) return n * 60;
+  return n;
+};
+
+const NOTES_KEY = "sth-ai-workout-notes";
+const readNotes = (): Record<string, string> => {
+  try {
+    return JSON.parse(localStorage.getItem(NOTES_KEY) || "{}");
+  } catch {
+    return {};
+  }
+};
+
 export default function AiWorkoutProgram({ content }: { content: string }) {
   const sessions = useMemo(() => parseWorkoutSessions(content), [content]);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [active, setActive] = useState<number | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState<Record<string, string>>(() => readNotes());
+  const [chronoOpen, setChronoOpen] = useState(false);
+  const [chronoRest, setChronoRest] = useState(60);
 
   const { data: library } = useQuery({
     queryKey: ["stcoach-exercise-catalog"],
@@ -79,71 +129,201 @@ export default function AiWorkoutProgram({ content }: { content: string }) {
     return null;
   };
 
+  const saveNote = (key: string) => {
+    const value = (drafts[key] || "").trim();
+    if (!value) return;
+    const next = { ...saved, [key]: value };
+    setSaved(next);
+    localStorage.setItem(NOTES_KEY, JSON.stringify(next));
+    setDrafts((p) => ({ ...p, [key]: "" }));
+    toast.success("Carga salva!");
+  };
+
   if (!sessions.length) return null;
 
-  return (
-    <div className="space-y-5">
-      {sessions.map((session, si) => (
-        <Card key={si} className="overflow-hidden border-border/60">
-          <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent px-5 py-4">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
-                <Dumbbell className="h-4 w-4" />
-              </span>
-              <div>
-                <h3 className="text-sm font-semibold leading-tight">{session.title}</h3>
-                <p className="text-[11px] text-muted-foreground">{session.rows.length} exercícios</p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="text-[10px]">STH METHOD</Badge>
-          </div>
+  // ============ VISTA: TREINO (exercícios sequenciais) ============
+  if (active !== null && sessions[active]) {
+    const session = sessions[active];
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={() => setActive(null)}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground uppercase tracking-wide"
+        >
+          <ChevronLeft className="w-4 h-4" /> Voltar
+        </button>
 
-          <div className="divide-y divide-border/60">
-            {session.rows.map((row, ri) => {
-              const ex = match(row.name);
-              return (
-                <div key={ri} className="flex gap-3 p-4 sm:gap-4">
-                  <div className="w-28 shrink-0 sm:w-40">
-                    {ex?.video_url ? (
+        {/* Hero */}
+        <div className="rounded-2xl bg-primary text-primary-foreground p-5 text-center">
+          <ChevronDown className="w-5 h-5 mx-auto opacity-70" />
+          <h2 className="text-xl font-bold mt-1">{session.title}</h2>
+          {session.subtitle && <p className="mt-2 text-sm opacity-90">{session.subtitle}</p>}
+          <Button
+            variant="secondary"
+            className="mt-4 w-full rounded-full bg-white text-black font-bold uppercase tracking-wide"
+            onClick={() => {
+              setChronoRest(restToSeconds(session.rows[0]?.rest || ""));
+              setChronoOpen(true);
+            }}
+          >
+            Iniciar Treino
+          </Button>
+          <p className="text-xs mt-2 opacity-80">Aperte iniciar para começar o treino.</p>
+        </div>
+
+        <WorkoutChronometer
+          open={chronoOpen}
+          onClose={() => setChronoOpen(false)}
+          workoutTitle={session.title}
+          defaultRest={chronoRest}
+        />
+
+        <div className="space-y-6">
+          {session.rows.map((row, idx) => {
+            const ex = match(row.name);
+            const key = `${active}-${idx}-${norm(row.name)}`;
+            const serie = seriesLabel(row);
+            return (
+              <div key={key} className="space-y-3">
+                <div>
+                  <p className="font-bold text-foreground">
+                    {idx + 1}. {ex?.name ?? row.name}
+                  </p>
+                  {serie && (
+                    <p className="text-sm font-semibold text-primary mt-1">
+                      Série: {serie}
+                      {row.note ? ` + ${row.note}` : ""}
+                    </p>
+                  )}
+                  {row.rest && <p className="text-sm text-muted-foreground">Intervalo: ⏱ {row.rest}</p>}
+                </div>
+
+                {ex?.video_url ? (
+                  <>
+                    <div className="rounded-2xl overflow-hidden border border-border/40 bg-card relative">
                       <LazyVideoEmbed
                         url={ex.video_url}
                         title={ex.name}
                         posterUrl={ex.image_url ?? undefined}
-                        className="aspect-video w-full overflow-hidden rounded-lg"
                       />
-                    ) : (
-                      <div className="grid aspect-video w-full place-items-center rounded-lg bg-muted text-muted-foreground">
-                        <Dumbbell className="h-4 w-4" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{ex?.name ?? row.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {ex?.video_url ? "Vídeo ST Coach" : "Sem vídeo ST Coach disponível"}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {row.sets && (
-                        <Badge variant="outline" className="gap-1 text-[10px]">
-                          <Repeat className="h-3 w-3" /> {row.sets} séries
-                        </Badge>
-                      )}
-                      {row.reps && <Badge variant="outline" className="text-[10px]">{row.reps} reps</Badge>}
-                      {row.rest && (
-                        <Badge variant="outline" className="gap-1 text-[10px]">
-                          <Timer className="h-3 w-3" /> {row.rest}
-                        </Badge>
-                      )}
+                      <StCoachCredit variant="overlay" />
                     </div>
-                    {row.note && <p className="mt-2 text-xs text-muted-foreground">{row.note}</p>}
+                    <StCoachCredit />
+                  </>
+                ) : (
+                  <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-full">
+                    <VideoOff className="w-3.5 h-3.5" /> Vídeo não cadastrado para este exercício.
+                  </div>
+                )}
+
+                {/* Anotação de carga */}
+                <div className="flex items-stretch gap-2">
+                  <Textarea
+                    placeholder="Anote os pesos aqui"
+                    value={drafts[key] || ""}
+                    onChange={(e) => setDrafts((p) => ({ ...p, [key]: e.target.value }))}
+                    rows={2}
+                    className="flex-1 rounded-xl bg-muted/40 border-border resize-none"
+                  />
+                  <div className="flex flex-col gap-1.5">
+                    <Button
+                      size="sm"
+                      disabled={!drafts[key]?.trim()}
+                      onClick={() => saveNote(key)}
+                      className="rounded-full bg-primary text-primary-foreground font-bold uppercase text-xs"
+                    >
+                      <Save className="w-3.5 h-3.5 mr-1" /> Salvar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDrafts((p) => ({ ...p, [key]: "" }))}
+                      className="text-xs uppercase font-bold"
+                    >
+                      <Eraser className="w-3.5 h-3.5 mr-1" /> Limpar
+                    </Button>
                   </div>
                 </div>
-              );
-            })}
+                {saved[key] && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Último: <span className="font-semibold text-foreground">{saved[key]}</span>
+                  </p>
+                )}
+
+                {idx < session.rows.length - 1 && (
+                  <div className="flex justify-center pt-1 text-muted-foreground/50">
+                    <ChevronsDown className="w-5 h-5" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ============ VISTA: PROGRAMA (lista de treinos) ============
+  return (
+    <div className="space-y-3">
+      {sessions.map((session, idx) => {
+        const letter = String.fromCharCode(65 + idx);
+        const isExpanded = openIndex === idx;
+        const preview = session.rows.slice(0, 3).map((r) => r.name);
+        return (
+          <div
+            key={idx}
+            className="rounded-2xl border border-border bg-card p-4 cursor-pointer transition-colors hover:bg-card/80"
+            onClick={() => setOpenIndex(isExpanded ? null : idx)}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-base font-semibold text-foreground tracking-tight">
+                {letter}. {session.title}
+              </p>
+              <ChevronDown
+                className={`w-4 h-4 text-muted-foreground shrink-0 mt-1 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+              />
+            </div>
+            {session.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{session.subtitle}</p>}
+            {!isExpanded && preview.length > 0 && (
+              <p className="text-sm text-muted-foreground mt-2">{preview.join(" • ")}</p>
+            )}
+            {isExpanded && (
+              <ul className="mt-3 space-y-2 border-t border-border/50 pt-3">
+                {session.rows.map((row, i) => {
+                  const serie = seriesLabel(row);
+                  return (
+                    <li key={i} className="text-sm">
+                      <div className="flex items-start gap-2">
+                        <span className="text-muted-foreground shrink-0 pt-0.5">{i + 1}.</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-foreground font-medium leading-snug">{row.name}</p>
+                          {serie && (
+                            <p className="text-primary font-semibold text-xs mt-0.5 tabular-nums tracking-tight">
+                              {serie}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <div className="flex items-center justify-between gap-3 mt-3" onClick={(e) => e.stopPropagation()}>
+              <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1.5 rounded-full">
+                <Dumbbell className="w-3.5 h-3.5" /> {session.rows.length} exercícios
+              </div>
+              <Button
+                onClick={() => setActive(idx)}
+                className="rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wide text-xs px-5"
+              >
+                Ver Treino
+              </Button>
+            </div>
           </div>
-        </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
