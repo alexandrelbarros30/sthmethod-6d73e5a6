@@ -70,22 +70,31 @@ export async function callAiEngine({
 
   if (engine === 'gemini_api') {
     const gkey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GEMINI_API_KEY_FALLBACK');
-    if (!gkey) throw new Error('GEMINI_API_KEY missing');
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gkey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(`Gemini API error: ${JSON.stringify(d)}`);
-    return {
-      response: (d as any)?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '',
-      model: 'gemini-2.5-flash (api)',
-      engine,
-    };
+    if (gkey) {
+      try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gkey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+          }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(`Gemini API error: ${JSON.stringify(d)}`);
+        const text = (d as any)?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
+        if (text.trim()) {
+          return { response: text, model: 'gemini-2.5-flash (api)', engine };
+        }
+        console.error('gemini_api returned empty text, falling back to Lovable AI');
+      } catch (e) {
+        // Cota diária/rate limit da chave direta não pode deixar o WhatsApp mudo:
+        // caímos para o Lovable AI Gateway automaticamente.
+        console.error('gemini_api failed, falling back to Lovable AI:', String(e));
+      }
+    } else {
+      console.error('GEMINI_API_KEY missing, falling back to Lovable AI');
+    }
   }
 
   // default: lovable
