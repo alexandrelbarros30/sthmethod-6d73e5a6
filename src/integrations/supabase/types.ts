@@ -182,6 +182,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_app_checkins: {
+        Row: {
+          checkin_date: string
+          created_at: string
+          diet_done: boolean
+          energy: number | null
+          id: string
+          mood: number | null
+          note: string | null
+          updated_at: string
+          user_id: string
+          water_done: boolean
+          workout_done: boolean
+        }
+        Insert: {
+          checkin_date?: string
+          created_at?: string
+          diet_done?: boolean
+          energy?: number | null
+          id?: string
+          mood?: number | null
+          note?: string | null
+          updated_at?: string
+          user_id: string
+          water_done?: boolean
+          workout_done?: boolean
+        }
+        Update: {
+          checkin_date?: string
+          created_at?: string
+          diet_done?: boolean
+          energy?: number | null
+          id?: string
+          mood?: number | null
+          note?: string | null
+          updated_at?: string
+          user_id?: string
+          water_done?: boolean
+          workout_done?: boolean
+        }
+        Relationships: []
+      }
       ai_app_files: {
         Row: {
           created_at: string

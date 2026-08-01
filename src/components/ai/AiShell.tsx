@@ -2,14 +2,14 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, CreditCard, LogOut } from "lucide-react";
+import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut } from "lucide-react";
 
 const NAV = [
   { to: "/ai/app", label: "Início", icon: LayoutGrid },
   { to: "/ai/app/cardapio", label: "Cardápio", icon: Salad },
   { to: "/ai/app/treino", label: "Treino", icon: Dumbbell },
   { to: "/ai/app/analise", label: "Análise", icon: LineChart },
-  { to: "/ai/assinatura", label: "Plano", icon: CreditCard },
+  { to: "/ai/app/progresso", label: "Evolução", icon: Flame },
 ];
 
 export default function AiShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
@@ -31,9 +31,14 @@ export default function AiShell({ children, title, subtitle }: { children: React
             </span>
             <span className="text-sm font-semibold tracking-tight">STH METHOD AI</span>
           </Link>
-          <Button variant="ghost" size="sm" onClick={logout} aria-label="Sair">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/ai/assinatura">Plano</Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={logout} aria-label="Sair">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
