@@ -2356,10 +2356,10 @@ Deno.serve(async (req) => {
       }
       autoReply = { sent: false, reason: 'human_typing' };
 
-    } else if (!shouldBootstrapCommercialFlow && !nutriHardBlock && aiMode === 'ai_only' && withinHours && !todayNoticeActive) {
-      // MODO AI GLOBAL: ignora fluxo e menus — IA responde tudo DENTRO do expediente.
-      // Fora do horário, deixa cair para o bloco de ausência abaixo, senão o aluno
-      // recebe resposta de IA 24h e nunca o aviso de fora de expediente.
+    } else if (!shouldBootstrapCommercialFlow && !nutriHardBlock && aiMode === 'ai_only' && !todayNoticeActive) {
+      // MODO AI GLOBAL: ignora fluxo e menus — a IA (STHIA) responde 24h,
+      // dentro e fora do expediente. Pessoas escrevem em qualquer horário e
+      // não podem ficar sem resposta.
       try {
         const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
         if (ai.response) {
