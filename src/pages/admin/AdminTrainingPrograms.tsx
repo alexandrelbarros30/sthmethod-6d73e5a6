@@ -79,6 +79,7 @@ const AdminTrainingPrograms = () => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [coverSyncing, setCoverSyncing] = useState<null | "push" | "pull">(null);
   const [coverError, setCoverError] = useState<ErrorDetails | null>(null);
   const [generatingCoverId, setGeneratingCoverId] = useState<string | null>(null);
 
@@ -688,6 +689,78 @@ const AdminTrainingPrograms = () => {
                   {getDifficultyInfo(selectedProgram.difficulty || "intermediate").label}
                 </Badge>
                 {selectedProgram.status === "draft" && <Badge variant="secondary">Rascunho</Badge>}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9"
+                  disabled={coverSyncing !== null}
+                  onClick={async () => {
+                    if (!selectedProgram.supercoach_program_id) {
+                      toast.info("Este programa não está vinculado ao ST Coach.");
+                      return;
+                    }
+                    if (!selectedProgram.poster_url) {
+                      toast.info("Este programa ainda não tem capa para enviar.");
+                      return;
+                    }
+                    setCoverSyncing("push");
+                    const toastId = toast.loading("Sincronizando capa com o ST Coach...");
+                    try {
+                      const { data, error } = await supabase.functions.invoke("supercoach-sync-covers", {
+                        body: { programIds: [selectedProgram.id] },
+                      });
+                      if (error) throw error;
+                      const fails = (data?.programs_failed || 0) + (data?.trainings_failed || 0);
+                      toast.success(
+                        `Capa sincronizada · ${data?.programs_synced || 0} programa / ${data?.trainings_synced || 0} treino(s)` +
+                          (fails ? ` · falhas: ${fails}` : ""),
+                        { id: toastId }
+                      );
+                    } catch (e: any) {
+                      toast.error(e?.message || "Falha ao sincronizar a capa.", { id: toastId });
+                    } finally {
+                      setCoverSyncing(null);
+                    }
+                  }}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-1.5 ${coverSyncing === "push" ? "animate-spin" : ""}`} />
+                  Sincronizar capa (ST Coach)
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9"
+                  disabled={coverSyncing !== null}
+                  onClick={async () => {
+                    if (!selectedProgram.supercoach_program_id) {
+                      toast.info("Este programa não está vinculado ao ST Coach.");
+                      return;
+                    }
+                    setCoverSyncing("pull");
+                    const toastId = toast.loading("Importando capa do ST Coach...");
+                    try {
+                      const { data, error } = await supabase.functions.invoke("supercoach-import-covers", {
+                        body: { programIds: [selectedProgram.id], overwrite: true },
+                      });
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                      queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
+                      toast.success(
+                        `Capa importada · ${data?.programs_updated || 0} programa / ${data?.templates_updated || 0} treino(s)`,
+                        { id: toastId }
+                      );
+                    } catch (e: any) {
+                      toast.error(e?.message || "Falha ao importar a capa.", { id: toastId });
+                    } finally {
+                      setCoverSyncing(null);
+                    }
+                  }}
+                >
+                  <ImageIcon className={`w-4 h-4 mr-1.5 ${coverSyncing === "pull" ? "animate-pulse" : ""}`} />
+                  Importar capa
+                </Button>
               </div>
             </div>
             <ProgramWorkouts programId={selectedProgram.id} />
