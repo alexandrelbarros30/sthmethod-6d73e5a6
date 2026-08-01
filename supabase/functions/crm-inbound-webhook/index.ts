@@ -2309,7 +2309,10 @@ Deno.serve(async (req) => {
       (conv as any).queue_type = 'comercial';
     }
 
-    const shouldBootstrapCommercialFlow = provider === 'zapi' && !conv.flow_state;
+    // No modo AI global (STHIA 2.0) o canal Comercial NÃO abre menu numérico:
+    // a IA conduz a conversa 24h. O expediente só vale para atendimento humano.
+    const shouldBootstrapCommercialFlow = provider === 'zapi' && !conv.flow_state
+      && String((aiModeCfg?.value as any)?.mode || 'auto') !== 'ai_only';
 
     // HARD RULE: bloqueio do canal Nutri para não-ativos tem PRECEDÊNCIA sobre
     // qualquer resposta automática (IA, today_notice, away). Assim, mesmo fora
