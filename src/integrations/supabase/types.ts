@@ -7000,6 +7000,7 @@ export type Database = {
       }
       identity_kba_available: { Args: { _user_id: string }; Returns: Json }
       install_backup_cron: { Args: { _token: string }; Returns: string }
+      is_coach_professional: { Args: never; Returns: boolean }
       is_consultant_of: {
         Args: { _consultant_id: string; _student_id: string }
         Returns: boolean
