@@ -73,7 +73,6 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
   const [fat, setFat] = useState("");
   const [restrictions, setRestrictions] = useState("");
   const [preferences, setPreferences] = useState("");
-  const [notes, setNotes] = useState("");
   const seeded = useRef<string | null>(null);
 
   // Gasto energético total: cadastro + rotina/atividade já registrada
