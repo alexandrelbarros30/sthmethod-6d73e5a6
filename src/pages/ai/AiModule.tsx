@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
 import AiFeedbackCard from "@/components/ai/AiFeedbackCard";
+import AiExamAttach from "@/components/ai/AiExamAttach";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 
@@ -28,6 +29,7 @@ export default function AiModule() {
   const { items: feedbacks, submit: submitFeedback } = useAiFeedback(kind);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
+  const [examIds, setExamIds] = useState<string[]>([]);
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
@@ -48,7 +50,7 @@ export default function AiModule() {
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke("sth-ai-app", {
-        body: { kind, mode, instruction: instruction.trim() },
+        body: { kind, mode, instruction: instruction.trim(), file_ids: kind === "analysis" ? examIds : [] },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
@@ -82,6 +84,8 @@ export default function AiModule() {
           <Badge variant="outline">Primeira geração</Badge>
         )}
       </div>
+
+      {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
 
       <Card className="space-y-3 p-5">
         <Textarea
