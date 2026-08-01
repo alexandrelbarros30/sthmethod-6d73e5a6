@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Button } from "@/components/ui/button";
 import { Brain, Salad, Dumbbell, LineChart, ShieldCheck, ArrowRight } from "lucide-react";
 import { AI_PLANS } from "@/hooks/useAiApp";
@@ -10,6 +11,7 @@ const PILLARS = [
 ];
 
 export default function AiLanding() {
+  useSthAiTheme();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">

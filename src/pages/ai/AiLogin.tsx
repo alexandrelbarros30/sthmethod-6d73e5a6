@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Brain, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function AiLogin() {
+  useSthAiTheme();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next") || "/ai/app";

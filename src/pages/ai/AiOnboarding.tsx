@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,6 +39,7 @@ const EMPTY: FormState = {
 };
 
 export default function AiOnboarding() {
+  useSthAiTheme();
   const { user, loading: authLoading } = useAuth() as { user: { id: string } | null; loading?: boolean };
   const navigate = useNavigate();
   const [form, setForm] = useState<FormState>(EMPTY);

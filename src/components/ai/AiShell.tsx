@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed } from "lucide-react";
 
 const NAV = [
@@ -22,6 +23,7 @@ const SECONDARY_NAV = [
 export default function AiShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
+  useSthAiTheme();
 
   async function logout() {
     await supabase.auth.signOut();
@@ -30,13 +32,15 @@ export default function AiShell({ children, title, subtitle }: { children: React
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/ai/app" className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
               <Brain className="h-4 w-4" />
             </span>
-            <span className="text-sm font-semibold tracking-tight">STH METHOD AI</span>
+            <span className="text-sm font-semibold tracking-tight">
+              STH METHOD <span className="text-primary">AI</span>
+            </span>
           </Link>
           <div className="flex items-center gap-1">
             <Button asChild variant="ghost" size="sm">
@@ -57,8 +61,8 @@ export default function AiShell({ children, title, subtitle }: { children: React
                 to={item.to}
                 className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   active
-                    ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-border/60 text-muted-foreground hover:text-foreground"
+                    ? "border-primary/30 bg-accent text-accent-foreground"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -77,7 +81,7 @@ export default function AiShell({ children, title, subtitle }: { children: React
         {children}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-stretch justify-between px-2">
           {NAV.map((item) => {
             const active = location.pathname === item.to;
