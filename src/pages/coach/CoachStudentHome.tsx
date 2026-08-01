@@ -1,12 +1,23 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Dumbbell, Target, User } from "lucide-react";
+import { CalendarClock, Dumbbell, KeyRound, Target, User } from "lucide-react";
 import CoachLayout from "@/components/coach/CoachLayout";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoachContext } from "@/hooks/useCoachTenant";
+import { toast } from "sonner";
+
+const formatDate = (d?: string | null) =>
+  d ? new Date(`${d}T12:00:00`).toLocaleDateString("pt-BR") : null;
 
 const CoachStudentHome = () => {
   const { student, tenant } = useCoachContext();
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const { data: detail } = useQuery({
     queryKey: ["coach-student-detail", student?.id],
@@ -14,12 +25,30 @@ const CoachStudentHome = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("coach_students")
-        .select("full_name, goal, height_cm, weight_kg, status")
+        .select("full_name, goal, height_cm, weight_kg, status, start_date, end_date")
         .eq("id", student!.id)
         .maybeSingle();
       return data;
     },
   });
+
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password.length < 8) return toast.error("A senha deve ter no mínimo 8 caracteres");
+    if (password !== confirm) return toast.error("As senhas não conferem");
+    setSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      toast.success("Senha atualizada");
+      setPassword("");
+      setConfirm("");
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível atualizar a senha");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <CoachLayout
@@ -52,6 +81,34 @@ const CoachStudentHome = () => {
           </p>
         </Card>
       </div>
+
+      {(detail?.start_date || detail?.end_date) && (
+        <Card className="mt-4 p-6 rounded-2xl border-border/60">
+          <CalendarClock className="h-4 w-4 text-primary mb-3" strokeWidth={1.9} />
+          <p className="text-[12px] text-muted-foreground font-light">Período de vigência</p>
+          <p className="text-[14px] font-semibold tracking-[-0.02em] mt-1">
+            {formatDate(detail?.start_date) || "—"} → {formatDate(detail?.end_date) || "sem término"}
+          </p>
+        </Card>
+      )}
+
+      <Card className="mt-4 p-6 rounded-2xl border-border/60">
+        <KeyRound className="h-4 w-4 text-primary mb-3" strokeWidth={1.9} />
+        <p className="text-[14px] font-semibold tracking-[-0.02em]">Alterar minha senha</p>
+        <form onSubmit={changePassword} className="mt-4 space-y-3 max-w-sm">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-muted-foreground">Nova senha (mín. 8 caracteres)</Label>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} maxLength={72} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-muted-foreground">Confirmar nova senha</Label>
+            <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={8} maxLength={72} required />
+          </div>
+          <Button type="submit" disabled={saving} className="rounded-full">
+            {saving ? "Salvando..." : "Atualizar senha"}
+          </Button>
+        </form>
+      </Card>
     </CoachLayout>
   );
 };
