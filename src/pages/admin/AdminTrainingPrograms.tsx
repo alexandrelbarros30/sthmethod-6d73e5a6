@@ -79,6 +79,7 @@ const AdminTrainingPrograms = () => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [coverSyncing, setCoverSyncing] = useState<null | "push" | "pull">(null);
   const [coverError, setCoverError] = useState<ErrorDetails | null>(null);
   const [generatingCoverId, setGeneratingCoverId] = useState<string | null>(null);
 
