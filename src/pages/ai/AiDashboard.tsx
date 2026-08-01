@@ -8,7 +8,7 @@ import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks
 import { useAiProgress } from "@/hooks/useAiProgress";
 import { useAiOffer } from "@/hooks/useAiGrowth";
 import AiOfferCard from "@/components/ai/AiOfferCard";
-import { Loader2, ArrowRight, Sparkles, ShieldCheck, Flame } from "lucide-react";
+import { Loader2, ArrowRight, Sparkles, ShieldCheck, Flame, HeartPulse, UserRound } from "lucide-react";
 
 const ROUTES: Record<AiKind, string> = {
   diet: "/ai/app/cardapio",
@@ -115,6 +115,14 @@ export default function AiDashboard() {
       </div>
 
       <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-5 text-xs leading-relaxed text-muted-foreground">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
+        <p>
+          O STH METHOD AI oferece orientação plena e suporte para o alcance do objetivo. Assuntos de substâncias, doses
+          e protocolos terapêuticos são exclusivos do acompanhamento profissional da consultoria.
+        </p>
+      </div>
+    </AiShell>
+  );
         <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
         <p>
           O STH METHOD AI oferece orientação plena e suporte para o alcance do objetivo. Assuntos de substâncias, doses
