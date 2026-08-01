@@ -25,6 +25,8 @@ Regras invioláveis:
 const PROMPTS: Record<Kind, string> = {
   diet: `${BASE_RULES}
 
+ATENÇÃO — SOBREPOSIÇÃO DE FORMATO: para o CARDÁPIO, a regra de "markdown" acima NÃO se aplica. A saída deve ser 100% HTML puro. É PROIBIDO usar "#", "##", "###", "**", "-" de lista ou qualquer marcação markdown. Qualquer resposta em markdown é considerada inválida.
+
 Tarefa: montar um PLANEJAMENTO ALIMENTAR completo de 30 dias, com a MESMA identidade visual e textual do cardápio do portal STH METHOD.
 Saída em HTML puro (nunca markdown), na ordem:
 1. <h3>Resumo estratégico</h3> — objetivo, GET, meta de kcal, distribuição de macros e justificativa técnica.
