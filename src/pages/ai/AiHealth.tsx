@@ -158,6 +158,13 @@ export default function AiHealth() {
         </div>
       </Card>
 
+      <SamsungWatchSetup
+        source={sources.find((s) => s.provider === "samsung_health")}
+        onConnect={() => connect("samsung_health")}
+        onDisconnect={() => disconnect("samsung_health")}
+        onImport={importRows}
+      />
+
       {chart.length > 1 && (
         <Card className="mt-4 p-5">
           <h2 className="text-sm font-semibold">Tendência de atividade</h2>
