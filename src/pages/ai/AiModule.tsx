@@ -98,46 +98,32 @@ export default function AiModule() {
         )}
       </div>
 
-      {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
-
-      {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
-
-      {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} />}
-
-      <Card className="space-y-3 p-5">
-        <Textarea
-          rows={3}
-          value={instruction}
-          onChange={(e) => setInstruction(e.target.value)}
-          placeholder={
-            current
-              ? "O que deseja ajustar? Ex: trocar o jantar por opções mais rápidas."
-              : "Quer acrescentar alguma observação antes de gerar? (opcional)"
-          }
-        />
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button className="flex-1" onClick={() => run("create")} disabled={busy || cycleLocked}>
-            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : cycleLocked ? <Lock className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            {current ? "Gerar novo ciclo" : "Gerar agora"}
-          </Button>
-          {current && (
-            <Button className="flex-1" variant="outline" onClick={() => run("revise")} disabled={busy || revisionsLeft === 0}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Revisar
+      {isWorkoutGuided ? (
+        <>
+          <div className="mb-4 flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setRequestOpen(true)} disabled={!canRequest}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Solicitar novo treino ou revisão
             </Button>
-          )}
-        </div>
-        {cycleLocked && (
-          <p className="text-xs text-muted-foreground">
-            A estrutura principal é preservada durante o ciclo — é assim que a metodologia gera adaptação real. Use uma
-            revisão para ajustes pontuais.
-          </p>
-        )}
-      </Card>
-
+          </div>
+          <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+            <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Novo treino ou revisão</DialogTitle>
+                <DialogDescription>
+                  Revise seu cadastro e a rotina de treino/cardio antes de solicitar.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">{requestForm}</div>
+            </DialogContent>
+          </Dialog>
+        </>
+      ) : (
+        requestForm
+      )}
       {current && (
         <>
         {kind === "workout" && (
-          <div className="mt-5">
+          <div>
             <AiWorkoutProgram content={current.content} />
           </div>
         )}
