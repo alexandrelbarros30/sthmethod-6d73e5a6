@@ -15,7 +15,7 @@ import AiExamAttach from "@/components/ai/AiExamAttach";
 import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
 import AiDietBriefing from "@/components/ai/AiDietBriefing";
 import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
-import DietContentRenderer from "@/components/student/DietContentRenderer";
+import AiDietPlan from "@/components/ai/AiDietPlan";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 
@@ -140,7 +140,7 @@ export default function AiModule() {
         )}
         {kind === "diet" ? (
           <Card className="mt-5 p-5">
-            <DietContentRenderer content={current.content} showHeader={false} />
+            <AiDietPlan content={current.content} />
             <p className="mt-4 text-[11px] text-muted-foreground">
               Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
             </p>

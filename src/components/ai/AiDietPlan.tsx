@@ -1,0 +1,224 @@
+import React, { useMemo, useState } from "react";
+import { Clock, Utensils, ChevronDown, ChevronRight, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
+import DietContentRenderer from "@/components/student/DietContentRenderer";
+
+interface ParsedOption {
+  label: string;
+  text: string;
+  isBase: boolean;
+}
+
+interface ParsedMeal {
+  index: number;
+  name: string;
+  subtitle?: string;
+  time?: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  options: ParsedOption[];
+}
+
+const HEADER_RE = /^\s*Refei[çc][ãa]o\s*(\d+)\s*[:\-–]\s*([^(—\-]+?)(?:\s*\(([^)]*)\))?\s*(?:[—–-]\s*(.*))?$/i;
+
+function stripTags(html: string) {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
+function num(re: RegExp, s: string) {
+  const m = s.match(re);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function parseMeals(content: string): ParsedMeal[] {
+  const blocks = content
+    .split(/<\/p>|\n/gi)
+    .map((b) => stripTags(b))
+    .filter(Boolean);
+
+  const meals: ParsedMeal[] = [];
+  let currentMeal: ParsedMeal | null = null;
+
+  for (const raw of blocks) {
+    const line = raw.replace(/^"+|"+$/g, "").trim();
+    if (!line) continue;
+    const h = line.match(HEADER_RE);
+    if (h) {
+      const meta = h[4] ?? "";
+      currentMeal = {
+        index: parseInt(h[1], 10),
+        name: h[2].trim(),
+        subtitle: h[3]?.trim(),
+        time: meta.match(/(\d{1,2}:\d{2})/)?.[1],
+        kcal: num(/(\d+)\s*kcal/i, meta),
+        protein: num(/P\s*(\d+)\s*g/i, meta),
+        carbs: num(/C\s*(\d+)\s*g/i, meta),
+        fat: num(/G\s*(\d+)\s*g/i, meta),
+        options: [],
+      };
+      meals.push(currentMeal);
+      continue;
+    }
+    if (!currentMeal) continue;
+    const optMatch = line.match(/^"?\s*(⭐?\s*BASE|Op[çc][ãa]o\s*\d+)\s*[:\-]\s*(.*)$/i);
+    if (optMatch) {
+      currentMeal.options.push({
+        label: /base/i.test(optMatch[1]) ? "BASE" : optMatch[1].replace(/\s+/g, " ").trim(),
+        text: optMatch[2].replace(/^"+|"+$/g, "").trim(),
+        isBase: /base/i.test(optMatch[1]),
+      });
+    } else if (currentMeal.options.length > 0) {
+      const last = currentMeal.options[currentMeal.options.length - 1];
+      last.text = `${last.text} ${line.replace(/^"+|"+$/g, "")}`.trim();
+    }
+  }
+
+  return meals.filter((m) => m.options.length > 0);
+}
+
+const MacroChip = ({ label, value, tone }: { label: string; value: number; tone: "prot" | "carb" | "fat" }) => {
+  const styles =
+    tone === "prot"
+      ? "border-info/25 bg-info/10 text-info"
+      : tone === "carb"
+      ? "border-warning/25 bg-warning/10 text-warning"
+      : "border-[hsl(25_85%_55%/0.25)] bg-[hsl(25_85%_55%/0.1)] text-[hsl(25_85%_50%)]";
+  return (
+    <div className={cn("rounded-lg border px-2 py-1 text-center", styles)}>
+      <p className="text-[8px] font-bold uppercase tracking-[0.18em] opacity-80">{label}</p>
+      <p className="text-[13px] font-extrabold leading-tight tabular-nums">
+        {Math.round(value)}
+        <span className="text-[9px] font-semibold opacity-70">g</span>
+      </p>
+    </div>
+  );
+};
+
+const AiDietPlan: React.FC<{ content: string }> = ({ content }) => {
+  const meals = useMemo(() => parseMeals(content), [content]);
+  const [open, setOpen] = useState<number | null>(null);
+
+  if (meals.length === 0) {
+    return <DietContentRenderer content={content} showHeader={false} />;
+  }
+
+  const totals = meals.reduce(
+    (acc, m) => ({
+      kcal: acc.kcal + m.kcal,
+      protein: acc.protein + m.protein,
+      carbs: acc.carbs + m.carbs,
+      fat: acc.fat + m.fat,
+    }),
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const totalG = totals.protein + totals.carbs + totals.fat || 1;
+
+  return (
+    <div className="space-y-4">
+      {/* Daily summary */}
+      <div className="rounded-2xl border border-border bg-muted/30 p-4">
+        <div className="flex items-baseline justify-between">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Total do dia</p>
+          <p className="text-lg font-extrabold tabular-nums text-foreground">
+            {Math.round(totals.kcal)} <span className="text-xs font-semibold text-muted-foreground">kcal</span>
+          </p>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <MacroChip label="Proteína" value={totals.protein} tone="prot" />
+          <MacroChip label="Carboidrato" value={totals.carbs} tone="carb" />
+          <MacroChip label="Gordura" value={totals.fat} tone="fat" />
+        </div>
+        <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-info" style={{ width: `${(totals.protein / totalG) * 100}%` }} />
+          <div className="h-full bg-warning" style={{ width: `${(totals.carbs / totalG) * 100}%` }} />
+          <div className="h-full" style={{ width: `${(totals.fat / totalG) * 100}%`, background: "hsl(25 85% 55%)" }} />
+        </div>
+      </div>
+
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+        Refeições do dia · {meals.length}
+      </p>
+
+      {meals.map((meal) => {
+        const isOpen = open === meal.index;
+        const Chevron = isOpen ? ChevronDown : ChevronRight;
+        const mealG = meal.protein + meal.carbs + meal.fat || 1;
+        return (
+          <div
+            key={meal.index}
+            className="overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-foreground/20"
+          >
+            <button
+              type="button"
+              onClick={() => setOpen(isOpen ? null : meal.index)}
+              className="flex w-full items-center gap-3 p-4 text-left"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                <Utensils className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-sm font-bold uppercase tracking-tight text-foreground">
+                  Refeição {String(meal.index).padStart(2, "0")} · {meal.name}
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
+                  {meal.time && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {meal.time}
+                    </span>
+                  )}
+                  <span className="font-bold tabular-nums text-foreground">{Math.round(meal.kcal)}</span>
+                  <span className="text-[10px]">kcal</span>
+                  {meal.subtitle && <span className="truncate text-[10px] italic">{meal.subtitle}</span>}
+                </div>
+              </div>
+              <Chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </button>
+
+            <div className="px-4 pb-4">
+              <div className="grid grid-cols-3 gap-2">
+                <MacroChip label="Prot" value={meal.protein} tone="prot" />
+                <MacroChip label="Carb" value={meal.carbs} tone="carb" />
+                <MacroChip label="Gord" value={meal.fat} tone="fat" />
+              </div>
+              <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full bg-info" style={{ width: `${(meal.protein / mealG) * 100}%` }} />
+                <div className="h-full bg-warning" style={{ width: `${(meal.carbs / mealG) * 100}%` }} />
+                <div className="h-full" style={{ width: `${(meal.fat / mealG) * 100}%`, background: "hsl(25 85% 55%)" }} />
+              </div>
+
+              {isOpen && (
+                <div className="mt-4 space-y-2 border-t border-border pt-4">
+                  {meal.options.map((opt, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "rounded-xl border p-3",
+                        opt.isBase ? "border-foreground/20 bg-muted/50" : "border-border bg-transparent"
+                      )}
+                    >
+                      <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                        {opt.isBase && <Star className="h-3 w-3 text-warning" />}
+                        {opt.isBase ? "Base" : opt.label}
+                      </p>
+                      <p className="text-sm leading-relaxed text-foreground">{opt.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default AiDietPlan;
