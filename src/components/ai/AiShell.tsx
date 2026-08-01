@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut } from "lucide-react";
+import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound } from "lucide-react";
 
 const NAV = [
   { to: "/ai/app", label: "Início", icon: LayoutGrid },
@@ -10,6 +10,8 @@ const NAV = [
   { to: "/ai/app/treino", label: "Treino", icon: Dumbbell },
   { to: "/ai/app/analise", label: "Análise", icon: LineChart },
   { to: "/ai/app/progresso", label: "Evolução", icon: Flame },
+  { to: "/ai/app/saude", label: "Saúde", icon: HeartPulse },
+  { to: "/ai/app/coaches", label: "Coaches", icon: UserRound },
 ];
 
 export default function AiShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
