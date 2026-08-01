@@ -60,9 +60,11 @@ const CoachStudentHome = () => {
         <Dumbbell className="h-5 w-5 text-primary mb-3" strokeWidth={1.9} />
         <p className="text-[14px] font-semibold tracking-[-0.02em]">Seus treinos</p>
         <p className="mt-2 text-[13px] text-muted-foreground font-light leading-relaxed">
-          Assim que seu treinador publicar um programa, ele aparece aqui com vídeos, séries,
-          repetições e registro de cargas.
+          Veja os programas montados pelo seu treinador com séries, repetições, cargas e descanso.
         </p>
+        <Button asChild className="mt-4 rounded-xl">
+          <Link to="/coach/aluno/treinos">Abrir meus treinos</Link>
+        </Button>
       </Card>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
