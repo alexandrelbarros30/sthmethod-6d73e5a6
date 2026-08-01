@@ -186,7 +186,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
     const timer = setTimeout(() => {
       supabase
         .from("ai_app_profiles")
-        .update({ answers: { ...(profile.answers ?? {}), ...values } })
+        .update({ answers: { ...(profile.answers ?? {}), ...values } as Record<string, string> })
         .eq("user_id", profile.user_id)
         .then(() => undefined);
     }, 800);
