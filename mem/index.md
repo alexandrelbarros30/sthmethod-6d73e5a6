@@ -4,7 +4,8 @@
 - **CXO / Padrão inegociável**: Toda decisão de produto, UX, UI, texto e comunicação segue os princípios do CXO STH METHOD (clareza > criatividade, simplicidade > complexidade, elegância > excesso, consistência > novidade, verdade > marketing). Sempre perguntar "isso melhora a vida do aluno?" — se não, descartar. Mobile first. Ver [CXO STH METHOD](mem://style/cxo-experiencia-sth).
 - **Design/Brand**: Pure Apple style, #000000 bg (main platform) or #f5f5f7 (CAS), SF Pro/Inter, neon green CTAs. NEVER use "STM", only "STH METHOD".
 - **IA/Núcleo Cognitivo**: Todos os canais IA operam como superagente (estrategista+copy+mentor), protocolo Diagnóstico→Construção→Otimização, zero respostas mornas. **PROIBIDO ABSOLUTO**: nunca escrever/dizer a expressão "modo deus" (nem variações: god mode, modo god, MODO DEUS) em nenhum canal/idioma.
-- **Identidade interna da IA**: O cérebro de IA do projeto se chama **STHIA** (pronuncia-se "está", STH+IA). Usar apenas em interações internas com o admin/owner. NÃO expor "STHIA" nos canais públicos (Comercial/Nutri/Sucesso/Aluno) — lá mantém personas existentes (ex.: Nutri Alexandre).
+- **Identidade interna da IA**: O cérebro de IA se chama **STHIA** (STH+IA). Uso interno com admin/owner; NÃO expor nos canais Nutri/Sucesso/Aluno (mantêm personas existentes, ex.: Nutri Alexandre). **EXCEÇÃO: no canal Comercial a IA se apresenta como STHIA.**
+- **Posicionamento comercial**: a STH METHOD NÃO vende dieta, treino, protocolo nem consulta — presta **SERVIÇO DE ACOMPANHAMENTO PERSONALIZADO**. Não há consultas/agendamentos.
 - **Vendas/Comercial**: Para NOVOS leads, IA Comercial ancora o **Plano 90D (Trimestral)** como recomendação ideal (12 semanas = ciclo biológico completo do método), com abordagem psicanalítica/consultiva — sem esconder demais planos. Não aplicar a aluno ativo.
 - **Security/RLS**: Use RLS `TO authenticated` for PII. Use decoupled `.in()` queries to avoid 400 errors on joins.
 - **Data Mutability**: Prefer UPSERT with explicit `user_id`. Use 500ms delay & 5 retries for Auth-Profile sync.
@@ -90,6 +91,7 @@
 - [STH METHOD COACH](mem://features/sth-method-coach) — SaaS multi-tenant em /coach para personal/academias, tabelas coach_*, sem IA e sem consultoria
 - [Consulting Methodology](mem://marketing/metodologia-consultoria) — 7 interactive cards, swipe navigation
 - [Âncora Plano 90D Comercial](mem://features/estrategia-vendas-90d) — IA Comercial ancora novos leads no Plano 90D (Trimestral) como ideal
+- [STHIA Comercial](mem://features/sthia-comercial-prompt) — Roteiro oficial do canal Comercial: identificação primeiro, posicionamento de acompanhamento, proteção de conteúdo, conversão
 - [Núcleo Cognitivo Superagente](mem://features/nucleo-cognitivo-superagente) — Diretiva interna de raciocínio para TODOS os canais IA
 - [Macro Questionnaire Funnel](mem://marketing/conversao-questionario-macros) — State transfer straight to registration
 - [Free Leads Funnel](mem://marketing/funil-leads-free) — Numbers-only login, 1.5s delayed WA follow-up
