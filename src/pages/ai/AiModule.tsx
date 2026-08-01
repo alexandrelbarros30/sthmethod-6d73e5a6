@@ -18,6 +18,7 @@ import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import AiDietPlan from "@/components/ai/AiDietPlan";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const SLUG_TO_KIND: Record<string, AiKind> = {
   cardapio: "diet",
@@ -37,6 +38,7 @@ export default function AiModule() {
   const [examIds, setExamIds] = useState<string[]>([]);
   const [workoutBrief, setWorkoutBrief] = useState("");
   const [dietBrief, setDietBrief] = useState("");
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
@@ -66,6 +68,7 @@ export default function AiModule() {
       if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
       setInstruction("");
       await refresh();
+      setRequestOpen(false);
       toast.success(mode === "create" ? "Plano gerado." : "Revisão aplicada.");
     } catch (e) {
       toast.error((e as Error)?.message || "Não foi possível gerar agora.");
