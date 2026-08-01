@@ -73,7 +73,6 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
   const [fat, setFat] = useState("");
   const [restrictions, setRestrictions] = useState("");
   const [preferences, setPreferences] = useState("");
-  const [notes, setNotes] = useState("");
   const seeded = useRef<string | null>(null);
 
   // Gasto energético total: cadastro + rotina/atividade já registrada
@@ -148,7 +147,6 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
     if (fat) lines.push(`- Lipídio: ${fat} g`);
     if (restrictions.trim()) lines.push(`- Restrições: ${restrictions.trim()}`);
     if (preferences.trim()) lines.push(`- Preferências: ${preferences.trim()}`);
-    if (notes.trim()) lines.push(`- Observações livres: ${notes.trim()}`);
     if (macros) {
       lines.push(
         `- Gasto energético total calculado (cadastro + rotina): TMB ${macros.bmr} kcal | GET/TDEE ${macros.tdee} kcal.`,
@@ -160,7 +158,7 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
     );
     onChange(`Briefing do cardápio confirmado pelo usuário (padrão STH METHOD):\n${lines.join("\n")}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objective, kcal, meals, protein, carbs, fat, restrictions, preferences, notes, macros]);
+  }, [objective, kcal, meals, protein, carbs, fat, restrictions, preferences, macros]);
 
   return (
     <div className="mb-4 space-y-4">
@@ -317,16 +315,6 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
               value={preferences}
               onChange={(e) => setPreferences(e.target.value)}
               placeholder="Gosta de tapioca, salmão, ovos..."
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Observações livres (prompt)</Label>
-            <Textarea
-              rows={4}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ex: dividir carbo em 4 refeições, colocar pré-treino sólido, ceia com whey + pasta de amendoim..."
             />
           </div>
         </div>
