@@ -197,7 +197,29 @@ const CoachStudents = () => {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[12px]">Objetivo</Label>
-                <Input value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} maxLength={160} placeholder="Ex.: hipertrofia, emagrecimento, performance" />
+                <Input
+                  value={form.goal}
+                  onChange={(e) => setForm({ ...form, goal: e.target.value })}
+                  maxLength={160}
+                  placeholder="Escreva livremente ou toque em uma sugestão"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {GOAL_PRESETS.map((g) => (
+                    <Button
+                      key={g}
+                      type="button"
+                      variant={form.goal === g ? "secondary" : "outline"}
+                      size="sm"
+                      className="rounded-full h-7 text-[11px] font-light"
+                      onClick={() => setForm({ ...form, goal: form.goal === g ? "" : g })}
+                    >
+                      {g}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted-foreground font-light">
+                  As sugestões apenas preenchem o campo — você pode editar ou escrever qualquer objetivo.
+                </p>
               </div>
               <div className="rounded-xl border border-border/60 p-3.5 space-y-3">
                 <div className="flex items-center gap-2">
