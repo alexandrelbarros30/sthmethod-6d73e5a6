@@ -34,6 +34,21 @@ const addMonths = (months: number) => {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+const GOAL_PRESETS = [
+  "Hipertrofia",
+  "Recomposição corporal",
+  "Emagrecimento",
+  "Bulking",
+  "Cutting",
+  "Off-season",
+  "Finalização",
+  "Manutenção",
+  "Performance",
+  "Condicionamento",
+  "Saúde e qualidade de vida",
+  "Reabilitação",
+];
+
 const CoachStudents = () => {
   const qc = useQueryClient();
   const { tenant } = useCoachContext();
