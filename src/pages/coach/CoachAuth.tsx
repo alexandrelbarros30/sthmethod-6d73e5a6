@@ -109,6 +109,23 @@ const CoachAuth = () => {
             </Button>
           </form>
 
+          {mode === "signin" && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (!email.trim()) return toast.error("Informe seu e-mail para redefinir a senha");
+                const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                  redirectTo: `${window.location.origin}/reset-password`,
+                });
+                if (error) toast.error("Não foi possível enviar o e-mail");
+                else toast.success("Enviamos um link de redefinição para seu e-mail");
+              }}
+              className="mt-4 w-full text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Esqueci minha senha
+            </button>
+          )}
+
           <button
             onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
             className="mt-5 w-full text-[12px] text-muted-foreground hover:text-foreground transition-colors"
