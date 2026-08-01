@@ -500,6 +500,12 @@ html, body {
     background-size: 60px 60px;
   }
 
+  .ai-tech-grid {
+    background-image: radial-gradient(hsl(var(--primary)) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: grid-move 20s linear infinite;
+  }
+
   /* Mobile viewport height fix */
   .h-screen {
     height: 100vh;
