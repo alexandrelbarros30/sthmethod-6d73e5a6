@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Sparkles, Loader2, ShieldCheck, Ban } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Row {
   id: string;
@@ -42,6 +43,7 @@ const invoke = async (payload: Record<string, unknown>) => {
 
 export default function AdminAiAccess() {
   const qc = useQueryClient();
+  const { role } = useAuth();
   const [email, setEmail] = useState("");
   const [plan, setPlan] = useState("free");
   const [days, setDays] = useState("");
@@ -75,7 +77,7 @@ export default function AdminAiAccess() {
     !v ? "—" : new Date(v).getFullYear() >= 2099 ? "Vitalício" : new Date(v).toLocaleDateString("pt-BR");
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role={(role ?? "admin") as any} title="Acessos STH METHOD AI">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
