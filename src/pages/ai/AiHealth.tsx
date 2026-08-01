@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { HEALTH_PROVIDERS, parseHealthCsv, useAiHealth } from "@/hooks/useAiHealth";
+import SamsungWatchSetup from "@/components/ai/SamsungWatchSetup";
 import { Activity, Flame, HeartPulse, Loader2, Moon, Upload, Footprints } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
