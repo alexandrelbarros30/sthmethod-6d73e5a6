@@ -7566,6 +7566,14 @@ export type Database = {
           token: string
         }[]
       }
+      get_stcoach_exercise_catalog: {
+        Args: never
+        Returns: {
+          image_url: string
+          name: string
+          video_url: string
+        }[]
+      }
       has_admin_view: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {

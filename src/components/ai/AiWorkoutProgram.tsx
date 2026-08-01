@@ -56,12 +56,10 @@ export default function AiWorkoutProgram({ content }: { content: string }) {
   const sessions = useMemo(() => parseWorkoutSessions(content), [content]);
 
   const { data: library } = useQuery({
-    queryKey: ["ai-workout-library"],
+    queryKey: ["stcoach-exercise-catalog"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("exercise_library")
-        .select("id, name, muscle_group, video_url, image_url, description");
-      return data ?? [];
+      const { data } = await supabase.rpc("get_stcoach_exercise_catalog");
+      return (data ?? []) as { name: string; video_url: string | null; image_url: string | null }[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -113,13 +111,6 @@ export default function AiWorkoutProgram({ content }: { content: string }) {
                         posterUrl={ex.image_url ?? undefined}
                         className="aspect-video w-full overflow-hidden rounded-lg"
                       />
-                    ) : ex?.image_url ? (
-                      <img
-                        src={ex.image_url}
-                        alt={`Execução do exercício ${ex.name}`}
-                        loading="lazy"
-                        className="aspect-video w-full rounded-lg object-cover"
-                      />
                     ) : (
                       <div className="grid aspect-video w-full place-items-center rounded-lg bg-muted text-muted-foreground">
                         <Dumbbell className="h-4 w-4" />
@@ -129,9 +120,9 @@ export default function AiWorkoutProgram({ content }: { content: string }) {
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{ex?.name ?? row.name}</p>
-                    {ex?.muscle_group && (
-                      <p className="text-[11px] text-muted-foreground">{ex.muscle_group}</p>
-                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      {ex?.video_url ? "Vídeo ST Coach" : "Sem vídeo ST Coach disponível"}
+                    </p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {row.sets && (
                         <Badge variant="outline" className="gap-1 text-[10px]">

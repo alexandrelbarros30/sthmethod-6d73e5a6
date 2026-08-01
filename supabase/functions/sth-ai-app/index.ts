@@ -40,7 +40,7 @@ Estrutura obrigatória:
 3. "## Progressão semanal" — semanas 1 a 4.
 4. "## Cuidados e adaptações" — equipamentos limitados, dor, tempo curto.
 Respeite o nível de treinamento, os equipamentos e a disponibilidade informados.
-REGRA CRÍTICA DE BIBLIOTECA: na coluna "Exercício" use SOMENTE nomes que existam, escritos de forma idêntica (mesma grafia e acentuação), na BIBLIOTECA OFICIAL DE EXERCÍCIOS STH METHOD enviada no contexto. É proibido inventar nomes ou usar variações não listadas — cada exercício precisa existir na biblioteca para que o vídeo/gif de referência técnica seja exibido ao aluno. Se faltar um exercício ideal, escolha o mais próximo que exista na biblioteca.
+REGRA CRÍTICA DE BIBLIOTECA: na coluna "Exercício" use SOMENTE nomes que existam, escritos de forma idêntica (mesma grafia e acentuação), na BIBLIOTECA OFICIAL ST COACH enviada no contexto. É proibido inventar nomes ou usar variações não listadas — todo exercício precisa ter vídeo do ST Coach para ser exibido ao aluno. Se faltar o exercício ideal, escolha o mais próximo que exista na biblioteca.
 Máximo 1100 palavras.`,
   analysis: `${BASE_RULES}
 
@@ -223,27 +223,14 @@ Deno.serve(async (req) => {
     const context = profileBlock(profile, measurements ?? []);
     const fbContext = feedbackBlock(feedbacks ?? []);
 
-    // ===== Biblioteca oficial de exercícios (ST Coach) — obrigatória no treino =====
+    // ===== Biblioteca oficial de exercícios do ST COACH (somente itens com vídeo) =====
     let libraryBlock = '';
     let libraryNames: string[] = [];
     if (kind === 'workout') {
-      const { data: lib } = await supabase
-        .from('exercise_library')
-        .select('name, muscle_group')
-        .order('muscle_group')
-        .order('name')
-        .limit(600);
+      const { data: lib } = await supabase.rpc('get_stcoach_exercise_catalog');
       libraryNames = (lib ?? []).map((e: any) => String(e.name));
       if (libraryNames.length) {
-        const byGroup = new Map<string, string[]>();
-        for (const e of lib ?? []) {
-          const g = String((e as any).muscle_group ?? 'Outros');
-          if (!byGroup.has(g)) byGroup.set(g, []);
-          byGroup.get(g)!.push(String((e as any).name));
-        }
-        libraryBlock = ['BIBLIOTECA OFICIAL DE EXERCÍCIOS STH METHOD (use apenas estes nomes, grafia idêntica):']
-          .concat(Array.from(byGroup.entries()).map(([g, names]) => `${g}: ${names.join('; ')}`))
-          .join('\n');
+        libraryBlock = `BIBLIOTECA OFICIAL ST COACH (use apenas estes nomes, grafia idêntica):\n${libraryNames.join('; ')}`;
       }
     }
 
