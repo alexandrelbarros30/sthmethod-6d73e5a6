@@ -31,6 +31,8 @@ Estrutura obrigatória:
 3. "## Substituições inteligentes" — 3 alternativas por refeição, equivalentes em macros.
 4. "## Hidratação e rotina".
 5. "## Como evoluir no ciclo" — ajustes previstos ao longo dos 30 dias.
+REGRAS DE ENERGIA: quando o briefing trouxer o gasto energético total (GET/TDEE) e a meta de kcal e macros, use EXATAMENTE esses números como alvo — o somatório das refeições deve fechar a meta com tolerância de ±5%. Nunca recalcule por conta própria nem arredonde para múltiplos de 100. Exiba o GET e a meta no "## Resumo estratégico".
+RESTRIÇÃO DE PROTOCOLO: nunca consulte, cite ou considere protocolos, medicamentos, hormônios, peptídeos ou suplementação terapêutica registrados na STH METHOD. O cardápio é exclusivamente alimentar.
 Máximo 1100 palavras.`,
   workout: `${BASE_RULES}
 
