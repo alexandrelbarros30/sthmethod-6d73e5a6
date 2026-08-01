@@ -51,6 +51,10 @@ function applyMeta(meal: ParsedMeal, meta: string) {
 }
 
 export function parseMeals(content: string): ParsedMeal[] {
+  return parseDiet(content).meals;
+}
+
+export function parseDiet(content: string): { meals: ParsedMeal[]; notes: string[] } {
   const blocks = content
     .split(/<\/p>|<\/h[1-6]>|<br\s*\/?>|\n/gi)
     .map((b) => stripTags(b))
@@ -59,7 +63,9 @@ export function parseMeals(content: string): ParsedMeal[] {
     .filter(Boolean);
 
   const meals: ParsedMeal[] = [];
+  const notes: string[] = [];
   let currentMeal: ParsedMeal | null = null;
+  let inNotes = false;
 
   for (const raw of blocks) {
     const line = raw.replace(/^"+|"+$/g, "").trim();
@@ -68,6 +74,7 @@ export function parseMeals(content: string): ParsedMeal[] {
     const mdh = !h && /^#{2,4}\s/.test(line) ? line.match(MD_HEADER_RE) : null;
     const isMealHeader = h || (mdh && MEAL_WORDS.test(mdh[2] ?? ""));
     if (isMealHeader) {
+      inNotes = false;
       const g = (h ?? mdh)!;
       currentMeal = {
         index: parseInt(g[1] ?? "", 10) || meals.length + 1,
@@ -81,6 +88,21 @@ export function parseMeals(content: string): ParsedMeal[] {
       };
       applyMeta(currentMeal, g[4] ?? "");
       meals.push(currentMeal);
+      continue;
+    }
+    // Início de uma seção de orientações (não é alimento)
+    const isNoteHeading =
+      (/^#{2,4}\s/.test(line) && NOTE_WORDS.test(line)) ||
+      /^(⚠️|💧|💊|📌|ℹ️)/.test(line) ||
+      (NOTE_WORDS.test(line) && /^[^a-z0-9]*[A-ZÀ-Ú][^.!?]{0,60}:?\s*$/.test(line.replace(/^#{2,4}\s*/, "")));
+    if (isNoteHeading) {
+      inNotes = true;
+      currentMeal = null;
+      notes.push(line.replace(/^#{2,4}\s*/, ""));
+      continue;
+    }
+    if (inNotes) {
+      notes.push(line);
       continue;
     }
     if (!currentMeal) continue;
@@ -108,7 +130,7 @@ export function parseMeals(content: string): ParsedMeal[] {
     }
   }
 
-  return meals.filter((m) => m.options.length > 0);
+  return { meals: meals.filter((m) => m.options.length > 0), notes };
 }
 
 const MacroChip = ({ label, value, tone }: { label: string; value: number; tone: "prot" | "carb" | "fat" }) => {
