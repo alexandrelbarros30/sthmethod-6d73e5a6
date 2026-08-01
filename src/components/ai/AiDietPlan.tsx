@@ -152,8 +152,9 @@ const MacroChip = ({ label, value, tone }: { label: string; value: number; tone:
 };
 
 const AiDietPlan: React.FC<{ content: string }> = ({ content }) => {
-  const meals = useMemo(() => parseMeals(content), [content]);
+  const { meals, notes } = useMemo(() => parseDiet(content), [content]);
   const [open, setOpen] = useState<number | null>(null);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   if (meals.length === 0) {
     return <DietContentRenderer content={content} showHeader={false} />;
@@ -267,6 +268,37 @@ const AiDietPlan: React.FC<{ content: string }> = ({ content }) => {
           </div>
         );
       })}
+
+      {notes.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-border bg-muted/20">
+          <button
+            type="button"
+            onClick={() => setNotesOpen((v) => !v)}
+            className="flex w-full items-center gap-3 p-4 text-left"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Info className="h-4 w-4" />
+            </div>
+            <p className="flex-1 font-display text-sm font-bold uppercase tracking-tight text-foreground">
+              Orientações gerais
+            </p>
+            {notesOpen ? (
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+          </button>
+          {notesOpen && (
+            <div className="space-y-2 border-t border-border px-4 pb-4 pt-4">
+              {notes.map((n, i) => (
+                <p key={i} className="text-sm leading-relaxed text-muted-foreground">
+                  {n.replace(/^[-•*]\s+/, "• ")}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
