@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Users } from "lucide-react";
+import { CalendarClock, Plus, Search, Users } from "lucide-react";
 import CoachLayout from "@/components/coach/CoachLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,23 @@ import { toast } from "sonner";
 const normalize = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
 
+const formatDate = (d?: string | null) =>
+  d ? new Date(`${d}T12:00:00`).toLocaleDateString("pt-BR") : null;
+
+const daysLeft = (end?: string | null) => {
+  if (!end) return null;
+  const diff = new Date(`${end}T23:59:59`).getTime() - Date.now();
+  return Math.ceil(diff / 86400000);
+};
+
+const addMonths = (months: number) => {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
+
 const CoachStudents = () => {
   const qc = useQueryClient();
   const { tenant } = useCoachContext();
@@ -24,9 +41,12 @@ const CoachStudents = () => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [period, setPeriod] = useState({ start_date: "", end_date: "" });
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", birth_date: "", gender: "",
     height_cm: "", weight_kg: "", goal: "", notes: "",
+    start_date: today(), end_date: "",
   });
 
   const { data: students } = useQuery({
@@ -35,7 +55,7 @@ const CoachStudents = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coach_students")
-        .select("id, full_name, email, phone, goal, status, created_at")
+        .select("id, full_name, email, phone, goal, status, created_at, start_date, end_date")
         .eq("tenant_id", tenantId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -67,15 +87,45 @@ const CoachStudents = () => {
         weight_kg: form.weight_kg ? Number(form.weight_kg) : null,
         goal: form.goal.trim() || null,
         notes: form.notes.trim() || null,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
       });
       if (error) throw error;
       toast.success("Aluno cadastrado");
       setOpen(false);
-      setForm({ full_name: "", email: "", phone: "", birth_date: "", gender: "", height_cm: "", weight_kg: "", goal: "", notes: "" });
+      setForm({ full_name: "", email: "", phone: "", birth_date: "", gender: "", height_cm: "", weight_kg: "", goal: "", notes: "", start_date: today(), end_date: "" });
       qc.invalidateQueries({ queryKey: ["coach-students"] });
       qc.invalidateQueries({ queryKey: ["coach-dashboard"] });
     } catch (err: any) {
       toast.error(err?.message || "Não foi possível cadastrar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openPeriod = (s: any) => {
+    setEditing(s);
+    setPeriod({ start_date: s.start_date || today(), end_date: s.end_date || "" });
+  };
+
+  const savePeriod = async () => {
+    if (!editing) return;
+    if (period.start_date && period.end_date && period.end_date < period.start_date) {
+      toast.error("A data final deve ser posterior à inicial");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("coach_students")
+        .update({ start_date: period.start_date || null, end_date: period.end_date || null })
+        .eq("id", editing.id);
+      if (error) throw error;
+      toast.success("Vigência atualizada");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["coach-students"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível salvar");
     } finally {
       setSaving(false);
     }
@@ -134,6 +184,31 @@ const CoachStudents = () => {
                 <Label className="text-[12px]">Objetivo</Label>
                 <Input value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} maxLength={160} placeholder="Ex.: hipertrofia, emagrecimento, performance" />
               </div>
+              <div className="rounded-xl border border-border/60 p-3.5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+                  <Label className="text-[12px]">Período de vigência</Label>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] text-muted-foreground">Início</Label>
+                    <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] text-muted-foreground">Término</Label>
+                    <Input type="date" min={form.start_date || undefined} value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[1, 3, 6, 12].map((m) => (
+                    <Button key={m} type="button" variant="outline" size="sm" className="rounded-full h-7 text-[11px]"
+                      onClick={() => setForm({ ...form, start_date: form.start_date || today(), end_date: addMonths(m) })}>
+                      {m} {m === 1 ? "mês" : "meses"}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted-foreground font-light">Datas livres — defina o período conforme o contrato do aluno.</p>
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-[12px]">Observações</Label>
                 <Textarea rows={4} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={2000} />
@@ -158,7 +233,9 @@ const CoachStudents = () => {
 
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((s: any) => (
+          {filtered.map((s: any) => {
+            const left = daysLeft(s.end_date);
+            return (
             <Card key={s.id} className="p-5 rounded-2xl border-border/60">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -170,8 +247,26 @@ const CoachStudents = () => {
                 </Badge>
               </div>
               {s.goal && <p className="mt-3 text-[12px] text-muted-foreground font-light">Objetivo: {s.goal}</p>}
+              <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] text-muted-foreground font-light truncate">
+                    {s.start_date || s.end_date
+                      ? `Vigência: ${formatDate(s.start_date) || "—"} → ${formatDate(s.end_date) || "sem término"}`
+                      : "Vigência não definida"}
+                  </p>
+                  {left !== null && (
+                    <Badge variant={left < 0 ? "destructive" : left <= 7 ? "outline" : "secondary"} className="mt-1.5 rounded-full text-[10px]">
+                      {left < 0 ? `Vencido há ${Math.abs(left)} dia(s)` : `Faltam ${left} dia(s)`}
+                    </Badge>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" className="rounded-full text-[11px] shrink-0" onClick={() => openPeriod(s)}>
+                  <CalendarClock className="mr-1 h-3.5 w-3.5" /> Vigência
+                </Button>
+              </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <Card className="p-10 rounded-2xl border-border/60 text-center">
@@ -181,6 +276,40 @@ const CoachStudents = () => {
           </p>
         </Card>
       )}
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="tracking-[-0.02em]">Período de vigência</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-[12px] text-muted-foreground font-light">{editing?.full_name}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground">Início</Label>
+                <Input type="date" value={period.start_date} onChange={(e) => setPeriod({ ...period, start_date: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground">Término</Label>
+                <Input type="date" min={period.start_date || undefined} value={period.end_date} onChange={(e) => setPeriod({ ...period, end_date: e.target.value })} />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {[1, 3, 6, 12].map((m) => (
+                <Button key={m} type="button" variant="outline" size="sm" className="rounded-full h-7 text-[11px]"
+                  onClick={() => setPeriod({ start_date: period.start_date || today(), end_date: addMonths(m) })}>
+                  {m} {m === 1 ? "mês" : "meses"}
+                </Button>
+              ))}
+              <Button type="button" variant="ghost" size="sm" className="rounded-full h-7 text-[11px]"
+                onClick={() => setPeriod({ ...period, end_date: "" })}>
+                Sem término
+              </Button>
+            </div>
+            <Button onClick={savePeriod} disabled={saving} className="w-full rounded-full">
+              {saving ? "Salvando..." : "Salvar vigência"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </CoachLayout>
   );
 };

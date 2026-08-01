@@ -1268,6 +1268,7 @@ export type Database = {
           birth_date: string | null
           created_at: string
           email: string | null
+          end_date: string | null
           full_name: string
           gender: string | null
           goal: string | null
@@ -1280,6 +1281,7 @@ export type Database = {
           pathologies: string | null
           phone: string | null
           photos: Json
+          start_date: string | null
           status: Database["public"]["Enums"]["coach_student_status"]
           tenant_id: string
           terms_accepted_at: string | null
@@ -1292,6 +1294,7 @@ export type Database = {
           birth_date?: string | null
           created_at?: string
           email?: string | null
+          end_date?: string | null
           full_name: string
           gender?: string | null
           goal?: string | null
@@ -1304,6 +1307,7 @@ export type Database = {
           pathologies?: string | null
           phone?: string | null
           photos?: Json
+          start_date?: string | null
           status?: Database["public"]["Enums"]["coach_student_status"]
           tenant_id: string
           terms_accepted_at?: string | null
@@ -1316,6 +1320,7 @@ export type Database = {
           birth_date?: string | null
           created_at?: string
           email?: string | null
+          end_date?: string | null
           full_name?: string
           gender?: string | null
           goal?: string | null
@@ -1328,6 +1333,7 @@ export type Database = {
           pathologies?: string | null
           phone?: string | null
           photos?: Json
+          start_date?: string | null
           status?: Database["public"]["Enums"]["coach_student_status"]
           tenant_id?: string
           terms_accepted_at?: string | null
