@@ -43,7 +43,12 @@ const CoachPublicInvite = () => {
     }
     setRedeeming(true);
     try {
-      const { error } = await supabase.rpc("coach_redeem_invite", { _token: token });
+      const fullName =
+        (user.user_metadata?.full_name as string | undefined)?.trim() ||
+        preview?.student_name?.trim() ||
+        user.email?.split("@")[0] ||
+        "Aluno";
+      const { error } = await supabase.rpc("coach_redeem_invite", { _token: token, _full_name: fullName });
       if (error) throw error;
       await qc.invalidateQueries({ queryKey: ["coach-context"] });
       toast.success("Convite aceito");
