@@ -45,7 +45,7 @@ export default function AiModule() {
   const maxRevisions = kind === "analysis" ? 1 : 2;
   const revisionsLeft = current ? Math.max(0, maxRevisions - current.revisions) : maxRevisions;
   const cycleLocked = Boolean(current) && daysLeft > 0;
-  const isWorkoutGuided = kind === "workout" && Boolean(current);
+  const isGuided = (kind === "workout" || kind === "diet") && Boolean(current);
   const canRequest = !cycleLocked || revisionsLeft > 0;
 
   const requestForm = (
@@ -136,19 +136,23 @@ export default function AiModule() {
         )}
       </div>
 
-      {isWorkoutGuided ? (
+      {isGuided ? (
         <>
+          {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} compact />}
           <div className="mb-4 flex justify-end">
             <Button variant="outline" size="sm" onClick={() => setRequestOpen(true)} disabled={!canRequest}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Solicitar novo treino ou revisão
+              <RefreshCw className="mr-2 h-4 w-4" />{" "}
+              {kind === "diet" ? "Solicitar novo cardápio ou revisão" : "Solicitar novo treino ou revisão"}
             </Button>
           </div>
           <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
             <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Novo treino ou revisão</DialogTitle>
+                <DialogTitle>{kind === "diet" ? "Novo cardápio ou revisão" : "Novo treino ou revisão"}</DialogTitle>
                 <DialogDescription>
-                  Revise seu cadastro e a rotina de treino/cardio antes de solicitar.
+                  {kind === "diet"
+                    ? "Revise seu cadastro e o briefing antes de solicitar."
+                    : "Revise seu cadastro e a rotina de treino/cardio antes de solicitar."}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">{requestForm}</div>
