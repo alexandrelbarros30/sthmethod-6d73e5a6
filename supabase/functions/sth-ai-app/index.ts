@@ -36,10 +36,11 @@ Máximo 1100 palavras.`,
 Tarefa: montar um PROGRAMA DE TREINO periodizado de 30 dias.
 Estrutura obrigatória:
 1. "## Resumo estratégico" (divisão, frequência, volume semanal e justificativa).
-2. "## Treinos" — um bloco por sessão (Treino A, B, C...), tabela com exercício, séries, repetições, descanso e observação técnica.
+2. "## Treinos" — um bloco por sessão com título no formato "### Treino A — Peito e Tríceps". Dentro de cada sessão, uma tabela markdown com EXATAMENTE as colunas: | Exercício | Séries | Repetições | Descanso | Observação |
 3. "## Progressão semanal" — semanas 1 a 4.
 4. "## Cuidados e adaptações" — equipamentos limitados, dor, tempo curto.
 Respeite o nível de treinamento, os equipamentos e a disponibilidade informados.
+REGRA CRÍTICA DE BIBLIOTECA: na coluna "Exercício" use SOMENTE nomes que existam, escritos de forma idêntica (mesma grafia e acentuação), na BIBLIOTECA OFICIAL DE EXERCÍCIOS STH METHOD enviada no contexto. É proibido inventar nomes ou usar variações não listadas — cada exercício precisa existir na biblioteca para que o vídeo/gif de referência técnica seja exibido ao aluno. Se faltar um exercício ideal, escolha o mais próximo que exista na biblioteca.
 Máximo 1100 palavras.`,
   analysis: `${BASE_RULES}
 
