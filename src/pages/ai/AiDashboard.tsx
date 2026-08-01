@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
-import { Loader2, ArrowRight, Sparkles, ShieldCheck } from "lucide-react";
+import { useAiProgress } from "@/hooks/useAiProgress";
+import { Loader2, ArrowRight, Sparkles, ShieldCheck, Flame } from "lucide-react";
 
 const ROUTES: Record<AiKind, string> = {
   diet: "/ai/app/cardapio",
@@ -15,6 +16,7 @@ const ROUTES: Record<AiKind, string> = {
 
 export default function AiDashboard() {
   const { profile, subscription, generations, loading, user } = useAiApp();
+  const { streak, today, last7 } = useAiProgress();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,9 +34,29 @@ export default function AiDashboard() {
   }
 
   const firstName = (profile?.full_name ?? "").split(" ")[0] || "atleta";
+  const adherence7 = last7.filter((d) => d.done).length;
 
   return (
     <AiShell title={`Olá, ${firstName}`} subtitle="Sua inteligência de nutrição, treino e evolução.">
+      <Card className="mb-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/15 text-primary">
+            <Flame className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">
+              {streak > 0 ? `${streak} ${streak === 1 ? "dia" : "dias"} de constância` : "Comece sua sequência hoje"}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {today ? `Check-in de hoje registrado · ${adherence7}/7 dias na semana` : "Faça o check-in de hoje em 5 segundos."}
+            </p>
+          </div>
+        </div>
+        <Button asChild variant={today ? "outline" : "default"}>
+          <Link to="/ai/app/progresso">{today ? "Ver evolução" : "Fazer check-in"}</Link>
+        </Button>
+      </Card>
+
       {!subscription && (
         <Card className="mb-5 flex flex-col gap-3 border-primary/30 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
