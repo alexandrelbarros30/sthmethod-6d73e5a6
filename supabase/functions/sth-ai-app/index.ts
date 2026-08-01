@@ -283,7 +283,21 @@ Deno.serve(async (req) => {
       ? [{ type: 'text', text: `${userPrompt}\n\nExames laboratoriais anexados pelo usuário estão em anexo. Leia todos integralmente.` }, ...parts]
       : userPrompt;
 
-    const content = await callAi(PROMPTS[kind], aiInput);
+    let content = await callAi(PROMPTS[kind], aiInput);
+
+    // Auditoria nutricional: kcal/macros das refeições recalculados sobre a BASE (TACO).
+    let dietTotals: unknown = null;
+    if (kind === 'diet') {
+      const audit = recalcDietMacros(content);
+      content = audit.html;
+      dietTotals = {
+        kcal: Math.round(audit.totals.kcal),
+        protein_g: Math.round(audit.totals.p),
+        carbs_g: Math.round(audit.totals.c),
+        fat_g: Math.round(audit.totals.f),
+        meals_recalculated: audit.recalculated,
+      };
+    }
 
     // Quais exercícios da biblioteca foram efetivamente usados (para render em cards com vídeo).
     const usedExercises = kind === 'workout'
@@ -310,7 +324,7 @@ Deno.serve(async (req) => {
           content,
           revisions: 0,
           exception_reason: exceptionReason || null,
-          meta: { plan: sub?.plan ?? 'admin', model: MODEL, library_exercises: usedExercises },
+          meta: { plan: sub?.plan ?? 'admin', model: MODEL, library_exercises: usedExercises, diet_totals: dietTotals },
         })
         .select()
         .single();
