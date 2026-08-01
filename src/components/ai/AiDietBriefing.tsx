@@ -218,10 +218,22 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
         ) : (
           <>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <MetricInfo
+                label="TMB"
+                value={`${macros.bmr} kcal`}
+                tip="Taxa Metabólica Basal: é a energia mínima que seu corpo gasta em repouso absoluto para manter funções vitais como respiração, batimento cardíaco e temperatura."
+              />
+              <MetricInfo
+                label="GET (TDEE)"
+                value={`${macros.tdee} kcal`}
+                tip="Gasto Energético Total: soma da TMB com tudo o que você gasta no dia a dia (trabalho, passos, treinos, cardio e atividades rotineiras). É o seu "queimar total" real."
+              />
+              <MetricInfo
+                label="Meta diária"
+                value={`${macros.dailyCalories} kcal`}
+                tip="Kcal-alvo ajustada ao seu objetivo: levemente abaixo do GET para perda de gordura, acima para ganho de massa ou igual para manutenção."
+              />
               {[
-                { label: "TMB", value: `${macros.bmr} kcal` },
-                { label: "GET (TDEE)", value: `${macros.tdee} kcal` },
-                { label: "Meta diária", value: `${macros.dailyCalories} kcal` },
                 { label: "Proteína", value: `${macros.proteinG} g` },
                 { label: "Carboidrato", value: `${macros.carbsG} g` },
                 { label: "Gordura", value: `${macros.fatG} g` },
