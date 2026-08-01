@@ -147,7 +147,6 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
     if (fat) lines.push(`- Lipídio: ${fat} g`);
     if (restrictions.trim()) lines.push(`- Restrições: ${restrictions.trim()}`);
     if (preferences.trim()) lines.push(`- Preferências: ${preferences.trim()}`);
-    if (notes.trim()) lines.push(`- Observações livres: ${notes.trim()}`);
     if (macros) {
       lines.push(
         `- Gasto energético total calculado (cadastro + rotina): TMB ${macros.bmr} kcal | GET/TDEE ${macros.tdee} kcal.`,
@@ -159,7 +158,7 @@ export default function AiDietBriefing({ profile, onChange }: Props) {
     );
     onChange(`Briefing do cardápio confirmado pelo usuário (padrão STH METHOD):\n${lines.join("\n")}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objective, kcal, meals, protein, carbs, fat, restrictions, preferences, notes, macros]);
+  }, [objective, kcal, meals, protein, carbs, fat, restrictions, preferences, macros]);
 
   return (
     <div className="mb-4 space-y-4">
