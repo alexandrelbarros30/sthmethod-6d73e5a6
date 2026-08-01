@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Brain, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";

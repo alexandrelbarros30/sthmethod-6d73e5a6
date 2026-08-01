@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
