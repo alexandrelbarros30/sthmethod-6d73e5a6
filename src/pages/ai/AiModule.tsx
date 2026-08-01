@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
 import AiFeedbackCard from "@/components/ai/AiFeedbackCard";
 import AiExamAttach from "@/components/ai/AiExamAttach";
+import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 
@@ -25,11 +26,12 @@ export default function AiModule() {
   const navigate = useNavigate();
   const kind = SLUG_TO_KIND[slug ?? ""] ?? "diet";
   const mod = AI_MODULES[kind];
-  const { generations, subscription, loading, refresh } = useAiApp();
+  const { generations, subscription, profile, loading, refresh } = useAiApp();
   const { items: feedbacks, submit: submitFeedback } = useAiFeedback(kind);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
   const [examIds, setExamIds] = useState<string[]>([]);
+  const [workoutBrief, setWorkoutBrief] = useState("");
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
@@ -48,9 +50,12 @@ export default function AiModule() {
       return;
     }
     setBusy(true);
+    const fullInstruction = [kind === "workout" ? workoutBrief : "", instruction.trim()]
+      .filter(Boolean)
+      .join("\n\n");
     try {
       const { data, error } = await supabase.functions.invoke("sth-ai-app", {
-        body: { kind, mode, instruction: instruction.trim(), file_ids: kind === "analysis" ? examIds : [] },
+        body: { kind, mode, instruction: fullInstruction, file_ids: kind === "analysis" ? examIds : [] },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
@@ -86,6 +91,8 @@ export default function AiModule() {
       </div>
 
       {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
+
+      {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
 
       <Card className="space-y-3 p-5">
         <Textarea
