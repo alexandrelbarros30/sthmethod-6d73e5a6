@@ -44,7 +44,7 @@ const CoachPlans = () => {
         <Progress value={pct} className="mt-4 h-1.5" />
       </Card>
 
-      <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
         {COACH_PLANS.map((plan) => {
           const isCurrent = plan.id === current.id;
           return (
