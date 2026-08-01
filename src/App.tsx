@@ -229,7 +229,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <AdminReauthProvider>
           <DynamicHead />
@@ -308,19 +308,19 @@ const App = () => (
             <Route path="/cas" element={<CasAuthProvider><CasProtectedRoute><Cas /></CasProtectedRoute></CasAuthProvider>} />
 
             {/* STH METHOD COACH */}
-            <Route path="/coach" element={<CoachLanding />} />
-            <Route path="/coach/entrar" element={<CoachAuth />} />
-            <Route path="/coach/comecar" element={<CoachOnboarding />} />
-            <Route path="/coach/convite/:token" element={<CoachPublicInvite />} />
-            <Route path="/coach/painel" element={<CoachRoute audience="professional"><CoachDashboard /></CoachRoute>} />
-            <Route path="/coach/alunos" element={<CoachRoute audience="professional"><CoachStudents /></CoachRoute>} />
-            <Route path="/coach/treinos" element={<CoachRoute audience="professional"><CoachPrograms /></CoachRoute>} />
-            <Route path="/coach/treinos/:programId" element={<CoachRoute audience="professional"><CoachProgramEditor /></CoachRoute>} />
-            <Route path="/coach/convites" element={<CoachRoute audience="professional"><CoachInvites /></CoachRoute>} />
-            <Route path="/coach/planos" element={<CoachRoute audience="professional"><CoachPlans /></CoachRoute>} />
-            <Route path="/coach/configuracoes" element={<CoachRoute audience="professional"><CoachSettings /></CoachRoute>} />
-            <Route path="/coach/aluno" element={<CoachRoute audience="student"><CoachStudentHome /></CoachRoute>} />
-            <Route path="/coach/aluno/treinos" element={<CoachRoute audience="student"><CoachStudentWorkouts /></CoachRoute>} />
+            <Route path="/coach" element={<Suspense fallback={<LazyFallback />}><CoachLanding /></Suspense>} />
+            <Route path="/coach/entrar" element={<Suspense fallback={<LazyFallback />}><CoachAuth /></Suspense>} />
+            <Route path="/coach/comecar" element={<Suspense fallback={<LazyFallback />}><CoachOnboarding /></Suspense>} />
+            <Route path="/coach/convite/:token" element={<Suspense fallback={<LazyFallback />}><CoachPublicInvite /></Suspense>} />
+            <Route path="/coach/painel" element={<CoachRoute audience="professional"><Suspense fallback={<LazyFallback />}><CoachDashboard /></Suspense></CoachRoute>} />
+            <Route path="/coach/alunos" element={<CoachRoute audience="professional"><Suspense fallback={<LazyFallback />}><CoachStudents /></Suspense></CoachRoute>} />
+            <Route path="/coach/treinos" element={<CoachRoute audience="professional"><Suspense fallback={<LazyFallback />}><CoachPrograms /></Suspense></CoachRoute>} />
+            <Route path="/coach/treinos/:programId" element={<CoachRoute audience="professional"><Suspense fallback={<LazyFallback />}><CoachProgramEditor /></Suspense></CoachRoute>} />
+            <Route path="/coach/convites" element={<CoachRoute audience="professional"><Suspense fallback={<LazyFallback />}><CoachInvites /></Suspense></CoachRoute>} />
+            <Route path="/coach/planos" element={<CoachRoute audience="professional"><Suspense fallback={<LazyFallback />}><CoachPlans /></Suspense></CoachRoute>} />
+            <Route path="/coach/configuracoes" element={<CoachRoute audience="professional"><Suspense fallback={<LazyFallback />}><CoachSettings /></Suspense></CoachRoute>} />
+            <Route path="/coach/aluno" element={<CoachRoute audience="student"><Suspense fallback={<LazyFallback />}><CoachStudentHome /></Suspense></CoachRoute>} />
+            <Route path="/coach/aluno/treinos" element={<CoachRoute audience="student"><Suspense fallback={<LazyFallback />}><CoachStudentWorkouts /></Suspense></CoachRoute>} />
             {/* MEAD aliases — landing oficial */}
             <Route path="/mead/login" element={<CasAuthProvider><CasLogin /></CasAuthProvider>} />
             <Route path="/mead/cadastro" element={<CasAuthProvider><CasRegister /></CasAuthProvider>} />
