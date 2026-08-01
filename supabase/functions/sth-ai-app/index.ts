@@ -223,27 +223,14 @@ Deno.serve(async (req) => {
     const context = profileBlock(profile, measurements ?? []);
     const fbContext = feedbackBlock(feedbacks ?? []);
 
-    // ===== Biblioteca oficial de exercícios (ST Coach) — obrigatória no treino =====
+    // ===== Biblioteca oficial de exercícios do ST COACH (somente itens com vídeo) =====
     let libraryBlock = '';
     let libraryNames: string[] = [];
     if (kind === 'workout') {
-      const { data: lib } = await supabase
-        .from('exercise_library')
-        .select('name, muscle_group')
-        .order('muscle_group')
-        .order('name')
-        .limit(600);
+      const { data: lib } = await supabase.rpc('get_stcoach_exercise_catalog');
       libraryNames = (lib ?? []).map((e: any) => String(e.name));
       if (libraryNames.length) {
-        const byGroup = new Map<string, string[]>();
-        for (const e of lib ?? []) {
-          const g = String((e as any).muscle_group ?? 'Outros');
-          if (!byGroup.has(g)) byGroup.set(g, []);
-          byGroup.get(g)!.push(String((e as any).name));
-        }
-        libraryBlock = ['BIBLIOTECA OFICIAL DE EXERCÍCIOS STH METHOD (use apenas estes nomes, grafia idêntica):']
-          .concat(Array.from(byGroup.entries()).map(([g, names]) => `${g}: ${names.join('; ')}`))
-          .join('\n');
+        libraryBlock = `BIBLIOTECA OFICIAL ST COACH (use apenas estes nomes, grafia idêntica):\n${libraryNames.join('; ')}`;
       }
     }
 
