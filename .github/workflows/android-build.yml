@@ -65,6 +65,9 @@ jobs:
             npx cap add android
           fi
 
+      - name: Configure Health Connect (AndroidManifest)
+        run: node scripts/patch-android-manifest.mjs
+
       - name: Set Android app version
         env:
           RUN_NUMBER: ${{ github.run_number }}
