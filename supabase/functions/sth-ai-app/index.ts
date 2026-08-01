@@ -3,6 +3,7 @@
 // (cardápio/treino, 30 dias) e 1 análise completa a cada 60 dias.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { STHIA_TRAINING_DOCTRINE } from '../_shared/sthia-training-doctrine.ts';
 
 const GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const MODEL = 'openai/gpt-5.6-sol';
