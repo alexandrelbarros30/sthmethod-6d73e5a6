@@ -114,15 +114,26 @@ export default function AiDashboard() {
         })}
       </div>
 
-      <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-5 text-xs leading-relaxed text-muted-foreground">
-        <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
-        <p>
-          O STH METHOD AI oferece orientação plena e suporte para o alcance do objetivo. Assuntos de substâncias, doses
-          e protocolos terapêuticos são exclusivos do acompanhamento profissional da consultoria.
-        </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Button asChild variant="outline" className="h-auto justify-between rounded-2xl p-5">
+          <Link to="/ai/app/saude">
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <HeartPulse className="h-4 w-4 text-primary" /> Saúde e wearables
+            </span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-auto justify-between rounded-2xl p-5">
+          <Link to="/ai/app/coaches">
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <UserRound className="h-4 w-4 text-primary" /> Coaches humanos
+            </span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
       </div>
-    </AiShell>
-  );
+
+      <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-5 text-xs leading-relaxed text-muted-foreground">
         <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
         <p>
           O STH METHOD AI oferece orientação plena e suporte para o alcance do objetivo. Assuntos de substâncias, doses
