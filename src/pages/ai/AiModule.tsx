@@ -126,7 +126,6 @@ export default function AiModule() {
 
   return (
     <AiShell title={mod.title} subtitle={mod.short}>
-      {/* eslint-disable-next-line */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {current ? (
           <>
