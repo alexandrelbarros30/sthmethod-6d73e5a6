@@ -109,6 +109,29 @@ function profileBlock(p: any, measurements: any[]) {
   return lines.join('\n');
 }
 
+// ===== Etapa 6 — feedback estruturado que realimenta a IA =====
+function feedbackBlock(rows: any[]) {
+  if (!rows?.length) return '';
+  const lines: string[] = ['Feedback estruturado dos ciclos anteriores (do mais recente ao mais antigo):'];
+  for (const f of rows) {
+    const parts = [
+      `- ${new Date(f.created_at).toISOString().slice(0, 10)}`,
+      `nota ${f.rating}/5`,
+      f.difficulty ? `dificuldade ${f.difficulty}/5` : '',
+      f.energy ? `energia ${f.energy}/5` : '',
+      f.adherence_pct !== null && f.adherence_pct !== undefined ? `adesão ${f.adherence_pct}%` : '',
+    ].filter(Boolean);
+    lines.push(parts.join(' | '));
+    if (f.worked?.length) lines.push(`  funcionou: ${f.worked.join(', ')}`);
+    if (f.blocked?.length) lines.push(`  atrapalhou: ${f.blocked.join(', ')}`);
+    if (f.comment) lines.push(`  relato: ${String(f.comment).slice(0, 300)}`);
+  }
+  lines.push(
+    'Diretriz obrigatória: preserve e amplifique o que funcionou, corrija ativamente o que atrapalhou e calibre volume/complexidade pela adesão relatada (adesão abaixo de 70% exige simplificação real do plano). Encerre com a seção "## O que mudou pelo seu feedback" explicando, em até 5 linhas, quais decisões vieram das respostas do usuário.',
+  );
+  return lines.join('\n');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -153,6 +176,14 @@ Deno.serve(async (req) => {
       .order('measured_on', { ascending: false })
       .limit(8);
 
+    const { data: feedbacks } = await supabase
+      .from('ai_app_feedback')
+      .select('rating, difficulty, energy, adherence_pct, worked, blocked, comment, created_at')
+      .eq('user_id', userId)
+      .eq('kind', kind)
+      .order('created_at', { ascending: false })
+      .limit(4);
+
     // ===== Periodização =====
     const { data: last } = await supabase
       .from('ai_app_generations')
@@ -184,9 +215,10 @@ Deno.serve(async (req) => {
     }
 
     const context = profileBlock(profile, measurements ?? []);
+    const fbContext = feedbackBlock(feedbacks ?? []);
     const userPrompt = mode === 'revise'
-      ? `Perfil do usuário:\n${context}\n\nVersão atual:\n${last!.content}\n\nAjuste pedido: ${instruction}\n\nPreserve a estrutura principal e altere apenas o necessário. Adicione ao final a seção "## O que mudou nesta revisão".`
-      : `Perfil do usuário:\n${context}\n${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
+      ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}\nVersão atual:\n${last!.content}\n\nAjuste pedido: ${instruction}\n\nPreserve a estrutura principal e altere apenas o necessário. Adicione ao final a seção "## O que mudou nesta revisão".`
+      : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
 
     const content = await callAi(PROMPTS[kind], userPrompt);
 

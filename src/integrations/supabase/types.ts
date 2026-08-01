@@ -354,6 +354,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_app_feedback: {
+        Row: {
+          adherence_pct: number | null
+          blocked: string[]
+          comment: string | null
+          created_at: string
+          difficulty: number | null
+          energy: number | null
+          generation_id: string | null
+          id: string
+          kind: string
+          rating: number
+          updated_at: string
+          user_id: string
+          worked: string[]
+        }
+        Insert: {
+          adherence_pct?: number | null
+          blocked?: string[]
+          comment?: string | null
+          created_at?: string
+          difficulty?: number | null
+          energy?: number | null
+          generation_id?: string | null
+          id?: string
+          kind: string
+          rating: number
+          updated_at?: string
+          user_id: string
+          worked?: string[]
+        }
+        Update: {
+          adherence_pct?: number | null
+          blocked?: string[]
+          comment?: string | null
+          created_at?: string
+          difficulty?: number | null
+          energy?: number | null
+          generation_id?: string | null
+          id?: string
+          kind?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+          worked?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_app_feedback_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_app_generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_app_files: {
         Row: {
           created_at: string
