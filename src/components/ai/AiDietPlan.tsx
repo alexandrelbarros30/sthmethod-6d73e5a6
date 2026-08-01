@@ -67,7 +67,6 @@ function parseMeals(content: string): ParsedMeal[] {
     const isMealHeader = h || (mdh && MEAL_WORDS.test(mdh[2] ?? ""));
     if (isMealHeader) {
       const g = (h ?? mdh)!;
-      const meta = h[4] ?? "";
       currentMeal = {
         index: parseInt(g[1] ?? "", 10) || meals.length + 1,
         name: (g[2] ?? "").trim(),
