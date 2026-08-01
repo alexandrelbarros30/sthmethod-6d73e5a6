@@ -278,6 +278,30 @@ html, body {
     background: hsl(var(--background));
     color-scheme: dark;
   }
+
+  /* ── Graphite Pulse overrides — neutraliza regras do STH light premium
+       quando a home do aluno está no tema dark tech. ── */
+  html.theme-sth-green .theme-graphite-pulse,
+  html.theme-sth-green .theme-graphite-pulse [role="dialog"],
+  html.theme-sth-green .theme-graphite-pulse [data-radix-popper-content-wrapper] {
+    font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  html.theme-sth-green .theme-graphite-pulse h1,
+  html.theme-sth-green .theme-graphite-pulse h2,
+  html.theme-sth-green .theme-graphite-pulse h3,
+  html.theme-sth-green .theme-graphite-pulse h4 {
+    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  html.theme-sth-green .theme-graphite-pulse .rounded-3xl.border.bg-background,
+  html.theme-sth-green .theme-graphite-pulse .rounded-2xl.border.bg-card,
+  html.theme-sth-green .theme-graphite-pulse .rounded-xl.border.bg-card,
+  html.theme-sth-green .theme-graphite-pulse .rounded-lg.border.bg-card {
+    background: hsl(var(--card)) !important;
+    border-color: hsl(var(--border)) !important;
+    box-shadow: none !important;
+  }
 }
 
 @layer base {
