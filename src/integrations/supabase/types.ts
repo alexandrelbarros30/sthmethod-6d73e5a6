@@ -7477,6 +7477,14 @@ export type Database = {
         }
         Relationships: []
       }
+      stcoach_exercise_catalog: {
+        Row: {
+          image_url: string | null
+          name: string | null
+          video_url: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       backup_list_public_tables: {
