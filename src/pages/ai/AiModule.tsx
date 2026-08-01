@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
+import AiFeedbackCard from "@/components/ai/AiFeedbackCard";
+import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 
 const SLUG_TO_KIND: Record<string, AiKind> = {
@@ -23,10 +25,12 @@ export default function AiModule() {
   const kind = SLUG_TO_KIND[slug ?? ""] ?? "diet";
   const mod = AI_MODULES[kind];
   const { generations, subscription, loading, refresh } = useAiApp();
+  const { items: feedbacks, submit: submitFeedback } = useAiFeedback(kind);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
+  const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
   const daysLeft = daysLeftInCycle(current, mod.cycleDays);
   const maxRevisions = kind === "analysis" ? 1 : 2;
   const revisionsLeft = current ? Math.max(0, maxRevisions - current.revisions) : maxRevisions;
@@ -118,6 +122,15 @@ export default function AiModule() {
             Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
           </p>
         </Card>
+      )}
+
+      {current && (
+        <AiFeedbackCard
+          kind={kind}
+          generationId={current.id}
+          existing={currentFeedback}
+          onSubmit={submitFeedback}
+        />
       )}
     </AiShell>
   );
