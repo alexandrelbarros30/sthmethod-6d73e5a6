@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAiProgress } from "@/hooks/useAiProgress";
+import AiInsightCard from "@/components/ai/AiInsightCard";
 import { Flame, Loader2, Check, Salad, Dumbbell, Droplets, Ruler, TrendingDown, TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
