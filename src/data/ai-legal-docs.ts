@@ -1031,6 +1031,115 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "politica-de-seguranca-da-informacao",
+    title: "Política de Segurança da Informação",
+    subtitle: "Princípios, controles e práticas de proteção de dados da STH AI",
+    code: "STHAI-SEG-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Objetivo",
+        paragraphs: [
+          "Esta Política estabelece os princípios, controles e práticas adotadas pela STH AI para proteger informações armazenadas e processadas pela plataforma.",
+          "O objetivo é garantir confidencialidade, integridade, disponibilidade e segurança dos dados dos usuários.",
+        ],
+      },
+      {
+        title: "2. Princípios de Segurança",
+        paragraphs: [
+          "A STH AI adota como princípios fundamentais:",
+        ],
+        bullets: [
+          "Confidencialidade: garantir que informações pessoais e sensíveis sejam acessadas apenas por usuários e sistemas autorizados.",
+          "Integridade: garantir que os dados não sejam alterados, corrompidos ou manipulados de forma indevida.",
+          "Disponibilidade: garantir que os recursos da plataforma estejam disponíveis para utilização conforme as condições do serviço contratado.",
+        ],
+      },
+      {
+        title: "3. Dados Protegidos",
+        paragraphs: [
+          "A política de segurança aplica-se aos dados tratados pela plataforma, incluindo:",
+        ],
+        bullets: [
+          "dados cadastrais;",
+          "informações corporais;",
+          "fotografias de evolução;",
+          "exames laboratoriais enviados;",
+          "registros alimentares;",
+          "históricos de utilização;",
+          "informações técnicas de acesso.",
+        ],
+      },
+      {
+        title: "4. Controle de Acesso",
+        paragraphs: [
+          "A STH AI adota medidas para limitar o acesso às informações conforme necessidade operacional.",
+          "São aplicados controles como autenticação de usuários, gerenciamento de permissões, proteção de credenciais e monitoramento de acessos.",
+          "Cada usuário possui acesso apenas aos dados vinculados à sua própria conta.",
+        ],
+      },
+      {
+        title: "5. Proteção de Conta do Usuário",
+        paragraphs: [
+          "O usuário é responsável por manter sua senha protegida, não compartilhar suas credenciais, utilizar dispositivos confiáveis e comunicar acessos suspeitos.",
+          "A STH AI nunca solicitará senhas por canais não oficiais.",
+        ],
+      },
+      {
+        title: "6. Armazenamento de Dados",
+        paragraphs: [
+          "Os dados são armazenados em ambientes tecnológicos adequados, utilizando recursos de segurança compatíveis com a natureza das informações tratadas.",
+          "A plataforma busca aplicar boas práticas de armazenamento seguro, controle de acesso, proteção contra perda de dados e continuidade operacional.",
+        ],
+      },
+      {
+        title: "7. Proteção de Dados Sensíveis",
+        paragraphs: [
+          "Dados como exames, fotografias corporais e informações relacionadas à saúde recebem tratamento diferenciado devido à sua natureza sensível.",
+          "O acesso e utilização desses dados seguem os princípios definidos na Política de Privacidade e no Consentimento para Tratamento de Dados Sensíveis.",
+        ],
+      },
+      {
+        title: "8. Integrações com Serviços Externos",
+        paragraphs: [
+          "A STH AI poderá utilizar serviços tecnológicos externos necessários para hospedagem, processamento, pagamentos, autenticação, armazenamento e funcionamento da inteligência artificial.",
+          "A seleção e utilização desses serviços busca respeitar requisitos de segurança e privacidade.",
+        ],
+      },
+      {
+        title: "9. Monitoramento e Prevenção",
+        paragraphs: [
+          "A plataforma poderá realizar atividades de segurança como identificação de acessos suspeitos, prevenção contra fraude, registro de eventos técnicos, análise de falhas e aplicação de melhorias.",
+        ],
+      },
+      {
+        title: "10. Incidentes de Segurança",
+        paragraphs: [
+          "Em caso de ocorrência de incidente envolvendo dados pessoais, a STH AI adotará medidas adequadas para identificar o ocorrido, avaliar impactos, corrigir vulnerabilidades e cumprir obrigações legais aplicáveis.",
+        ],
+      },
+      {
+        title: "11. Responsabilidades do Usuário",
+        paragraphs: [
+          "O usuário deve utilizar a plataforma de forma segura, manter seus dados atualizados, evitar compartilhamento de acesso e informar possíveis vulnerabilidades identificadas.",
+        ],
+      },
+      {
+        title: "12. Atualização da Segurança",
+        paragraphs: [
+          "A STH AI poderá atualizar seus mecanismos de segurança continuamente, considerando evolução tecnológica, novas ameaças digitais, melhorias internas e requisitos legais.",
+        ],
+      },
+      {
+        title: "13. Vigência",
+        paragraphs: [
+          "Esta Política entra em vigor na data de sua publicação e integra os documentos oficiais da STH AI.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
