@@ -136,7 +136,7 @@ const AdminStudents = () => {
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete, created_at");
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, medications, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete, created_at");
       if (!profiles) return [];
       const { data: subs } = await supabase.from("subscriptions").select("*, plans(name, duration_days)");
       return profiles.map((p: any) => {
@@ -833,7 +833,7 @@ const AdminStudents = () => {
           // Tenta carregar perfil diretamente
           const { data: prof } = await supabase
             .from("profiles")
-            .select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete, created_at")
+            .select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, medications, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete, created_at")
             .eq("user_id", manageUserId)
             .maybeSingle();
           if (prof) {
