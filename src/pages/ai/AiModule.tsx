@@ -179,7 +179,7 @@ export default function AiModule() {
         )}
         {kind === "diet" ? (
           <Card className="mt-5 p-5">
-            <AiDietPlan content={current.content} />
+            <AiDietPlan content={current.content} weightKg={profile?.weight_kg ?? null} />
             <p className="mt-4 text-[11px] text-muted-foreground">
               Atualizado em {new Date(current.updated_at).toLocaleString("pt-BR")}
             </p>
