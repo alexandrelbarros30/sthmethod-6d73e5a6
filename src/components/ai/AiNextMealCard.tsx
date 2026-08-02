@@ -61,11 +61,26 @@ const AiNextMealCard = ({ diet }: { diet: AiGeneration | null }) => {
             )}
           </div>
 
-          <div className="relative mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">
-            <span className="text-foreground">{current.kcal} kcal</span>
-            <span>P {current.protein}g</span>
-            <span>C {current.carbs}g</span>
-            <span>G {current.fat}g</span>
+          <div className="relative mt-4 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-baseline gap-1 rounded-lg border border-primary/25 bg-primary/10 px-2.5 py-1 font-mono text-[12px] font-extrabold tabular-nums text-primary">
+              {current.kcal}
+              <span className="text-[9px] font-semibold uppercase tracking-[0.14em] opacity-75">kcal</span>
+            </span>
+            <span className="inline-flex items-baseline gap-1 rounded-lg border border-info/25 bg-info/10 px-2.5 py-1 font-mono text-[12px] font-extrabold tabular-nums text-info">
+              <span className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-80">Prot</span>
+              {current.protein}
+              <span className="text-[9px] font-semibold opacity-70">g</span>
+            </span>
+            <span className="inline-flex items-baseline gap-1 rounded-lg border border-warning/25 bg-warning/10 px-2.5 py-1 font-mono text-[12px] font-extrabold tabular-nums text-warning">
+              <span className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-80">Carb</span>
+              {current.carbs}
+              <span className="text-[9px] font-semibold opacity-70">g</span>
+            </span>
+            <span className="inline-flex items-baseline gap-1 rounded-lg border border-[hsl(25_85%_55%/0.25)] bg-[hsl(25_85%_55%/0.1)] px-2.5 py-1 font-mono text-[12px] font-extrabold tabular-nums text-[hsl(25_85%_50%)]">
+              <span className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-80">Gord</span>
+              {current.fat}
+              <span className="text-[9px] font-semibold opacity-70">g</span>
+            </span>
           </div>
 
           <div className="relative mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-3">
