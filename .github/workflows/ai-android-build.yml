@@ -14,6 +14,8 @@ jobs:
       CAP_ENV: production
       APP_TARGET: ai
       VITE_APP_TARGET: ai
+      # Garantia global para todos os módulos Gradle, inclusive capacitor-health.
+      ORG_GRADLE_PROJECT_minSdkVersion: '26'
 
     steps:
       - name: Checkout
@@ -103,7 +105,10 @@ jobs:
       # O Health Connect exige API 26. Aplicar depois do sync evita que o
       # Capacitor restaure minSdk 24 durante a sincronização.
       - name: Configure and verify Health Connect (minSdk 26)
-        run: node scripts/patch-android-manifest.mjs
+        run: |
+          node scripts/patch-android-manifest.mjs
+          echo "--- Android SDK efetivo no projeto STH AI ---"
+          grep -nE 'minSdk(Version)?' android/variables.gradle android/app/build.gradle
 
       # -------- DEBUG APK (unsigned, para instalar direto no celular) --------
       - name: Build debug APK
