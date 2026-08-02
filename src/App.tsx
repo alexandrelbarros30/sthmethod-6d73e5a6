@@ -184,7 +184,6 @@ import { usePublicAppleTheme } from "@/hooks/usePublicAppleTheme";
 import { APP_RELEASE_VERSION } from "@/lib/app-version";
 import AccessibilityThemeButton from "@/components/student/AccessibilityThemeButton";
 import { useAccessibilityTheme } from "@/hooks/useAccessibilityTheme";
-import PullToRefresh from "@/components/PullToRefresh";
 import LaunchAppPopup from "@/components/LaunchAppPopup";
 import NativeUpdateBanner from "@/components/NativeUpdateBanner";
 
@@ -257,7 +256,6 @@ const App = () => (
           <DynamicHead />
           {/* UpdateBanner removido a pedido: sem popup de atualização ao entrar */}
           <AccessibilityThemeButton />
-          <PullToRefresh />
           <NativeUpdateBanner />
           <LaunchAppPopup scope="site" />
           <FriendlyErrorBoundary>
