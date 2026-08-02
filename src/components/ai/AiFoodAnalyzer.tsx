@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { MEAL_TYPES } from "@/lib/food-diary-storage";
 import { cn } from "@/lib/utils";
-import { Camera, Check, Loader2, Mic, Sparkles, Square, Tag, Utensils } from "lucide-react";
+import { Camera, Check, Image as ImageIcon, Loader2, Mic, Sparkles, Square, Tag, Utensils } from "lucide-react";
 
 type Mode = "photo" | "label" | "text" | "audio";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
+const DRAFT_KEY = "sth_food_ai_photo_draft";
 
 // Grava PCM via Web Audio e codifica WAV 16 kHz mono.
 // WebM/Opus é rejeitado pelo modelo de transcrição — WAV funciona em todos os navegadores.
@@ -87,7 +88,11 @@ async function compressImage(file: File, maxSide = 1400): Promise<string> {
   canvas.width = Math.max(1, Math.round(decoded.width * scale));
   canvas.height = Math.max(1, Math.round(decoded.height * scale));
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas_unavailable");
+  if (!ctx) {
+    const raw = await readAsDataUrl(file);
+    if (/^data:image\/(jpeg|jpg|png|webp);/i.test(raw)) return raw;
+    throw new Error("canvas_unavailable");
+  }
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   decoded.draw(ctx, canvas.width, canvas.height);
@@ -97,7 +102,12 @@ async function compressImage(file: File, maxSide = 1400): Promise<string> {
     quality -= 0.15;
     out = canvas.toDataURL("image/jpeg", quality);
   }
-  if (!out.startsWith("data:image/jpeg")) throw new Error("encode_failed");
+  // WebViews Android podem devolver canvas vazio ("data:,") — cai no arquivo original.
+  if (!out.startsWith("data:image/jpeg") || out.length < 3000) {
+    const raw = await readAsDataUrl(file);
+    if (/^data:image\/(jpeg|jpg|png|webp);/i.test(raw)) return raw;
+    throw new Error("encode_failed");
+  }
   return out;
 }
 
@@ -107,8 +117,29 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
   const [text, setText] = useState("");
   const [imgB64, setImgB64] = useState<string | null>(null);
   const [imgPreview, setImgPreview] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Android WebView pode reiniciar a activity ao abrir a câmera e perder o state.
+  // Restauramos o rascunho da foto ao montar.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { mode: Mode; dataUrl: string; at: number };
+      if (!draft?.dataUrl || Date.now() - (draft.at || 0) > 30 * 60 * 1000) {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      setMode(draft.mode === "label" ? "label" : "photo");
+      setImgPreview(draft.dataUrl);
+      setImgB64(draft.dataUrl.split(",")[1] || "");
+    } catch { /* noop */ }
+  }, []);
 
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
@@ -128,6 +159,8 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
 
   function reset() {
     setText(""); setImgB64(null); setImgPreview(null); setResult(null); setTranscript(""); setRecSeconds(0);
+    setErrMsg(null);
+    try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
   }
 
   function stopStream() {
@@ -200,19 +233,26 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
 
   async function onFile(file: File | null) {
     if (!file) return;
+    setPreparing(true);
+    setErrMsg(null);
     try {
       const dataUrl = await compressImage(file);
+      if (!dataUrl || dataUrl.length < 1000) throw new Error("empty_image");
       setImgPreview(dataUrl);
       setImgB64(dataUrl.split(",")[1] || "");
       setResult(null);
+      try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ mode, dataUrl, at: Date.now() })); } catch { /* noop */ }
     } catch (e) {
       setImgB64(null);
       setImgPreview(null);
-      toast.error(
-        (e as Error)?.message === "unsupported_image"
-          ? "Formato de imagem não suportado. Use JPG ou PNG."
-          : "Não foi possível preparar a foto. Tente novamente.",
-      );
+      const code = (e as Error)?.message || "";
+      const msg = code === "unsupported_image"
+        ? "Formato de imagem não suportado. Tente escolher a foto pela galeria (JPG ou PNG)."
+        : "Não foi possível preparar a foto neste aparelho. Tente novamente pela galeria.";
+      setErrMsg(msg);
+      toast.error(msg);
+    } finally {
+      setPreparing(false);
     }
   }
 
@@ -247,9 +287,12 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
       }
       if ((data as any)?.error) throw new Error((data as any).details || (data as any).error);
       setResult(data);
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
       setTimeout(onSaved, 400);
     } catch (e) {
-      toast.error((e as Error)?.message || "Não foi possível analisar agora.");
+      const msg = (e as Error)?.message || "Não foi possível analisar agora.";
+      setErrMsg(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -385,27 +428,59 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
           className="w-full resize-none rounded-2xl border border-border bg-muted/40 p-4 text-sm outline-none focus:border-primary"
         />
       ) : (
-        <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-border bg-muted/40 p-6 text-center transition-colors hover:border-primary">
+        <div className="space-y-3">
           <input
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
-            capture={mode === "photo" ? "environment" : undefined}
+            capture="environment"
             className="hidden"
-            onChange={(e) => onFile(e.target.files?.[0] || null)}
+            onChange={(e) => { onFile(e.target.files?.[0] || null); e.currentTarget.value = ""; }}
           />
-          {imgPreview ? (
-            <img src={imgPreview} alt="Prévia da refeição" className="mx-auto max-h-56 rounded-xl object-contain" />
-          ) : (
-            <div className="py-4">
-              <Camera className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-2 text-sm font-medium">{mode === "photo" ? "Fotografar o prato" : "Fotografar o rótulo"}</p>
-              <p className="text-xs text-muted-foreground">Toque para escolher ou capturar</p>
-            </div>
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { onFile(e.target.files?.[0] || null); e.currentTarget.value = ""; }}
+          />
+          <div className="rounded-2xl border-2 border-dashed border-border bg-muted/40 p-6 text-center">
+            {preparing ? (
+              <div className="py-6">
+                <Loader2 className="mx-auto h-7 w-7 animate-spin text-muted-foreground" />
+                <p className="mt-2 text-sm font-medium">Preparando a foto…</p>
+              </div>
+            ) : imgPreview ? (
+              <img src={imgPreview} alt="Prévia da refeição" className="mx-auto max-h-56 rounded-xl object-contain" />
+            ) : (
+              <div className="py-4">
+                <Camera className="mx-auto h-8 w-8 text-muted-foreground" />
+                <p className="mt-2 text-sm font-medium">{mode === "photo" ? "Fotografar o prato" : "Fotografar o rótulo"}</p>
+                <p className="text-xs text-muted-foreground">Use a câmera ou escolha da galeria</p>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => cameraInputRef.current?.click()}>
+              <Camera className="mr-2 h-4 w-4" /> Câmera
+            </Button>
+            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => galleryInputRef.current?.click()}>
+              <ImageIcon className="mr-2 h-4 w-4" /> Galeria
+            </Button>
+          </div>
+          {imgPreview && (
+            <button type="button" className="w-full text-center text-[11px] text-muted-foreground hover:underline" onClick={() => { setImgB64(null); setImgPreview(null); setResult(null); try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ } }}>
+              Remover foto
+            </button>
           )}
-        </label>
+        </div>
       )}
 
-      <Button className="w-full" onClick={analyze} disabled={!canAnalyze || loading}>
+      {errMsg && (
+        <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">{errMsg}</p>
+      )}
+
+      <Button className="w-full" onClick={analyze} disabled={!canAnalyze || loading || preparing}>
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
         Analisar com a STHIA
       </Button>
