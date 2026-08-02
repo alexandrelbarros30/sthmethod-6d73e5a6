@@ -372,6 +372,20 @@ export default function AiProfile() {
       </>
       )}
 
+      <button
+        type="button"
+        onClick={() => setShowRotina((v) => !v)}
+        className="mb-3 mt-5 flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left"
+      >
+        <span>
+          <span className="block text-sm font-semibold tracking-tight">Rotina de treino e cardio</span>
+          <span className="block text-[11px] text-muted-foreground">NEAT, frequência, duração, intensidade e local de treino</span>
+        </span>
+        {showRotina ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+      </button>
+
+      {showRotina && <AiWorkoutBriefing profile={liveProfile} onChange={() => {}} />}
+
       <Card className="mt-5 space-y-4 p-5">
         <div>
           <h2 className="text-base font-semibold tracking-tight">Documentos e exames laboratoriais</h2>
