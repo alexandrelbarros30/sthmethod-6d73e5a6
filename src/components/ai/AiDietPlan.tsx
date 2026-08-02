@@ -170,10 +170,10 @@ export function parseDiet(content: string): { meals: ParsedMeal[]; notes: string
 const MacroChip = ({ label, value, tone }: { label: string; value: number; tone: "prot" | "carb" | "fat" }) => {
   const styles =
     tone === "prot"
-      ? "border-info/25 bg-info/10 text-info"
+      ? "border-ocean-deep/25 bg-ocean-deep/10 text-ocean-deep"
       : tone === "carb"
-      ? "border-warning/25 bg-warning/10 text-warning"
-      : "border-[hsl(25_85%_55%/0.25)] bg-[hsl(25_85%_55%/0.1)] text-[hsl(25_85%_50%)]";
+      ? "border-ocean-teal/30 bg-ocean-teal/10 text-ocean-teal"
+      : "border-ocean-mint/35 bg-ocean-mint/15 text-ocean-mid";
   return (
     <div className={cn("rounded-lg border px-2 py-1 text-center", styles)}>
       <p className="text-[8px] font-bold uppercase tracking-[0.18em] opacity-80">{label}</p>
@@ -227,14 +227,14 @@ const AiDietPlan: React.FC<{ content: string; weightKg?: number | null }> = ({ c
           <MacroChip label="Gordura" value={totals.fat} tone="fat" />
         </div>
         <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-info" style={{ width: `${(totals.protein / totalG) * 100}%` }} />
-          <div className="h-full bg-warning" style={{ width: `${(totals.carbs / totalG) * 100}%` }} />
-          <div className="h-full" style={{ width: `${(totals.fat / totalG) * 100}%`, background: "hsl(25 85% 55%)" }} />
+          <div className="h-full bg-ocean-deep" style={{ width: `${(totals.protein / totalG) * 100}%` }} />
+          <div className="h-full bg-ocean-teal" style={{ width: `${(totals.carbs / totalG) * 100}%` }} />
+          <div className="h-full bg-ocean-mint" style={{ width: `${(totals.fat / totalG) * 100}%` }} />
         </div>
         {waterL && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-info/25 bg-info/10 px-3 py-2">
-            <Droplets className="h-4 w-4 shrink-0 text-info" />
-            <p className="text-[12px] font-semibold text-info">
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-ocean-teal/30 bg-ocean-teal/10 px-3 py-2">
+            <Droplets className="h-4 w-4 shrink-0 text-ocean-teal" />
+            <p className="text-[12px] font-semibold text-ocean-teal">
               Hidratação · {waterL.toFixed(1).replace(".", ",")} L de água por dia
             </p>
           </div>
@@ -287,9 +287,9 @@ const AiDietPlan: React.FC<{ content: string; weightKg?: number | null }> = ({ c
                 <MacroChip label="Gord" value={meal.fat} tone="fat" />
               </div>
               <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-full bg-info" style={{ width: `${(meal.protein / mealG) * 100}%` }} />
-                <div className="h-full bg-warning" style={{ width: `${(meal.carbs / mealG) * 100}%` }} />
-                <div className="h-full" style={{ width: `${(meal.fat / mealG) * 100}%`, background: "hsl(25 85% 55%)" }} />
+                <div className="h-full bg-ocean-deep" style={{ width: `${(meal.protein / mealG) * 100}%` }} />
+                <div className="h-full bg-ocean-teal" style={{ width: `${(meal.carbs / mealG) * 100}%` }} />
+                <div className="h-full bg-ocean-mint" style={{ width: `${(meal.fat / mealG) * 100}%` }} />
               </div>
 
               {isOpen && (
