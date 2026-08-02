@@ -177,6 +177,7 @@ const GROUPS: { id: string; title: string; description: string; icon: JSX.Elemen
 
 export default function AiWorkoutBriefing({ profile, onChange, standalone, collapsible }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
+  const focusKey = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("campo") ?? "" : "";
   const [values, setValues] = useState<Record<string, string>>({});
   const hydrated = useRef(false);
 
