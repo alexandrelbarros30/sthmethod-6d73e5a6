@@ -38,9 +38,14 @@ export default function AiLanding() {
           <AiLogoMark className="h-8 w-8 shadow-lg shadow-primary/25" />
           <span className="text-sm font-semibold tracking-tight">STH METHOD AI</span>
         </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/ai/login?next=/ai/app">Entrar</Link>
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/ai/instalar">Baixar app</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/ai/login?next=/ai/app">Entrar</Link>
+          </Button>
+        </div>
       </header>
 
       {/* Hero */}

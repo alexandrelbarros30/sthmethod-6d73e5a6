@@ -205,7 +205,7 @@ jobs:
           fi
 
       - name: Publish to "latest" GitHub Release
-                uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ai-latest
           name: STH AI APK (latest)
