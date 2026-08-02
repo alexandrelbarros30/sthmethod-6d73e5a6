@@ -159,6 +159,16 @@ export default function AiLanding() {
             exclusivamente ao acompanhamento profissional da consultoria STH METHOD.
           </p>
         </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Ao contratar, você concorda com os{" "}
+          <a href="/ai/legal/termos-de-uso" className="text-primary underline underline-offset-4">
+            Termos de Uso
+          </a>{" "}
+          ·{" "}
+          <a href="/ai/legal" className="text-primary underline underline-offset-4">
+            Documentos e Termos
+          </a>
+        </p>
       </section>
     </div>
   );
