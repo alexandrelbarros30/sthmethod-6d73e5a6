@@ -295,6 +295,28 @@ export default function AiDashboard() {
           );
         })}
 
+        {/* Imagens corporais */}
+        <Link to="/ai/app/imagens" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-2`}>
+          <div className="flex items-start justify-between gap-2">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Camera className="h-5 w-5" />
+            </span>
+            <Badge variant="outline" className="text-[10px]">Evolução</Badge>
+          </div>
+          <div className="mt-4">
+            <h2 className="text-base font-semibold tracking-tight">Imagens corporais</h2>
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
+              Envie fotos de evolução e compare sua transformação ao longo do ciclo.
+            </p>
+          </div>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+              Registrar
+              <Sparkles className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+            </span>
+          </div>
+        </Link>
+
         {/* Atalhos */}
         {[
           { to: "/ai/app/diario", label: "Diário alimentar", hint: "registre refeições e água", icon: UtensilsCrossed },
