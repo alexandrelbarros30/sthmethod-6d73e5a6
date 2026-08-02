@@ -42,24 +42,63 @@ function encodeWav(chunks: Float32Array[], sampleRate: number, targetRate = 1600
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-async function compressImage(file: File, maxSide = 1600, quality = 0.85): Promise<string> {
-  const blob = new Blob([await file.arrayBuffer()], { type: file.type || "image/jpeg" });
-  const bitmap = await createImageBitmap(blob).catch(() => null);
-  if (!bitmap) {
-    return await new Promise<string>((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(String(r.result || ""));
-      r.onerror = () => rej(r.error);
-      r.readAsDataURL(file);
+function readAsDataUrl(file: Blob): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result || ""));
+    r.onerror = () => rej(r.error || new Error("read_failed"));
+    r.readAsDataURL(file);
+  });
+}
+
+// Decodifica em 2 estágios (createImageBitmap → <img>), pois WebViews Android
+// e HEIC do iOS falham no primeiro caminho.
+async function decodeImage(file: File): Promise<{ width: number; height: number; draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void } | null> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    return { width: bitmap.width, height: bitmap.height, draw: (ctx, w, h) => ctx.drawImage(bitmap, 0, 0, w, h) };
+  } catch { /* fallback */ }
+  try {
+    const url = await readAsDataUrl(file);
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const el = new Image();
+      el.onload = () => res(el);
+      el.onerror = () => rej(new Error("img_decode_failed"));
+      el.src = url;
     });
+    return {
+      width: img.naturalWidth || img.width,
+      height: img.naturalHeight || img.height,
+      draw: (ctx, w, h) => ctx.drawImage(img, 0, 0, w, h),
+    };
+  } catch { return null; }
+}
+
+// Sempre devolve JPEG (o modelo não aceita HEIC) e mantém o payload abaixo de ~1,5 MB.
+async function compressImage(file: File, maxSide = 1400): Promise<string> {
+  const decoded = await decodeImage(file);
+  if (!decoded) {
+    const raw = await readAsDataUrl(file);
+    if (!/^data:image\/(jpeg|jpg|png|webp);/i.test(raw)) throw new Error("unsupported_image");
+    return raw;
   }
-  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(1, maxSide / Math.max(decoded.width, decoded.height, 1));
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.width = Math.max(1, Math.round(decoded.width * scale));
+  canvas.height = Math.max(1, Math.round(decoded.height * scale));
   const ctx = canvas.getContext("2d");
-  if (ctx) ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", quality);
+  if (!ctx) throw new Error("canvas_unavailable");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  decoded.draw(ctx, canvas.width, canvas.height);
+  let quality = 0.82;
+  let out = canvas.toDataURL("image/jpeg", quality);
+  while (out.length > 1_500_000 && quality > 0.4) {
+    quality -= 0.15;
+    out = canvas.toDataURL("image/jpeg", quality);
+  }
+  if (!out.startsWith("data:image/jpeg")) throw new Error("encode_failed");
+  return out;
 }
 
 export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
@@ -165,8 +204,15 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
       const dataUrl = await compressImage(file);
       setImgPreview(dataUrl);
       setImgB64(dataUrl.split(",")[1] || "");
-    } catch {
-      toast.error("Não foi possível preparar a foto.");
+      setResult(null);
+    } catch (e) {
+      setImgB64(null);
+      setImgPreview(null);
+      toast.error(
+        (e as Error)?.message === "unsupported_image"
+          ? "Formato de imagem não suportado. Use JPG ou PNG."
+          : "Não foi possível preparar a foto. Tente novamente.",
+      );
     }
   }
 
@@ -176,17 +222,29 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
     try {
       const isAudio = mode === "audio";
       const analyzeMode = isAudio || mode === "text" ? "text" : mode;
+      const isImage = analyzeMode === "photo" || analyzeMode === "label";
+      if (isImage && !imgB64) throw new Error("Escolha ou capture uma foto antes de analisar.");
       const { data, error } = await supabase.functions.invoke("food-ai-analyze", {
         body: {
           mode: analyzeMode,
           text: isAudio ? transcript.trim() : mode === "text" ? text.trim() : undefined,
-          image: !isAudio && mode !== "text" ? imgB64 : undefined,
+          image: isImage ? imgB64 : undefined,
           mime: "image/jpeg",
           audit_source: isAudio ? "ai_app_audio" : "ai_app_standalone",
           student_id: user?.id ?? null,
         },
       });
-      if (error) throw new Error(error.message || "analysis_failed");
+      if (error) {
+        let detail = "";
+        try {
+          const ctx = (error as any)?.context;
+          if (ctx && typeof ctx.json === "function") {
+            const j = await ctx.json();
+            detail = String(j?.details || j?.error || "");
+          }
+        } catch { /* noop */ }
+        throw new Error(detail || error.message || "analysis_failed");
+      }
       if ((data as any)?.error) throw new Error((data as any).details || (data as any).error);
       setResult(data);
       setTimeout(onSaved, 400);
