@@ -58,8 +58,8 @@ export default function AiLanding() {
               <div className="relative rounded-[40px] bg-card p-10 shadow-apple-xl border border-border/40 group transition-all duration-500 hover:border-primary/30">
                 <div className="absolute -inset-1 rounded-[44px] bg-gradient-to-r from-primary/20 to-transparent opacity-0 blur-xl transition-opacity duration-700 group-hover:opacity-100" />
                 <div className="relative flex flex-col items-center">
-                  <div className="mb-5 grid h-24 w-24 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-                    <Activity className="h-10 w-10" />
+                  <div className="mb-5 grid h-24 w-24 place-items-center overflow-hidden rounded-2xl bg-primary shadow-lg shadow-primary/30">
+                    <img src="/pwa-ai-192.png?v=1" alt="STH AI" className="h-20 w-20 object-contain" />
                   </div>
                   <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">System Active</span>
                   <h2 className="text-3xl font-bold tracking-tight">STH AI</h2>
