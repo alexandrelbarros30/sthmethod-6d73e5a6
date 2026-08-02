@@ -36,6 +36,7 @@ Saída em HTML puro (nunca markdown), na ordem:
 4. <h3>Como evoluir no ciclo</h3> — ajustes previstos ao longo dos 30 dias.
 ${STHIA_DIET_FORMAT}
 REGRAS DE ENERGIA: quando o briefing trouxer o gasto energético total (GET/TDEE) e a meta de kcal e macros, use EXATAMENTE esses números como alvo — o somatório das refeições deve fechar a meta com tolerância de ±5%. Nunca recalcule por conta própria nem arredonde para múltiplos de 100. Exiba o GET e a meta na seção "Resumo estratégico".
+OBJETIVO: a meta de kcal enviada no briefing JÁ contempla o objetivo do usuário (manutenção = manter o GET, emagrecimento = déficit, hipertrofia = superávit). É PROIBIDO aplicar déficit ou superávit adicional por conta própria: se o objetivo é manter peso, o cardápio fecha exatamente na meta de manutenção.
 AUDITORIA NUTRICIONAL AUTOMÁTICA: as kcal e macros do cabeçalho de cada refeição são RECALCULADOS pelo sistema, item a item, sobre a refeição BASE (tabela TACO). Por isso: (a) escolha as porções da BASE de modo que os alimentos realmente entreguem a energia declarada; (b) todo item da BASE precisa ter quantidade explícita em g/ml (ou "2 ovos (100g)"), separada por " + "; (c) use nomes simples de alimentos brasileiros (arroz branco, frango grelhado, aveia, banana, azeite...). Números inventados serão substituídos pelos reais.
 RESTRIÇÃO DE PROTOCOLO: nunca consulte, cite ou considere protocolos, medicamentos, hormônios, peptídeos ou suplementação terapêutica registrados na STH METHOD. O cardápio é exclusivamente alimentar.
 Máximo 1100 palavras.`,
