@@ -11,7 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { FileText, Loader2, LogOut, Trash2, Upload } from "lucide-react";
+import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown } from "lucide-react";
+
+const HUB = [
+  { to: "/ai/app/treino", label: "Treino", desc: "Programa guiado STHIA", icon: Dumbbell },
+  { to: "/ai/app/cardapio", label: "Cardápio", desc: "Plano alimentar do ciclo", icon: Salad },
+  { to: "/ai/app/analise", label: "Análise", desc: "Anexar exame laboratorial", icon: LineChart },
+  { to: "/ai/app/diario", label: "Diário", desc: "Food AI: foto, áudio e rótulo", icon: UtensilsCrossed },
+  { to: "/ai/app/saude", label: "Saúde", desc: "Wearables e sinais diários", icon: HeartPulse },
+  { to: "/ai/app/progresso", label: "Evolução", desc: "Medidas e constância", icon: Flame },
+  { to: "/ai/app/coaches", label: "Coaches", desc: "Acompanhamento humano", icon: UserRound },
+  { to: "/sobre", label: "Sobre", desc: "Versão e novidades", icon: Info },
+];
 
 interface Form {
   full_name: string; age: string; sex: string; weight_kg: string; height_cm: string;
@@ -37,6 +48,7 @@ export default function AiProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showFicha, setShowFicha] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -147,7 +159,7 @@ export default function AiProfile() {
   }
 
   return (
-    <AiShell title="Perfil" subtitle="Seus dados, objetivos e documentos — a base de tudo que a IA constrói.">
+    <AiShell title="Perfil" subtitle="Seu organizador: ficha de cadastro, ferramentas do STH AI e documentos.">
       <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-5">
         <div>
           <p className="text-xs text-muted-foreground">Assinatura</p>
@@ -162,6 +174,40 @@ export default function AiProfile() {
         </div>
       </Card>
 
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        {HUB.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.to}
+              type="button"
+              onClick={() => navigate(item.to)}
+              className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent"
+            >
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="text-sm font-semibold tracking-tight">{item.label}</span>
+              <span className="text-[11px] leading-snug text-muted-foreground">{item.desc}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowFicha((v) => !v)}
+        className="mb-3 flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left"
+      >
+        <span>
+          <span className="block text-sm font-semibold tracking-tight">Ficha de cadastro do aluno</span>
+          <span className="block text-[11px] text-muted-foreground">Dados essenciais e perfil avançado usados pela IA</span>
+        </span>
+        {showFicha ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+      </button>
+
+      {showFicha && (
+      <>
       <Card className="space-y-4 p-5">
         <h2 className="text-base font-semibold tracking-tight">Dados essenciais</h2>
         <div className="space-y-1.5">
@@ -285,10 +331,12 @@ export default function AiProfile() {
           Salvar perfil
         </Button>
       </Card>
+      </>
+      )}
 
       <Card className="mt-5 space-y-4 p-5">
         <div>
-          <h2 className="text-base font-semibold tracking-tight">Documentos e exames</h2>
+          <h2 className="text-base font-semibold tracking-tight">Documentos e exames laboratoriais</h2>
           <p className="text-xs text-muted-foreground">
             Arquivos privados. Servem de contexto para a leitura educativa da Central de Análise — nunca para conduta terapêutica.
           </p>
