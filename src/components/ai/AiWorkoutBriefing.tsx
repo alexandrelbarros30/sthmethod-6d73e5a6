@@ -312,6 +312,57 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
       )}
 
       {!standalone && !collapsible && (
+      {collapsible ? (
+        <>
+          {GROUPS.map((g) => {
+            const fields = visible.filter((f) => g.keys.includes(f.key));
+            if (!fields.length) return null;
+            const pend = fields.filter((f) => !values[f.key]).length;
+            return (
+              <AiEditSection
+                key={g.id}
+                icon={g.icon}
+                title={g.title}
+                description={g.description}
+                pending={pend}
+                onSave={saveRoutine}
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {fields.map((f) => (
+                    <div key={f.key} id={`brief-${f.key}`} className="space-y-1.5 scroll-mt-24 p-1">
+                      <Label className="flex items-center gap-2 text-xs">
+                        {f.label}
+                        {!values[f.key] && (
+                          <Badge variant="outline" className="h-4 px-1.5 text-[10px]">falta</Badge>
+                        )}
+                      </Label>
+                      <Select value={values[f.key] ?? ""} onValueChange={(v) => handleSelect(f.key, v)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {f.options.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+                {g.id === "cardio" && cardioOn && cardioMin > 0 && (
+                  <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <Timer className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <p className="text-xs text-muted-foreground">
+                      O cardio é somado ao relógio do treino:{" "}
+                      <strong className="text-foreground">{strengthMin || 0} min</strong> de musculação +{" "}
+                      <strong className="text-foreground">{cardioMin} min</strong> de cardio ={" "}
+                      <strong className="text-foreground">{(strengthMin || 0) + cardioMin} min</strong> por sessão.
+                    </p>
+                  </div>
+                )}
+              </AiEditSection>
+            );
+          })}
+        </>
+      ) : (
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -397,6 +448,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
           </Button>
         )}
       </Card>
+      )}
 
       <Dialog open={cardioDialog} onOpenChange={setCardioDialog}>
         <DialogContent className="sm:max-w-md">
