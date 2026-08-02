@@ -280,7 +280,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {visible.map((f) => (
-            <div key={f.key} className="space-y-1.5">
+            <div key={f.key} id={`brief-${f.key}`} className="space-y-1.5 scroll-mt-24 p-1">
               <Label className="flex items-center gap-2 text-xs">
                 {f.label}
                 {!values[f.key] && <Badge variant="outline" className="h-4 px-1.5 text-[10px]">falta</Badge>}
