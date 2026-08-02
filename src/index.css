@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@500;600;700;800;900&family=Epilogue:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -209,6 +210,72 @@ html, body {
 
     background: hsl(240 9% 96%);
     color-scheme: light;
+  }
+}
+
+@layer base {
+  /* =====================================================================
+     STH AI — Ocean Deep (Urbanist + Epilogue)
+     Aplicado junto de .theme-sth-green (mantém a elevação Apple) e
+     sobrescreve a paleta para o oceano profundo do STH AI.
+     ===================================================================== */
+  .theme-sth-ai {
+    --background: 210 40% 98%;        /* #f8fafc */
+    --foreground: 211 48% 15%;        /* #0c2340 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 211 48% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 211 48% 15%;
+
+    --primary: 191 56% 40%;           /* #2d8a9e */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 30% 95%;
+    --secondary-foreground: 211 48% 15%;
+
+    --muted: 210 30% 96%;
+    --muted-foreground: 211 24% 42%;
+
+    --accent: 177 41% 92%;
+    --accent-foreground: 205 61% 26%;
+
+    --border: 210 24% 91%;
+    --input: 210 24% 91%;
+    --ring: 191 56% 40%;
+
+    --glow: 177 41% 55%;
+    --surface: 0 0% 100%;
+    --surface-hover: 210 30% 95%;
+    --gradient-start: 211 48% 15%;
+    --gradient-end: 191 56% 40%;
+    --text-subtle: 211 20% 48%;
+
+    --brand: 191 56% 40%;
+    --brand-foreground: 0 0% 100%;
+
+    /* Paleta Ocean Deep exposta para os cards do dashboard */
+    --ocean-deep: 211 48% 15%;        /* #0c2340 */
+    --ocean-mid: 205 61% 27%;         /* #1a4a6e */
+    --ocean-teal: 191 56% 40%;        /* #2d8a9e */
+    --ocean-mint: 177 41% 55%;        /* #5cbdb9 */
+
+    background: hsl(210 40% 98%);
+    color-scheme: light;
+  }
+
+  html.theme-sth-ai body {
+    background: hsl(210 40% 98%);
+    font-family: "Epilogue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  html.theme-sth-ai h1,
+  html.theme-sth-ai h2,
+  html.theme-sth-ai h3,
+  html.theme-sth-ai h4 {
+    font-family: "Urbanist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: -0.015em;
   }
 }
 
