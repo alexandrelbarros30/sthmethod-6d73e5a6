@@ -18,6 +18,7 @@ import AiAnalysisReport from "@/components/ai/AiAnalysisReport";
 import AiRevisionsBanner from "@/components/ai/AiRevisionsBanner";
 import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
 import AiFieldTipsDialog from "@/components/ai/AiFieldTipsDialog";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft } from "lucide-react";
 import { focusField } from "@/lib/field-focus";
