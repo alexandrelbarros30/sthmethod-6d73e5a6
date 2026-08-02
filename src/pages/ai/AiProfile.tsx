@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
 import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown, Camera, CreditCard, ShieldCheck } from "lucide-react";
 
 const HUB = [
@@ -52,6 +53,7 @@ export default function AiProfile() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showFicha, setShowFicha] = useState(false);
+  const [savedAnswers, setSavedAnswers] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -66,6 +68,7 @@ export default function AiProfile() {
     ]);
     if (p) {
       const a = ((p.answers ?? {}) as Record<string, string>);
+      setSavedAnswers(a);
       setForm({
         ...EMPTY,
         full_name: p.full_name ?? "", age: p.age?.toString() ?? "", sex: p.sex ?? "",
@@ -84,6 +87,25 @@ export default function AiProfile() {
   useEffect(() => { load(); }, [load]);
 
   const set = <K extends keyof Form>(k: K, v: string) => setForm((prev) => ({ ...prev, [k]: v }));
+
+  const liveProfile = {
+    user_id: user?.id ?? "",
+    full_name: form.full_name,
+    age: Number(form.age) || null,
+    sex: form.sex,
+    weight_kg: Number(form.weight_kg) || null,
+    height_cm: Number(form.height_cm) || null,
+    goal: form.goal,
+    training_level: form.training_level,
+    comorbidities: form.comorbidities,
+    medications: form.medications,
+    answers: { ...savedAnswers, ...form },
+    step: 2,
+    phase1_complete: true,
+    phase2_complete: true,
+  } as any;
+  const dietChecklist = buildChecklist(liveProfile, "diet");
+  const workoutChecklist = buildChecklist(liveProfile, "workout");
 
   async function save() {
     if (!user?.id) return;
@@ -213,6 +235,23 @@ export default function AiProfile() {
         </span>
         {showFicha ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </button>
+
+      <AiBriefingChecklist
+        profile={liveProfile}
+        kind="diet"
+        items={dietChecklist}
+        editHref="#"
+        hideEdit
+        title="Checklist do briefing · Cardápio"
+      />
+      <AiBriefingChecklist
+        profile={liveProfile}
+        kind="workout"
+        items={workoutChecklist}
+        editHref="#"
+        hideEdit
+        title="Checklist do briefing · Treino"
+      />
 
       {showFicha && (
       <>
