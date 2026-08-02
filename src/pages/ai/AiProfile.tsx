@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -310,6 +311,7 @@ export default function AiProfile() {
         <div id="f-routine" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Rotina do dia a dia</Label>
           <Textarea rows={2} value={form.routine} onChange={(e) => set("routine", e.target.value)} />
+          <AiVoiceInput onTranscribe={(t) => set("routine", appendTranscript(form.routine, t))} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div id="f-meals_per_day" className="space-y-1.5 scroll-mt-24 p-1">
@@ -328,10 +330,12 @@ export default function AiProfile() {
         <div id="f-comorbidities" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Comorbidades (doenças/condições de saúde)</Label>
           <Textarea rows={2} value={form.comorbidities} onChange={(e) => set("comorbidities", e.target.value)} placeholder="Ex.: diabetes, hipertensão, hipotireoidismo. Se não houver, escreva 'Nenhuma'" />
+          <AiVoiceInput onTranscribe={(t) => set("comorbidities", appendTranscript(form.comorbidities, t))} />
         </div>
         <div id="f-medications" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Medicamentos em uso</Label>
           <Textarea rows={2} value={form.medications} onChange={(e) => set("medications", e.target.value)} placeholder="Ex.: Metformina 850mg 2x/dia, Losartana 50mg/dia. Se não usa, escreva 'Nenhum'" />
+          <AiVoiceInput onTranscribe={(t) => set("medications", appendTranscript(form.medications, t))} />
         </div>
         <div id="f-dislikes" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Alimentos que você não gosta</Label>
