@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
@@ -112,6 +112,41 @@ export default function AiDashboard() {
     dateISO: todayISO(),
     onRemind: remind,
   });
+
+  // Notificações push locais: treino (aviso prévio + início) e cada refeição do cardápio.
+  const workoutDone = !!today?.workout_done;
+  const dietGen = latestOf(generations, "diet");
+  const workoutGen = latestOf(generations, "workout");
+  const reminderItems = useMemo<ReminderItem[]>(() => {
+    const items: ReminderItem[] = [];
+    if (workoutGen && !workoutDone) {
+      items.push({
+        id: "workout",
+        time: "18:00",
+        title: "Hora do treino",
+        body: "Abra o treino guiado e marque como realizado ao terminar.",
+        url: "/ai/app/treino",
+        leadMinutes: 15,
+        onFire: () => remind(),
+      });
+    }
+    if (dietGen) {
+      for (const meal of parseMeals(dietGen.content)) {
+        if (!meal.time) continue;
+        items.push({
+          id: `meal-${meal.name}`,
+          time: meal.time,
+          title: `${meal.name} · ${meal.time}`,
+          body: `${meal.kcal} kcal · P ${meal.protein}g · C ${meal.carbs}g · G ${meal.fat}g`,
+          url: "/ai/app/cardapio",
+          leadMinutes: 10,
+        });
+      }
+    }
+    return items;
+  }, [dietGen, workoutGen, workoutDone, remind]);
+
+  useAiReminders(reminderItems, { enabled: !!user, dateISO: todayISO() });
 
   if (loading) {
     return (
