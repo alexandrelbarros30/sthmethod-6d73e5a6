@@ -238,7 +238,7 @@ export default function AiModule() {
               size="lg"
               onClick={() => setRequestOpen(true)}
               disabled={!canRequest}
-              className="w-full animate-pulse-slow shadow-lg ring-2 ring-primary/40 ring-offset-2 ring-offset-background"
+              className="w-full shadow-lg ring-2 ring-primary/40 ring-offset-2 ring-offset-background"
             >
               <RefreshCw className="mr-2 h-5 w-5" />
               {kind === "diet" ? "Solicitar novo cardápio ou revisão" : "Solicitar novo treino ou revisão"}
@@ -248,7 +248,7 @@ export default function AiModule() {
             </p>
           </div>
           <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
-            <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-auto sm:max-h-[85vh] sm:w-[calc(100vw-2rem)] sm:max-w-2xl sm:rounded-lg">
+            <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 [&>button.absolute]:hidden sm:h-auto sm:max-h-[85vh] sm:w-[calc(100vw-2rem)] sm:max-w-2xl sm:rounded-lg">
               <DialogHeader className="sticky top-0 z-10 flex-row items-start justify-between gap-3 border-b bg-background px-4 py-3 text-left sm:px-6">
                 <div className="min-w-0 flex-1">
                 <DialogTitle className="text-base sm:text-lg">{kind === "diet" ? "Novo cardápio ou revisão" : "Novo treino ou revisão"}</DialogTitle>
