@@ -207,6 +207,16 @@ export default function AiModule() {
 
   return (
     <AiShell title={mod.title} subtitle={mod.short}>
+      {backTo && (
+        <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 border-primary/40 bg-primary/5 p-4">
+          <p className="text-xs text-muted-foreground">
+            Você veio de outra tela para completar um campo. Ao terminar, volte para gerar ou revisar.
+          </p>
+          <Button size="sm" variant="outline" onClick={() => navigate(backTo)}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar e continuar
+          </Button>
+        </Card>
+      )}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {current ? (
           <>
