@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { supabase } from "@/integrations/supabase/client";
 import LazyVideoEmbed from "@/components/student/LazyVideoEmbed";
 import WorkoutChronometer from "@/components/student/WorkoutChronometer";
@@ -226,6 +227,10 @@ export default function AiWorkoutProgram({ content }: { content: string }) {
                     className="flex-1 rounded-xl bg-muted/40 border-border resize-none"
                   />
                   <div className="flex flex-col gap-1.5">
+                    <AiVoiceInput
+                      size="icon"
+                      onTranscribe={(t) => setDrafts((p) => ({ ...p, [key]: appendTranscript(p[key] || "", t) }))}
+                    />
                     <Button
                       size="sm"
                       disabled={!drafts[key]?.trim()}

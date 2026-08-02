@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { toast } from "sonner";
 import { useAiProgress } from "@/hooks/useAiProgress";
 import AiInsightCard from "@/components/ai/AiInsightCard";
@@ -214,6 +215,7 @@ export default function AiProgress() {
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="notes">Observações</Label>
               <Textarea id="notes" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              <AiVoiceInput onTranscribe={(t) => setForm((f) => ({ ...f, notes: appendTranscript(f.notes, t) }))} className="self-start" />
             </div>
             <Button type="submit" disabled={saving} className="sm:col-span-2">
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar medidas

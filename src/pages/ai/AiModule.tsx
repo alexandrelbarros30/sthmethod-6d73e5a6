@@ -18,6 +18,7 @@ import AiAnalysisReport from "@/components/ai/AiAnalysisReport";
 import AiRevisionsBanner from "@/components/ai/AiRevisionsBanner";
 import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
 import AiFieldTipsDialog from "@/components/ai/AiFieldTipsDialog";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft } from "lucide-react";
 import { focusField } from "@/lib/field-focus";
@@ -113,7 +114,10 @@ export default function AiModule() {
       <Card className="space-y-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium">Campo livre — conte os detalhes</p>
-          <AiFieldTipsDialog kind={kind} />
+          <div className="flex items-center gap-2">
+            <AiVoiceInput onTranscribe={(t) => setInstruction((v) => appendTranscript(v, t))} />
+            <AiFieldTipsDialog kind={kind} />
+          </div>
         </div>
         <Textarea
           rows={3}

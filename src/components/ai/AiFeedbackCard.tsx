@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, MessageSquareHeart, Star } from "lucide-react";
 import type { AiKind } from "@/hooks/useAiApp";
@@ -190,13 +191,16 @@ export default function AiFeedbackCard({ kind, generationId, existing, onSubmit 
       <TagRow title="O que funcionou" tone="good" options={tags.worked} selected={worked} onToggle={toggle(worked, setWorked)} />
       <TagRow title="O que atrapalhou" tone="bad" options={tags.blocked} selected={blocked} onToggle={toggle(blocked, setBlocked)} />
 
-      <Textarea
-        rows={3}
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        maxLength={800}
-        placeholder="Quer detalhar algo? (opcional)"
-      />
+      <div className="space-y-2">
+        <Textarea
+          rows={3}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          maxLength={800}
+          placeholder="Quer detalhar algo? (opcional)"
+        />
+        <AiVoiceInput onTranscribe={(t) => setComment((v) => appendTranscript(v, t))} />
+      </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button className="flex-1" onClick={save} disabled={busy}>
