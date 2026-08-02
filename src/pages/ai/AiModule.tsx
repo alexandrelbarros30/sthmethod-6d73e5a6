@@ -18,7 +18,6 @@ import AiAnalysisReport from "@/components/ai/AiAnalysisReport";
 import AiRevisionsBanner from "@/components/ai/AiRevisionsBanner";
 import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
 import AiFieldTipsDialog from "@/components/ai/AiFieldTipsDialog";
-import AiDetailMeter, { scoreDetail } from "@/components/ai/AiDetailMeter";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft } from "lucide-react";
 import { focusField } from "@/lib/field-focus";
@@ -45,7 +44,6 @@ export default function AiModule() {
   const [workoutBrief, setWorkoutBrief] = useState("");
   const [dietBrief, setDietBrief] = useState("");
   const [requestOpen, setRequestOpen] = useState(false);
-  const [lowDetailMode, setLowDetailMode] = useState<"create" | "revise" | null>(null);
 
   const backTo = searchParams.get("next");
   const campoParam = searchParams.get("campo");
@@ -79,7 +77,6 @@ export default function AiModule() {
   const checklistMissing = checklist.filter((i) => !i.ok);
   const briefingIncomplete = kind !== "analysis" && checklistMissing.length > 0;
   const editHref = `/ai/onboarding?next=${encodeURIComponent(`/ai/app/${slug}?solicitar=1`)}`;
-  const detail = useMemo(() => scoreDetail(instruction, kind), [instruction, kind]);
 
   /** Clique na red flag: leva até a tela do campo e volta para gerar/revisar. */
   function handleChecklistSelect(item: ChecklistItem) {
@@ -128,7 +125,6 @@ export default function AiModule() {
               : "Quer acrescentar alguma observação antes de gerar? (opcional)"
           }
         />
-        <AiDetailMeter text={instruction} kind={kind} />
         <p className="text-xs text-muted-foreground">
           Quanto mais detalhes você informar, melhor a entrega. Toque em "Como escrever aqui?" para ver o guia.
         </p>
@@ -158,7 +154,7 @@ export default function AiModule() {
     </>
   );
 
-  async function run(mode: "create" | "revise", force = false) {
+  async function run(mode: "create" | "revise") {
     if (!subscription && !unlimited) {
       navigate("/ai/assinatura");
       return;
@@ -171,11 +167,6 @@ export default function AiModule() {
       toast.error(`Checklist incompleto: faltam ${checklistMissing.length} campo(s) do briefing.`);
       return;
     }
-    if (!force && detail.score < 60) {
-      setLowDetailMode(mode);
-      return;
-    }
-    setLowDetailMode(null);
     setBusy(true);
     const fullInstruction = [kind === "workout" ? workoutBrief : kind === "diet" ? dietBrief : "", instruction.trim()]
       .filter(Boolean)
@@ -302,34 +293,6 @@ export default function AiModule() {
         />
       )}
 
-      <Dialog open={lowDetailMode !== null} onOpenChange={(v) => !v && setLowDetailMode(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Seu texto está pouco detalhado</DialogTitle>
-            <DialogDescription>
-              Nível atual: {detail.score}% ({detail.level}). Com mais detalhes a entrega fica muito mais precisa e
-              personalizada.
-            </DialogDescription>
-          </DialogHeader>
-          <AiDetailMeter text={instruction} kind={kind} />
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="flex-1" onClick={() => setLowDetailMode(null)}>
-              Voltar e detalhar
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                const mode = lowDetailMode!;
-                setLowDetailMode(null);
-                run(mode, true);
-              }}
-            >
-              Gerar assim mesmo
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </AiShell>
   );
 }
