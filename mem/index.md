@@ -7,6 +7,7 @@
 - **Identidade interna da IA**: O cérebro de IA se chama **STHIA** (STH+IA). Uso interno com admin/owner; NÃO expor nos canais Nutri/Sucesso/Aluno (mantêm personas existentes, ex.: Nutri Alexandre). **EXCEÇÃO: no canal Comercial a IA se apresenta como STHIA.**
 - **Posicionamento comercial**: a STH METHOD NÃO vende dieta, treino, protocolo nem consulta — presta **SERVIÇO DE ACOMPANHAMENTO PERSONALIZADO**. Não há consultas/agendamentos.
 - **Vendas/Comercial**: Para NOVOS leads, IA Comercial ancora o **Plano 90D (Trimestral)** como recomendação ideal (12 semanas = ciclo biológico completo do método), com abordagem psicanalítica/consultiva — sem esconder demais planos. Não aplicar a aluno ativo.
+- **Dados/Ecossistema**: Banco único STH METHOD. Cadastro mestre = profiles.user_id. Módulos (STH AI, Coach, CAS) nunca duplicam cadastro nem histórico.
 - **Security/RLS**: Use RLS `TO authenticated` for PII. Use decoupled `.in()` queries to avoid 400 errors on joins.
 - **Data Mutability**: Prefer UPSERT with explicit `user_id`. Use 500ms delay & 5 retries for Auth-Profile sync.
 - **Edge Functions**: Always use `SUPABASE_ANON_KEY` via `Deno.env.get`, NOT publishable keys.
@@ -18,6 +19,7 @@
 ## Memories
 
 ### Architecture & Tech
+- [Dados unificados do ecossistema](mem://features/ecossistema-dados-unificados) — Cadastro mestre único, sync ai_app_profiles↔profiles, imagens corporais compartilhadas
 - [Auth Roles & RLS](mem://auth/niveis-acesso) — RBAC 5 levels, RLS `is_consultant_of` for data isolation
 - [Admin Management](mem://tech/admin-auth-management) — Edge function returns 200 on business errors for frontend recovery
 - [Decoupled Queries](mem://tech/padrao-consultas-supabase-relacional) — Decoupled Supabase relational queries to avoid 400 errors
