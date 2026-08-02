@@ -150,9 +150,10 @@ function grams(item: string): number | null {
   const direct = n.match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/);
   if (direct) return parseFloat(direct[1].replace(",", "."));
   // unidades: "2 ovos", "1 fatia"
-  const unit = n.match(/^(\d+(?:[.,]\d+)?)\s+(ovos?|unidades?|fatias?|colheres?|colher)/);
+  const unit = n.match(/^(\d+(?:[.,]\d+)?)\s+(claras?|ovos?|unidades?|fatias?|colheres?|colher)/);
   if (unit) {
     const qty = parseFloat(unit[1].replace(",", "."));
+    if (/clara/.test(unit[2])) return qty * 33;
     if (/ovo/.test(unit[2])) return qty * 50;
     if (/fatia/.test(unit[2])) return qty * 25;
     if (/colher/.test(unit[2])) return qty * 15;
