@@ -245,7 +245,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
             </div>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link to="/ai/onboarding">
+            <Link to="/ai/onboarding?next=/ai/app/treino">
               <Pencil className="mr-2 h-4 w-4" /> Editar cadastro
             </Link>
           </Button>
