@@ -233,23 +233,41 @@ export default function AiModule() {
       {isGuided ? (
         <>
           {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} compact />}
-          <div className="mb-4 flex justify-end">
-            <Button variant="outline" size="sm" onClick={() => setRequestOpen(true)} disabled={!canRequest}>
-              <RefreshCw className="mr-2 h-4 w-4" />{" "}
+          <div className="mb-4">
+            <Button
+              size="lg"
+              onClick={() => setRequestOpen(true)}
+              disabled={!canRequest}
+              className="w-full shadow-lg ring-2 ring-primary/40 ring-offset-2 ring-offset-background"
+            >
+              <RefreshCw className="mr-2 h-5 w-5" />
               {kind === "diet" ? "Solicitar novo cardápio ou revisão" : "Solicitar novo treino ou revisão"}
             </Button>
+            <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
+              Toque aqui para pedir um novo ciclo ou uma revisão do que já foi entregue.
+            </p>
           </div>
           <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
-            <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{kind === "diet" ? "Novo cardápio ou revisão" : "Novo treino ou revisão"}</DialogTitle>
-                <DialogDescription>
+            <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 [&>button.absolute]:hidden sm:h-auto sm:max-h-[85vh] sm:w-[calc(100vw-2rem)] sm:max-w-2xl sm:rounded-lg">
+              <DialogHeader className="sticky top-0 z-10 flex-row items-start justify-between gap-3 border-b bg-background px-4 py-3 text-left sm:px-6">
+                <div className="min-w-0 flex-1">
+                <DialogTitle className="text-base sm:text-lg">{kind === "diet" ? "Novo cardápio ou revisão" : "Novo treino ou revisão"}</DialogTitle>
+                <DialogDescription className="text-xs">
                   {kind === "diet"
                     ? "Revise seu cadastro e o briefing antes de solicitar."
                     : "Revise seu cadastro e a rotina de treino/cardio antes de solicitar."}
                 </DialogDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => setRequestOpen(false)}
+                >
+                  <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
+                </Button>
               </DialogHeader>
-              <div className="space-y-4">{requestForm}</div>
+              <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">{requestForm}</div>
             </DialogContent>
           </Dialog>
         </>
