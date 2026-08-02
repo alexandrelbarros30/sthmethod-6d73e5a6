@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { useAiThemeMode } from "@/hooks/useAiThemeMode";
-import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf } from "lucide-react";
+import { LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf } from "lucide-react";
+import AiLogoMark from "@/components/ai/AiLogoMark";
 
 const NAV = [
   { to: "/ai/app", label: "Início", icon: LayoutGrid },
@@ -39,9 +40,7 @@ export default function AiShell({ children, title, subtitle }: { children: React
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/ai/app" className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <Brain className="h-4 w-4" />
-            </span>
+            <AiLogoMark className="h-8 w-8" />
             <span className="text-sm font-semibold tracking-tight">
               STH METHOD <span className="text-primary">AI</span>
             </span>
