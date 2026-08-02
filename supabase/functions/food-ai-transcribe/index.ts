@@ -2,7 +2,14 @@
 // Recebe áudio em base64 (webm/mp4/wav/ogg) e devolve texto puro.
 // Usado pelo Diário Alimentar (aba Áudio) e como fallback do canal
 // Sucesso do Aluno quando o áudio não é encaminhado direto pelo WhatsApp.
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+// CORS explícito (o supabase-js do navegador envia cabeçalhos
+// x-supabase-client-*; sem liberá-los o preflight falha).
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-retry-count, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-supabase-api-version',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 function extFromMime(mime: string): string {
   const m = String(mime || '').toLowerCase();
