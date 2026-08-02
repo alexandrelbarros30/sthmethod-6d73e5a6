@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, CircleAlert, ClipboardCheck, Pencil } from "lucide-react";
+import { CheckCircle2, ChevronRight, CircleAlert, ClipboardCheck, Pencil } from "lucide-react";
 import type { AiProfile } from "@/hooks/useAiApp";
 
 export type ChecklistItem = { key: string; label: string; ok: boolean; where: string };
