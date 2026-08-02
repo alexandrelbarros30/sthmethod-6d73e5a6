@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { focusField } from "@/lib/field-focus";
-import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
+import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
 import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown, Camera, CreditCard, ShieldCheck } from "lucide-react";
 
 const HUB = [
@@ -54,6 +54,7 @@ export default function AiProfile() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showFicha, setShowFicha] = useState(false);
+  const [showRotina, setShowRotina] = useState(false);
   const [savedAnswers, setSavedAnswers] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -105,8 +106,6 @@ export default function AiProfile() {
     phase1_complete: true,
     phase2_complete: true,
   } as any;
-  const dietChecklist = buildChecklist(liveProfile, "diet");
-  const workoutChecklist = buildChecklist(liveProfile, "workout");
 
   async function save() {
     if (!user?.id) return;
@@ -236,25 +235,6 @@ export default function AiProfile() {
         </span>
         {showFicha ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </button>
-
-      <AiBriefingChecklist
-        profile={liveProfile}
-        kind="diet"
-        items={dietChecklist}
-        editHref="#"
-        hideEdit
-        onSelect={(i) => { if (i.where === "briefing") { navigate(`/ai/app/treino?solicitar=1&campo=${i.key}&next=${encodeURIComponent("/ai/app/perfil")}`); return; } setShowFicha(true); focusField(`f-${i.key}`); }}
-        title="Checklist do briefing · Cardápio"
-      />
-      <AiBriefingChecklist
-        profile={liveProfile}
-        kind="workout"
-        items={workoutChecklist}
-        editHref="#"
-        hideEdit
-        onSelect={(i) => { if (i.where === "briefing") { navigate(`/ai/app/treino?solicitar=1&campo=${i.key}&next=${encodeURIComponent("/ai/app/perfil")}`); return; } setShowFicha(true); focusField(`f-${i.key}`); }}
-        title="Checklist do briefing · Treino"
-      />
 
       {showFicha && (
       <>
