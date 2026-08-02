@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,9 @@ export default function AiOnboarding() {
   useSthAiTheme();
   const { user, loading: authLoading } = useAuth() as { user: { id: string } | null; loading?: boolean };
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const returnTo = nextParam && nextParam.startsWith("/ai/") ? nextParam : "/ai/app";
   const [form, setForm] = useState<FormState>(EMPTY);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -50,7 +53,7 @@ export default function AiOnboarding() {
   useEffect(() => {
     if (authLoading) return;
     if (!user?.id) {
-      navigate("/ai/login?next=/ai/onboarding");
+      navigate(`/ai/login?next=${encodeURIComponent(`/ai/onboarding${nextParam ? `?next=${nextParam}` : ""}`)}`);
       return;
     }
     (async () => {
@@ -126,7 +129,7 @@ export default function AiOnboarding() {
       setStep(1);
     } else {
       toast.success("Perfil concluído.");
-      navigate("/ai/app");
+      navigate(returnTo);
     }
   }
 
