@@ -18,12 +18,12 @@ const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone, onUndo }: Props)
   const doneLabel = doneAt ? doneAt.split("-").reverse().join("/") : null;
 
   return (
-    <div className="group relative col-span-2 flex flex-col justify-between overflow-hidden rounded-[2rem] border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:border-ocean-teal/40 lg:col-span-3 lg:p-6">
+    <div className="group relative col-span-2 flex flex-col justify-between overflow-hidden rounded-3xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-300 hover:border-ocean-teal/40 sm:rounded-[2rem] sm:p-5 lg:col-span-3 lg:p-6">
       <div
         className="pointer-events-none absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-ocean-mint/20 blur-3xl"
         aria-hidden
       />
-      <div className="relative flex items-center justify-between gap-3">
+      <div className="relative flex flex-wrap items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-mint/15 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-ocean-teal">
           <Dumbbell className="h-3 w-3" /> Treino de hoje
         </span>
@@ -49,19 +49,19 @@ const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone, onUndo }: Props)
         </p>
       </div>
 
-      <div className="relative mt-5 flex items-center gap-2">
+      <div className="relative mt-5 flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center">
         <Button
-          className="flex-1 gap-2 bg-ocean-deep font-urbanist font-bold text-white hover:bg-ocean-mid"
+          className="w-full gap-2 bg-ocean-deep font-urbanist font-bold text-primary-foreground hover:bg-ocean-mid min-[380px]:flex-1"
           onClick={() => navigate("/ai/app/treino")}
         >
           {workout ? "Ir para o treino" : "Gerar treino"} <ArrowRight className="h-4 w-4" />
         </Button>
         {done ? (
-          <Button variant="secondary" className="gap-1.5" onClick={onUndo}>
+          <Button variant="secondary" className="w-full gap-1.5 min-[380px]:w-auto" onClick={onUndo}>
             <RotateCcw className="h-4 w-4" /> Desfazer
           </Button>
         ) : (
-          <Button variant="outline" className="gap-1.5" onClick={onDone}>
+          <Button variant="outline" className="w-full gap-1.5 min-[380px]:w-auto" onClick={onDone}>
             <Check className="h-4 w-4" /> Realizado
           </Button>
         )}

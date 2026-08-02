@@ -280,6 +280,24 @@ html, body {
 }
 
 @layer base {
+  /* =====================================================================
+     STH AI — Tema clássico (Apple Light + verde STH)
+     Reaproveita .theme-sth-green e remapeia a escala "ocean" usada nos
+     cards do dashboard para tons de grafite/verde da marca.
+     ===================================================================== */
+  .theme-sth-ai-classic {
+    --ocean-deep: 240 3% 12%;   /* grafite #1D1D1F */
+    --ocean-mid: 240 3% 22%;
+    --ocean-teal: 158 84% 36%;  /* verde STH */
+    --ocean-mint: 158 60% 52%;
+  }
+
+  html.theme-sth-ai-classic .font-urbanist {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+  }
+}
+
+@layer base {
   /* ────────────────────────────────────────────────────────────
      Acessibilidade — temas alternativos para neurodivergentes
      Aplicados em <html> apenas dentro da área do aluno.
