@@ -68,9 +68,11 @@ interface Props {
   title?: string;
   /** Esconde o botão de editar (quando já se está na tela de cadastro). */
   hideEdit?: boolean;
+  /** Clique em um item pendente (red flag) — leva o usuário até o campo. */
+  onSelect?: (item: ChecklistItem) => void;
 }
 
-export default function AiBriefingChecklist({ items, editHref, title, hideEdit }: Props) {
+export default function AiBriefingChecklist({ items, editHref, title, hideEdit, onSelect }: Props) {
   const { done, total, missing } = useMemo(() => {
     const done = items.filter((i) => i.ok).length;
     return { done, total: items.length, missing: items.filter((i) => !i.ok) };
@@ -94,7 +96,7 @@ export default function AiBriefingChecklist({ items, editHref, title, hideEdit }
             <p className="text-xs text-muted-foreground">
               {complete
                 ? "Tudo preenchido — você já pode gerar ou revisar."
-                : `${missing.length} campo(s) obrigatórios faltando para liberar a geração.`}
+                : `${missing.length} campo(s) faltando. Toque no item em vermelho para corrigir.`}
             </p>
           </div>
         </div>
@@ -115,28 +117,50 @@ export default function AiBriefingChecklist({ items, editHref, title, hideEdit }
       </div>
 
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-        {items.map((i) => (
-          <li
-            key={i.key}
-            className={`flex items-center justify-between gap-2 rounded-lg border p-2.5 text-sm ${
-              i.ok ? "border-border/60" : "border-destructive/40 bg-destructive/5"
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              {i.ok ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-              ) : (
-                <CircleAlert className="h-4 w-4 shrink-0 text-destructive" />
+        {items.map((i) => {
+          const clickable = !i.ok && Boolean(onSelect);
+          const Inner = (
+            <>
+              <span className="flex items-center gap-2 text-left">
+                {i.ok ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                ) : (
+                  <CircleAlert className="h-4 w-4 shrink-0 text-destructive" />
+                )}
+                <span className={i.ok ? "" : "font-medium"}>{i.label}</span>
+              </span>
+              {!i.ok && (
+                <span className="flex shrink-0 items-center gap-1">
+                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] uppercase">
+                    {i.where}
+                  </Badge>
+                  {clickable && <ChevronRight className="h-4 w-4 text-destructive" />}
+                </span>
               )}
-              <span className={i.ok ? "" : "font-medium"}>{i.label}</span>
-            </span>
-            {!i.ok && (
-              <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px] uppercase">
-                {i.where}
-              </Badge>
-            )}
-          </li>
-        ))}
+            </>
+          );
+          return (
+            <li key={i.key}>
+              {clickable ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect?.(i)}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 text-sm transition-colors hover:bg-destructive/10"
+                >
+                  {Inner}
+                </button>
+              ) : (
+                <div
+                  className={`flex items-center justify-between gap-2 rounded-lg border p-2.5 text-sm ${
+                    i.ok ? "border-border/60" : "border-destructive/40 bg-destructive/5"
+                  }`}
+                >
+                  {Inner}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </Card>
   );
