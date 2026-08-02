@@ -49,19 +49,19 @@ const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone, onUndo }: Props)
         </p>
       </div>
 
-      <div className="relative mt-5 flex flex-col gap-2 xs:flex-row xs:items-center">
+      <div className="relative mt-5 flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center">
         <Button
-          className="w-full gap-2 bg-ocean-deep font-urbanist font-bold text-primary-foreground hover:bg-ocean-mid xs:flex-1"
+          className="w-full gap-2 bg-ocean-deep font-urbanist font-bold text-primary-foreground hover:bg-ocean-mid min-[380px]:flex-1"
           onClick={() => navigate("/ai/app/treino")}
         >
           {workout ? "Ir para o treino" : "Gerar treino"} <ArrowRight className="h-4 w-4" />
         </Button>
         {done ? (
-          <Button variant="secondary" className="w-full gap-1.5 xs:w-auto" onClick={onUndo}>
+          <Button variant="secondary" className="w-full gap-1.5 min-[380px]:w-auto" onClick={onUndo}>
             <RotateCcw className="h-4 w-4" /> Desfazer
           </Button>
         ) : (
-          <Button variant="outline" className="w-full gap-1.5 xs:w-auto" onClick={onDone}>
+          <Button variant="outline" className="w-full gap-1.5 min-[380px]:w-auto" onClick={onDone}>
             <Check className="h-4 w-4" /> Realizado
           </Button>
         )}
