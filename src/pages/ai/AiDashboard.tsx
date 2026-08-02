@@ -140,15 +140,21 @@ export default function AiDashboard() {
         </Card>
       )}
 
-      <div className="mb-3 sm:mb-4">
-        <AiHydrationCard />
-      </div>
-
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-        {/* Constância — tile herói */}
+        {/* Refeição de agora — destaque principal */}
+        <AiNextMealCard diet={latestOf(generations, "diet")} />
+
+        {/* Treino do dia — lembrete */}
+        <AiWorkoutReminderCard
+          workout={latestOf(generations, "workout")}
+          done={!!today?.workout_done}
+          onDone={() => saveCheckin({ workout_done: true })}
+        />
+
+        {/* Constância — compacto */}
         <Link
           to="/ai/app/progresso"
-          className={`${tile} col-span-2 row-span-2 flex flex-col justify-between lg:col-span-3 lg:p-6`}
+          className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-3`}
         >
           <div
             className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl transition-opacity duration-500 group-hover:opacity-80"
@@ -158,82 +164,56 @@ export default function AiDashboard() {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               <Flame className="h-3 w-3" /> Constância
             </span>
-            <Badge variant={today ? "secondary" : "outline"}>{today ? "Check-in feito" : "Pendente"}</Badge>
+            <Badge variant={today ? "secondary" : "outline"} className="text-[10px]">
+              {today ? "Check-in feito" : "Pendente"}
+            </Badge>
           </div>
 
-          <div className="relative mt-6 flex items-center gap-5">
+          <div className="relative mt-4 flex items-center gap-4">
             <div className="relative grid place-items-center">
-              <Ring pct={adherencePct} />
+              <Ring pct={adherencePct} size={72} stroke={7} />
               <span className="absolute text-center">
-                <span className="block text-2xl font-semibold leading-none tracking-tight">{adherence7}</span>
-                <span className="block text-[10px] text-muted-foreground">/7 dias</span>
+                <span className="block text-lg font-semibold leading-none tracking-tight">{adherence7}</span>
+                <span className="block text-[9px] text-muted-foreground">/7 dias</span>
               </span>
             </div>
             <div className="min-w-0">
-              <p className="text-lg font-semibold leading-tight tracking-tight sm:text-xl">
+              <p className="text-sm font-semibold leading-tight tracking-tight">
                 {streak > 0 ? `${streak} ${streak === 1 ? "dia" : "dias"} seguidos` : "Comece sua sequência hoje"}
               </p>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                {today ? "Tudo registrado por hoje. Siga o ritmo." : "Registre seu dia em 5 segundos."}
+              <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+                {today ? "Tudo registrado por hoje." : "Registre seu dia em 5 segundos."}
               </p>
             </div>
           </div>
 
-          <div className="relative mt-6 flex items-center gap-1.5">
+          <div className="relative mt-4 flex items-center gap-1.5">
             {last7.map((d, i) => (
               <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${d.done ? "bg-primary" : "bg-muted"}`} />
             ))}
           </div>
-
-          <span className="relative mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity group-hover:opacity-90">
-            {today ? "Ver evolução" : "Fazer check-in"} <ArrowRight className="h-4 w-4" />
-          </span>
         </Link>
 
-        {/* Passos */}
-        <Link to="/ai/app/saude" className={`${tile} col-span-1 flex flex-col justify-between lg:col-span-2`}>
-          <div className="flex items-center justify-between">
-            <MicroLabel>Passos</MicroLabel>
-            <Footprints className="h-4 w-4 text-primary" />
-          </div>
-          <p className="mt-3 text-2xl font-semibold leading-none tracking-tight">
-            {health.steps != null ? health.steps.toLocaleString("pt-BR") : "—"}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {health.hasData ? `média 7d · ${health.stepsAvg.toLocaleString("pt-BR")}` : "conecte seu relógio"}
-          </p>
-          {health.hasData && <div className="mt-3"><Spark values={health.stepsSeries} /></div>}
-        </Link>
+        {/* Hidratação */}
+        <div className="col-span-2 lg:col-span-3">
+          <AiHydrationCard />
+        </div>
 
-        {/* Kcal ativas */}
-        <Link to="/ai/app/saude" className={`${tile} col-span-1 flex flex-col justify-between lg:col-span-1`}>
-          <div className="flex items-center justify-between">
-            <MicroLabel>Kcal</MicroLabel>
-            <HeartPulse className="h-4 w-4 text-primary" />
-          </div>
-          <p className="mt-3 text-2xl font-semibold leading-none tracking-tight">
-            {health.kcal != null ? health.kcal.toLocaleString("pt-BR") : "—"}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {health.hasData ? `média ${health.kcalAvg}` : "gasto ativo"}
-          </p>
-        </Link>
-
-        {/* Peso */}
-        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex items-center justify-between lg:col-span-3`}>
+        {/* Peso — compacto */}
+        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex items-center justify-between gap-3 lg:col-span-2`}>
           <div>
             <MicroLabel>Peso atual</MicroLabel>
-            <p className="mt-2 text-2xl font-semibold leading-none tracking-tight">
+            <p className="mt-1.5 text-xl font-semibold leading-none tracking-tight">
               {weight != null ? `${weight} kg` : "—"}
             </p>
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
               {weightDelta != null
-                ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg desde a última medida`
-                : "registre suas medidas para acompanhar a curva"}
+                ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg desde a última`
+                : "registre suas medidas"}
             </p>
           </div>
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
-            <Scale className="h-5 w-5" />
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Scale className="h-4 w-4" />
           </span>
         </Link>
 
