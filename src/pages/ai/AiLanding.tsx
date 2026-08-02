@@ -34,8 +34,8 @@ export default function AiLanding() {
       {/* Header */}
       <header className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
-            <Brain className="h-4 w-4" />
+          <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-xl bg-primary shadow-lg shadow-primary/25">
+            <img src="/pwa-ai-192.png?v=1" alt="STH AI" className="h-full w-full object-cover" />
           </span>
           <span className="text-sm font-semibold tracking-tight">STH METHOD AI</span>
         </div>
