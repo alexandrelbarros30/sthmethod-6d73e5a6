@@ -37,7 +37,7 @@ const ROUTES: Record<AiKind, string> = {
 };
 
 const tile =
-  "group relative overflow-hidden rounded-[2rem] border border-border/70 bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ocean-teal/40 hover:shadow-[0_18px_50px_-30px_hsl(var(--ocean-teal)/0.75)] sm:p-5";
+  "group relative overflow-hidden rounded-3xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ocean-teal/40 hover:shadow-[0_18px_50px_-30px_hsl(var(--ocean-teal)/0.75)] sm:rounded-[2rem] sm:p-5";
 
 const Ring = ({ pct, size = 104, stroke = 9 }: { pct: number; size?: number; stroke?: number }) => {
   const radius = (size - stroke) / 2;
@@ -230,7 +230,7 @@ export default function AiDashboard() {
 
           <div className="relative mt-4 flex items-center gap-4">
             <div className="relative grid place-items-center">
-              <Ring pct={adherencePct} size={72} stroke={7} />
+              <Ring pct={adherencePct} size={68} stroke={7} />
               <span className="absolute text-center">
                 <span className="block text-lg font-semibold leading-none tracking-tight">{adherence7}</span>
                 <span className="block text-[9px] text-muted-foreground">/7 dias</span>
@@ -261,28 +261,28 @@ export default function AiDashboard() {
         {/* Peso — compacto */}
         <Link
           to="/ai/app/progresso"
-          className={`${tile} col-span-2 flex items-center justify-between gap-3 border-ocean-mint/25 bg-ocean-mint/10 lg:col-span-2`}
+          className={`${tile} col-span-2 flex items-center justify-between gap-3 border-ocean-mint/25 bg-ocean-mint/10 sm:col-span-1 lg:col-span-2`}
         >
-          <div>
+          <div className="min-w-0">
             <MicroLabel>Peso atual</MicroLabel>
-            <p className="mt-1.5 font-urbanist text-xl font-extrabold leading-none tracking-tight text-ocean-mid">
+            <p className="mt-1.5 font-urbanist text-2xl font-extrabold leading-none tracking-tight text-ocean-mid">
               {weight != null ? `${weight} kg` : "—"}
             </p>
-            <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+            <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
               {weightDelta != null
                 ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg desde a última`
                 : "registre suas medidas"}
             </p>
           </div>
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-white/70 text-ocean-teal">
-            <Scale className="h-4 w-4" />
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-background/70 text-ocean-teal">
+            <Scale className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} />
           </span>
         </Link>
 
         {/* Leitura STHIA */}
         <Link
           to="/ai/app/progresso"
-          className={`${tile} col-span-2 flex flex-col justify-between border-transparent bg-gradient-to-br from-ocean-teal to-ocean-mint text-white shadow-lg shadow-ocean-teal/20 lg:col-span-4`}
+          className={`${tile} col-span-2 flex min-h-[9.5rem] flex-col justify-between border-transparent bg-gradient-to-br from-ocean-teal to-ocean-mint text-white shadow-lg shadow-ocean-teal/20 sm:col-span-1 lg:col-span-4`}
         >
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-white/90">
@@ -290,7 +290,7 @@ export default function AiDashboard() {
             </span>
             <ArrowUpRight className="h-4 w-4 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-          <p className="mt-3 line-clamp-3 max-w-[70ch] text-[15px] font-light leading-[1.7] tracking-[0.01em] text-white/90">
+          <p className="mt-3 line-clamp-4 max-w-[70ch] text-sm font-light leading-relaxed tracking-[0.01em] text-white/90 sm:text-[15px] sm:leading-[1.7]">
             {insightText || "Registre alguns dias e a inteligência gera sua leitura de tendência automaticamente."}
           </p>
         </Link>
@@ -305,7 +305,7 @@ export default function AiDashboard() {
             <Link
               key={kind}
               to={ROUTES[kind]}
-              className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-2 ${
+              className={`${tile} col-span-2 flex min-h-[10.5rem] flex-col justify-between sm:col-span-1 lg:col-span-2 ${
                 dark ? "border-white/5 bg-ocean-mid text-white" : ""
               }`}
             >
@@ -326,7 +326,7 @@ export default function AiDashboard() {
               </div>
               <div className="mt-4">
                 <h2 className="font-urbanist text-base font-bold tracking-tight">{mod.title}</h2>
-                <p className={`mt-1 line-clamp-2 text-xs sm:text-sm ${dark ? "text-white/60" : "text-muted-foreground"}`}>{mod.short}</p>
+                <p className={`mt-1 line-clamp-2 text-xs leading-snug sm:text-sm ${dark ? "text-white/60" : "text-muted-foreground"}`}>{mod.short}</p>
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${dark ? "text-ocean-mint" : "text-ocean-teal"}`}>
@@ -344,7 +344,7 @@ export default function AiDashboard() {
         })}
 
         {/* Imagens corporais */}
-        <Link to="/ai/app/imagens" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-2`}>
+        <Link to="/ai/app/imagens" className={`${tile} col-span-2 flex min-h-[10.5rem] flex-col justify-between sm:col-span-1 lg:col-span-2`}>
           <div className="flex items-start justify-between gap-2">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
               <Camera className="h-5 w-5" />
@@ -353,7 +353,7 @@ export default function AiDashboard() {
           </div>
           <div className="mt-4">
             <h2 className="font-urbanist text-base font-bold tracking-tight">Imagens corporais</h2>
-            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
+            <p className="mt-1 line-clamp-2 text-xs leading-snug text-muted-foreground sm:text-sm">
               Envie fotos de evolução e compare sua transformação ao longo do ciclo.
             </p>
           </div>
@@ -371,14 +371,14 @@ export default function AiDashboard() {
           { to: "/ai/app/saude", label: "Saúde e wearables", hint: "Galaxy Watch e Health Connect", icon: HeartPulse },
           { to: "/ai/app/coaches", label: "Coaches humanos", hint: "acompanhamento profissional", icon: UserRound },
         ].map((s) => (
-          <Link key={s.to} to={s.to} className={`${tile} col-span-2 flex items-center justify-between lg:col-span-2`}>
+          <Link key={s.to} to={s.to} className={`${tile} col-span-2 flex items-center justify-between gap-2 py-3.5 sm:col-span-1 lg:col-span-2`}>
             <span className="flex min-w-0 items-center gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
                 <s.icon className="h-4 w-4" />
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-sm font-medium">{s.label}</span>
-                <span className="block truncate text-[11px] text-muted-foreground">{s.hint}</span>
+                <span className="block truncate text-sm font-semibold">{s.label}</span>
+                <span className="block truncate text-xs text-muted-foreground">{s.hint}</span>
               </span>
             </span>
             <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -386,7 +386,7 @@ export default function AiDashboard() {
         ))}
       </div>
 
-      <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-5 text-xs leading-relaxed text-muted-foreground">
+      <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-4 text-xs leading-relaxed text-muted-foreground sm:p-5">
         <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
         <p>
           O STH METHOD AI oferece orientação plena e suporte para o alcance do objetivo. Assuntos de substâncias, doses
