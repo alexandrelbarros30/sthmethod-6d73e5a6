@@ -254,6 +254,35 @@ export default function AiModule() {
           onSubmit={submitFeedback}
         />
       )}
+
+      <Dialog open={lowDetailMode !== null} onOpenChange={(v) => !v && setLowDetailMode(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Seu texto está pouco detalhado</DialogTitle>
+            <DialogDescription>
+              Nível atual: {detail.score}% ({detail.level}). Com mais detalhes a entrega fica muito mais precisa e
+              personalizada.
+            </DialogDescription>
+          </DialogHeader>
+          <AiDetailMeter text={instruction} kind={kind} />
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="flex-1" onClick={() => setLowDetailMode(null)}>
+              Voltar e detalhar
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                const mode = lowDetailMode!;
+                setLowDetailMode(null);
+                run(mode, true);
+              }}
+            >
+              Gerar assim mesmo
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AiShell>
   );
 }
