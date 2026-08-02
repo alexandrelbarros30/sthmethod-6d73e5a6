@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
+import ProfileAvatar from "@/components/shared/ProfileAvatar";
 import AdAutoPopup from "@/components/student/AdAutoPopup";
 import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
 import WelcomeTour from "@/components/student/WelcomeTour";
@@ -236,7 +237,10 @@ const StudentOverview = () => {
       {/* HEADER */}
       <div className="flex items-start justify-between mb-10 relative">
         <div className="flex-1 min-w-0 pt-2">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted-foreground">{greeting}</p>
+          <div className="flex items-center gap-3">
+            <ProfileAvatar size={44} onClick={() => navigate("/dashboard/perfil")} />
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted-foreground">{greeting}</p>
+          </div>
           <h1 className="text-[42px] sm:text-[56px] leading-[0.95] font-semibold text-foreground tracking-[-0.045em] mt-3">
             {firstName}.
           </h1>

@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { focusField } from "@/lib/field-focus";
 import AiWorkoutBriefing from "@/components/ai/AiWorkoutBriefing";
+import ProfileAvatar from "@/components/shared/ProfileAvatar";
 import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown, Camera, CreditCard, ShieldCheck } from "lucide-react";
 
 const HUB = [
@@ -190,6 +191,14 @@ export default function AiProfile() {
 
   return (
     <AiShell title="Perfil" subtitle="Seu organizador: ficha de cadastro, ferramentas do STH AI e documentos.">
+      <Card className="mb-5 flex items-center gap-4 p-5">
+        <ProfileAvatar size={72} editable />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{form.full_name || "Seu perfil"}</p>
+          <p className="text-xs text-muted-foreground">Toque na câmera para alterar sua foto de perfil.</p>
+        </div>
+      </Card>
+
       <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-5">
         <div>
           <p className="text-xs text-muted-foreground">Assinatura</p>
