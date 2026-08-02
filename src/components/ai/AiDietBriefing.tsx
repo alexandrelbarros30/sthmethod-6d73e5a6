@@ -83,6 +83,28 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
   const [preferences, setPreferences] = useState("");
   const seeded = useRef<string | null>(null);
 
+  async function saveGroup() {
+    if (!profile?.user_id) return;
+    const { error } = await supabase
+      .from("ai_app_profiles")
+      .update({
+        answers: {
+          ...((profile.answers ?? {}) as Record<string, string>),
+          diet_objective: objective,
+          diet_kcal: kcal,
+          diet_meals: meals,
+          diet_protein: protein,
+          diet_carbs: carbs,
+          diet_fat: fat,
+          diet_restrictions: restrictions,
+          diet_preferences: preferences,
+        },
+      })
+      .eq("user_id", profile.user_id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Dados salvos — a IA já usa esses valores na próxima geração.");
+  }
+
   // Gasto energético total: cadastro + rotina/atividade já registrada
   const macros = useMemo(() => {
     const weight = Number(profile?.weight_kg || 0);
