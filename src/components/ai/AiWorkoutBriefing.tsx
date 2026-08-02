@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { ClipboardList, Pencil, SlidersHorizontal, Timer } from "lucide-react";
+import { ClipboardList, Dumbbell, HeartPulse, MapPin, Pencil, SlidersHorizontal, Timer } from "lucide-react";
+import AiEditSection from "@/components/ai/AiEditSection";
 import {
   Dialog,
   DialogContent,
