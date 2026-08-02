@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
-import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard } from "lucide-react";
+import { useAiThemeMode } from "@/hooks/useAiThemeMode";
+import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf } from "lucide-react";
 
 const NAV = [
   { to: "/ai/app", label: "Início", icon: LayoutGrid },
@@ -26,6 +27,7 @@ export default function AiShell({ children, title, subtitle }: { children: React
   const location = useLocation();
   const navigate = useNavigate();
   useSthAiTheme();
+  const { mode, toggle } = useAiThemeMode();
 
   async function logout() {
     await supabase.auth.signOut();
@@ -45,6 +47,17 @@ export default function AiShell({ children, title, subtitle }: { children: React
             </span>
           </Link>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggle}
+              aria-label={mode === "ocean" ? "Usar tema STH clássico" : "Usar tema Ocean Premium"}
+              title={mode === "ocean" ? "Tema: Ocean Premium" : "Tema: STH clássico"}
+              className="gap-1.5 px-2"
+            >
+              {mode === "ocean" ? <Waves className="h-4 w-4" /> : <Leaf className="h-4 w-4" />}
+              <span className="hidden text-xs sm:inline">{mode === "ocean" ? "Ocean" : "Clássico"}</span>
+            </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to="/ai/assinatura">Plano</Link>
             </Button>
