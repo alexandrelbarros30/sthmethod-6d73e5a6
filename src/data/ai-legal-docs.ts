@@ -477,6 +477,110 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "consentimento-dados-sensiveis",
+    title: "Termo de Consentimento para Tratamento de Dados Pessoais Sensíveis",
+    subtitle: "Consentimento específico para dados de saúde e evolução corporal",
+    code: "STHAI-CONS-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Finalidade do Documento",
+        paragraphs: [
+          "Este Termo tem como objetivo registrar o consentimento do usuário para que a STH AI realize o tratamento de dados pessoais sensíveis necessários para o funcionamento das ferramentas de inteligência artificial e acompanhamento digital oferecidas pela plataforma.",
+          "O aceite deste documento é necessário para utilização dos recursos que dependem de informações relacionadas à saúde, composição corporal e evolução física.",
+        ],
+      },
+      {
+        title: "2. Dados Sensíveis Envolvidos",
+        paragraphs: ["O usuário autoriza o tratamento das seguintes categorias de dados, quando fornecidas voluntariamente:"],
+        bullets: [
+          "Informações corporais: peso, altura, medidas corporais, composição corporal, histórico de evolução e fotografias corporais.",
+          "Informações relacionadas à saúde: exames laboratoriais, informações metabólicas, histórico informado pelo usuário e informações relacionadas a objetivos físicos e nutricionais.",
+          "Informações alimentares: registros do diário alimentar, refeições cadastradas e análises realizadas pelo STH Food AI.",
+        ],
+      },
+      {
+        title: "3. Finalidade do Uso dos Dados",
+        paragraphs: ["Os dados poderão ser utilizados exclusivamente para:"],
+        bullets: [
+          "personalização dos serviços da STH AI;",
+          "geração de treinos personalizados;",
+          "geração de cardápios personalizados;",
+          "análise de informações fornecidas pelo usuário;",
+          "interpretação de dados laboratoriais enviados;",
+          "acompanhamento da evolução corporal;",
+          "comparação de imagens de evolução;",
+          "melhoria da experiência dentro da plataforma.",
+        ],
+      },
+      {
+        title: "4. Uso das Fotografias Corporais",
+        paragraphs: [
+          "O usuário declara estar ciente de que as fotografias corporais enviadas poderão ser analisadas por sistemas de inteligência artificial para identificar alterações visuais de evolução, comparar diferentes períodos e auxiliar no acompanhamento da transformação corporal.",
+          "As imagens permanecem vinculadas ao perfil do usuário e não serão divulgadas publicamente sem autorização específica.",
+        ],
+      },
+      {
+        title: "5. Uso pela Inteligência Artificial",
+        paragraphs: [
+          "O usuário compreende que a STH AI utiliza sistemas de inteligência artificial para analisar informações fornecidas e gerar respostas personalizadas.",
+          "O usuário reconhece que os resultados dependem da qualidade dos dados inseridos, que informações incompletas podem reduzir a precisão das análises e que a inteligência artificial atua conforme os parâmetros da metodologia STH Method.",
+        ],
+      },
+      {
+        title: "6. Natureza do Consentimento",
+        paragraphs: [
+          "O fornecimento dos dados sensíveis é voluntário.",
+          "Entretanto, o usuário compreende que a ausência dessas informações poderá limitar ou impedir o funcionamento de determinadas ferramentas personalizadas da plataforma.",
+        ],
+      },
+      {
+        title: "7. Proteção dos Dados",
+        paragraphs: [
+          "A STH AI compromete-se a aplicar medidas técnicas e administrativas para proteger as informações armazenadas, conforme descrito na Política de Privacidade.",
+        ],
+      },
+      {
+        title: "8. Compartilhamento",
+        paragraphs: [
+          "O usuário declara estar ciente de que os dados poderão ser processados por fornecedores tecnológicos necessários ao funcionamento da plataforma, sempre respeitando medidas de segurança e finalidade definida.",
+          "A STH AI não comercializa dados pessoais de seus usuários.",
+        ],
+      },
+      {
+        title: "9. Revogação do Consentimento",
+        paragraphs: [
+          "O usuário poderá solicitar a revogação deste consentimento conforme previsto na legislação aplicável.",
+          "A revogação poderá limitar o acesso a funcionalidades que dependam do tratamento dos dados autorizados.",
+        ],
+      },
+      {
+        title: "10. Declarações do Usuário",
+        paragraphs: ["Ao aceitar este termo, o usuário declara que:"],
+        bullets: [
+          "compreendeu quais dados serão tratados;",
+          "compreendeu a finalidade do tratamento;",
+          "concorda com a utilização das informações para funcionamento da STH AI;",
+          "forneceu informações de forma voluntária;",
+          "está ciente das limitações da inteligência artificial.",
+        ],
+      },
+      {
+        title: "11. Aceite Eletrônico",
+        paragraphs: [
+          "O aceite digital deste documento representa manifestação válida de consentimento, registrada pela plataforma com identificação do usuário, data e horário, versão do documento aceita e registro eletrônico da ação.",
+        ],
+      },
+      {
+        title: "12. Vigência",
+        paragraphs: [
+          "Este Termo permanece válido enquanto o usuário utilizar recursos da STH AI que dependam do tratamento de dados sensíveis, podendo ser atualizado conforme mudanças legais ou tecnológicas.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
