@@ -134,6 +134,9 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
   // Pré-preenche objetivo e metas com base no gasto energético calculado
   useEffect(() => {
     if (!objective) setObjective(GOAL_TO_OBJECTIVE[profile?.goal ?? ""] || "manter_peso");
+    if (answers.diet_restrictions) setRestrictions(answers.diet_restrictions);
+    if (answers.diet_preferences) setPreferences(answers.diet_preferences);
+    if (answers.diet_meals) setMeals(answers.diet_meals);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.user_id]);
 
@@ -192,7 +195,34 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
 
   return (
     <div className="mb-4 space-y-4">
-      {!compact && (
+      {!compact && collapsible && (
+        <AiEditSection
+          icon={<ClipboardList className="h-4 w-4" />}
+          title="Revisão do seu cadastro"
+          description="Dados pessoais usados pela IA"
+          pending={review.length === 0 ? 1 : 0}
+        >
+          {review.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum dado cadastrado ainda. Complete seu perfil primeiro.</p>
+          ) : (
+            <dl className="grid gap-3 sm:grid-cols-2">
+              {review.map((i) => (
+                <div key={i.label} className="rounded-lg border border-border/60 p-3">
+                  <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{i.label}</dt>
+                  <dd className="mt-0.5 text-sm">{i.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link to="/ai/onboarding?next=/ai/app/cardapio%3Fsolicitar%3D1">
+              <Pencil className="mr-2 h-4 w-4" /> Editar cadastro
+            </Link>
+          </Button>
+        </AiEditSection>
+      )}
+
+      {!compact && !collapsible && (
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
