@@ -1,6 +1,24 @@
 // Injeta as permissões e activities do Google Health Connect no AndroidManifest.xml
-// gerado pelo Capacitor. Rodado no CI logo após `npx cap add android`.
+// gerado pelo Capacitor e ajusta o minSdk do projeto. Rodado no CI logo após
+// `npx cap add android`.
 import fs from 'node:fs';
+
+// O plugin capacitor-health exige minSdk 26. O template do Capacitor usa 24, o
+// que quebra o merge do manifesto no `assembleDebug`.
+const MIN_SDK = 26;
+const variablesFile = 'android/variables.gradle';
+if (fs.existsSync(variablesFile)) {
+  let gradle = fs.readFileSync(variablesFile, 'utf8');
+  if (/minSdkVersion\s*=\s*\d+/.test(gradle)) {
+    gradle = gradle.replace(/minSdkVersion\s*=\s*\d+/g, `minSdkVersion = ${MIN_SDK}`);
+  } else {
+    gradle = gradle.replace(/ext\s*\{/, `ext {\n    minSdkVersion = ${MIN_SDK}`);
+  }
+  fs.writeFileSync(variablesFile, gradle);
+  console.log(`variables.gradle: minSdkVersion = ${MIN_SDK}`);
+} else {
+  console.log('variables.gradle não encontrado — pulando ajuste de minSdk.');
+}
 
 const file = 'android/app/src/main/AndroidManifest.xml';
 if (!fs.existsSync(file)) {
