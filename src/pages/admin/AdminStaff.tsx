@@ -271,7 +271,41 @@ const AdminStaff = () => {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Mobile: cards */}
+              <div className="md:hidden space-y-3">
+                {filtered.map((user) => {
+                  const config = staffRoleConfig[user.role];
+                  const studentCount = consultantCounts?.[user.user_id] || 0;
+                  return (
+                    <div key={user.user_id} className="rounded-xl border border-border bg-muted/20 p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">{user.initials}</div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm text-foreground truncate">{user.full_name || "—"}</p>
+                          <p className="text-xs text-muted-foreground break-all">{user.email}</p>
+                          {user.phone && <p className="text-xs text-muted-foreground">{user.phone}</p>}
+                        </div>
+                        <Badge variant="outline" className={`shrink-0 text-[10px] ${config.color}`}>{config.label}</Badge>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <p className="text-[11px] text-muted-foreground">
+                          {user.role === "consultor" ? `${studentCount} aluno(s) · ` : ""}{formatDate(user.created_at)}
+                        </p>
+                        <div className="flex gap-1 shrink-0">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openEdit(user)}><Pencil className="w-4 h-4" /></Button>
+                          <Button variant="outline" size="icon" className="h-8 w-8" title="Alterar senha" onClick={() => { setPasswordReset({ userId: user.user_id, name: user.full_name || user.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
+                          <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm({ userId: user.user_id, name: user.full_name || user.email })}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Desktop: tabela */}
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -318,6 +352,7 @@ const AdminStaff = () => {
                   </TableBody>
                 </Table>
               </div>
+              </>
             )}
           </CardContent>
         </Card>
