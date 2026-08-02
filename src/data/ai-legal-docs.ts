@@ -187,6 +187,171 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "contrato-prestacao-servicos",
+    title: "Contrato de Prestação de Serviços Digitais",
+    subtitle: "Condições contratuais dos planos STH AI",
+    code: "STHAI-CT-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Partes",
+        paragraphs: [
+          "O presente Contrato de Prestação de Serviços Digitais é celebrado entre a STH AI, plataforma tecnológica baseada na metodologia STH Method, doravante denominada CONTRATADA, e o usuário que concluir a contratação de qualquer plano disponível na plataforma, doravante denominado CONTRATANTE.",
+          "O aceite eletrônico deste contrato possui validade jurídica e produz os mesmos efeitos de uma assinatura física, conforme a legislação aplicável.",
+        ],
+      },
+      {
+        title: "2. Objeto",
+        paragraphs: [
+          "Este contrato tem por objeto a disponibilização dos serviços digitais da STH AI durante o período correspondente ao plano contratado.",
+          "Os serviços incluem, conforme as funcionalidades vigentes da plataforma:",
+        ],
+        bullets: [
+          "geração inteligente de treino;",
+          "geração inteligente de cardápio;",
+          "análise de exames laboratoriais;",
+          "análise corporal por imagens;",
+          "acompanhamento por inteligência artificial;",
+          "utilização ilimitada do STH Food AI;",
+          "utilização ilimitada da ferramenta de evolução corporal por fotografias;",
+          "diário alimentar;",
+          "histórico de evolução;",
+          "demais funcionalidades disponibilizadas pela plataforma.",
+        ],
+      },
+      {
+        title: "3. Planos",
+        paragraphs: ["A CONTRATADA disponibiliza planos com vigência de:"],
+        bullets: ["30 dias;", "90 dias;", "180 dias;", "365 dias."],
+      },
+      {
+        title: "4. Ativação",
+        paragraphs: [
+          "A assinatura será considerada ativa após a confirmação do pagamento.",
+          "A partir desse momento, os recursos previstos no plano serão automaticamente liberados.",
+        ],
+      },
+      {
+        title: "5. Metodologia de Acompanhamento",
+        paragraphs: [
+          "A STH AI utiliza a metodologia STH Method para estruturar o acompanhamento do usuário.",
+          "Cada ciclo de acompanhamento poderá incluir:",
+        ],
+        bullets: [
+          "geração de treino;",
+          "geração de cardápio;",
+          "análise de exames;",
+          "análise corporal.",
+        ],
+      },
+      {
+        title: "6. Revisões",
+        paragraphs: [
+          "Cada planejamento poderá receber revisões quando houver justificativa técnica compatível com a metodologia STH Method.",
+          "As revisões possuem critérios próprios definidos na Política de Gerações, Revisões e Periodização.",
+          "A CONTRATADA poderá negar solicitações incompatíveis com os princípios metodológicos da plataforma.",
+        ],
+      },
+      {
+        title: "7. Obrigações da CONTRATADA",
+        paragraphs: ["Compete à CONTRATADA:"],
+        bullets: [
+          "manter a plataforma disponível, ressalvadas interrupções técnicas ou de manutenção;",
+          "proteger os dados pessoais conforme a legislação vigente;",
+          "fornecer os serviços contratados;",
+          "promover melhorias contínuas na plataforma.",
+        ],
+      },
+      {
+        title: "8. Obrigações do CONTRATANTE",
+        paragraphs: ["O CONTRATANTE compromete-se a:"],
+        bullets: [
+          "fornecer informações verdadeiras e atualizadas;",
+          "utilizar a plataforma de forma lícita;",
+          "preservar a confidencialidade de suas credenciais de acesso;",
+          "não compartilhar sua conta com terceiros;",
+          "seguir as orientações fornecidas pela plataforma.",
+        ],
+      },
+      {
+        title: "9. Uso Indevido",
+        paragraphs: ["É vedado ao CONTRATANTE:"],
+        bullets: [
+          "copiar conteúdos protegidos;",
+          "tentar acessar áreas restritas da plataforma;",
+          "utilizar robôs ou ferramentas automatizadas para exploração indevida;",
+          "comercializar, reproduzir ou redistribuir conteúdos da STH AI sem autorização.",
+        ],
+      },
+      {
+        title: "10. Inteligência Artificial",
+        paragraphs: [
+          "O CONTRATANTE reconhece que o acompanhamento é realizado predominantemente por inteligência artificial desenvolvida conforme a metodologia STH Method.",
+          "As recomendações dependem da qualidade e veracidade das informações fornecidas pelo usuário.",
+        ],
+      },
+      {
+        title: "11. Limitação de Responsabilidade",
+        paragraphs: [
+          "A CONTRATADA não garante resultados específicos, uma vez que estes dependem de fatores individuais, incluindo adesão ao planejamento, rotina, condições clínicas, alimentação, treinamento e outros aspectos pessoais.",
+          "A plataforma não substitui atendimento médico, nutricional ou de outros profissionais quando necessário.",
+        ],
+      },
+      {
+        title: "12. Pagamentos",
+        paragraphs: [
+          "Os valores, formas de pagamento, condições promocionais e regras comerciais são definidos na página oficial da plataforma no momento da contratação.",
+        ],
+      },
+      {
+        title: "13. Cancelamento",
+        paragraphs: [
+          "As condições de cancelamento, reembolso e encerramento da assinatura observarão a Política de Planos, Pagamentos, Cancelamentos e Reembolsos da STH AI e a legislação aplicável.",
+        ],
+      },
+      {
+        title: "14. Proteção de Dados",
+        paragraphs: [
+          "O tratamento dos dados pessoais e sensíveis seguirá a Política de Privacidade da STH AI e a legislação vigente.",
+        ],
+      },
+      {
+        title: "15. Alterações Contratuais",
+        paragraphs: [
+          "Este contrato poderá ser atualizado para refletir alterações legais, regulatórias ou evoluções da plataforma.",
+          "Quando as alterações forem relevantes, o usuário será comunicado e poderá ser solicitado novo aceite.",
+        ],
+      },
+      {
+        title: "16. Vigência",
+        paragraphs: [
+          "O presente contrato entra em vigor na data da confirmação do pagamento e permanece válido durante todo o período correspondente ao plano contratado.",
+        ],
+      },
+      {
+        title: "17. Disposições Finais",
+        paragraphs: [
+          "Este contrato integra o conjunto documental da STH AI e deve ser interpretado em conjunto com:",
+        ],
+        bullets: [
+          "Termos de Uso;",
+          "Política de Privacidade;",
+          "Política de Uso da Inteligência Artificial;",
+          "Política de Gerações, Revisões e Periodização;",
+          "Política de Planos, Pagamentos, Cancelamentos e Reembolsos;",
+          "demais documentos oficiais da plataforma.",
+        ],
+      },
+      {
+        title: "18. Foro",
+        paragraphs: [
+          "As partes elegem o foro competente previsto na legislação brasileira para dirimir eventuais controvérsias decorrentes deste contrato, observadas as normas de proteção ao consumidor quando aplicáveis.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
