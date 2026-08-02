@@ -17,6 +17,7 @@ import AiDietPlan from "@/components/ai/AiDietPlan";
 import AiAnalysisReport from "@/components/ai/AiAnalysisReport";
 import AiRevisionsBanner from "@/components/ai/AiRevisionsBanner";
 import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
+import AiFieldTipsDialog from "@/components/ai/AiFieldTipsDialog";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -73,6 +74,10 @@ export default function AiModule() {
       {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
       {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} />}
       <Card className="space-y-3 p-5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-medium">Campo livre — conte os detalhes</p>
+          <AiFieldTipsDialog kind={kind} />
+        </div>
         <Textarea
           rows={3}
           value={instruction}
@@ -83,6 +88,9 @@ export default function AiModule() {
               : "Quer acrescentar alguma observação antes de gerar? (opcional)"
           }
         />
+        <p className="text-xs text-muted-foreground">
+          Quanto mais detalhes você informar, melhor a entrega. Toque em "Como escrever aqui?" para ver o guia.
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button className="flex-1" onClick={() => run("create")} disabled={busy || cycleLocked || briefingIncomplete}>
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : cycleLocked || briefingIncomplete ? <Lock className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
