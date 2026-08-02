@@ -287,6 +287,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
       }
       if ((data as any)?.error) throw new Error((data as any).details || (data as any).error);
       setResult(data);
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
       setTimeout(onSaved, 400);
     } catch (e) {
       const msg = (e as Error)?.message || "Não foi possível analisar agora.";
