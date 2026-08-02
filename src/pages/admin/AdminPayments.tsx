@@ -464,7 +464,64 @@ const AdminPayments = () => {
             </CardHeader>
             <CardContent>
               {payments && payments.length > 0 ? (
-                <div className="overflow-x-auto">
+                <>
+                {/* Mobile: cards */}
+                <div className="md:hidden space-y-3">
+                  {payments.map((p: any) => {
+                    const profile = getProfile(p.user_id);
+                    const hasReceipt = !!p.receipt_url;
+                    const needsReview = p.status === "pending" && p.ai_verification_status === "review";
+                    return (
+                      <div
+                        key={p.id}
+                        className={`rounded-xl border border-border p-3 ${needsReview ? "bg-yellow-500/5" : "bg-muted/20"}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{profile?.full_name || "—"}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {(p as any).plans?.name || "—"} · {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                            </p>
+                          </div>
+                          <Badge className={`text-[10px] shrink-0 ${statusColors[p.status] || ""}`}>
+                            {statusLabels[p.status] || p.status}
+                          </Badge>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span className="text-sm font-semibold">R$ {Number(p.amount).toFixed(2)}</span>
+                          <Badge variant="outline" className="text-[10px]">{methodLabels[p.method] || p.method}</Badge>
+                          <Badge variant="outline" className="text-[10px]">{actionLabels[p.action_type] || p.action_type}</Badge>
+                        </div>
+                        <p className="mt-1.5 text-[11px] text-muted-foreground">
+                          Verificação: {p.ai_verification_status
+                            ? (aiStatusLabels[p.ai_verification_status] || p.ai_verification_status)
+                            : hasReceipt ? "Com comprovante" : "—"}
+                        </p>
+                        {(hasReceipt || needsReview || p.status === "approved") && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {hasReceipt && (
+                              <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setReceiptDialog(p)}>
+                                <Eye className="w-3.5 h-3.5 mr-1" />Ver comprovante
+                              </Button>
+                            )}
+                            {needsReview && (
+                              <Button size="sm" className="flex-1 text-xs" onClick={() => setReceiptDialog(p)}>
+                                <ShieldAlert className="w-3.5 h-3.5 mr-1" />Revisar
+                              </Button>
+                            )}
+                            {p.status === "approved" && (
+                              <a href={generateWhatsAppLink(p)} target="_blank" rel="noopener noreferrer" className="flex-1">
+                                <Button size="sm" variant="outline" className="w-full text-primary text-xs">📲 WhatsApp</Button>
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Desktop: tabela */}
+                <div className="hidden md:block overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -533,6 +590,7 @@ const AdminPayments = () => {
                     </TableBody>
                   </Table>
                 </div>
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-8">Nenhum pagamento registrado.</p>
               )}
