@@ -20,7 +20,9 @@ import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingC
 import AiFieldTipsDialog from "@/components/ai/AiFieldTipsDialog";
 import AiDetailMeter, { scoreDetail } from "@/components/ai/AiDetailMeter";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
-import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
+import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft } from "lucide-react";
+import { focusField } from "@/lib/field-focus";
+import type { ChecklistItem } from "@/components/ai/AiBriefingChecklist";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const SLUG_TO_KIND: Record<string, AiKind> = {
@@ -45,9 +47,20 @@ export default function AiModule() {
   const [requestOpen, setRequestOpen] = useState(false);
   const [lowDetailMode, setLowDetailMode] = useState<"create" | "revise" | null>(null);
 
+  const backTo = searchParams.get("next");
+  const campoParam = searchParams.get("campo");
+  const currentHref = `/ai/app/${slug}?solicitar=1`;
+
   useEffect(() => {
     if (searchParams.get("solicitar") === "1") setRequestOpen(true);
   }, [searchParams]);
+
+  // Veio de uma red flag do checklist: abre o formulário e destaca o campo.
+  useEffect(() => {
+    if (!campoParam || loading) return;
+    setRequestOpen(true);
+    focusField(`brief-${campoParam}`);
+  }, [campoParam, loading]);
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
@@ -68,10 +81,34 @@ export default function AiModule() {
   const editHref = `/ai/onboarding?next=${encodeURIComponent(`/ai/app/${slug}?solicitar=1`)}`;
   const detail = useMemo(() => scoreDetail(instruction, kind), [instruction, kind]);
 
+  /** Clique na red flag: leva até a tela do campo e volta para gerar/revisar. */
+  function handleChecklistSelect(item: ChecklistItem) {
+    if (item.where === "cadastro") {
+      navigate(
+        `/ai/onboarding?campo=${item.key}&next=${encodeURIComponent(
+          backTo && backTo.startsWith("/ai/") ? backTo : currentHref,
+        )}`,
+      );
+      return;
+    }
+    if (kind === "workout") {
+      setRequestOpen(true);
+      focusField(`brief-${item.key}`);
+      return;
+    }
+    navigate(`/ai/app/treino?solicitar=1&campo=${item.key}&next=${encodeURIComponent(currentHref)}`);
+  }
+
   const requestForm = (
     <>
       {kind !== "analysis" && (
-        <AiBriefingChecklist profile={profile} kind={kind} items={checklist} editHref={editHref} />
+        <AiBriefingChecklist
+          profile={profile}
+          kind={kind}
+          items={checklist}
+          editHref={editHref}
+          onSelect={handleChecklistSelect}
+        />
       )}
       {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
       {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
