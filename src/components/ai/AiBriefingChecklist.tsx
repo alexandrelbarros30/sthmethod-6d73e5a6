@@ -65,9 +65,12 @@ interface Props {
   kind: "diet" | "workout" | "analysis";
   items: ChecklistItem[];
   editHref: string;
+  title?: string;
+  /** Esconde o botão de editar (quando já se está na tela de cadastro). */
+  hideEdit?: boolean;
 }
 
-export default function AiBriefingChecklist({ items, editHref }: Props) {
+export default function AiBriefingChecklist({ items, editHref, title, hideEdit }: Props) {
   const { done, total, missing } = useMemo(() => {
     const done = items.filter((i) => i.ok).length;
     return { done, total: items.length, missing: items.filter((i) => !i.ok) };
@@ -87,7 +90,7 @@ export default function AiBriefingChecklist({ items, editHref }: Props) {
             <ClipboardCheck className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-base font-semibold">Checklist do briefing</h2>
+            <h2 className="text-base font-semibold">{title ?? "Checklist do briefing"}</h2>
             <p className="text-xs text-muted-foreground">
               {complete
                 ? "Tudo preenchido — você já pode gerar ou revisar."
@@ -95,11 +98,13 @@ export default function AiBriefingChecklist({ items, editHref }: Props) {
             </p>
           </div>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to={editHref}>
-            <Pencil className="mr-2 h-4 w-4" /> Completar cadastro
-          </Link>
-        </Button>
+        {!hideEdit && (
+          <Button asChild variant="outline" size="sm">
+            <Link to={editHref}>
+              <Pencil className="mr-2 h-4 w-4" /> Completar cadastro
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="mt-4 flex items-center gap-3">
