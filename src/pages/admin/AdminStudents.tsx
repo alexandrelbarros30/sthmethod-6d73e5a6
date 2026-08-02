@@ -81,7 +81,7 @@ const emptyForm = {
   gender: "", activity_type: "", does_cardio: "",
   physical_activity_level: "",
   objective: "", current_protocol: "",
-  comorbidities: "", additional_info: "",
+  comorbidities: "", medications: "", additional_info: "",
   lab_exam_url: "", medical_prescription_url: "",
   // training/cardio detail fields
   training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
@@ -320,6 +320,7 @@ const AdminStudents = () => {
         if (!form.objective) { toast.error("Objetivo é obrigatório"); return false; }
         if (!form.current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return false; }
         if (!form.comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return false; }
+        if (!form.medications.trim()) { toast.error("Medicamentos em uso é obrigatório (use 'Nenhum' se não houver)"); return false; }
         return true;
       case "macros":
         return true;
@@ -468,6 +469,7 @@ const AdminStudents = () => {
     objective: form.objective,
     current_protocol: form.current_protocol,
     comorbidities: form.comorbidities,
+    medications: form.medications,
     additional_info: form.additional_info,
     lab_exam_url: form.lab_exam_url,
     medical_prescription_url: form.medical_prescription_url,
@@ -768,6 +770,7 @@ const AdminStudents = () => {
           physical_activity_level: (p as any).physical_activity_level || "",
           objective: p.objective || "",
           current_protocol: p.current_protocol || "", comorbidities: p.comorbidities || "",
+          medications: (p as any).medications || "",
           additional_info: (p as any).additional_info || "",
           lab_exam_url: p.lab_exam_url || "", medical_prescription_url: p.medical_prescription_url || "",
           training_days_per_week: (p as any).training_days_per_week?.toString() || "",
@@ -1125,7 +1128,11 @@ const AdminStudents = () => {
           </div>
           <div>
             <Label className="font-body">Comorbidades *</Label>
-            <Textarea value={form.comorbidities} onChange={(e) => setForm({ ...form, comorbidities: e.target.value })} rows={3} placeholder="Informe patologias pré-existentes e condições clínicas relevantes." />
+            <Textarea value={form.comorbidities} onChange={(e) => setForm({ ...form, comorbidities: e.target.value })} rows={3} placeholder="Ex.: diabetes tipo 2, hipertensão, hipotireoidismo. Use 'Nenhuma' se não houver." />
+          </div>
+          <div>
+            <Label className="font-body">Medicamentos em uso *</Label>
+            <Textarea value={form.medications} onChange={(e) => setForm({ ...form, medications: e.target.value })} rows={3} placeholder="Ex.: Metformina 850mg 2x/dia, Losartana 50mg/dia. Use 'Nenhum' se não houver." />
           </div>
           <div>
             <Label className="font-body">Mais informações</Label>
@@ -1164,6 +1171,7 @@ const AdminStudents = () => {
                           objective: null,
                           current_protocol: null,
                           comorbidities: null,
+                          medications: null,
                           additional_info: null,
                         }).eq("user_id", selected.user_id);
                         setForm(prev => ({
@@ -1171,7 +1179,7 @@ const AdminStudents = () => {
                           physical_activity_level: "", activity_type: "", does_cardio: "",
                           training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
                           cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
-                          objective: "", current_protocol: "", comorbidities: "", additional_info: "",
+                          objective: "", current_protocol: "", comorbidities: "", medications: "", additional_info: "",
                         }));
                         qc.invalidateQueries({ queryKey: ["admin-students-list"] });
                         qc.invalidateQueries({ queryKey: ["admin-full-profile", selected.user_id] });
@@ -1773,6 +1781,10 @@ const AdminStudents = () => {
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comorbidades</h3>
                   <p className="text-sm whitespace-pre-wrap">{selected.comorbidities || "Não informado"}</p>
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Medicamentos em uso</h3>
+                  <p className="text-sm whitespace-pre-wrap">{(selectedFullProfile as any)?.medications || (selected as any).medications || "Não informado"}</p>
                 </section>
                 {(selectedFullProfile as any)?.additional_info && (
                   <section>
