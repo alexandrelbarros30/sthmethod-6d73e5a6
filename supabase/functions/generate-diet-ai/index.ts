@@ -384,7 +384,7 @@ Analise o briefing, os dados do aluno, o protocolo atual (quando houver) e as fo
 - alimentos e combinações prioritárias, e o que evitar
 - riscos, pontos de atenção e critérios de acompanhamento
 
-NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em português BR, tom técnico, direto e premium, em HTML simples (<p>, <strong>, <ul>, <li>), sem markdown.${protocolBlock}
+NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em português BR, tom técnico, direto e premium, em HTML simples (<p>, <strong>, <ul>, <li>), sem markdown.${protocolBlock}${clinicalBlock}
 
 ${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
