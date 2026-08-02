@@ -6,12 +6,15 @@ import { AiGeneration } from "@/hooks/useAiApp";
 interface Props {
   workout: AiGeneration | null;
   done: boolean;
+  /** Data (ISO) do check-in em que o treino foi marcado como realizado. */
+  doneAt?: string | null;
   onDone: () => void;
 }
 
 /** Lembrete de treino do dia — leva ao treino guiado e permite marcar como realizado. */
-const AiWorkoutReminderCard = ({ workout, done, onDone }: Props) => {
+const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone }: Props) => {
   const navigate = useNavigate();
+  const doneLabel = doneAt ? doneAt.split("-").reverse().join("/") : null;
 
   return (
     <div className="group relative col-span-2 flex flex-col justify-between overflow-hidden rounded-3xl border border-border/70 bg-card p-5 transition-all duration-300 hover:border-primary/40 lg:col-span-3 lg:p-6">
@@ -39,7 +42,7 @@ const AiWorkoutReminderCard = ({ workout, done, onDone }: Props) => {
         <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
           {workout
             ? done
-              ? "Excelente. Sua constância de hoje já está registrada."
+              ? `Excelente. Registrado no seu histórico${doneLabel ? ` em ${doneLabel}` : ""}.`
               : "Abra seu programa guiado, use o cronômetro e execute a sessão do dia."
             : "Gere seu treino inteligente para receber lembretes diários."}
         </p>

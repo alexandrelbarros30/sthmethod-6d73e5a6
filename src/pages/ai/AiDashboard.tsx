@@ -4,6 +4,7 @@ import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
 import { useAiProgress } from "@/hooks/useAiProgress";
 import { useAiOffer, useAiInsight } from "@/hooks/useAiGrowth";
@@ -132,7 +133,17 @@ export default function AiDashboard() {
         <AiWorkoutReminderCard
           workout={latestOf(generations, "workout")}
           done={!!today?.workout_done}
-          onDone={() => saveCheckin({ workout_done: true })}
+          doneAt={today?.workout_done ? today.checkin_date : null}
+          onDone={async () => {
+            await saveCheckin({
+              diet_done: today?.diet_done ?? false,
+              water_done: today?.water_done ?? false,
+              workout_done: true,
+            });
+            toast.success(
+              `Treino registrado em ${new Date().toLocaleDateString("pt-BR")} no seu histórico.`,
+            );
+          }}
         />
 
         {/* Constância — compacto */}
