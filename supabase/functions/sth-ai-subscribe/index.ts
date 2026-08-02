@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       .single();
     if (error) throw error;
 
-    const token = Deno.env.get('MP_ACCESS_TOKEN');
+    const token = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN') ?? Deno.env.get('MP_ACCESS_TOKEN');
     if (!token) return json({ error: 'Pagamento indisponível no momento.' }, 500);
 
     const origin = req.headers.get('origin') || 'https://sthmethod.com.br';

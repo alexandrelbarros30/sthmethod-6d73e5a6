@@ -1,5 +1,5 @@
 // STH METHOD AI — motor do app de IA (Cardápio IA, Treino IA, Central de Análise).
-// Aplica a periodização da metodologia STH Method: 1 criação por ciclo + 2 revisões
+// Aplica a periodização da metodologia STH Method: 1 criação por ciclo + 3 revisões
 // (cardápio/treino, 30 dias) e 1 análise completa a cada 60 dias.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -13,7 +13,7 @@ const MODEL = 'openai/gpt-5.6-sol';
 type Kind = 'diet' | 'workout' | 'analysis';
 
 const CYCLE_DAYS: Record<Kind, number> = { diet: 30, workout: 30, analysis: 60 };
-const MAX_REVISIONS: Record<Kind, number> = { diet: 2, workout: 2, analysis: 1 };
+const MAX_REVISIONS: Record<Kind, number> = { diet: 3, workout: 3, analysis: 1 };
 
 const BASE_RULES = `Você é a inteligência oficial do STH METHOD AI.
 Regras invioláveis:
@@ -103,7 +103,7 @@ async function callAi(system: string, user: string | unknown[]) {
   return content as string;
 }
 
-function profileBlock(p: any, measurements: any[]) {
+function profileBlock(p: any, measurements: any[], master?: any) {
   const a = p?.answers ?? {};
   const lines = [
     `Nome: ${p?.full_name ?? '—'}`,
@@ -111,8 +111,8 @@ function profileBlock(p: any, measurements: any[]) {
     `Peso: ${p?.weight_kg ?? '—'} kg | Altura: ${p?.height_cm ?? '—'} cm`,
     `Objetivo: ${p?.goal ?? '—'} | Nível: ${p?.training_level ?? '—'}`,
   ];
-  const comorb = p?.comorbidities ?? a?.comorbidities ?? '';
-  const meds = p?.medications ?? a?.medications ?? '';
+  const comorb = p?.comorbidities ?? a?.comorbidities ?? master?.comorbidities ?? '';
+  const meds = p?.medications ?? a?.medications ?? master?.medications ?? '';
   lines.push(
     '⚠️ DADOS CLÍNICOS SENSÍVEIS (obrigatório considerar em cardápio, treino e análise):',
     `- Comorbidades: ${comorb || 'não informado'}`,
@@ -123,6 +123,39 @@ function profileBlock(p: any, measurements: any[]) {
     .filter(([, v]) => v !== null && v !== '' && v !== undefined)
     .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`);
   if (extras.length) lines.push('Perfil avançado:', ...extras);
+  if (master) {
+    const masterLabels: Record<string, string> = {
+      objective: 'Objetivo declarado no cadastro',
+      physical_activity: 'Atividade física',
+      physical_activity_level: 'Nível de atividade diária (NEAT)',
+      activity_type: 'Tipo de treino',
+      does_cardio: 'Faz cardio',
+      current_protocol: 'Protocolo atual em uso',
+      additional_info: 'Informações adicionais relatadas',
+      training_days_per_week: 'Treinos por semana',
+      training_duration_minutes: 'Duração do treino (min)',
+      training_intensity: 'Intensidade do treino',
+      cardio_days_per_week: 'Cardio por semana',
+      cardio_duration_minutes: 'Duração do cardio (min)',
+      cardio_intensity: 'Intensidade do cardio',
+      daily_calories: 'Meta calórica calculada (kcal)',
+      protein_g: 'Proteína alvo (g)',
+      carbs_g: 'Carboidrato alvo (g)',
+      fat_g: 'Gordura alvo (g)',
+      bmr: 'TMB', tdee: 'GET (TDEE)', gender: 'Sexo', birth_date: 'Data de nascimento',
+    };
+    const masterLines = Object.entries(masterLabels)
+      .map(([k, label]) => [label, (master as any)[k]] as const)
+      .filter(([, v]) => v !== null && v !== undefined && v !== '')
+      .map(([label, v]) => `- ${label}: ${typeof v === 'boolean' ? (v ? 'sim' : 'não') : v}`);
+    if (masterLines.length) {
+      lines.push(
+        'CADASTRO COMPLETO STH METHOD (uso obrigatório — cada campo abaixo, inclusive os de texto livre, deve influenciar as decisões do plano):',
+        ...masterLines,
+      );
+    }
+  }
+  lines.push('REGRA INEGOCIÁVEL: todos os dados do cadastro acima são insumo obrigatório. Nenhum campo preenchido pode ser ignorado na construção do cardápio, do treino ou da análise.');
   if (measurements.length) {
     lines.push('Medidas recentes:');
     for (const m of measurements.slice(0, 6)) {
@@ -199,6 +232,11 @@ Deno.serve(async (req) => {
     // ===== Perfil =====
     const { data: profile } = await supabase.from('ai_app_profiles').select('*').eq('user_id', userId).maybeSingle();
     if (!profile?.phase1_complete) return json({ error: 'profile_required', message: 'Conclua o cadastro essencial primeiro.' }, 400);
+    const { data: master } = await supabase
+      .from('profiles')
+      .select('full_name, objective, physical_activity, physical_activity_level, activity_type, does_cardio, current_protocol, comorbidities, medications, additional_info, training_days_per_week, training_duration_minutes, training_intensity, cardio_days_per_week, cardio_duration_minutes, cardio_intensity, daily_calories, protein_g, carbs_g, fat_g, bmr, tdee, gender, birth_date')
+      .eq('user_id', userId)
+      .maybeSingle();
     const { data: measurements } = await supabase
       .from('ai_app_measurements')
       .select('*')
@@ -244,7 +282,7 @@ Deno.serve(async (req) => {
       if (!instruction) return json({ error: 'instruction_required', message: 'Descreva o que deseja ajustar.' }, 400);
     }
 
-    const context = profileBlock(profile, measurements ?? []);
+    const context = profileBlock(profile, measurements ?? [], master);
     const fbContext = feedbackBlock(feedbacks ?? []);
 
     // ===== Biblioteca oficial de exercícios do ST COACH (somente itens com vídeo) =====

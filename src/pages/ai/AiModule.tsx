@@ -15,6 +15,7 @@ import AiDietBriefing from "@/components/ai/AiDietBriefing";
 import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import AiDietPlan from "@/components/ai/AiDietPlan";
 import AiAnalysisReport from "@/components/ai/AiAnalysisReport";
+import AiRevisionsBanner from "@/components/ai/AiRevisionsBanner";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -47,7 +48,7 @@ export default function AiModule() {
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
   const daysLeft = daysLeftInCycle(current, mod.cycleDays);
-  const maxRevisions = kind === "analysis" ? 1 : 2;
+  const maxRevisions = kind === "analysis" ? 1 : 3;
   const revisionsLeft = unlimited
     ? Infinity
     : current
@@ -140,14 +141,21 @@ export default function AiModule() {
             <Badge variant="secondary">
               {unlimited ? "Ciclo livre" : daysLeft > 0 ? `${daysLeft} dia(s) no ciclo` : "Novo ciclo liberado"}
             </Badge>
-            <Badge variant="outline">
-              {unlimited ? "Revisões ilimitadas" : `${revisionsLeft} revisão(ões) disponível(is)`}
-            </Badge>
           </>
         ) : (
           <Badge variant="outline">Primeira geração</Badge>
         )}
       </div>
+
+      {current && (
+        <AiRevisionsBanner
+          used={current.revisions}
+          max={maxRevisions}
+          cycleStart={current.cycle_start}
+          cycleDays={mod.cycleDays}
+          unlimited={unlimited}
+        />
+      )}
 
       {isGuided ? (
         <>
