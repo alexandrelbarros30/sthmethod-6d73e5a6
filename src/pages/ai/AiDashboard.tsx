@@ -22,6 +22,7 @@ import {
   Footprints,
   Scale,
   BrainCircuit,
+  Camera,
 } from "lucide-react";
 
 const ROUTES: Record<AiKind, string> = {
