@@ -113,7 +113,10 @@ export default function AiModule() {
       <Card className="space-y-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium">Campo livre — conte os detalhes</p>
-          <AiFieldTipsDialog kind={kind} />
+          <div className="flex items-center gap-2">
+            <AiVoiceInput onTranscribe={(t) => setInstruction((v) => appendTranscript(v, t))} />
+            <AiFieldTipsDialog kind={kind} />
+          </div>
         </div>
         <Textarea
           rows={3}
