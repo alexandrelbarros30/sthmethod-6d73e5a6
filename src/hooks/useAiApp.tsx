@@ -51,6 +51,7 @@ export const AI_MODULES: Record<AiKind, { title: string; short: string; cycleDay
 
 export function useAiApp() {
   const { user } = useAuth();
+  const AI_DEMO_EMAILS = ["alexandrelbarros30@gmail.com"];
   const [profile, setProfile] = useState<AiProfile | null>(null);
   const [subscription, setSubscription] = useState<AiSubscription | null>(null);
   const [generations, setGenerations] = useState<AiGeneration[]>([]);
@@ -89,7 +90,9 @@ export function useAiApp() {
     refresh();
   }, [refresh]);
 
-  return { user, profile, subscription, generations, loading, refresh, setProfile };
+  const unlimited = AI_DEMO_EMAILS.includes((user?.email ?? "").toLowerCase());
+
+  return { user, profile, subscription, generations, loading, refresh, setProfile, unlimited };
 }
 
 export function latestOf(generations: AiGeneration[], kind: AiKind) {

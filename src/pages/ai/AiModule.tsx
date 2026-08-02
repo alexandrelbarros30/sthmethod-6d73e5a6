@@ -30,7 +30,7 @@ export default function AiModule() {
   const navigate = useNavigate();
   const kind = SLUG_TO_KIND[slug ?? ""] ?? "diet";
   const mod = AI_MODULES[kind];
-  const { generations, subscription, profile, loading, refresh } = useAiApp();
+  const { generations, subscription, profile, loading, refresh, unlimited } = useAiApp();
   const { items: feedbacks, submit: submitFeedback } = useAiFeedback(kind);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
@@ -43,10 +43,14 @@ export default function AiModule() {
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
   const daysLeft = daysLeftInCycle(current, mod.cycleDays);
   const maxRevisions = kind === "analysis" ? 1 : 2;
-  const revisionsLeft = current ? Math.max(0, maxRevisions - current.revisions) : maxRevisions;
-  const cycleLocked = Boolean(current) && daysLeft > 0;
+  const revisionsLeft = unlimited
+    ? Infinity
+    : current
+      ? Math.max(0, maxRevisions - current.revisions)
+      : maxRevisions;
+  const cycleLocked = !unlimited && Boolean(current) && daysLeft > 0;
   const isGuided = (kind === "workout" || kind === "diet") && Boolean(current);
-  const canRequest = !cycleLocked || revisionsLeft > 0;
+  const canRequest = unlimited || !cycleLocked || revisionsLeft > 0;
 
   const requestForm = (
     <>
@@ -86,7 +90,7 @@ export default function AiModule() {
   );
 
   async function run(mode: "create" | "revise") {
-    if (!subscription) {
+    if (!subscription && !unlimited) {
       navigate("/ai/assinatura");
       return;
     }
@@ -128,8 +132,12 @@ export default function AiModule() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {current ? (
           <>
-            <Badge variant="secondary">{daysLeft > 0 ? `${daysLeft} dia(s) no ciclo` : "Novo ciclo liberado"}</Badge>
-            <Badge variant="outline">{revisionsLeft} revisão(ões) disponível(is)</Badge>
+            <Badge variant="secondary">
+              {unlimited ? "Ciclo livre" : daysLeft > 0 ? `${daysLeft} dia(s) no ciclo` : "Novo ciclo liberado"}
+            </Badge>
+            <Badge variant="outline">
+              {unlimited ? "Revisões ilimitadas" : `${revisionsLeft} revisão(ões) disponível(is)`}
+            </Badge>
           </>
         ) : (
           <Badge variant="outline">Primeira geração</Badge>
