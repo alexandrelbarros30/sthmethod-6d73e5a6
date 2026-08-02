@@ -26,6 +26,12 @@ export interface AiSubscription {
   expires_at: string | null;
 }
 
+const AI_DEMO_EMAILS = new Set(["alexandrelbarros30@gmail.com"]);
+
+function normalizeEmail(email?: string | null) {
+  return (email ?? "").trim().toLowerCase();
+}
+
 export interface AiGeneration {
   id: string;
   kind: AiKind;
@@ -51,7 +57,6 @@ export const AI_MODULES: Record<AiKind, { title: string; short: string; cycleDay
 
 export function useAiApp() {
   const { user } = useAuth();
-  const AI_DEMO_EMAILS = ["alexandrelbarros30@gmail.com"];
   const [profile, setProfile] = useState<AiProfile | null>(null);
   const [subscription, setSubscription] = useState<AiSubscription | null>(null);
   const [generations, setGenerations] = useState<AiGeneration[]>([]);
@@ -90,7 +95,10 @@ export function useAiApp() {
     refresh();
   }, [refresh]);
 
-  const unlimited = AI_DEMO_EMAILS.includes((user?.email ?? "").toLowerCase());
+  // A conta de apresentação tem duas garantias independentes: identidade por
+  // e-mail e assinatura modelo vitalícia. Assim, sessão/cache antigo não volta
+  // a bloquear geração ou revisão na interface.
+  const unlimited = AI_DEMO_EMAILS.has(normalizeEmail(user?.email)) || subscription?.plan === "free";
 
   return { user, profile, subscription, generations, loading, refresh, setProfile, unlimited };
 }
