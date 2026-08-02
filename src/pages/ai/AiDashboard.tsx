@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
 import { useAiProgress } from "@/hooks/useAiProgress";
 import { useAiOffer, useAiInsight } from "@/hooks/useAiGrowth";
-import { useAiHealth } from "@/hooks/useAiHealth";
 import AiOfferCard from "@/components/ai/AiOfferCard";
 import AiHydrationCard from "@/components/ai/AiHydrationCard";
 import AiNextMealCard from "@/components/ai/AiNextMealCard";
@@ -56,21 +55,6 @@ const Ring = ({ pct, size = 104, stroke = 9 }: { pct: number; size?: number; str
         className="transition-all duration-700 ease-out"
       />
     </svg>
-  );
-};
-
-const Spark = ({ values }: { values: number[] }) => {
-  const max = Math.max(1, ...values);
-  return (
-    <div className="flex h-8 items-end gap-1" aria-hidden>
-      {values.map((v, i) => (
-        <span
-          key={i}
-          className="flex-1 rounded-full bg-primary/25 transition-all duration-500 group-hover:bg-primary/40"
-          style={{ height: `${Math.max(12, (v / max) * 100)}%` }}
-        />
-      ))}
-    </div>
   );
 };
 
@@ -218,7 +202,7 @@ export default function AiDashboard() {
         </Link>
 
         {/* Leitura STHIA */}
-        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-6`}>
+        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-4`}>
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               <BrainCircuit className="h-3.5 w-3.5" /> Leitura preditiva
