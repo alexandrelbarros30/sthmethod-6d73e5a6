@@ -151,15 +151,15 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
   // mobile devolve o arquivo vazio ou perde o state ao voltar da câmera nativa.
   const [camOpen, setCamOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const camStreamRef = useRef<MediaStream | null>(null);
 
   function stopCamera() {
-    try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
-    streamRef.current = null;
+    try { camStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
+    camStreamRef.current = null;
     setCamOpen(false);
   }
 
-  useEffect(() => () => { try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ } }, []);
+  useEffect(() => () => { try { camStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ } }, []);
 
   async function openCamera() {
     if (!navigator.mediaDevices?.getUserMedia) { cameraInputRef.current?.click(); return; }
@@ -168,7 +168,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
         video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 } },
         audio: false,
       });
-      streamRef.current = stream;
+      camStreamRef.current = stream;
       setCamOpen(true);
       setTimeout(() => {
         const v = videoRef.current;
