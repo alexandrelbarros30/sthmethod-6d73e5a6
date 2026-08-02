@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { focusField } from "@/lib/field-focus";
 import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
 import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown, Camera, CreditCard, ShieldCheck } from "lucide-react";
 
@@ -242,6 +243,7 @@ export default function AiProfile() {
         items={dietChecklist}
         editHref="#"
         hideEdit
+        onSelect={(i) => { if (i.where === "briefing") { navigate(`/ai/app/treino?solicitar=1&campo=${i.key}&next=${encodeURIComponent("/ai/app/perfil")}`); return; } setShowFicha(true); focusField(`f-${i.key}`); }}
         title="Checklist do briefing · Cardápio"
       />
       <AiBriefingChecklist
@@ -250,6 +252,7 @@ export default function AiProfile() {
         items={workoutChecklist}
         editHref="#"
         hideEdit
+        onSelect={(i) => { if (i.where === "briefing") { navigate(`/ai/app/treino?solicitar=1&campo=${i.key}&next=${encodeURIComponent("/ai/app/perfil")}`); return; } setShowFicha(true); focusField(`f-${i.key}`); }}
         title="Checklist do briefing · Treino"
       />
 
@@ -257,16 +260,16 @@ export default function AiProfile() {
       <>
       <Card className="space-y-4 p-5">
         <h2 className="text-base font-semibold tracking-tight">Dados essenciais</h2>
-        <div className="space-y-1.5">
+        <div id="f-full_name" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Nome completo</Label>
           <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div id="f-age" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Idade</Label>
             <Input inputMode="numeric" value={form.age} onChange={(e) => set("age", e.target.value)} />
           </div>
-          <div className="space-y-1.5">
+          <div id="f-sex" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Sexo</Label>
             <Select value={form.sex} onValueChange={(v) => set("sex", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -276,17 +279,17 @@ export default function AiProfile() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
+          <div id="f-weight_kg" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Peso (kg)</Label>
             <Input inputMode="decimal" value={form.weight_kg} onChange={(e) => set("weight_kg", e.target.value)} />
           </div>
-          <div className="space-y-1.5">
+          <div id="f-height_cm" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Altura (cm)</Label>
             <Input inputMode="numeric" value={form.height_cm} onChange={(e) => set("height_cm", e.target.value)} />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div id="f-goal" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Objetivo</Label>
             <Select value={form.goal} onValueChange={(v) => set("goal", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -299,7 +302,7 @@ export default function AiProfile() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
+          <div id="f-training_level" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Nível de treino</Label>
             <Select value={form.training_level} onValueChange={(v) => set("training_level", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -315,37 +318,37 @@ export default function AiProfile() {
 
       <Card className="mt-5 space-y-4 p-5">
         <h2 className="text-base font-semibold tracking-tight">Perfil avançado</h2>
-        <div className="space-y-1.5">
+        <div id="f-routine" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Rotina do dia a dia</Label>
           <Textarea rows={2} value={form.routine} onChange={(e) => set("routine", e.target.value)} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div id="f-meals_per_day" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Refeições por dia</Label>
             <Input inputMode="numeric" value={form.meals_per_day} onChange={(e) => set("meals_per_day", e.target.value)} />
           </div>
-          <div className="space-y-1.5">
+          <div id="f-training_days" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Dias de treino por semana</Label>
             <Input inputMode="numeric" value={form.training_days} onChange={(e) => set("training_days", e.target.value)} />
           </div>
         </div>
-        <div className="space-y-1.5">
+        <div id="f-restrictions" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Restrições alimentares / alergias</Label>
           <Input value={form.restrictions} onChange={(e) => set("restrictions", e.target.value)} />
         </div>
-        <div className="space-y-1.5">
+        <div id="f-comorbidities" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Comorbidades (doenças/condições de saúde)</Label>
           <Textarea rows={2} value={form.comorbidities} onChange={(e) => set("comorbidities", e.target.value)} placeholder="Ex.: diabetes, hipertensão, hipotireoidismo. Se não houver, escreva 'Nenhuma'" />
         </div>
-        <div className="space-y-1.5">
+        <div id="f-medications" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Medicamentos em uso</Label>
           <Textarea rows={2} value={form.medications} onChange={(e) => set("medications", e.target.value)} placeholder="Ex.: Metformina 850mg 2x/dia, Losartana 50mg/dia. Se não usa, escreva 'Nenhum'" />
         </div>
-        <div className="space-y-1.5">
+        <div id="f-dislikes" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Alimentos que você não gosta</Label>
           <Input value={form.dislikes} onChange={(e) => set("dislikes", e.target.value)} />
         </div>
-        <div className="space-y-1.5">
+        <div id="f-budget" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Orçamento para alimentação</Label>
           <Select value={form.budget} onValueChange={(v) => set("budget", v)}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -356,20 +359,20 @@ export default function AiProfile() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        <div id="f-equipment" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Equipamentos disponíveis</Label>
           <Input value={form.equipment} onChange={(e) => set("equipment", e.target.value)} />
         </div>
-        <div className="space-y-1.5">
+        <div id="f-limitations" className="space-y-1.5 scroll-mt-24 p-1">
           <Label>Limitações físicas / lesões</Label>
           <Input value={form.limitations} onChange={(e) => set("limitations", e.target.value)} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div id="f-sleep" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Horas de sono</Label>
             <Input inputMode="numeric" value={form.sleep} onChange={(e) => set("sleep", e.target.value)} />
           </div>
-          <div className="space-y-1.5">
+          <div id="f-stress" className="space-y-1.5 scroll-mt-24 p-1">
             <Label>Nível de estresse</Label>
             <Select value={form.stress} onValueChange={(v) => set("stress", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
