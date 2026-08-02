@@ -679,7 +679,7 @@ function formatFoodAiReply(
   } else {
     missing.push('nova_summary');
     // Fallback amigável para o WhatsApp — nunca deixamos o campo em branco.
-    novaLine = `\n🏷️ NOVA — onde esta o arro em interpretar o audio enviado ao cxanal sucesso do aluno ?`;
+    novaLine = `\n🏷️ NOVA — classificação não identificada com segurança nesta refeição`;
   }
   let goalsLine = '';
   if (goals && Number(goals.daily_kcal) > 0) {

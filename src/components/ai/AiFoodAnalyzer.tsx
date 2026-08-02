@@ -353,26 +353,85 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
       </Button>
 
       {result && (
+        (() => {
+          const t = (result as any).totals || {};
+          const num = (v: any) => Number(v) || 0;
+          const kcal = num((result as any).total_calories ?? t.calories);
+          const prot = num((result as any).total_protein_g ?? t.protein_g);
+          const carb = num((result as any).total_carbs_g ?? t.carbs_g);
+          const fat = num((result as any).total_fat_g ?? t.fat_g);
+          const fiber = num((result as any).total_fiber_g ?? t.fiber_g);
+          const sodium = num((result as any).total_sodium_mg ?? t.sodium_mg);
+          const score = Math.round(num((result as any).sthia_score) || num(result.quality_score) * 10);
+          const scoreLabel = String((result as any).sthia_score_label || result.classification || "");
+          const novaMap: Record<number, string> = {
+            1: "NOVA 1 — in natura",
+            2: "NOVA 2 — ingrediente culinário",
+            3: "NOVA 3 — processado",
+            4: "NOVA 4 — ultraprocessado",
+          };
+          const nova = novaMap[Number((result as any).nova_summary)] || null;
+          const alerts: string[] = Array.isArray(result.alerts) ? result.alerts : [];
+          return (
         <div className="space-y-3 rounded-2xl border border-border p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{Math.round(Number(result.total_calories || 0))} kcal</Badge>
-            <Badge variant="outline">P {Math.round(Number(result.total_protein_g || 0))}g</Badge>
-            <Badge variant="outline">C {Math.round(Number(result.total_carbs_g || 0))}g</Badge>
-            <Badge variant="outline">G {Math.round(Number(result.total_fat_g || 0))}g</Badge>
+            <Badge variant="secondary">{Math.round(kcal)} kcal</Badge>
+            <Badge variant="outline">P {prot.toFixed(1)}g</Badge>
+            <Badge variant="outline">C {carb.toFixed(1)}g</Badge>
+            <Badge variant="outline">G {fat.toFixed(1)}g</Badge>
+            {fiber > 0 && <Badge variant="outline">Fibra {fiber.toFixed(1)}g</Badge>}
+            {sodium > 0 && <Badge variant="outline">Sódio {Math.round(sodium)}mg</Badge>}
             {result.classification && <Badge>{String(result.classification)}</Badge>}
           </div>
+
           {Array.isArray(result.foods) && (
-            <ul className="space-y-1 text-sm">
+            <ul className="space-y-2 text-sm">
               {result.foods.map((f: any, i: number) => (
-                <li key={i} className="flex justify-between gap-3">
-                  <span>{f.name}</span>
-                  <span className="text-muted-foreground">
-                    {Math.round(Number(f.estimated_weight_g || 0))}{f.unit === "ml" ? "ml" : "g"} · {Math.round(Number(f.calories || 0))} kcal
-                  </span>
+                <li key={i} className="rounded-xl bg-muted/40 px-3 py-2">
+                  <div className="flex justify-between gap-3">
+                    <span className="font-medium">{f.name}</span>
+                    <span className="text-muted-foreground">
+                      {Math.round(num(f.estimated_weight_g))}{f.unit === "ml" ? "ml" : "g"} · {Math.round(num(f.calories))} kcal
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted-foreground">
+                    P {num(f.protein_g).toFixed(1)}g · C {num(f.carbs_g).toFixed(1)}g · G {num(f.fat_g).toFixed(1)}g
+                    {num(f.fiber_g) > 0 && ` · Fibra ${num(f.fiber_g).toFixed(1)}g`}
+                    {num(f.sodium_mg) > 0 && ` · Sódio ${Math.round(num(f.sodium_mg))}mg`}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {score > 0 && (
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary">
+                📈 Score STHIA: {scoreLabel} ({score}/100)
+              </span>
+            )}
+            {nova && <span className="rounded-full bg-muted px-2.5 py-1 font-medium">🏷️ {nova}</span>}
+          </div>
+
+          {alerts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {alerts.slice(0, 6).map((a, i) => (
+                <Badge key={i} variant="outline" className="text-[10px]">⚠️ {a.replace(/_/g, " ")}</Badge>
+              ))}
+            </div>
+          )}
+
+          {(result as any).needs_second_evidence && (result as any).second_evidence_reason && (
+            <p className="rounded-xl bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+              📷 {(result as any).second_evidence_reason}
+            </p>
+          )}
+
+          {result.notes && <p className="text-xs text-muted-foreground">{String(result.notes)}</p>}
+
+          <p className="text-xs font-medium">
+            ⚡ Resumo: {Math.round(kcal)} kcal · {prot.toFixed(1)} g proteína{fiber > 0 ? ` · ${fiber.toFixed(1)} g fibra` : ""}
+          </p>
           {Array.isArray(result.suggestions) && result.suggestions.length > 0 && (
             <div className="rounded-xl bg-muted/50 p-3">
               <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Sugestões STHIA</p>
@@ -393,6 +452,8 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
             Estimativa por IA — confira antes de usar. Não substitui orientação profissional.
           </p>
         </div>
+          );
+        })()
       )}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
