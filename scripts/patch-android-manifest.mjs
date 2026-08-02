@@ -11,6 +11,7 @@ if (!fs.existsSync(file)) {
 let xml = fs.readFileSync(file, 'utf8');
 
 const PERMISSIONS = [
+  'android.permission.CAMERA',
   'android.permission.health.READ_STEPS',
   'android.permission.health.READ_ACTIVE_CALORIES_BURNED',
   'android.permission.health.READ_TOTAL_CALORIES_BURNED',

@@ -11,8 +11,32 @@ import { toast } from "sonner";
 import { MEAL_TYPES } from "@/lib/food-diary-storage";
 import { cn } from "@/lib/utils";
 import { Camera, Check, Image as ImageIcon, Loader2, Mic, Sparkles, Square, Tag, Utensils } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Camera as NativeCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 
 type Mode = "photo" | "label" | "text" | "audio";
+
+const isNative = () => {
+  try { return Capacitor.isNativePlatform(); } catch { return false; }
+};
+
+// No APK o <input type="file" capture> abre a câmera do sistema, mas o
+// Android pode destruir a Activity do WebView e o onChange nunca dispara —
+// a foto some sem erro. O plugin nativo devolve o base64 direto.
+async function nativeCapture(source: CameraSource): Promise<string | null> {
+  const shot = await NativeCamera.getPhoto({
+    quality: 80,
+    allowEditing: false,
+    resultType: CameraResultType.Base64,
+    source,
+    width: 1400,
+    correctOrientation: true,
+  });
+  if (!shot?.base64String) return null;
+  const fmt = (shot.format || "jpeg").toLowerCase();
+  const mime = fmt === "png" ? "image/png" : fmt === "webp" ? "image/webp" : "image/jpeg";
+  return `data:${mime};base64,${shot.base64String}`;
+}
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const DRAFT_KEY = "sth_food_ai_photo_draft";
@@ -238,10 +262,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
     try {
       const dataUrl = await compressImage(file);
       if (!dataUrl || dataUrl.length < 1000) throw new Error("empty_image");
-      setImgPreview(dataUrl);
-      setImgB64(dataUrl.split(",")[1] || "");
-      setResult(null);
-      try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ mode, dataUrl, at: Date.now() })); } catch { /* noop */ }
+      applyImage(dataUrl);
     } catch (e) {
       setImgB64(null);
       setImgPreview(null);
@@ -249,6 +270,38 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
       const msg = code === "unsupported_image"
         ? "Formato de imagem não suportado. Tente escolher a foto pela galeria (JPG ou PNG)."
         : "Não foi possível preparar a foto neste aparelho. Tente novamente pela galeria.";
+      setErrMsg(msg);
+      toast.error(msg);
+    } finally {
+      setPreparing(false);
+    }
+  }
+
+  function applyImage(dataUrl: string) {
+    setImgPreview(dataUrl);
+    setImgB64(dataUrl.split(",")[1] || "");
+    setResult(null);
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ mode, dataUrl, at: Date.now() })); } catch { /* noop */ }
+  }
+
+  // Câmera/galeria: usa o plugin nativo no APK e o <input file> no navegador.
+  async function pickImage(from: "camera" | "gallery") {
+    setErrMsg(null);
+    if (!isNative()) {
+      (from === "camera" ? cameraInputRef : galleryInputRef).current?.click();
+      return;
+    }
+    setPreparing(true);
+    try {
+      const dataUrl = await nativeCapture(from === "camera" ? CameraSource.Camera : CameraSource.Photos);
+      if (!dataUrl) throw new Error("empty_image");
+      applyImage(dataUrl);
+    } catch (e) {
+      const raw = String((e as Error)?.message || "");
+      if (/cancel/i.test(raw)) return;
+      const msg = /permission|denied/i.test(raw)
+        ? "Permissão de câmera negada. Libere o acesso nas configurações do app."
+        : "Não foi possível capturar a foto. Tente pela galeria.";
       setErrMsg(msg);
       toast.error(msg);
     } finally {
@@ -461,10 +514,10 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
             )}
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => cameraInputRef.current?.click()}>
+            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => pickImage("camera")}>
               <Camera className="mr-2 h-4 w-4" /> Câmera
             </Button>
-            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => galleryInputRef.current?.click()}>
+            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => pickImage("gallery")}>
               <ImageIcon className="mr-2 h-4 w-4" /> Galeria
             </Button>
           </div>
