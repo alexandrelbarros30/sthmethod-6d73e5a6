@@ -313,7 +313,84 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
         )}
       </Card>
 
-      {!compact && (
+      {!compact && collapsible && (
+        <>
+          <AiEditSection
+            icon={<Target className="h-4 w-4" />}
+            title="Metas e macros"
+            description="Objetivo, kcal, refeições e macronutrientes"
+            pending={[objective, kcal, meals, protein, carbs, fat].filter((v) => !String(v).trim()).length}
+            onSave={saveGroup}
+          >
+            <div className="space-y-1.5">
+              <Label className="text-xs">Objetivo</Label>
+              <Select value={objective} onValueChange={setObjective}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(objectiveLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Kcal alvo</Label>
+                <Input inputMode="numeric" value={kcal} onChange={(e) => setKcal(e.target.value)} placeholder="2500" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nº refeições</Label>
+                <Input inputMode="numeric" value={meals} onChange={(e) => setMeals(e.target.value)} placeholder="5" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Proteína (g)</Label>
+                <Input inputMode="numeric" value={protein} onChange={(e) => setProtein(e.target.value)} placeholder="180" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Carbo (g)</Label>
+                <Input inputMode="numeric" value={carbs} onChange={(e) => setCarbs(e.target.value)} placeholder="300" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Lipídio (g)</Label>
+                <Input inputMode="numeric" value={fat} onChange={(e) => setFat(e.target.value)} placeholder="70" />
+              </div>
+            </div>
+          </AiEditSection>
+
+          <AiEditSection
+            icon={<Salad className="h-4 w-4" />}
+            title="Restrições e preferências"
+            description="O que evitar e o que você gosta de comer"
+            pending={[restrictions, preferences].filter((v) => !v.trim()).length}
+            onSave={saveGroup}
+          >
+            <div className="space-y-1.5">
+              <Label className="text-xs">Restrições</Label>
+              <Input
+                value={restrictions}
+                onChange={(e) => setRestrictions(e.target.value)}
+                placeholder="Sem lactose, sem glúten..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Preferências</Label>
+              <Input
+                value={preferences}
+                onChange={(e) => setPreferences(e.target.value)}
+                placeholder="Gosta de tapioca, salmão, ovos..."
+              />
+            </div>
+            <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                O cardápio é exclusivamente alimentar. Protocolos registrados na STH METHOD não são utilizados aqui.
+              </p>
+            </div>
+          </AiEditSection>
+        </>
+      )}
+
+      {!compact && !collapsible && (
       <Card className="p-5">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
