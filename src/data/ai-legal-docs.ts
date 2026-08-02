@@ -805,6 +805,131 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "politica-planos-pagamentos-cancelamentos-reembolsos",
+    title: "Política de Planos, Pagamentos, Cancelamentos e Reembolsos",
+    subtitle: "Condições comerciais dos planos STH AI",
+    code: "STHAI-PAG-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Objetivo",
+        paragraphs: [
+          "Esta Política estabelece as regras comerciais relacionadas aos planos, pagamentos, cancelamentos, renovação e possíveis reembolsos dos serviços digitais oferecidos pela STH AI.",
+          "O objetivo é garantir transparência na relação entre a plataforma e seus usuários.",
+        ],
+      },
+      {
+        title: "2. Planos Disponíveis",
+        paragraphs: ["A STH AI poderá disponibilizar planos com diferentes períodos de acesso:"],
+        bullets: [
+          "Plano 30 dias;",
+          "Plano 90 dias;",
+          "Plano 180 dias;",
+          "Plano 365 dias.",
+        ],
+      },
+      {
+        title: "3. Ativação do Plano",
+        paragraphs: [
+          "O acesso aos recursos pagos será liberado após confirmação do pagamento, validação da transação financeira e aceite dos documentos obrigatórios da plataforma.",
+          "Após a ativação, o usuário poderá utilizar os recursos correspondentes ao plano contratado.",
+        ],
+      },
+      {
+        title: "4. Recursos Incluídos",
+        paragraphs: ["Durante a vigência da assinatura, o usuário terá acesso aos recursos disponibilizados conforme o plano contratado, incluindo:"],
+        bullets: [
+          "geração de planejamento personalizado;",
+          "geração de treino;",
+          "geração de cardápio;",
+          "análises disponíveis;",
+          "STH Food AI com uso livre;",
+          "análise de evolução corporal por imagens com uso livre;",
+          "diário alimentar;",
+          "histórico de acompanhamento.",
+        ],
+      },
+      {
+        title: "5. Pagamento",
+        paragraphs: [
+          "O pagamento poderá ser realizado através dos meios disponibilizados pela STH AI no momento da contratação.",
+          "O usuário é responsável por informar dados corretos de pagamento, garantir disponibilidade financeira e acompanhar confirmações de pagamento.",
+        ],
+      },
+      {
+        title: "6. Início da Vigência",
+        paragraphs: [
+          "A vigência do plano inicia-se após a confirmação do pagamento.",
+          "O período contratado será contado a partir da ativação do acesso.",
+        ],
+      },
+      {
+        title: "7. Renovação",
+        paragraphs: [
+          "A renovação do acesso poderá ocorrer conforme as condições apresentadas no momento da contratação.",
+          "O usuário será informado sobre condições de renovação quando aplicável.",
+        ],
+      },
+      {
+        title: "8. Cancelamento",
+        paragraphs: [
+          "O usuário poderá solicitar o cancelamento conforme os canais oficiais disponibilizados pela STH AI.",
+          "O cancelamento interrompe futuras cobranças ou renovações, quando aplicável.",
+          "O encerramento do acesso seguirá as condições previstas no plano contratado e na legislação vigente.",
+        ],
+      },
+      {
+        title: "9. Direito de Arrependimento",
+        paragraphs: [
+          "Quando aplicável, serão observadas as regras previstas no Código de Defesa do Consumidor relacionadas a contratações realizadas por meios digitais.",
+          "O tratamento de solicitações considerará data da contratação, início da utilização dos serviços e disponibilização das funcionalidades contratadas.",
+        ],
+      },
+      {
+        title: "10. Reembolsos",
+        paragraphs: ["Solicitações de reembolso serão analisadas conforme:"],
+        bullets: [
+          "legislação aplicável;",
+          "condições do plano contratado;",
+          "utilização dos recursos disponibilizados;",
+          "histórico de acesso.",
+        ],
+      },
+      {
+        title: "11. Planos Promocionais",
+        paragraphs: [
+          "Condições promocionais poderão possuir regras específicas relacionadas a prazo, valores, benefícios e elegibilidade.",
+          "As regras da promoção serão informadas no momento da contratação.",
+        ],
+      },
+      {
+        title: "12. Suspensão de Acesso",
+        paragraphs: [
+          "A STH AI poderá suspender ou limitar o acesso em casos de uso indevido da plataforma, tentativa de fraude, compartilhamento de conta, violação dos Termos de Uso ou práticas que comprometam a segurança do sistema.",
+        ],
+      },
+      {
+        title: "13. Alteração de Planos",
+        paragraphs: [
+          "A STH AI poderá disponibilizar novos planos, alterar características comerciais ou criar novos formatos de assinatura, respeitando contratos já ativos.",
+        ],
+      },
+      {
+        title: "14. Transparência",
+        paragraphs: [
+          "O usuário terá acesso às informações do plano contratado, incluindo período de vigência, recursos disponíveis, histórico de pagamento e situação da assinatura.",
+        ],
+      },
+      {
+        title: "15. Vigência",
+        paragraphs: [
+          "Esta Política entra em vigor na data de sua publicação e integra os documentos oficiais da STH AI.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
