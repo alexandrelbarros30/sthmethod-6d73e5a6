@@ -930,6 +930,107 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "politica-de-cookies",
+    title: "Política de Cookies",
+    subtitle: "Uso de cookies e tecnologias semelhantes na plataforma STH AI",
+    code: "STHAI-COOK-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Objetivo",
+        paragraphs: [
+          "Esta Política de Cookies tem como objetivo informar aos usuários da STH AI como são utilizados cookies e tecnologias semelhantes durante o acesso à plataforma.",
+          "A finalidade é garantir transparência sobre a coleta de informações técnicas utilizadas para funcionamento, segurança e melhoria da experiência do usuário.",
+        ],
+      },
+      {
+        title: "2. O que são Cookies",
+        paragraphs: [
+          "Cookies são pequenos arquivos de informação armazenados no dispositivo do usuário quando ele acessa uma plataforma digital.",
+          "Eles permitem que o sistema reconheça determinadas informações, facilitando o funcionamento dos serviços e proporcionando uma experiência mais personalizada.",
+        ],
+      },
+      {
+        title: "3. Utilização de Cookies pela STH AI",
+        paragraphs: ["A STH AI poderá utilizar cookies e tecnologias semelhantes para:"],
+        bullets: [
+          "manter o usuário conectado;",
+          "garantir segurança de acesso;",
+          "lembrar preferências;",
+          "melhorar desempenho da plataforma;",
+          "analisar utilização dos recursos;",
+          "identificar falhas técnicas;",
+          "aperfeiçoar funcionalidades.",
+        ],
+      },
+      {
+        title: "4. Categorias de Cookies Utilizados",
+        paragraphs: [],
+      },
+      {
+        title: "4.1 Cookies Essenciais",
+        paragraphs: [
+          "São necessários para o funcionamento básico da plataforma.",
+          "Podem ser utilizados para autenticação de usuário, manutenção da sessão, segurança da conta e funcionamento de áreas restritas.",
+          "Sem esses cookies, algumas funcionalidades podem não funcionar corretamente.",
+        ],
+      },
+      {
+        title: "4.2 Cookies de Preferência",
+        paragraphs: [
+          "Permitem que a plataforma memorize escolhas realizadas pelo usuário, como configurações, preferências de utilização e personalizações da experiência.",
+        ],
+      },
+      {
+        title: "4.3 Cookies de Desempenho",
+        paragraphs: [
+          "Auxiliam a STH AI a compreender como os usuários utilizam a plataforma.",
+          "Podem ajudar na identificação de páginas mais acessadas, dificuldades de navegação, erros técnicos e melhorias necessárias.",
+        ],
+      },
+      {
+        title: "4.4 Cookies de Segurança",
+        paragraphs: [
+          "São utilizados para proteger a plataforma contra acessos indevidos, tentativas de fraude e atividades suspeitas.",
+        ],
+      },
+      {
+        title: "5. Cookies de Terceiros",
+        paragraphs: [
+          "A STH AI poderá utilizar serviços tecnológicos de terceiros necessários para hospedagem, pagamentos, análise de desempenho, segurança e funcionamento de integrações.",
+          "Esses fornecedores poderão utilizar tecnologias semelhantes conforme suas próprias políticas de privacidade.",
+        ],
+      },
+      {
+        title: "6. Controle pelo Usuário",
+        paragraphs: [
+          "O usuário poderá gerenciar ou bloquear cookies através das configurações do navegador ou dispositivo utilizado.",
+          "Entretanto, a desativação de determinados cookies poderá afetar login, segurança, funcionamento de recursos e experiência dentro da plataforma.",
+        ],
+      },
+      {
+        title: "7. Cookies e Dados Pessoais",
+        paragraphs: [
+          "Quando cookies estiverem associados a informações capazes de identificar o usuário, seu tratamento seguirá as regras estabelecidas na Política de Privacidade da STH AI e na legislação aplicável de proteção de dados.",
+        ],
+      },
+      {
+        title: "8. Atualizações",
+        paragraphs: [
+          "Esta Política poderá ser atualizada para refletir mudanças tecnológicas, novas funcionalidades, alterações legais e melhorias de transparência.",
+          "Quando necessário, a STH AI poderá solicitar novo consentimento do usuário.",
+        ],
+      },
+      {
+        title: "9. Vigência",
+        paragraphs: [
+          "Esta Política entra em vigor na data de sua publicação e permanece válida enquanto estiver disponível na plataforma STH AI.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
