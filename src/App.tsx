@@ -210,6 +210,7 @@ const AiFood = lazyWithRetry(() => import("./pages/ai/AiFood"));
 const AiProfile = lazyWithRetry(() => import("./pages/ai/AiProfile"));
 const AiLeituraVisual = lazyWithRetry(() => import("./pages/ai/AiLeituraVisual"));
 const AiBodyImages = lazyWithRetry(() => import("./pages/ai/AiBodyImages"));
+const AiSobre = lazyWithRetry(() => import("./pages/ai/AiSobre"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 

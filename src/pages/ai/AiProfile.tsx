@@ -23,7 +23,7 @@ const HUB = [
   { to: "/ai/app/imagens", label: "Imagens corporais", desc: "Fotos para comparação", icon: Camera },
   { to: "/ai/app/coaches", label: "Coaches", desc: "Acompanhamento humano", icon: UserRound },
   { to: "/ai/assinatura", label: "Assinatura", desc: "Planos e renovação", icon: CreditCard },
-  { to: "/sobre", label: "Sobre", desc: "Versão e novidades", icon: Info },
+  { to: "/ai/sobre", label: "Sobre", desc: "Versão e novidades do STH AI", icon: Info },
 ];
 
 interface Form {
