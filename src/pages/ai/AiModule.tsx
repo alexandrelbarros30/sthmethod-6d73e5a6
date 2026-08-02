@@ -121,7 +121,7 @@ export default function AiModule() {
     </>
   );
 
-  async function run(mode: "create" | "revise") {
+  async function run(mode: "create" | "revise", force = false) {
     if (!subscription && !unlimited) {
       navigate("/ai/assinatura");
       return;
@@ -134,6 +134,11 @@ export default function AiModule() {
       toast.error(`Checklist incompleto: faltam ${checklistMissing.length} campo(s) do briefing.`);
       return;
     }
+    if (!force && detail.score < 60) {
+      setLowDetailMode(mode);
+      return;
+    }
+    setLowDetailMode(null);
     setBusy(true);
     const fullInstruction = [kind === "workout" ? workoutBrief : kind === "diet" ? dietBrief : "", instruction.trim()]
       .filter(Boolean)
