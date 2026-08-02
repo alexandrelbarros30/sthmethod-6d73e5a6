@@ -311,8 +311,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
         </AiEditSection>
       )}
 
-      {!standalone && !collapsible && (
-      {collapsible ? (
+      {collapsible && (
         <>
           {GROUPS.map((g) => {
             const fields = visible.filter((f) => g.keys.includes(f.key));
@@ -362,7 +361,9 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
             );
           })}
         </>
-      ) : (
+      )}
+
+      {!standalone && !collapsible && (
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -396,6 +397,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
       </Card>
       )}
 
+      {!collapsible && (
       <Card className="p-5">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
