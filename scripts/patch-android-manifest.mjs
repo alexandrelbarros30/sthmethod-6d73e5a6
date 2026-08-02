@@ -1,6 +1,6 @@
 // Injeta as permissões e activities do Google Health Connect no AndroidManifest.xml
-// gerado pelo Capacitor e ajusta o minSdk do projeto. Rodado no CI logo após
-// `npx cap add android`.
+// gerado pelo Capacitor e ajusta o minSdk do projeto. Rodado no CI depois de
+// `npx cap sync android` para que nenhuma etapa posterior restaure a API 24.
 import fs from 'node:fs';
 
 // O plugin capacitor-health exige minSdk 26. O template do Capacitor usa 24, o
@@ -28,6 +28,30 @@ if (!new RegExp(`minSdkVersion\\s*(?:=\\s*|\\s+)${MIN_SDK}\\b`).test(verifiedGra
   throw new Error(`Falha ao configurar minSdkVersion = ${MIN_SDK}.`);
 }
 console.log(`variables.gradle verificado: minSdkVersion = ${MIN_SDK}`);
+
+// Defesa adicional: o app gerado pelo Capacitor normalmente referencia
+// rootProject.ext.minSdkVersion, mas fixamos também o defaultConfig. Assim o
+// build não volta à API 24 mesmo se o template ou algum plugin mudar a origem
+// dessa variável.
+const appGradleFile = 'android/app/build.gradle';
+if (!fs.existsSync(appGradleFile)) {
+  throw new Error('android/app/build.gradle não encontrado; a plataforma Android não foi gerada.');
+}
+
+let appGradle = fs.readFileSync(appGradleFile, 'utf8');
+const minSdkDeclaration = /(minSdk(?:Version)?\s+)(?:rootProject\.ext\.minSdkVersion|project\.[\w.]+|\d+)/;
+if (minSdkDeclaration.test(appGradle)) {
+  appGradle = appGradle.replace(minSdkDeclaration, `$1${MIN_SDK}`);
+} else {
+  appGradle = appGradle.replace(/defaultConfig\s*\{/, `defaultConfig {\n        minSdkVersion ${MIN_SDK}`);
+}
+fs.writeFileSync(appGradleFile, appGradle);
+
+const verifiedAppGradle = fs.readFileSync(appGradleFile, 'utf8');
+if (!new RegExp(`minSdk(?:Version)?\\s+${MIN_SDK}\\b`).test(verifiedAppGradle)) {
+  throw new Error(`Falha ao fixar minSdkVersion ${MIN_SDK} em android/app/build.gradle.`);
+}
+console.log(`app/build.gradle verificado: minSdkVersion = ${MIN_SDK}`);
 
 const file = 'android/app/src/main/AndroidManifest.xml';
 if (!fs.existsSync(file)) {
