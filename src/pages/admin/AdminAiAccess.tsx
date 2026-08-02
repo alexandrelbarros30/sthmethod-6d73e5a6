@@ -134,10 +134,61 @@ export default function AdminAiAccess() {
           <CardHeader>
             <CardTitle className="text-base">Assinaturas do app AI</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
+          <CardContent className="px-3 sm:px-6">
             {isLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" /></div>
             ) : (
+              <>
+              {/* Mobile: lista em cards legíveis */}
+              <div className="space-y-3 md:hidden">
+                {(data ?? []).map((r) => (
+                  <div key={r.id} className="rounded-xl border bg-card p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{r.full_name ?? "—"}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {r.email ?? r.user_id.slice(0, 8)}
+                        </p>
+                      </div>
+                      <Badge variant={r.status === "active" ? "default" : "secondary"} className="shrink-0">
+                        {r.status}
+                      </Badge>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                      <div>
+                        <dt className="text-muted-foreground">Plano</dt>
+                        <dd className="capitalize font-medium">{r.plan}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Origem</dt>
+                        <dd className="font-medium break-words">{r.provider}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Expira</dt>
+                        <dd className="font-medium">{fmt(r.expires_at)}</dd>
+                      </div>
+                    </dl>
+                    {r.status === "active" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-3 w-full"
+                        onClick={() => revoke.mutate(r.id)}
+                      >
+                        <Ban className="mr-1 h-4 w-4" /> Revogar acesso
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {!data?.length && (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    Nenhuma assinatura registrada.
+                  </p>
+                )}
+              </div>
+
+              {/* Desktop: tabela */}
+              <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -180,6 +231,8 @@ export default function AdminAiAccess() {
                   )}
                 </TableBody>
               </Table>
+              </div>
+              </>
             )}
           </CardContent>
         </Card>
