@@ -34,8 +34,24 @@ export default {
           "-apple-system", "BlinkMacSystemFont", "Inter",
           "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
         ],
+        urbanist: [
+          "Urbanist",
+          "-apple-system", "BlinkMacSystemFont", "Inter",
+          "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+        ],
+        epilogue: [
+          "Epilogue",
+          "-apple-system", "BlinkMacSystemFont", "Inter",
+          "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+        ],
       },
       colors: {
+        ocean: {
+          deep: "hsl(var(--ocean-deep, 211 48% 15%))",
+          mid: "hsl(var(--ocean-mid, 205 61% 27%))",
+          teal: "hsl(var(--ocean-teal, 191 56% 40%))",
+          mint: "hsl(var(--ocean-mint, 177 41% 55%))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
