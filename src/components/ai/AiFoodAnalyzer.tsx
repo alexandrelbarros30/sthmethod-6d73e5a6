@@ -262,10 +262,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
     try {
       const dataUrl = await compressImage(file);
       if (!dataUrl || dataUrl.length < 1000) throw new Error("empty_image");
-      setImgPreview(dataUrl);
-      setImgB64(dataUrl.split(",")[1] || "");
-      setResult(null);
-      try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ mode, dataUrl, at: Date.now() })); } catch { /* noop */ }
+      applyImage(dataUrl);
     } catch (e) {
       setImgB64(null);
       setImgPreview(null);
@@ -273,6 +270,38 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
       const msg = code === "unsupported_image"
         ? "Formato de imagem não suportado. Tente escolher a foto pela galeria (JPG ou PNG)."
         : "Não foi possível preparar a foto neste aparelho. Tente novamente pela galeria.";
+      setErrMsg(msg);
+      toast.error(msg);
+    } finally {
+      setPreparing(false);
+    }
+  }
+
+  function applyImage(dataUrl: string) {
+    setImgPreview(dataUrl);
+    setImgB64(dataUrl.split(",")[1] || "");
+    setResult(null);
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ mode, dataUrl, at: Date.now() })); } catch { /* noop */ }
+  }
+
+  // Câmera/galeria: usa o plugin nativo no APK e o <input file> no navegador.
+  async function pickImage(from: "camera" | "gallery") {
+    setErrMsg(null);
+    if (!isNative()) {
+      (from === "camera" ? cameraInputRef : galleryInputRef).current?.click();
+      return;
+    }
+    setPreparing(true);
+    try {
+      const dataUrl = await nativeCapture(from === "camera" ? CameraSource.Camera : CameraSource.Photos);
+      if (!dataUrl) throw new Error("empty_image");
+      applyImage(dataUrl);
+    } catch (e) {
+      const raw = String((e as Error)?.message || "");
+      if (/cancel/i.test(raw)) return;
+      const msg = /permission|denied/i.test(raw)
+        ? "Permissão de câmera negada. Libere o acesso nas configurações do app."
+        : "Não foi possível capturar a foto. Tente pela galeria.";
       setErrMsg(msg);
       toast.error(msg);
     } finally {
