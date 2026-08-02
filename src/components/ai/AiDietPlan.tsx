@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Clock, Utensils, ChevronDown, ChevronRight, Star, Info } from "lucide-react";
+import { Clock, Utensils, ChevronDown, ChevronRight, Star, Info, Droplets } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { computeBaseMacros } from "../../../supabase/functions/_shared/diet-macros";
@@ -53,6 +53,23 @@ function applyMeta(meal: ParsedMeal, meta: string) {
 
 export function parseMeals(content: string): ParsedMeal[] {
   return parseDiet(content).meals;
+}
+
+/** Extrai a meta hídrica (em litros) declarada no cardápio, se houver. */
+export function parseWaterL(content: string): number | null {
+  const text = stripTags(content);
+  const l = text.match(/hidrata[çc][ãa]o[\s\S]{0,160}?(\d+[.,]?\d*)\s*(?:l\b|litros?)/i) ||
+    text.match(/meta\s+di[áa]ria[^\n]{0,40}?(\d+[.,]?\d*)\s*(?:l\b|litros?)\s*(?:de\s*[áa]gua)/i);
+  if (l) {
+    const v = parseFloat(l[1].replace(",", "."));
+    if (v > 0.5 && v < 12) return v;
+  }
+  const ml = text.match(/hidrata[çc][ãa]o[\s\S]{0,160}?(\d{3,5})\s*ml/i);
+  if (ml) {
+    const v = parseInt(ml[1], 10) / 1000;
+    if (v > 0.5 && v < 12) return v;
+  }
+  return null;
 }
 
 export function parseDiet(content: string): { meals: ParsedMeal[]; notes: string[] } {
@@ -168,8 +185,13 @@ const MacroChip = ({ label, value, tone }: { label: string; value: number; tone:
   );
 };
 
-const AiDietPlan: React.FC<{ content: string }> = ({ content }) => {
+const AiDietPlan: React.FC<{ content: string; weightKg?: number | null }> = ({ content, weightKg }) => {
   const { meals, notes } = useMemo(() => parseDiet(content), [content]);
+  const waterL = useMemo(() => {
+    const parsed = parseWaterL(content);
+    if (parsed) return parsed;
+    return weightKg && weightKg > 0 ? Math.round(weightKg * 0.035 * 10) / 10 : null;
+  }, [content, weightKg]);
   const [open, setOpen] = useState<number | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
 
@@ -209,6 +231,14 @@ const AiDietPlan: React.FC<{ content: string }> = ({ content }) => {
           <div className="h-full bg-warning" style={{ width: `${(totals.carbs / totalG) * 100}%` }} />
           <div className="h-full" style={{ width: `${(totals.fat / totalG) * 100}%`, background: "hsl(25 85% 55%)" }} />
         </div>
+        {waterL && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-info/25 bg-info/10 px-3 py-2">
+            <Droplets className="h-4 w-4 shrink-0 text-info" />
+            <p className="text-[12px] font-semibold text-info">
+              Hidratação · {waterL.toFixed(1).replace(".", ",")} L de água por dia
+            </p>
+          </div>
+        )}
       </div>
 
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
