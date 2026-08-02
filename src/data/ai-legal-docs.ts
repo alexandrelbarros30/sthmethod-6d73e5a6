@@ -581,6 +581,114 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "politica-de-uso-da-ia",
+    title: "Política de Uso da Inteligência Artificial",
+    subtitle: "Regras e princípios dos recursos de IA da STH AI",
+    code: "STHAI-IA-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Objetivo",
+        paragraphs: [
+          "Esta Política estabelece as regras de utilização dos recursos de Inteligência Artificial disponibilizados pela STH AI.",
+          "O objetivo é garantir que o usuário compreenda como a tecnologia funciona, suas capacidades, limitações e princípios utilizados para geração de informações personalizadas.",
+        ],
+      },
+      {
+        title: "2. O que é a STH AI",
+        paragraphs: [
+          "A STH AI é uma plataforma de inteligência artificial desenvolvida com base na metodologia STH Method, criada para auxiliar o usuário no acompanhamento de objetivos relacionados a treinamento, alimentação, evolução corporal, análise de informações fornecidas e organização e acompanhamento de dados pessoais.",
+          "A plataforma utiliza informações inseridas pelo próprio usuário para construir análises e recomendações personalizadas.",
+        ],
+      },
+      {
+        title: "3. Funcionamento da Inteligência Artificial",
+        paragraphs: [
+          "A STH AI utiliza modelos computacionais capazes de interpretar informações fornecidas, identificar padrões, organizar dados, gerar sugestões personalizadas e acompanhar histórico de evolução.",
+          "As respostas geradas são baseadas nas informações disponíveis no perfil do usuário e nos parâmetros definidos pela metodologia STH Method.",
+        ],
+      },
+      {
+        title: "4. Importância das Informações Fornecidas",
+        paragraphs: [
+          "O usuário reconhece que a qualidade das análises depende diretamente da qualidade das informações cadastradas.",
+          "Informações incompletas, incorretas ou desatualizadas podem influenciar análises, recomendações, planejamento e acompanhamento da evolução.",
+          "O usuário é responsável por manter seus dados atualizados.",
+        ],
+      },
+      {
+        title: "5. Geração de Planejamentos",
+        paragraphs: [
+          "A STH AI poderá gerar planejamento de treino, planejamento alimentar, análises técnicas e acompanhamento de evolução.",
+          "As gerações seguem critérios metodológicos e não são realizadas com base em alterações aleatórias ou solicitações sem fundamento técnico.",
+        ],
+      },
+      {
+        title: "6. Princípio da Periodização",
+        paragraphs: [
+          "A STH AI utiliza o conceito de periodização, respeitando fases planejadas de evolução.",
+          "Por esse motivo, novos planejamentos não devem ser solicitados constantemente, revisões devem possuir justificativa e alterações frequentes podem prejudicar a avaliação dos resultados.",
+          "A plataforma prioriza consistência, execução e evolução progressiva.",
+        ],
+      },
+      {
+        title: "7. Revisões e Ajustes",
+        paragraphs: [
+          "As revisões dos planejamentos possuem critérios definidos pela Política de Gerações, Revisões e Periodização.",
+          "A inteligência artificial poderá considerar histórico do usuário, evolução registrada, alterações informadas, objetivos definidos e dados adicionados ao longo do acompanhamento.",
+        ],
+      },
+      {
+        title: "8. Recursos de Uso Contínuo",
+        paragraphs: ["Durante a vigência da assinatura, alguns recursos possuem utilização contínua:"],
+        bullets: [
+          "STH Food AI: permite análise de alimentos, análise de refeições, interpretação de produtos e auxílio no registro alimentar.",
+          "Evolução Corporal por Imagens: permite análise comparativa de fotografias, acompanhamento visual e registro histórico da evolução.",
+          "Esses recursos não representam uma alteração automática do planejamento principal.",
+        ],
+      },
+      {
+        title: "9. Limitações da Inteligência Artificial",
+        paragraphs: [
+          "O usuário compreende que a IA não possui consciência ou julgamento humano, que resultados dependem das informações fornecidas, que podem existir limitações tecnológicas e que nenhuma ferramenta digital elimina a necessidade de avaliação profissional quando indicada.",
+        ],
+      },
+      {
+        title: "10. Saúde e Segurança",
+        paragraphs: [
+          "A STH AI não substitui consultas ou avaliações realizadas por profissionais habilitados.",
+          "O usuário deve buscar atendimento especializado em situações como sintomas importantes, emergências, diagnósticos e alterações clínicas relevantes.",
+        ],
+      },
+      {
+        title: "11. Transparência e Evolução da Tecnologia",
+        paragraphs: [
+          "A STH AI poderá passar por melhorias constantes para aumentar a qualidade das análises, melhorar a experiência do usuário, incorporar novas tecnologias e aperfeiçoar os recursos disponíveis.",
+          "Atualizações poderão modificar funcionalidades sem comprometer os princípios fundamentais da plataforma.",
+        ],
+      },
+      {
+        title: "12. Uso Responsável",
+        paragraphs: [
+          "O usuário concorda em utilizar a inteligência artificial de forma responsável, evitando compartilhamento indevido da conta, tentativa de manipulação do sistema, uso comercial não autorizado e envio intencional de informações falsas.",
+        ],
+      },
+      {
+        title: "13. Aceite",
+        paragraphs: [
+          "Ao utilizar os recursos de inteligência artificial da STH AI, o usuário declara que compreendeu como a tecnologia funciona, suas limitações, a importância das informações fornecidas e os princípios metodológicos utilizados.",
+        ],
+      },
+      {
+        title: "14. Vigência",
+        paragraphs: [
+          "Esta Política entra em vigor na data de sua publicação e permanece válida enquanto o usuário utilizar os recursos de inteligência artificial da STH AI.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
