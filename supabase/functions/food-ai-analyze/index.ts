@@ -1,8 +1,17 @@
 // STH METHOD FOOD AI — analyze a plate photo, a free-text description or a label image.
 // Combines Gemini multimodal via Lovable AI Gateway with FatSecret reconciliation.
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { FOOD_AI_SYSTEM_PROMPT } from '../_shared/food-ai-prompt.ts';
+
+// CORS explícito: o supabase-js do navegador envia os cabeçalhos
+// x-supabase-client-* — se não estiverem liberados o preflight falha e a
+// requisição nem chega à função (foto/rótulo "não fazem nada" no app).
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-retry-count, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-supabase-api-version',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 // ============= FatSecret integration (reused pattern from analyze-diet) =============
 const FS_CLIENT_ID = Deno.env.get('FATSECRET_CLIENT_ID');
