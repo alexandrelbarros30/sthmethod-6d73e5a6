@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { Dumbbell, ArrowRight, Check } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Dumbbell, ArrowRight, Check, RotateCcw, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AiGeneration } from "@/hooks/useAiApp";
 
@@ -9,10 +9,11 @@ interface Props {
   /** Data (ISO) do check-in em que o treino foi marcado como realizado. */
   doneAt?: string | null;
   onDone: () => void;
+  onUndo?: () => void;
 }
 
 /** Lembrete de treino do dia — leva ao treino guiado e permite marcar como realizado. */
-const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone }: Props) => {
+const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone, onUndo }: Props) => {
   const navigate = useNavigate();
   const doneLabel = doneAt ? doneAt.split("-").reverse().join("/") : null;
 
@@ -52,10 +53,23 @@ const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone }: Props) => {
         <Button className="flex-1 gap-2" onClick={() => navigate("/ai/app/treino")}>
           {workout ? "Ir para o treino" : "Gerar treino"} <ArrowRight className="h-4 w-4" />
         </Button>
-        <Button variant={done ? "secondary" : "outline"} className="gap-1.5" disabled={done} onClick={onDone}>
-          <Check className="h-4 w-4" /> {done ? "Feito" : "Realizado"}
-        </Button>
+        {done ? (
+          <Button variant="secondary" className="gap-1.5" onClick={onUndo}>
+            <RotateCcw className="h-4 w-4" /> Desfazer
+          </Button>
+        ) : (
+          <Button variant="outline" className="gap-1.5" onClick={onDone}>
+            <Check className="h-4 w-4" /> Realizado
+          </Button>
+        )}
       </div>
+
+      <Link
+        to="/ai/app/treino/historico"
+        className="relative mt-3 inline-flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        <History className="h-3.5 w-3.5" /> Ver histórico de treinos
+      </Link>
     </div>
   );
 };

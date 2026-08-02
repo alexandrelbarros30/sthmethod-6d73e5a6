@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
-import { useAiProgress } from "@/hooks/useAiProgress";
+import { useAiProgress, todayISO } from "@/hooks/useAiProgress";
+import { useWorkoutReminder, ensureNotificationPermission } from "@/hooks/useWorkoutReminder";
 import { useAiOffer, useAiInsight } from "@/hooks/useAiGrowth";
 import AiOfferCard from "@/components/ai/AiOfferCard";
 import AiHydrationCard from "@/components/ai/AiHydrationCard";
@@ -65,7 +66,7 @@ const MicroLabel = ({ children }: { children: React.ReactNode }) => (
 
 export default function AiDashboard() {
   const { profile, subscription, generations, loading, user } = useAiApp();
-  const { streak, today, last7, measurements, saveCheckin } = useAiProgress();
+  const { streak, today, last7, measurements, saveCheckin, setWorkoutDone } = useAiProgress();
   const { offer, dismiss } = useAiOffer();
   const { insight } = useAiInsight();
   const navigate = useNavigate();
@@ -75,6 +76,40 @@ export default function AiDashboard() {
     if (!user) navigate("/ai/login?next=/ai/app");
     else if (!profile?.phase1_complete) navigate("/ai/onboarding");
   }, [loading, user, profile, navigate]);
+
+  const markWorkoutDone = useCallback(async () => {
+    await saveCheckin({
+      diet_done: today?.diet_done ?? false,
+      water_done: today?.water_done ?? false,
+      workout_done: true,
+    });
+    toast.success(`Treino registrado em ${new Date().toLocaleDateString("pt-BR")} no seu histórico.`);
+  }, [saveCheckin, today]);
+
+  const undoWorkout = useCallback(async () => {
+    await setWorkoutDone(todayISO(), false);
+    toast("Registro desfeito. O treino de hoje voltou para pendente.");
+  }, [setWorkoutDone]);
+
+  // Lembrete no horário do treino: notificação do sistema + prompt na tela.
+  useEffect(() => {
+    void ensureNotificationPermission();
+  }, []);
+
+  const remind = useCallback(() => {
+    toast("Hora do treino", {
+      description: "Conclua a sessão e marque seu check-in como realizado.",
+      duration: 15000,
+      action: { label: "Realizado", onClick: () => void markWorkoutDone() },
+    });
+  }, [markWorkoutDone]);
+
+  useWorkoutReminder({
+    enabled: !!user && !!latestOf(generations, "workout"),
+    alreadyDone: !!today?.workout_done,
+    dateISO: todayISO(),
+    onRemind: remind,
+  });
 
   if (loading) {
     return (
@@ -134,16 +169,8 @@ export default function AiDashboard() {
           workout={latestOf(generations, "workout")}
           done={!!today?.workout_done}
           doneAt={today?.workout_done ? today.checkin_date : null}
-          onDone={async () => {
-            await saveCheckin({
-              diet_done: today?.diet_done ?? false,
-              water_done: today?.water_done ?? false,
-              workout_done: true,
-            });
-            toast.success(
-              `Treino registrado em ${new Date().toLocaleDateString("pt-BR")} no seu histórico.`,
-            );
-          }}
+          onDone={markWorkoutDone}
+          onUndo={undoWorkout}
         />
 
         {/* Constância — compacto */}
