@@ -580,6 +580,27 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
               Remover foto
             </button>
           )}
+          {camOpen && (
+            <div className="fixed inset-0 z-[70] flex flex-col bg-black">
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                autoPlay
+                className="min-h-0 w-full flex-1 object-cover"
+              />
+              <div className="flex items-center justify-between gap-3 bg-black/90 px-6 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-4">
+                <button type="button" className="text-sm text-white/70" onClick={stopCamera}>Cancelar</button>
+                <button
+                  type="button"
+                  aria-label="Tirar foto"
+                  onClick={captureFromCamera}
+                  className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 active:scale-95"
+                />
+                <span className="w-14 text-right text-[11px] text-white/50">{mode === "label" ? "Rótulo" : "Prato"}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
