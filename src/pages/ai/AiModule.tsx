@@ -108,8 +108,8 @@ export default function AiModule() {
         />
       )}
       {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
-      {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
-      {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} />}
+      {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} collapsible />}
+      {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} collapsible />}
       <Card className="space-y-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium">Campo livre — conte os detalhes</p>

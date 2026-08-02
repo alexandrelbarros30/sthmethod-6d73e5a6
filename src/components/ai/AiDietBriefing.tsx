@@ -8,6 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ClipboardList, Flame, HelpCircle, Pencil, Sparkles, ShieldCheck } from "lucide-react";
+import { Salad, Target } from "lucide-react";
+import AiEditSection from "@/components/ai/AiEditSection";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { AiProfile } from "@/hooks/useAiApp";
 import { calculateMacros } from "@/lib/macro-calculator";
 import { objectiveLabels } from "@/lib/form-constants";
@@ -44,6 +48,8 @@ interface Props {
   onChange: (brief: string) => void;
   /** Quando true, exibe apenas o card de Gasto energético total. */
   compact?: boolean;
+  /** Modo solicitação: grupos em janelas expansíveis fechadas, cada uma com seu botão salvar. */
+  collapsible?: boolean;
 }
 
 const GOAL_TO_OBJECTIVE: Record<string, string> = {
@@ -64,7 +70,7 @@ const GOAL_LABELS: Record<string, string> = {
   saude: "Saúde e rotina",
 };
 
-export default function AiDietBriefing({ profile, onChange, compact = false }: Props) {
+export default function AiDietBriefing({ profile, onChange, compact = false, collapsible = false }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
 
   const [objective, setObjective] = useState("");
@@ -76,6 +82,28 @@ export default function AiDietBriefing({ profile, onChange, compact = false }: P
   const [restrictions, setRestrictions] = useState("");
   const [preferences, setPreferences] = useState("");
   const seeded = useRef<string | null>(null);
+
+  async function saveGroup() {
+    if (!profile?.user_id) return;
+    const { error } = await supabase
+      .from("ai_app_profiles")
+      .update({
+        answers: {
+          ...((profile.answers ?? {}) as Record<string, string>),
+          diet_objective: objective,
+          diet_kcal: kcal,
+          diet_meals: meals,
+          diet_protein: protein,
+          diet_carbs: carbs,
+          diet_fat: fat,
+          diet_restrictions: restrictions,
+          diet_preferences: preferences,
+        },
+      })
+      .eq("user_id", profile.user_id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Dados salvos — a IA já usa esses valores na próxima geração.");
+  }
 
   // Gasto energético total: cadastro + rotina/atividade já registrada
   const macros = useMemo(() => {
@@ -106,6 +134,9 @@ export default function AiDietBriefing({ profile, onChange, compact = false }: P
   // Pré-preenche objetivo e metas com base no gasto energético calculado
   useEffect(() => {
     if (!objective) setObjective(GOAL_TO_OBJECTIVE[profile?.goal ?? ""] || "manter_peso");
+    if (answers.diet_restrictions) setRestrictions(answers.diet_restrictions);
+    if (answers.diet_preferences) setPreferences(answers.diet_preferences);
+    if (answers.diet_meals) setMeals(answers.diet_meals);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.user_id]);
 
@@ -164,7 +195,34 @@ export default function AiDietBriefing({ profile, onChange, compact = false }: P
 
   return (
     <div className="mb-4 space-y-4">
-      {!compact && (
+      {!compact && collapsible && (
+        <AiEditSection
+          icon={<ClipboardList className="h-4 w-4" />}
+          title="Revisão do seu cadastro"
+          description="Dados pessoais usados pela IA"
+          pending={review.length === 0 ? 1 : 0}
+        >
+          {review.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum dado cadastrado ainda. Complete seu perfil primeiro.</p>
+          ) : (
+            <dl className="grid gap-3 sm:grid-cols-2">
+              {review.map((i) => (
+                <div key={i.label} className="rounded-lg border border-border/60 p-3">
+                  <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{i.label}</dt>
+                  <dd className="mt-0.5 text-sm">{i.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link to="/ai/onboarding?next=/ai/app/cardapio%3Fsolicitar%3D1">
+              <Pencil className="mr-2 h-4 w-4" /> Editar cadastro
+            </Link>
+          </Button>
+        </AiEditSection>
+      )}
+
+      {!compact && !collapsible && (
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -255,7 +313,84 @@ export default function AiDietBriefing({ profile, onChange, compact = false }: P
         )}
       </Card>
 
-      {!compact && (
+      {!compact && collapsible && (
+        <>
+          <AiEditSection
+            icon={<Target className="h-4 w-4" />}
+            title="Metas e macros"
+            description="Objetivo, kcal, refeições e macronutrientes"
+            pending={[objective, kcal, meals, protein, carbs, fat].filter((v) => !String(v).trim()).length}
+            onSave={saveGroup}
+          >
+            <div className="space-y-1.5">
+              <Label className="text-xs">Objetivo</Label>
+              <Select value={objective} onValueChange={setObjective}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(objectiveLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Kcal alvo</Label>
+                <Input inputMode="numeric" value={kcal} onChange={(e) => setKcal(e.target.value)} placeholder="2500" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nº refeições</Label>
+                <Input inputMode="numeric" value={meals} onChange={(e) => setMeals(e.target.value)} placeholder="5" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Proteína (g)</Label>
+                <Input inputMode="numeric" value={protein} onChange={(e) => setProtein(e.target.value)} placeholder="180" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Carbo (g)</Label>
+                <Input inputMode="numeric" value={carbs} onChange={(e) => setCarbs(e.target.value)} placeholder="300" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Lipídio (g)</Label>
+                <Input inputMode="numeric" value={fat} onChange={(e) => setFat(e.target.value)} placeholder="70" />
+              </div>
+            </div>
+          </AiEditSection>
+
+          <AiEditSection
+            icon={<Salad className="h-4 w-4" />}
+            title="Restrições e preferências"
+            description="O que evitar e o que você gosta de comer"
+            pending={[restrictions, preferences].filter((v) => !v.trim()).length}
+            onSave={saveGroup}
+          >
+            <div className="space-y-1.5">
+              <Label className="text-xs">Restrições</Label>
+              <Input
+                value={restrictions}
+                onChange={(e) => setRestrictions(e.target.value)}
+                placeholder="Sem lactose, sem glúten..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Preferências</Label>
+              <Input
+                value={preferences}
+                onChange={(e) => setPreferences(e.target.value)}
+                placeholder="Gosta de tapioca, salmão, ovos..."
+              />
+            </div>
+            <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                O cardápio é exclusivamente alimentar. Protocolos registrados na STH METHOD não são utilizados aqui.
+              </p>
+            </div>
+          </AiEditSection>
+        </>
+      )}
+
+      {!compact && !collapsible && (
       <Card className="p-5">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">

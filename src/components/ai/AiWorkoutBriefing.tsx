@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { ClipboardList, Pencil, SlidersHorizontal, Timer } from "lucide-react";
+import { ClipboardList, Dumbbell, HeartPulse, MapPin, Pencil, SlidersHorizontal, Timer } from "lucide-react";
+import AiEditSection from "@/components/ai/AiEditSection";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,8 @@ interface Props {
   onChange: (brief: string) => void;
   /** Modo perfil: esconde a revisão do cadastro e mostra botão de salvar explícito. */
   standalone?: boolean;
+  /** Modo solicitação: grupos em janelas expansíveis fechadas, cada uma com seu botão salvar. */
+  collapsible?: boolean;
 }
 
 type Field = { key: string; label: string; options: { value: string; label: string }[]; when?: (v: Record<string, string>) => boolean };
@@ -141,8 +144,40 @@ const LEVEL_LABELS: Record<string, string> = {
   avancado: "Avançado",
 };
 
-export default function AiWorkoutBriefing({ profile, onChange, standalone }: Props) {
+const GROUPS: { id: string; title: string; description: string; icon: JSX.Element; keys: string[] }[] = [
+  {
+    id: "treino",
+    title: "Treino",
+    description: "Objetivo, NEAT, frequência, duração e intensidade",
+    icon: <Dumbbell className="h-4 w-4" />,
+    keys: [
+      "objective",
+      "physical_activity_level",
+      "activity_type",
+      "training_days_per_week",
+      "training_duration_minutes",
+      "training_intensity",
+    ],
+  },
+  {
+    id: "cardio",
+    title: "Cardio",
+    description: "Frequência, duração e intensidade do cardio",
+    icon: <HeartPulse className="h-4 w-4" />,
+    keys: ["does_cardio", "cardio_days_per_week", "cardio_duration_minutes", "cardio_intensity"],
+  },
+  {
+    id: "contexto",
+    title: "Local e limitações",
+    description: "Onde treina e regiões sensíveis",
+    icon: <MapPin className="h-4 w-4" />,
+    keys: ["training_place", "injury_area"],
+  },
+];
+
+export default function AiWorkoutBriefing({ profile, onChange, standalone, collapsible }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
+  const focusKey = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("campo") ?? "" : "";
   const [values, setValues] = useState<Record<string, string>>({});
   const hydrated = useRef(false);
 
@@ -250,7 +285,87 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone }: Pro
 
   return (
     <div className="mb-4 space-y-4">
-      {!standalone && (
+      {!standalone && collapsible && (
+        <AiEditSection
+          icon={<ClipboardList className="h-4 w-4" />}
+          title="Revisão do seu cadastro"
+          description="Dados pessoais usados pela IA"
+          pending={review.length === 0 ? 1 : 0}
+        >
+          {review.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum dado cadastrado ainda. Complete seu perfil primeiro.</p>
+          ) : (
+            <dl className="grid gap-3 sm:grid-cols-2">
+              {review.map((i) => (
+                <div key={i.label} className="rounded-lg border border-border/60 p-3">
+                  <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{i.label}</dt>
+                  <dd className="mt-0.5 text-sm">{i.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link to="/ai/onboarding?next=/ai/app/treino%3Fsolicitar%3D1">
+              <Pencil className="mr-2 h-4 w-4" /> Editar cadastro
+            </Link>
+          </Button>
+        </AiEditSection>
+      )}
+
+      {collapsible && (
+        <>
+          {GROUPS.map((g) => {
+            const fields = visible.filter((f) => g.keys.includes(f.key));
+            if (!fields.length) return null;
+            const pend = fields.filter((f) => !values[f.key]).length;
+            return (
+              <AiEditSection
+                key={g.id}
+                icon={g.icon}
+                title={g.title}
+                description={g.description}
+                pending={pend}
+                onSave={saveRoutine}
+                defaultOpen={Boolean(focusKey) && g.keys.includes(focusKey)}
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {fields.map((f) => (
+                    <div key={f.key} id={`brief-${f.key}`} className="space-y-1.5 scroll-mt-24 p-1">
+                      <Label className="flex items-center gap-2 text-xs">
+                        {f.label}
+                        {!values[f.key] && (
+                          <Badge variant="outline" className="h-4 px-1.5 text-[10px]">falta</Badge>
+                        )}
+                      </Label>
+                      <Select value={values[f.key] ?? ""} onValueChange={(v) => handleSelect(f.key, v)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {f.options.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+                {g.id === "cardio" && cardioOn && cardioMin > 0 && (
+                  <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <Timer className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <p className="text-xs text-muted-foreground">
+                      O cardio é somado ao relógio do treino:{" "}
+                      <strong className="text-foreground">{strengthMin || 0} min</strong> de musculação +{" "}
+                      <strong className="text-foreground">{cardioMin} min</strong> de cardio ={" "}
+                      <strong className="text-foreground">{(strengthMin || 0) + cardioMin} min</strong> por sessão.
+                    </p>
+                  </div>
+                )}
+              </AiEditSection>
+            );
+          })}
+        </>
+      )}
+
+      {!standalone && !collapsible && (
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -284,6 +399,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone }: Pro
       </Card>
       )}
 
+      {!collapsible && (
       <Card className="p-5">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
@@ -336,6 +452,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone }: Pro
           </Button>
         )}
       </Card>
+      )}
 
       <Dialog open={cardioDialog} onOpenChange={setCardioDialog}>
         <DialogContent className="sm:max-w-md">
