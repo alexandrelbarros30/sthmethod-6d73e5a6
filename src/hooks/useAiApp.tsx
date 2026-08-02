@@ -27,6 +27,7 @@ export interface AiSubscription {
 }
 
 const AI_DEMO_EMAILS = new Set(["alexandrelbarros30@gmail.com"]);
+const AI_DEMO_USER_IDS = new Set(["d1398e8a-2707-4470-833d-186ea0e28c95"]);
 
 function normalizeEmail(email?: string | null) {
   return (email ?? "").trim().toLowerCase();
@@ -98,7 +99,7 @@ export function useAiApp() {
   // A conta de apresentação tem duas garantias independentes: identidade por
   // e-mail e assinatura modelo vitalícia. Assim, sessão/cache antigo não volta
   // a bloquear geração ou revisão na interface.
-  const unlimited = AI_DEMO_EMAILS.has(normalizeEmail(user?.email)) || subscription?.plan === "free";
+  const unlimited = AI_DEMO_EMAILS.has(normalizeEmail(user?.email)) || AI_DEMO_USER_IDS.has(user?.id ?? "");
 
   return { user, profile, subscription, generations, loading, refresh, setProfile, unlimited };
 }
