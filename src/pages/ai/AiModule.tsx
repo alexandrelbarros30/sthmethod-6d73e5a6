@@ -16,6 +16,7 @@ import AiWorkoutProgram from "@/components/ai/AiWorkoutProgram";
 import AiDietPlan from "@/components/ai/AiDietPlan";
 import AiAnalysisReport from "@/components/ai/AiAnalysisReport";
 import AiRevisionsBanner from "@/components/ai/AiRevisionsBanner";
+import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingChecklist";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
 import { Loader2, Sparkles, RefreshCw, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -58,8 +59,16 @@ export default function AiModule() {
   const isGuided = (kind === "workout" || kind === "diet") && Boolean(current);
   const canRequest = unlimited || !cycleLocked || revisionsLeft > 0;
 
+  const checklist = useMemo(() => buildChecklist(profile, kind), [profile, kind]);
+  const checklistMissing = checklist.filter((i) => !i.ok);
+  const briefingIncomplete = kind !== "analysis" && checklistMissing.length > 0;
+  const editHref = `/ai/onboarding?next=${encodeURIComponent(`/ai/app/${slug}?solicitar=1`)}`;
+
   const requestForm = (
     <>
+      {kind !== "analysis" && (
+        <AiBriefingChecklist profile={profile} kind={kind} items={checklist} editHref={editHref} />
+      )}
       {kind === "analysis" && <AiExamAttach selected={examIds} onChange={setExamIds} />}
       {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} />}
       {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} />}
@@ -75,16 +84,21 @@ export default function AiModule() {
           }
         />
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button className="flex-1" onClick={() => run("create")} disabled={busy || cycleLocked}>
-            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : cycleLocked ? <Lock className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
+          <Button className="flex-1" onClick={() => run("create")} disabled={busy || cycleLocked || briefingIncomplete}>
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : cycleLocked || briefingIncomplete ? <Lock className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
             {current ? "Gerar novo ciclo" : "Gerar agora"}
           </Button>
           {current && (
-            <Button className="flex-1" variant="outline" onClick={() => run("revise")} disabled={busy || revisionsLeft === 0}>
+            <Button className="flex-1" variant="outline" onClick={() => run("revise")} disabled={busy || revisionsLeft === 0 || briefingIncomplete}>
               <RefreshCw className="mr-2 h-4 w-4" /> Revisar
             </Button>
           )}
         </div>
+        {briefingIncomplete && (
+          <p className="text-xs font-medium text-destructive">
+            Complete os {checklistMissing.length} campo(s) do checklist acima para liberar a geração e a revisão.
+          </p>
+        )}
         {cycleLocked && (
           <p className="text-xs text-muted-foreground">
             A estrutura principal é preservada durante o ciclo — é assim que a metodologia gera adaptação real. Use uma
@@ -102,6 +116,10 @@ export default function AiModule() {
     }
     if (mode === "revise" && !instruction.trim()) {
       toast.error("Descreva o que deseja ajustar.");
+      return;
+    }
+    if (briefingIncomplete) {
+      toast.error(`Checklist incompleto: faltam ${checklistMissing.length} campo(s) do briefing.`);
       return;
     }
     setBusy(true);
