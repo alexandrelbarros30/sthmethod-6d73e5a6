@@ -300,27 +300,41 @@ export default function AiDashboard() {
           const mod = AI_MODULES[kind];
           const gen = latestOf(generations, kind);
           const left = daysLeftInCycle(gen, mod.cycleDays);
+          const dark = kind === "diet";
           return (
-            <Link key={kind} to={ROUTES[kind]} className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-2`}>
+            <Link
+              key={kind}
+              to={ROUTES[kind]}
+              className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-2 ${
+                dark ? "border-white/5 bg-ocean-mid text-white" : ""
+              }`}
+            >
               <div className="flex items-start justify-between gap-2">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-lg">{mod.icon}</span>
+                <span className={`grid h-10 w-10 place-items-center rounded-2xl text-lg ${dark ? "bg-white/10" : "bg-ocean-mint/15"}`}>
+                  {mod.icon}
+                </span>
                 {gen ? (
-                  <Badge variant="secondary" className="text-[10px]">{left > 0 ? `${left}d restantes` : "Novo ciclo"}</Badge>
+                  <Badge
+                    variant="secondary"
+                    className={`text-[10px] ${dark ? "bg-ocean-mint/20 text-ocean-mint hover:bg-ocean-mint/20" : ""}`}
+                  >
+                    {left > 0 ? `${left}d restantes` : "Novo ciclo"}
+                  </Badge>
                 ) : (
-                  <Badge variant="outline" className="text-[10px]">Novo</Badge>
+                  <Badge variant="outline" className={`text-[10px] ${dark ? "border-white/20 text-white/80" : ""}`}>Novo</Badge>
                 )}
               </div>
               <div className="mt-4">
-                <h2 className="text-base font-semibold tracking-tight">{mod.title}</h2>
-                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground sm:text-sm">{mod.short}</p>
+                <h2 className="font-urbanist text-base font-bold tracking-tight">{mod.title}</h2>
+                <p className={`mt-1 line-clamp-2 text-xs sm:text-sm ${dark ? "text-white/60" : "text-muted-foreground"}`}>{mod.short}</p>
               </div>
               <div className="mt-4 flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${dark ? "text-ocean-mint" : "text-ocean-teal"}`}>
                   {gen ? "Abrir" : "Gerar agora"}
                   <Sparkles className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
                 </span>
                 {gen && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className={`text-[10px] ${dark ? "text-white/50" : "text-muted-foreground"}`}>
                     revisões {gen.revisions}/{kind === "analysis" ? 1 : 2}
                   </span>
                 )}
@@ -332,19 +346,19 @@ export default function AiDashboard() {
         {/* Imagens corporais */}
         <Link to="/ai/app/imagens" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-2`}>
           <div className="flex items-start justify-between gap-2">
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
               <Camera className="h-5 w-5" />
             </span>
             <Badge variant="outline" className="text-[10px]">Evolução</Badge>
           </div>
           <div className="mt-4">
-            <h2 className="text-base font-semibold tracking-tight">Imagens corporais</h2>
+            <h2 className="font-urbanist text-base font-bold tracking-tight">Imagens corporais</h2>
             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
               Envie fotos de evolução e compare sua transformação ao longo do ciclo.
             </p>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ocean-teal">
               Registrar
               <Sparkles className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
             </span>
@@ -359,7 +373,7 @@ export default function AiDashboard() {
         ].map((s) => (
           <Link key={s.to} to={s.to} className={`${tile} col-span-2 flex items-center justify-between lg:col-span-2`}>
             <span className="flex min-w-0 items-center gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
                 <s.icon className="h-4 w-4" />
               </span>
               <span className="min-w-0">
