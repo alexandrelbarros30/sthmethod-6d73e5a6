@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown } from "lucide-react";
+import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown, Camera, CreditCard } from "lucide-react";
 
 const HUB = [
   { to: "/ai/app/treino", label: "Treino", desc: "Programa guiado STHIA", icon: Dumbbell },
@@ -20,7 +20,9 @@ const HUB = [
   { to: "/ai/app/diario", label: "Diário", desc: "Food AI: foto, áudio e rótulo", icon: UtensilsCrossed },
   { to: "/ai/app/saude", label: "Saúde", desc: "Wearables e sinais diários", icon: HeartPulse },
   { to: "/ai/app/progresso", label: "Evolução", desc: "Medidas e constância", icon: Flame },
+  { to: "/ai/app/imagens", label: "Imagens corporais", desc: "Fotos para comparação", icon: Camera },
   { to: "/ai/app/coaches", label: "Coaches", desc: "Acompanhamento humano", icon: UserRound },
+  { to: "/ai/assinatura", label: "Assinatura", desc: "Planos e renovação", icon: CreditCard },
   { to: "/sobre", label: "Sobre", desc: "Versão e novidades", icon: Info },
 ];
 
