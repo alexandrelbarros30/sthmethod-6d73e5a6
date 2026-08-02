@@ -243,7 +243,7 @@ export default function AiProfile() {
         items={dietChecklist}
         editHref="#"
         hideEdit
-        onSelect={(i) => { setShowFicha(true); focusField(`f-${i.key}`); }}
+        onSelect={(i) => { if (i.where === "briefing") { navigate(`/ai/app/treino?solicitar=1&campo=${i.key}&next=${encodeURIComponent("/ai/app/perfil")}`); return; } setShowFicha(true); focusField(`f-${i.key}`); }}
         title="Checklist do briefing · Cardápio"
       />
       <AiBriefingChecklist
@@ -252,7 +252,7 @@ export default function AiProfile() {
         items={workoutChecklist}
         editHref="#"
         hideEdit
-        onSelect={(i) => { setShowFicha(true); focusField(`f-${i.key}`); }}
+        onSelect={(i) => { if (i.where === "briefing") { navigate(`/ai/app/treino?solicitar=1&campo=${i.key}&next=${encodeURIComponent("/ai/app/perfil")}`); return; } setShowFicha(true); focusField(`f-${i.key}`); }}
         title="Checklist do briefing · Treino"
       />
 
