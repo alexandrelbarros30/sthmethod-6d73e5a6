@@ -514,10 +514,10 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
             )}
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => cameraInputRef.current?.click()}>
+            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => pickImage("camera")}>
               <Camera className="mr-2 h-4 w-4" /> Câmera
             </Button>
-            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => galleryInputRef.current?.click()}>
+            <Button type="button" variant="outline" className="flex-1" disabled={preparing} onClick={() => pickImage("gallery")}>
               <ImageIcon className="mr-2 h-4 w-4" /> Galeria
             </Button>
           </div>
