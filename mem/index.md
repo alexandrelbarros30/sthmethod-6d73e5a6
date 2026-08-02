@@ -46,6 +46,7 @@
 - [Doutrina STHIA de Treino](mem://features/doutrina-treino-sthia) — Mín. 6 reps, cardio dentro das sessões A-G, cardio livre da biblioteca ST Coach
 - [Body Evolution Generator](mem://features/gerador-evolucao-corporal) — DNA Tech frame, canvas drawImageContain logic
 - [Nutritional Menu](mem://features/cardapio-nutricional) — TACO/TBCA macros, recalculated from 100g/ml
+- [Ovos em unidades](mem://features/ovos-em-unidades) — Ovos e claras sempre em unidades nos cardápios (STH METHOD e STH AI)
 - [Diet Interactive Tracking](mem://features/acompanhamento-dieta-interativo) — Next meal widget, hydration goals (25/50/75/100%)
 - [Diet AI Analysis](mem://features/analise-dieta-ia) — Gemini AI for parsing free text diets to TACO macros
 - [Meal AI Images](mem://features/geracao-imagens-refeicao-ia) — Automatic AI generation for meal photos

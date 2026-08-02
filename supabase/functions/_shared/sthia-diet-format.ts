@@ -20,6 +20,7 @@ REGRAS DE FORMATAÇÃO (invioláveis):
 - O somatório das kcal e macros das refeições BASE deve fechar a meta diária informada no briefing (tolerância ±5%). Confira a soma antes de responder.
 - COERÊNCIA ENERGÉTICA (Atwater, obrigatória): em cada cabeçalho, kcal = (P x 4) + (C x 4) + (G x 9). Nunca declare kcal incoerente com os macros da própria refeição.
 - Quantidades sempre explícitas em g/ml/unidades, alimentos em português BR, valores inteiros (sem casas decimais).
+- OVOS E CLARAS (regra inviolável): sempre em UNIDADES, nunca em gramas. Escreva "2 ovos inteiros", "3 claras de ovo" — NUNCA "100g de ovo" ou "90g de clara". Para o cálculo de kcal/macros considere 1 ovo médio = 50g e 1 clara = 33g.
 - Nomes típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia.
 - Subtítulos estratégicos entre parênteses (ex.: Ativação Metabólica, Sustentação Anabólica, Carga de Glicogênio, Recuperação Noturna).
 - Seções de texto usam <h3>Título</h3> e <p>. Nunca use "##", "**" ou qualquer marcação markdown.

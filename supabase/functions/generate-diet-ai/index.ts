@@ -411,6 +411,7 @@ REGRAS DE FORMATAÇÃO (obrigatórias):
 - Cada refeição tem SEMPRE 4 blocos: "⭐ BASE" + Opção 2 + Opção 3 + Opção 4 (substituições isocalóricas equivalentes em kcal e macros à BASE, com tolerância ±5%).
 - Rótulos entre <strong>...</strong>. Abre aspas dupla no BASE (<strong>"⭐ BASE:</strong>) e fecha aspas dupla no fim da Opção 4 (<strong>"</strong></p>).
 - Quantidades explícitas em g/ml/unidades. Nomes de alimentos em português BR.
+- OVOS E CLARAS (regra inviolável): sempre em UNIDADES, nunca em gramas. Escreva "2 ovos inteiros", "3 claras de ovo" — NUNCA "100g de ovo" ou "90g de clara". Para o cálculo use 1 ovo médio = 50g e 1 clara = 33g.
 - Nomes de refeição típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia (adaptar ao número pedido).
 - Subtítulos estratégicos entre parênteses (ex: "Ativação Metabólica", "Sustentação Anabólica", "Carga de Glicogênio", "Manutenção Nitrogenada", "Recuperação Noturna").
 - NÃO inclua linha de macros por refeição no HTML (diet_text). Os macros por refeição são retornados apenas no tool call estruturado (campo meals).
