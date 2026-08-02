@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { supabase } from "@/integrations/supabase/client";
 import LazyVideoEmbed from "@/components/student/LazyVideoEmbed";
 import WorkoutChronometer from "@/components/student/WorkoutChronometer";
