@@ -15,6 +15,7 @@ import AiOfferCard from "@/components/ai/AiOfferCard";
 import AiHydrationCard from "@/components/ai/AiHydrationCard";
 import AiNextMealCard from "@/components/ai/AiNextMealCard";
 import AiWorkoutReminderCard from "@/components/ai/AiWorkoutReminderCard";
+import ProfileAvatar from "@/components/shared/ProfileAvatar";
 import {
   Loader2,
   ArrowRight,
