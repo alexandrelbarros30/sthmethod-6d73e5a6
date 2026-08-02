@@ -16,6 +16,32 @@ type Mode = "photo" | "label" | "text" | "audio";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+// Grava PCM via Web Audio e codifica WAV 16 kHz mono.
+// WebM/Opus é rejeitado pelo modelo de transcrição — WAV funciona em todos os navegadores.
+function encodeWav(chunks: Float32Array[], sampleRate: number, targetRate = 16000): Blob {
+  const total = chunks.reduce((n, c) => n + c.length, 0);
+  const merged = new Float32Array(total);
+  let off = 0;
+  for (const c of chunks) { merged.set(c, off); off += c.length; }
+  const ratio = sampleRate / targetRate;
+  const outLen = Math.max(1, Math.floor(merged.length / ratio));
+  const samples = new Int16Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const s = Math.max(-1, Math.min(1, merged[Math.floor(i * ratio)] || 0));
+    samples[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+  }
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const wr = (o: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+  wr(0, "RIFF"); view.setUint32(4, 36 + samples.length * 2, true); wr(8, "WAVE");
+  wr(12, "fmt "); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, targetRate, true); view.setUint32(28, targetRate * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  wr(36, "data"); view.setUint32(40, samples.length * 2, true);
+  new Int16Array(buffer, 44).set(samples);
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
 async function compressImage(file: File, maxSide = 1600, quality = 0.85): Promise<string> {
   const blob = new Blob([await file.arrayBuffer()], { type: file.type || "image/jpeg" });
   const bitmap = await createImageBitmap(blob).catch(() => null);
@@ -49,10 +75,11 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
   const [transcribing, setTranscribing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [recSeconds, setRecSeconds] = useState(0);
-  const recRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const nodeRef = useRef<ScriptProcessorNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const pcmRef = useRef<Float32Array[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
-  const recMimeRef = useRef("audio/webm");
   const timerRef = useRef<number | null>(null);
 
   const [addOpen, setAddOpen] = useState(false);
@@ -74,27 +101,39 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
-      const chosen = candidates.find((c) => MediaRecorder.isTypeSupported?.(c)) || "";
-      const rec = chosen ? new MediaRecorder(stream, { mimeType: chosen }) : new MediaRecorder(stream);
-      recMimeRef.current = rec.mimeType || chosen || "audio/webm";
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => { if (e.data?.size) chunksRef.current.push(e.data); };
-      rec.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: recMimeRef.current });
-        stopStream();
-        setRecording(false);
-        if (blob.size < 1024) { toast.error("Gravação muito curta. Tente novamente."); return; }
-        await transcribe(blob);
-      };
-      rec.start();
-      recRef.current = rec;
+      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx: AudioContext = new Ctx();
+      if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+      const source = ctx.createMediaStreamSource(stream);
+      const node = ctx.createScriptProcessor(4096, 1, 1);
+      pcmRef.current = [];
+      node.onaudioprocess = (e) => pcmRef.current.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+      source.connect(node);
+      node.connect(ctx.destination);
+      audioCtxRef.current = ctx;
+      nodeRef.current = node;
+      sourceRef.current = source;
       setRecording(true);
       setRecSeconds(0);
       timerRef.current = window.setInterval(() => setRecSeconds((s) => s + 1), 1000) as unknown as number;
     } catch {
       toast.error("Não foi possível acessar o microfone. Verifique as permissões.");
     }
+  }
+
+  async function stopRecording() {
+    const ctx = audioCtxRef.current;
+    try { nodeRef.current?.disconnect(); sourceRef.current?.disconnect(); } catch { /* noop */ }
+    nodeRef.current = null; sourceRef.current = null;
+    stopStream();
+    setRecording(false);
+    const rate = ctx?.sampleRate || 44100;
+    try { await ctx?.close(); } catch { /* noop */ }
+    audioCtxRef.current = null;
+    const blob = encodeWav(pcmRef.current, rate);
+    pcmRef.current = [];
+    if (blob.size < 4096) { toast.error("Gravação muito curta. Tente novamente."); return; }
+    await transcribe(blob);
   }
 
   async function transcribe(blob: Blob) {
@@ -107,7 +146,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
         r.readAsDataURL(blob);
       });
       const { data, error } = await supabase.functions.invoke("food-ai-transcribe", {
-        body: { audio: b64, mime: blob.type || recMimeRef.current },
+        body: { audio: b64, mime: "audio/wav" },
       });
       if (error) throw new Error(error.message);
       const txt = String((data as any)?.text || "").trim();
@@ -247,7 +286,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
             <div className="rounded-2xl border-2 border-dashed border-border bg-muted/40 p-6 text-center">
               <button
                 type="button"
-                onClick={recording ? () => recRef.current?.stop() : startRecording}
+                onClick={recording ? stopRecording : startRecording}
                 disabled={transcribing}
                 className={cn(
                   "mx-auto grid h-16 w-16 place-items-center rounded-full transition-colors",
