@@ -15,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import type { AiProfile } from "@/hooks/useAiApp";
 import {
   activityLabels,
@@ -27,6 +29,8 @@ import {
 interface Props {
   profile: AiProfile | null;
   onChange: (brief: string) => void;
+  /** Modo perfil: esconde a revisão do cadastro e mostra botão de salvar explícito. */
+  standalone?: boolean;
 }
 
 type Field = { key: string; label: string; options: { value: string; label: string }[]; when?: (v: Record<string, string>) => boolean };
@@ -137,7 +141,7 @@ const LEVEL_LABELS: Record<string, string> = {
   avancado: "Avançado",
 };
 
-export default function AiWorkoutBriefing({ profile, onChange }: Props) {
+export default function AiWorkoutBriefing({ profile, onChange, standalone }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
   const [values, setValues] = useState<Record<string, string>>({});
   const hydrated = useRef(false);
@@ -183,6 +187,19 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
   const cardioDays = values.cardio_days_per_week;
   const cardioIntensity = cardioIntensityOptions.find((o) => o.value === values.cardio_intensity)?.label;
   const [cardioDialog, setCardioDialog] = useState(false);
+  const [savingRoutine, setSavingRoutine] = useState(false);
+
+  async function saveRoutine() {
+    if (!profile?.user_id) return;
+    setSavingRoutine(true);
+    const { error } = await supabase
+      .from("ai_app_profiles")
+      .update({ answers: { ...((profile.answers ?? {}) as Record<string, string>), ...values } })
+      .eq("user_id", profile.user_id);
+    setSavingRoutine(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Rotina atualizada — a IA já usa esses dados na próxima geração.");
+  }
 
   function handleSelect(key: string, v: string) {
     setValues((s) => ({ ...s, [key]: v }));
@@ -233,6 +250,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
 
   return (
     <div className="mb-4 space-y-4">
+      {!standalone && (
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -264,6 +282,7 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
           </dl>
         )}
       </Card>
+      )}
 
       <Card className="p-5">
         <div className="flex items-center gap-2">
@@ -308,6 +327,13 @@ export default function AiWorkoutBriefing({ profile, onChange }: Props) {
               {cardioIntensity ? ` em intensidade ${cardioIntensity}` : ""}.
             </p>
           </div>
+        )}
+
+        {standalone && (
+          <Button className="mt-4 w-full" onClick={saveRoutine} disabled={savingRoutine}>
+            {savingRoutine && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Salvar rotina
+          </Button>
         )}
       </Card>
 
