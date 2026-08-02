@@ -8,6 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ClipboardList, Flame, HelpCircle, Pencil, Sparkles, ShieldCheck } from "lucide-react";
+import { Salad, Target } from "lucide-react";
+import AiEditSection from "@/components/ai/AiEditSection";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { AiProfile } from "@/hooks/useAiApp";
 import { calculateMacros } from "@/lib/macro-calculator";
 import { objectiveLabels } from "@/lib/form-constants";
@@ -44,6 +48,8 @@ interface Props {
   onChange: (brief: string) => void;
   /** Quando true, exibe apenas o card de Gasto energético total. */
   compact?: boolean;
+  /** Modo solicitação: grupos em janelas expansíveis fechadas, cada uma com seu botão salvar. */
+  collapsible?: boolean;
 }
 
 const GOAL_TO_OBJECTIVE: Record<string, string> = {
@@ -64,7 +70,7 @@ const GOAL_LABELS: Record<string, string> = {
   saude: "Saúde e rotina",
 };
 
-export default function AiDietBriefing({ profile, onChange, compact = false }: Props) {
+export default function AiDietBriefing({ profile, onChange, compact = false, collapsible = false }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
 
   const [objective, setObjective] = useState("");
