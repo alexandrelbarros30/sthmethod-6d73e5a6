@@ -669,10 +669,12 @@ export type Database = {
         Row: {
           age: number | null
           answers: Json
+          comorbidities: string | null
           created_at: string
           full_name: string | null
           goal: string | null
           height_cm: number | null
+          medications: string | null
           phase1_complete: boolean
           phase2_complete: boolean
           sex: string | null
@@ -685,10 +687,12 @@ export type Database = {
         Insert: {
           age?: number | null
           answers?: Json
+          comorbidities?: string | null
           created_at?: string
           full_name?: string | null
           goal?: string | null
           height_cm?: number | null
+          medications?: string | null
           phase1_complete?: boolean
           phase2_complete?: boolean
           sex?: string | null
@@ -701,10 +705,12 @@ export type Database = {
         Update: {
           age?: number | null
           answers?: Json
+          comorbidities?: string | null
           created_at?: string
           full_name?: string | null
           goal?: string | null
           height_cm?: number | null
+          medications?: string | null
           phase1_complete?: boolean
           phase2_complete?: boolean
           sex?: string | null
@@ -5463,6 +5469,7 @@ export type Database = {
           lab_exam_url: string | null
           marketing_opt_in: boolean | null
           medical_prescription_url: string | null
+          medications: string | null
           notify_on_updates: boolean
           objective: string | null
           onboarding_complete: boolean
@@ -5512,6 +5519,7 @@ export type Database = {
           lab_exam_url?: string | null
           marketing_opt_in?: boolean | null
           medical_prescription_url?: string | null
+          medications?: string | null
           notify_on_updates?: boolean
           objective?: string | null
           onboarding_complete?: boolean
@@ -5561,6 +5569,7 @@ export type Database = {
           lab_exam_url?: string | null
           marketing_opt_in?: boolean | null
           medical_prescription_url?: string | null
+          medications?: string | null
           notify_on_updates?: boolean
           objective?: string | null
           onboarding_complete?: boolean
