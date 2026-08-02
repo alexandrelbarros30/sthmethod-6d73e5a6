@@ -236,6 +236,23 @@ export default function AiProfile() {
         {showFicha ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </button>
 
+      <AiBriefingChecklist
+        profile={liveProfile}
+        kind="diet"
+        items={dietChecklist}
+        editHref="#"
+        hideEdit
+        title="Checklist do briefing · Cardápio"
+      />
+      <AiBriefingChecklist
+        profile={liveProfile}
+        kind="workout"
+        items={workoutChecklist}
+        editHref="#"
+        hideEdit
+        title="Checklist do briefing · Treino"
+      />
+
       {showFicha && (
       <>
       <Card className="space-y-4 p-5">
