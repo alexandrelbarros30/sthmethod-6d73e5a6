@@ -325,6 +325,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
                 description={g.description}
                 pending={pend}
                 onSave={saveRoutine}
+                defaultOpen={Boolean(focusKey) && g.keys.includes(focusKey)}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   {fields.map((f) => (
