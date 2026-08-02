@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
@@ -182,9 +183,10 @@ export default function AiCoaches() {
               <Label htmlFor="goal">Seu objetivo</Label>
               <Input id="goal" value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} placeholder="Ex.: recomposição corporal em 12 semanas" />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="msg">Mensagem (opcional)</Label>
               <Textarea id="msg" rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
+              <AiVoiceInput onTranscribe={(t) => setForm((f) => ({ ...f, message: appendTranscript(f.message, t) }))} />
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
               {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enviar solicitação
@@ -216,9 +218,12 @@ export default function AiCoaches() {
           </div>
           <div className="flex items-end gap-2">
             <Textarea rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Escreva sua mensagem" />
-            <Button onClick={send} disabled={busy || !draft.trim()} size="icon" aria-label="Enviar">
-              <Send className="h-4 w-4" />
-            </Button>
+            <div className="flex flex-col gap-1.5">
+              <AiVoiceInput size="icon" onTranscribe={(t) => setDraft((v) => appendTranscript(v, t))} />
+              <Button onClick={send} disabled={busy || !draft.trim()} size="icon" aria-label="Enviar">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
