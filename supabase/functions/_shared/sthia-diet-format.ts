@@ -23,4 +23,11 @@ REGRAS DE FORMATAÇÃO (invioláveis):
 - Nomes típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia.
 - Subtítulos estratégicos entre parênteses (ex.: Ativação Metabólica, Sustentação Anabólica, Carga de Glicogênio, Recuperação Noturna).
 - Seções de texto usam <h3>Título</h3> e <p>. Nunca use "##", "**" ou qualquer marcação markdown.
+
+HIDRATAÇÃO (obrigatória em todo cardápio):
+- Calcule a meta hídrica diária em 35 ml por kg de peso corporal (arredonde para 0,1 L) e ajuste para cima em caso de treino intenso, calor ou dieta hiperproteica.
+- Ao final do cardápio, SEMPRE inclua a seção exatamente assim:
+  <h3>💧 Hidratação</h3>
+  <p><strong>Meta diária: X,X L de água</strong> (~35 ml/kg) — distribua ao longo do dia; ~500 ml ao acordar, 500 ml no treino e o restante entre as refeições.</p>
+- Nunca omita essa seção e nunca declare a meta hídrica dentro do cabeçalho das refeições.
 `;
