@@ -335,7 +335,7 @@ export default function AiDashboard() {
                 </span>
                 {gen && (
                   <span className={`text-[10px] ${dark ? "text-white/50" : "text-muted-foreground"}`}>
-                    revisões {gen.revisions}/{kind === "analysis" ? 1 : 2}
+                    revisões {gen.revisions}/{kind === "analysis" ? 1 : 3}
                   </span>
                 )}
               </div>
