@@ -291,7 +291,39 @@ Deno.serve(async (req) => {
     // Auditoria nutricional: kcal/macros das refeições recalculados sobre a BASE (TACO).
     let dietTotals: unknown = null;
     if (kind === 'diet') {
-      const audit = recalcDietMacros(content);
+      // Alvos vindos do briefing confirmado pelo usuário.
+      const num = (re: RegExp) => {
+        const m = String(instruction ?? '').match(re);
+        return m ? Number(m[1]) : null;
+      };
+      const targetKcal = num(/Kcal alvo:\s*([\d.]+)/i);
+      const targetP = num(/Prote[ií]na:\s*([\d.]+)/i);
+      const targetC = num(/Carboidrato:\s*([\d.]+)/i);
+      const targetF = num(/Lip[ií]dio:\s*([\d.]+)/i);
+
+      let audit = recalcDietMacros(content);
+
+      // Ciclo de convergência: enquanto o somatório real (TACO) estiver fora de ±5%
+      // do alvo, a IA reajusta as PORÇÕES das refeições BASE e recalculamos de novo.
+      if (targetKcal && targetKcal > 0) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const diff = audit.totals.kcal - targetKcal;
+          if (Math.abs(diff) / targetKcal <= 0.05) break;
+          const fix = `Auditoria nutricional do sistema (tabela TACO, calculada item a item sobre as refeições BASE):
+- Total atual: ${Math.round(audit.totals.kcal)} kcal | P ${Math.round(audit.totals.p)}g / C ${Math.round(audit.totals.c)}g / G ${Math.round(audit.totals.f)}g
+- Meta obrigatória: ${targetKcal} kcal${targetP ? ` | P ${targetP}g` : ''}${targetC ? ` / C ${targetC}g` : ''}${targetF ? ` / G ${targetF}g` : ''}
+- Desvio: ${diff > 0 ? '+' : ''}${Math.round(diff)} kcal (${((diff / targetKcal) * 100).toFixed(1)}%)
+
+Reescreva o MESMO cardápio integralmente (HTML puro, mesma estrutura, mesmas refeições e mesmo formato), ${diff > 0 ? 'REDUZINDO' : 'AUMENTANDO'} as porções em gramas/ml dos itens das refeições BASE e das opções até que o somatório real feche a meta com tolerância de ±5%. Ajuste preferencialmente carboidratos e gorduras, preservando a proteína próxima do alvo. Toda quantidade deve continuar explícita em g/ml. Não invente números nos cabeçalhos: o sistema recalcula.`;
+          try {
+            content = await callAi(PROMPTS[kind], `${userPrompt}\n\nVersão atual do cardápio:\n${content}\n\n${fix}`);
+            audit = recalcDietMacros(content);
+          } catch (_e) {
+            break;
+          }
+        }
+      }
+
       content = audit.html;
       dietTotals = {
         kcal: Math.round(audit.totals.kcal),
@@ -299,6 +331,10 @@ Deno.serve(async (req) => {
         carbs_g: Math.round(audit.totals.c),
         fat_g: Math.round(audit.totals.f),
         meals_recalculated: audit.recalculated,
+        target_kcal: targetKcal,
+        target_protein_g: targetP,
+        target_carbs_g: targetC,
+        target_fat_g: targetF,
       };
     }
 
