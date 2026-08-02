@@ -341,6 +341,28 @@ serve(async (req) => {
       }
     }
 
+    // Comorbidades e medicamentos do cadastro (dados sensíveis que mudam a dieta)
+    let clinicalBlock = "";
+    if (studentId) {
+      try {
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+        const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const admin2 = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+        const { data: prof } = await admin2
+          .from("profiles")
+          .select("comorbidities, medications")
+          .eq("user_id", studentId)
+          .maybeSingle();
+        const comorb = String(prof?.comorbidities || "").trim();
+        const meds = String(prof?.medications || "").trim();
+        if (comorb || meds) {
+          clinicalBlock = `\n\n⚠️ DADOS CLÍNICOS SENSÍVEIS DO CADASTRO (obrigatório considerar):\n- Comorbidades: ${comorb || "não informado"}\n- Medicamentos em uso: ${meds || "não informado"}\nAjuste escolha de alimentos, sódio, fibras, índice glicêmico, distribuição de macros e timing conforme essas condições e possíveis interações. NÃO prescreva, altere ou sugira suspensão de medicamentos.`;
+        }
+      } catch (e) {
+        console.warn("clinical fetch failed", e);
+      }
+    }
+
     const protocolBlock = String(protocolText || "").trim()
       ? `\n\nPROTOCOLO ATUAL DO ALUNO (registrado na ficha — use para calibrar timing, hidratação, sódio, fibras, suporte hepático/renal, sensibilidade à insulina e tolerância gastrointestinal; NÃO prescreva medicamentos e NÃO cite doses):\n${String(protocolText).slice(0, 8000)}`
       : "";
@@ -362,7 +384,7 @@ Analise o briefing, os dados do aluno, o protocolo atual (quando houver) e as fo
 - alimentos e combinações prioritárias, e o que evitar
 - riscos, pontos de atenção e critérios de acompanhamento
 
-NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em português BR, tom técnico, direto e premium, em HTML simples (<p>, <strong>, <ul>, <li>), sem markdown.${protocolBlock}
+NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em português BR, tom técnico, direto e premium, em HTML simples (<p>, <strong>, <ul>, <li>), sem markdown.${protocolBlock}${clinicalBlock}
 
 ${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
@@ -405,7 +427,7 @@ REGRAS:
 - Opção 2, 3 e 4 devem ser aproximadamente isocalóricas e isomacros em relação à BASE.
 - Campo diet_text DEVE conter o HTML completo pronto para renderizar no portal do aluno.
 - Nos campos numéricos do tool call (energy_kcal, protein_g, carbs_g, fat_g), retorne SEMPRE valores inteiros (sem casas decimais).
-- Retorne APENAS via tool call.${protocolBlock}${adviceBlock}`;
+- Retorne APENAS via tool call.${protocolBlock}${clinicalBlock}${adviceBlock}`;
 
     const userText = isReview
       ? `Revise este cardápio e devolva análise + sugestões:\n\n${dietContent}`

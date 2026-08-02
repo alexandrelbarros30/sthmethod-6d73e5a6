@@ -72,7 +72,7 @@ async function fetchDossier(
   const imageParts: Array<{ type: "image_url"; image_url: { url: string } }> = [];
 
   const { data: prof } = await admin.from("profiles")
-    .select("full_name, birth_date, gender, weight, height, objective, medical_conditions, medications, current_supplements, allergies, notes")
+    .select("full_name, birth_date, gender, weight, height, objective, comorbidities, medications, current_protocol, additional_info")
     .eq("user_id", studentId).maybeSingle();
   out.profile = prof ?? null;
 

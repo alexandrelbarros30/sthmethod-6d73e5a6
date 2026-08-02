@@ -13,7 +13,7 @@ export async function buildStudentContext(admin: any, userId: string): Promise<s
     { data: training },
     { data: protocol },
   ] = await Promise.all([
-    admin.from('profiles').select('full_name, objective, weight, height, age, gender, neat_level, phone').eq('user_id', userId).maybeSingle(),
+    admin.from('profiles').select('full_name, objective, weight, height, age, gender, neat_level, phone, comorbidities, medications').eq('user_id', userId).maybeSingle(),
     admin.from('subscriptions').select('status, end_date, plan_id').eq('user_id', userId).order('end_date', { ascending: false }).limit(1).maybeSingle(),
     admin.from('weight_logs').select('weight, waist_cm, hip_cm, logged_at').eq('user_id', userId).order('logged_at', { ascending: false }).limit(1).maybeSingle(),
     admin.from('student_diets').select('total_calories, total_protein, total_carbs, total_fat, water_goal_ml, updated_at').eq('user_id', userId).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
@@ -33,6 +33,8 @@ export async function buildStudentContext(admin: any, userId: string): Promise<s
   if (profile.gender) bio.push(profile.gender);
   if (bio.length) lines.push(`Biometria: ${bio.join(' · ')}`);
   if (profile.neat_level) lines.push(`NEAT: ${profile.neat_level}`);
+  lines.push(`Comorbidades: ${profile.comorbidities || 'não informado'}`);
+  lines.push(`Medicamentos em uso: ${profile.medications || 'não informado'}`);
 
   if (sub) {
     const isActive = sub.status === 'active' && sub.end_date && sub.end_date >= today;

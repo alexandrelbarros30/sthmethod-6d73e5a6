@@ -23,6 +23,8 @@ interface FormState {
   routine: string;
   meals_per_day: string;
   restrictions: string;
+  comorbidities: string;
+  medications: string;
   dislikes: string;
   budget: string;
   training_days: string;
@@ -34,7 +36,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   full_name: "", age: "", sex: "", weight_kg: "", height_cm: "", goal: "", training_level: "",
-  routine: "", meals_per_day: "", restrictions: "", dislikes: "", budget: "",
+  routine: "", meals_per_day: "", restrictions: "", comorbidities: "", medications: "", dislikes: "", budget: "",
   training_days: "", equipment: "", limitations: "", sleep: "", stress: "",
 };
 
@@ -69,6 +71,8 @@ export default function AiOnboarding() {
           height_cm: data.height_cm?.toString() ?? "",
           goal: data.goal ?? "",
           training_level: data.training_level ?? "",
+          comorbidities: (data as any).comorbidities ?? "",
+          medications: (data as any).medications ?? "",
           ...a,
         });
         setStep(data.phase1_complete ? 1 : 0);
@@ -104,10 +108,14 @@ export default function AiOnboarding() {
       height_cm: Number(form.height_cm) || null,
       goal: form.goal || null,
       training_level: form.training_level || null,
+      comorbidities: form.comorbidities || null,
+      medications: form.medications || null,
       answers: {
         routine: form.routine,
         meals_per_day: form.meals_per_day,
         restrictions: form.restrictions,
+        comorbidities: form.comorbidities,
+        medications: form.medications,
         dislikes: form.dislikes,
         budget: form.budget,
         training_days: form.training_days,
@@ -239,6 +247,16 @@ export default function AiOnboarding() {
               <div className="space-y-1.5">
                 <Label>Restrições alimentares / alergias</Label>
                 <Input value={form.restrictions} onChange={(e) => set("restrictions", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Comorbidades (doenças/condições de saúde)</Label>
+                <Textarea rows={2} value={form.comorbidities} onChange={(e) => set("comorbidities", e.target.value)} placeholder="Ex.: diabetes, hipertensão, hipotireoidismo. Se não houver, escreva 'Nenhuma'" />
+                <p className="text-[11px] text-muted-foreground">Usado na avaliação e na construção do seu cardápio e treino.</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Medicamentos em uso</Label>
+                <Textarea rows={2} value={form.medications} onChange={(e) => set("medications", e.target.value)} placeholder="Ex.: Metformina 850mg 2x/dia, Losartana 50mg/dia. Se não usa, escreva 'Nenhum'" />
+                <p className="text-[11px] text-muted-foreground">Usado na avaliação e na construção do seu cardápio e treino.</p>
               </div>
               <div className="space-y-1.5">
                 <Label>Alimentos que você não gosta</Label>

@@ -110,6 +110,7 @@ const defaultProfileForm = (quizData?: any, draft?: any) => ({
   objective: draft?.objective || quizData?.objective || "",
   current_protocol: draft?.current_protocol || "",
   comorbidities: draft?.comorbidities || "",
+  medications: draft?.medications || "",
   additional_info: draft?.additional_info || "",
   training_days_per_week: draft?.training_days_per_week || quizData?.training_days_per_week || "",
   training_duration_minutes: draft?.training_duration_minutes || quizData?.training_duration_minutes || "",
@@ -483,7 +484,7 @@ const Cadastro = () => {
 
   // Step 2: Save profile
   const handleSaveProfile = async () => {
-    const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date, physical_activity_level } = profileForm;
+    const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, medications, birth_date, physical_activity_level } = profileForm;
     if (!validateContact()) return;
     if (!profileForm.cpf || !isValidCpf(profileForm.cpf)) { toast.error("CPF inválido"); return; }
     if (!gender) { toast.error("Selecione o gênero"); return; }
@@ -539,6 +540,7 @@ const Cadastro = () => {
           : null,
         current_protocol: current_protocol || null,
         comorbidities: comorbidities || null,
+        medications: medications || null,
         additional_info: profileForm.additional_info,
         physical_activity_level: profileForm.physical_activity_level || null,
         training_days_per_week: profileForm.training_days_per_week ? Math.round(Number(profileForm.training_days_per_week)) : null,
@@ -1055,7 +1057,20 @@ const Cadastro = () => {
                   Comorbidades
                   <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
                 </Label>
-                <Textarea value={profileForm.comorbidities} onChange={(e) => setProfileForm({ ...profileForm, comorbidities: e.target.value })} rows={2} placeholder="Possui alguma condição de saúde? Se não, escreva 'Nenhuma'" />
+                <Textarea value={profileForm.comorbidities} onChange={(e) => setProfileForm({ ...profileForm, comorbidities: e.target.value })} rows={2} placeholder="Possui alguma doença ou condição de saúde? Ex.: diabetes, hipertensão, tireoide, colesterol alto. Se não, escreva 'Nenhuma'" />
+                <p className="text-[11px] text-muted-foreground font-body mt-1">
+                  Esse dado é usado na avaliação e na construção do seu cardápio e treino.
+                </p>
+              </div>
+              <div>
+                <Label className="font-body inline-flex items-center">
+                  Medicamentos em uso
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                </Label>
+                <Textarea value={profileForm.medications} onChange={(e) => setProfileForm({ ...profileForm, medications: e.target.value })} rows={2} placeholder="Relate os medicamentos de uso contínuo com dose e frequência. Ex.: Metformina 850mg 2x/dia, Losartana 50mg/dia. Se não usa, escreva 'Nenhum'" />
+                <p className="text-[11px] text-muted-foreground font-body mt-1">
+                  Esse dado é usado na avaliação e na construção do seu cardápio e treino.
+                </p>
               </div>
               <div>
                 <Label className="font-body">Mais informações</Label>

@@ -69,6 +69,7 @@ export interface ProfileFormData {
   objective: string;
   current_protocol: string;
   comorbidities: string;
+  medications: string;
   additional_info: string;
 }
 
@@ -77,7 +78,7 @@ export const emptyProfileForm: ProfileFormData = {
   gender: "", physical_activity_level: "", activity_type: "", does_cardio: "",
   training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
   cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
-  objective: "", current_protocol: "", comorbidities: "", additional_info: "",
+  objective: "", current_protocol: "", comorbidities: "", medications: "", additional_info: "",
 };
 
 export function profileFromDb(p: any): ProfileFormData {
@@ -101,6 +102,7 @@ export function profileFromDb(p: any): ProfileFormData {
     objective: p.objective || "",
     current_protocol: p.current_protocol || "",
     comorbidities: p.comorbidities || "",
+    medications: p.medications || "",
     additional_info: p.additional_info || "",
   };
 }
@@ -130,6 +132,7 @@ export function getPendingFields(form: ProfileFormData, hasImages: boolean): str
   if (!form.objective) pending.push("Objetivo");
   if (!form.current_protocol) pending.push("Protocolo atual");
   if (!form.comorbidities) pending.push("Comorbidades");
+  if (!form.medications) pending.push("Medicamentos em uso");
   return pending;
 }
 
@@ -196,6 +199,7 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
     if (!form.objective) { toast.error("Selecione o objetivo"); return; }
     if (!form.current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return; }
     if (!form.comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return; }
+    if (!form.medications.trim()) { toast.error("Medicamentos em uso é obrigatório (escreva 'Nenhum' se não usar)"); return; }
 
     setSaving(true);
     try {
@@ -214,6 +218,7 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
         objective: form.objective,
         current_protocol: form.current_protocol,
         comorbidities: form.comorbidities,
+        medications: form.medications,
         additional_info: form.additional_info,
         training_days_per_week: form.training_days_per_week ? Math.round(Number(form.training_days_per_week)) : null,
         training_duration_minutes: form.training_duration_minutes ? Math.round(Number(form.training_duration_minutes)) : null,
@@ -472,7 +477,11 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
         </div>
         <div>
           <Label className="font-body">Comorbidades *</Label>
-          <Textarea value={form.comorbidities} onChange={(e) => set("comorbidities", e.target.value)} rows={2} />
+          <Textarea value={form.comorbidities} onChange={(e) => set("comorbidities", e.target.value)} rows={2} placeholder="Ex.: diabetes tipo 2, hipertensão, hipotireoidismo. Se não houver, escreva 'Nenhuma'" />
+        </div>
+        <div>
+          <Label className="font-body">Medicamentos em uso *</Label>
+          <Textarea value={form.medications} onChange={(e) => set("medications", e.target.value)} rows={2} placeholder="Ex.: Metformina 850mg 2x/dia, Losartana 50mg/dia. Se não usar, escreva 'Nenhum'" />
         </div>
         <div>
           <Label className="font-body">Informações adicionais</Label>

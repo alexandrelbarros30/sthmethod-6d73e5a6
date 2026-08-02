@@ -38,6 +38,7 @@
 ### Features & Modules
 - [STH METHOD AI](mem://features/sth-method-ai-app) — Produto autônomo em /ai: onboarding 2 fases, Cardápio/Treino IA, Central de Análise, paywall MP, tabelas ai_app_*
 - [Student Record](mem://features/prontuario-aluno) — Required NEAT, dynamic training frequency, quick copy
+- [Comorbidades e Medicamentos](mem://features/comorbidades-medicamentos) — Campos obrigatórios no cadastro, sincronizados STH METHOD ↔ STH AI e injetados em todos os prompts de IA
 - [Student Plan History](mem://features/admin/historico-jornada-aluno) — Admin view of current plan, first adhesion, and renewal timeline
 - [Macro Calculator](mem://features/calculadora-macros) — Mifflin-St Jeor, dynamic NEAT, and EAT calculations
 - [Guided Workouts](mem://features/modulo-treino-guiado) — ST Coach deep linking (stcoach://) with app store fallbacks

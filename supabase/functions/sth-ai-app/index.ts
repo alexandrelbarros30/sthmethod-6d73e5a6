@@ -111,6 +111,14 @@ function profileBlock(p: any, measurements: any[]) {
     `Peso: ${p?.weight_kg ?? '—'} kg | Altura: ${p?.height_cm ?? '—'} cm`,
     `Objetivo: ${p?.goal ?? '—'} | Nível: ${p?.training_level ?? '—'}`,
   ];
+  const comorb = p?.comorbidities ?? a?.comorbidities ?? '';
+  const meds = p?.medications ?? a?.medications ?? '';
+  lines.push(
+    '⚠️ DADOS CLÍNICOS SENSÍVEIS (obrigatório considerar em cardápio, treino e análise):',
+    `- Comorbidades: ${comorb || 'não informado'}`,
+    `- Medicamentos em uso: ${meds || 'não informado'}`,
+    'Adapte alimentos, distribuição de macros, volume/intensidade do treino e recomendações a essas condições e possíveis interações. Nunca prescreva, altere ou sugira suspensão de medicamentos — oriente sempre a falar com a consultoria.',
+  );
   const extras = Object.entries(a)
     .filter(([, v]) => v !== null && v !== '' && v !== undefined)
     .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`);
