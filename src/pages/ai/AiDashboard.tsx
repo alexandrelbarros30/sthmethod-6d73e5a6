@@ -132,7 +132,17 @@ export default function AiDashboard() {
         <AiWorkoutReminderCard
           workout={latestOf(generations, "workout")}
           done={!!today?.workout_done}
-          onDone={() => saveCheckin({ workout_done: true })}
+          doneAt={today?.workout_done ? today.checkin_date : null}
+          onDone={async () => {
+            await saveCheckin({
+              diet_done: today?.diet_done ?? false,
+              water_done: today?.water_done ?? false,
+              workout_done: true,
+            });
+            toast.success(
+              `Treino registrado em ${new Date().toLocaleDateString("pt-BR")} no seu histórico.`,
+            );
+          }}
         />
 
         {/* Constância — compacto */}
