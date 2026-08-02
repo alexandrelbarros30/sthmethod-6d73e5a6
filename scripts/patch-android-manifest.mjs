@@ -7,18 +7,27 @@ import fs from 'node:fs';
 // que quebra o merge do manifesto no `assembleDebug`.
 const MIN_SDK = 26;
 const variablesFile = 'android/variables.gradle';
-if (fs.existsSync(variablesFile)) {
-  let gradle = fs.readFileSync(variablesFile, 'utf8');
-  if (/minSdkVersion\s*=\s*\d+/.test(gradle)) {
-    gradle = gradle.replace(/minSdkVersion\s*=\s*\d+/g, `minSdkVersion = ${MIN_SDK}`);
-  } else {
-    gradle = gradle.replace(/ext\s*\{/, `ext {\n    minSdkVersion = ${MIN_SDK}`);
-  }
-  fs.writeFileSync(variablesFile, gradle);
-  console.log(`variables.gradle: minSdkVersion = ${MIN_SDK}`);
-} else {
-  console.log('variables.gradle não encontrado — pulando ajuste de minSdk.');
+if (!fs.existsSync(variablesFile)) {
+  throw new Error('android/variables.gradle não encontrado; a plataforma Android não foi gerada.');
 }
+
+let gradle = fs.readFileSync(variablesFile, 'utf8');
+if (/minSdkVersion\s*=\s*\d+/.test(gradle)) {
+  gradle = gradle.replace(/minSdkVersion\s*=\s*\d+/g, `minSdkVersion = ${MIN_SDK}`);
+} else if (/minSdkVersion\s+\d+/.test(gradle)) {
+  gradle = gradle.replace(/minSdkVersion\s+\d+/g, `minSdkVersion = ${MIN_SDK}`);
+} else if (/ext\s*\{/.test(gradle)) {
+  gradle = gradle.replace(/ext\s*\{/, `ext {\n    minSdkVersion = ${MIN_SDK}`);
+} else {
+  throw new Error('Bloco ext não encontrado em android/variables.gradle.');
+}
+
+fs.writeFileSync(variablesFile, gradle);
+const verifiedGradle = fs.readFileSync(variablesFile, 'utf8');
+if (!new RegExp(`minSdkVersion\\s*(?:=\\s*|\\s+)${MIN_SDK}\\b`).test(verifiedGradle)) {
+  throw new Error(`Falha ao configurar minSdkVersion = ${MIN_SDK}.`);
+}
+console.log(`variables.gradle verificado: minSdkVersion = ${MIN_SDK}`);
 
 const file = 'android/app/src/main/AndroidManifest.xml';
 if (!fs.existsSync(file)) {
