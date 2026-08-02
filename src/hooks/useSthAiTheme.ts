@@ -14,7 +14,11 @@ export function useSthAiTheme() {
     const root = document.documentElement;
     root.classList.remove("dark");
     root.classList.add("theme-sth-green");
-    return () => root.classList.remove("theme-sth-green");
+    root.classList.add("theme-sth-ai");
+    return () => {
+      root.classList.remove("theme-sth-green");
+      root.classList.remove("theme-sth-ai");
+    };
   }, []);
 }
 
