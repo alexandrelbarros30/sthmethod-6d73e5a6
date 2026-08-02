@@ -226,6 +226,10 @@ export default function AiWorkoutProgram({ content }: { content: string }) {
                     className="flex-1 rounded-xl bg-muted/40 border-border resize-none"
                   />
                   <div className="flex flex-col gap-1.5">
+                    <AiVoiceInput
+                      size="icon"
+                      onTranscribe={(t) => setDrafts((p) => ({ ...p, [key]: appendTranscript(p[key] || "", t) }))}
+                    />
                     <Button
                       size="sm"
                       disabled={!drafts[key]?.trim()}
