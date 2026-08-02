@@ -16,6 +16,7 @@
     "@ai-sdk/openai-compatible": "0.2",
     "@capacitor/android": "^8.1.0",
     "@capacitor/app": "^8.1.1",
+    "@capacitor/camera": "^8.2.2",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
     "@capacitor/ios": "^8.1.0",
