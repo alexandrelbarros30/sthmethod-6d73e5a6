@@ -9,6 +9,7 @@ import { useAiProgress } from "@/hooks/useAiProgress";
 import { useAiOffer, useAiInsight } from "@/hooks/useAiGrowth";
 import { useAiHealth } from "@/hooks/useAiHealth";
 import AiOfferCard from "@/components/ai/AiOfferCard";
+import AiHydrationCard from "@/components/ai/AiHydrationCard";
 import {
   Loader2,
   ArrowRight,
@@ -154,6 +155,10 @@ export default function AiDashboard() {
           </Button>
         </Card>
       )}
+
+      <div className="mb-3 sm:mb-4">
+        <AiHydrationCard />
+      </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
         {/* Constância — tile herói */}
