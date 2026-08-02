@@ -179,6 +179,16 @@ export default function AiDashboard() {
 
   return (
     <AiShell title={`Olá, ${firstName}`} subtitle="Sua inteligência de nutrição, treino e evolução.">
+      <Card className="mb-4 flex items-center gap-3 p-4">
+        <ProfileAvatar size={52} onClick={() => navigate("/ai/app/perfil")} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{profile?.full_name || firstName}</p>
+          <Link to="/ai/app/perfil" className="text-xs text-primary hover:underline">
+            Alterar foto de perfil
+          </Link>
+        </div>
+      </Card>
+
       {offer && (
         <div className="mb-4">
           <AiOfferCard offer={offer} onDismiss={dismiss} />
