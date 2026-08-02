@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
 import { useAiProgress, todayISO } from "@/hooks/useAiProgress";
 import { useWorkoutReminder, ensureNotificationPermission } from "@/hooks/useWorkoutReminder";
+import { useAiReminders, ReminderItem } from "@/hooks/useAiReminders";
+import { parseMeals } from "@/components/ai/AiDietPlan";
 import { useAiOffer, useAiInsight } from "@/hooks/useAiGrowth";
 import AiOfferCard from "@/components/ai/AiOfferCard";
 import AiHydrationCard from "@/components/ai/AiHydrationCard";
