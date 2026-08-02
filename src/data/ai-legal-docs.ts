@@ -689,6 +689,122 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "politica-geracoes-revisoes-periodizacao",
+    title: "Política de Gerações, Revisões e Periodização",
+    subtitle: "Regras para criação e ajuste dos planejamentos personalizados",
+    code: "STHAI-GR-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Objetivo",
+        paragraphs: [
+          "Esta Política estabelece as regras para geração, atualização e revisão dos planejamentos personalizados realizados pela STH AI.",
+          "O objetivo é garantir que os recursos de inteligência artificial sejam utilizados de forma estratégica, respeitando princípios de periodização, adaptação e evolução progressiva.",
+        ],
+      },
+      {
+        title: "2. Princípio da Metodologia",
+        paragraphs: [
+          "A STH AI não funciona como uma ferramenta de criação ilimitada de planos aleatórios.",
+          "O sistema foi desenvolvido para acompanhar a evolução do usuário através de ciclos planejados, considerando objetivo individual, histórico registrado, informações corporais, rotina, evolução observada e dados inseridos durante o acompanhamento.",
+          "A constante alteração de estratégias sem justificativa técnica pode prejudicar a execução e a análise dos resultados.",
+        ],
+      },
+      {
+        title: "3. Conceito de Geração",
+        paragraphs: [
+          "Uma geração representa a criação oficial de um planejamento personalizado pela STH AI.",
+          "Cada geração poderá envolver planejamento de treino, planejamento alimentar, análise de exames e análise corporal por imagens.",
+          "Após a geração, o planejamento passa a ser considerado a referência oficial do ciclo atual do usuário.",
+        ],
+      },
+      {
+        title: "4. Primeiro Planejamento",
+        paragraphs: [
+          "Após a contratação do plano, o usuário terá direito à primeira geração dos serviços contratados.",
+          "A geração será realizada utilizando questionário inicial, dados corporais, objetivos informados, histórico disponível, informações alimentares e demais dados fornecidos.",
+        ],
+      },
+      {
+        title: "5. Ciclos de Acompanhamento",
+        paragraphs: [
+          "A STH AI organiza o acompanhamento em ciclos de evolução.",
+          "Os ciclos permitem aplicação do planejamento, observação da resposta individual, coleta de dados, análise de evolução e ajustes quando necessários.",
+          "A duração dos ciclos pode variar conforme objetivo, perfil e estratégia definida.",
+        ],
+      },
+      {
+        title: "6. Revisões",
+        paragraphs: [
+          "As revisões existem para ajustes técnicos e não para substituição constante do planejamento.",
+          "Cada geração poderá possuir até três revisões dentro dos critérios definidos pela plataforma.",
+        ],
+        bullets: [
+          "mudança relevante de rotina;",
+          "alteração de objetivo;",
+          "evolução corporal significativa;",
+          "dificuldade comprovada de execução;",
+          "necessidade de ajuste alimentar;",
+          "alteração de dados importantes;",
+          "informações novas que impactem o planejamento.",
+        ],
+      },
+      {
+        title: "7. Solicitações sem Justificativa Técnica",
+        paragraphs: [
+          "Podem não gerar revisão: desejo de alterar constantemente o planejamento, comparação com outros usuários, curiosidade sobre novas versões e busca por mudanças sem execução adequada do plano anterior.",
+          "A STH AI poderá manter o planejamento vigente quando identificar que a continuidade é mais adequada para o processo de evolução.",
+        ],
+      },
+      {
+        title: "8. Uso de Recursos Ilimitados",
+        paragraphs: ["Algumas ferramentas possuem utilização contínua durante a assinatura:"],
+        bullets: [
+          "STH Food AI: uso livre para análise de alimentos, análise de refeições, interpretação de produtos e apoio ao diário alimentar.",
+          "Evolução Corporal por Imagens: uso livre para envio de novas fotografias, comparação visual e acompanhamento da transformação corporal.",
+          "Esses recursos não representam automaticamente uma nova geração de treino ou cardápio.",
+        ],
+      },
+      {
+        title: "9. Planos e Ciclos",
+        paragraphs: ["Os planos possuem diferentes períodos de duração:"],
+        bullets: [
+          "Plano 30 dias: destinado a um ciclo inicial de acompanhamento.",
+          "Plano 90 dias: permite acompanhamento de ciclos de evolução mais extensos.",
+          "Plano 180 dias: permite acompanhamento prolongado com análise contínua da evolução.",
+          "Plano 365 dias: permite acompanhamento anual com planejamento estruturado em fases.",
+          "A liberação de novos ciclos seguirá critérios metodológicos e não apenas o tempo contratado.",
+        ],
+      },
+      {
+        title: "10. Exceções Técnicas",
+        paragraphs: [
+          "A STH AI poderá considerar novas avaliações ou ajustes extraordinários quando houver alteração significativa das informações fornecidas, mudança relevante de contexto, necessidade identificada pela análise da evolução ou situações que justifiquem alteração do planejamento.",
+        ],
+      },
+      {
+        title: "11. Registro Histórico",
+        paragraphs: [
+          "Todas as gerações e revisões serão registradas no histórico do usuário contendo data da criação, versão do planejamento, alterações realizadas, justificativa da revisão e evolução observada.",
+          "Esse histórico permite acompanhar a trajetória do usuário dentro da metodologia STH AI.",
+        ],
+      },
+      {
+        title: "12. Objetivo Final",
+        paragraphs: [
+          "A Política de Gerações, Revisões e Periodização existe para garantir que a inteligência artificial seja utilizada como uma ferramenta estratégica de acompanhamento, evitando mudanças impulsivas e priorizando consistência, execução, adaptação e evolução sustentável.",
+        ],
+      },
+      {
+        title: "13. Vigência",
+        paragraphs: [
+          "Esta Política entra em vigor na data de sua publicação e permanece válida durante a utilização da plataforma STH AI.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
