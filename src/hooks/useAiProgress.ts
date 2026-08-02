@@ -119,5 +119,37 @@ export function useAiProgress() {
     [user?.id, refresh],
   );
 
-  return { user, checkins, measurements, streak, today, last7, loading, refresh, saveCheckin, saveMeasurement };
+  /** Marca/desmarca o treino como realizado em uma data específica do histórico. */
+  const setWorkoutDone = useCallback(
+    async (dateISO: string, value: boolean) => {
+      if (!user?.id) return;
+      const existing = checkins.find((c) => c.checkin_date === dateISO);
+      await supabase.from("ai_app_checkins").upsert(
+        {
+          user_id: user.id,
+          checkin_date: dateISO,
+          diet_done: existing?.diet_done ?? false,
+          water_done: existing?.water_done ?? false,
+          workout_done: value,
+        },
+        { onConflict: "user_id,checkin_date" },
+      );
+      await refresh();
+    },
+    [user?.id, checkins, refresh],
+  );
+
+  return {
+    user,
+    checkins,
+    measurements,
+    streak,
+    today,
+    last7,
+    loading,
+    refresh,
+    saveCheckin,
+    saveMeasurement,
+    setWorkoutDone,
+  };
 }
