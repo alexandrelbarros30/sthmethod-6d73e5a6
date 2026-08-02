@@ -46,6 +46,7 @@ export default function AiOnboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const nextParam = searchParams.get("next");
+  const campoParam = searchParams.get("campo");
   const returnTo = nextParam && nextParam.startsWith("/ai/") ? nextParam : "/ai/app";
   const [form, setForm] = useState<FormState>(EMPTY);
   const [step, setStep] = useState(0);
@@ -84,6 +85,16 @@ export default function AiOnboarding() {
       setReady(true);
     })();
   }, [user?.id, authLoading, navigate]);
+
+  const STEP0_FIELDS = ["full_name", "age", "sex", "weight_kg", "height_cm", "goal", "training_level"];
+
+  // Chegou aqui a partir de uma red flag do checklist: abre a etapa certa e destaca o campo.
+  useEffect(() => {
+    if (!ready || !campoParam) return;
+    setStep(STEP0_FIELDS.includes(campoParam) ? 0 : 1);
+    focusField(`f-${campoParam}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, campoParam]);
 
   function set<K extends keyof FormState>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
