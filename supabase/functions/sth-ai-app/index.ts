@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
     // ===== Admin / contas demo bypass (testes internos e apresentação) =====
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
     const DEMO_EMAILS = ['alexandrelbarros30@gmail.com'];
-    const claimEmail = String((auth?.claims as any)?.email ?? '').toLowerCase();
+    const claimEmail = String((auth?.claims as any)?.email ?? '').trim().toLowerCase();
     const unlimited = Boolean(isAdmin) || DEMO_EMAILS.includes(claimEmail);
 
     // ===== Assinatura ativa =====
