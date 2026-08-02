@@ -147,6 +147,59 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
   const [result, setResult] = useState<any>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  // Câmera embutida (web): evita o <input capture>, que em vários navegadores
+  // mobile devolve o arquivo vazio ou perde o state ao voltar da câmera nativa.
+  const [camOpen, setCamOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const camStreamRef = useRef<MediaStream | null>(null);
+
+  function stopCamera() {
+    try { camStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
+    camStreamRef.current = null;
+    setCamOpen(false);
+  }
+
+  useEffect(() => () => { try { camStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ } }, []);
+
+  async function openCamera() {
+    if (!navigator.mediaDevices?.getUserMedia) { cameraInputRef.current?.click(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 } },
+        audio: false,
+      });
+      camStreamRef.current = stream;
+      setCamOpen(true);
+      setTimeout(() => {
+        const v = videoRef.current;
+        if (!v) return;
+        v.srcObject = stream;
+        v.play().catch(() => { /* noop */ });
+      }, 50);
+    } catch {
+      cameraInputRef.current?.click();
+    }
+  }
+
+  function captureFromCamera() {
+    const v = videoRef.current;
+    if (!v || !v.videoWidth) { setErrMsg("Câmera ainda carregando. Tente novamente."); return; }
+    const maxSide = 1400;
+    const scale = Math.min(1, maxSide / Math.max(v.videoWidth, v.videoHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(v.videoWidth * scale);
+    canvas.height = Math.round(v.videoHeight * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { setErrMsg("Não foi possível capturar a foto neste aparelho."); return; }
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+    stopCamera();
+    if (!dataUrl.startsWith("data:image/jpeg") || dataUrl.length < 3000) {
+      setErrMsg("A captura falhou. Tente pela galeria.");
+      return;
+    }
+    applyImage(dataUrl);
+  }
 
   // Android WebView pode reiniciar a activity ao abrir a câmera e perder o state.
   // Restauramos o rascunho da foto ao montar.
@@ -288,7 +341,8 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
   async function pickImage(from: "camera" | "gallery") {
     setErrMsg(null);
     if (!isNative()) {
-      (from === "camera" ? cameraInputRef : galleryInputRef).current?.click();
+      if (from === "camera") { void openCamera(); return; }
+      galleryInputRef.current?.click();
       return;
     }
     setPreparing(true);
@@ -525,6 +579,27 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
             <button type="button" className="w-full text-center text-[11px] text-muted-foreground hover:underline" onClick={() => { setImgB64(null); setImgPreview(null); setResult(null); try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ } }}>
               Remover foto
             </button>
+          )}
+          {camOpen && (
+            <div className="fixed inset-0 z-[70] flex flex-col bg-black">
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                autoPlay
+                className="min-h-0 w-full flex-1 object-cover"
+              />
+              <div className="flex items-center justify-between gap-3 bg-black/90 px-6 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-4">
+                <button type="button" className="text-sm text-white/70" onClick={stopCamera}>Cancelar</button>
+                <button
+                  type="button"
+                  aria-label="Tirar foto"
+                  onClick={captureFromCamera}
+                  className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 active:scale-95"
+                />
+                <span className="w-14 text-right text-[11px] text-white/50">{mode === "label" ? "Rótulo" : "Prato"}</span>
+              </div>
+            </div>
           )}
         </div>
       )}
