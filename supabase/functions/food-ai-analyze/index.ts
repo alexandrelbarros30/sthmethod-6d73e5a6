@@ -540,6 +540,20 @@ Deno.serve(async (req) => {
       classification: aiResult?.classification || 'Moderado',
       alerts: [...(Array.isArray(aiResult?.alerts) ? aiResult.alerts : []), ...extraAlerts],
       notes: aiResult?.notes || '',
+      sthia_score: Number.isFinite(Number(aiResult?.sthia_score)) && Number(aiResult?.sthia_score) > 0
+        ? Math.max(0, Math.min(100, Math.round(Number(aiResult.sthia_score))))
+        : Math.max(0, Math.min(100, Math.round((Number(aiResult?.quality_score) || 6) * 10))),
+      sthia_score_label: aiResult?.sthia_score_label || aiResult?.classification || 'Moderada',
+      nova_summary: Number(aiResult?.nova_summary) || 0,
+      suggestions: Array.isArray(aiResult?.suggestions) ? aiResult.suggestions.slice(0, 3) : [],
+      objective_fit: aiResult?.objective_fit || 'unknown',
+      // Compatibilidade com clientes que leem os totais em campos planos.
+      total_calories: totals.calories,
+      total_protein_g: totals.protein_g,
+      total_carbs_g: totals.carbs_g,
+      total_fat_g: totals.fat_g,
+      total_fiber_g: totals.fiber_g,
+      total_sodium_mg: totals.sodium_mg,
       source,
       reconciled_count: reconciledCount,
       total_count: reconciledFoods.length,
