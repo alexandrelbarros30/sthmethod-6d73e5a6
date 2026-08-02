@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown, Camera, CreditCard } from "lucide-react";
+import { FileText, Loader2, LogOut, Trash2, Upload, Dumbbell, Salad, LineChart, UtensilsCrossed, HeartPulse, Flame, UserRound, Info, ChevronRight, ChevronDown, Camera, CreditCard, ShieldCheck } from "lucide-react";
 
 const HUB = [
   { to: "/ai/app/treino", label: "Treino", desc: "Programa guiado STHIA", icon: Dumbbell },
@@ -23,6 +23,7 @@ const HUB = [
   { to: "/ai/app/imagens", label: "Imagens corporais", desc: "Fotos para comparação", icon: Camera },
   { to: "/ai/app/coaches", label: "Coaches", desc: "Acompanhamento humano", icon: UserRound },
   { to: "/ai/assinatura", label: "Assinatura", desc: "Planos e renovação", icon: CreditCard },
+  { to: "/ai/legal", label: "Documentos e Termos", desc: "Termos de Uso e documentos jurídicos", icon: ShieldCheck },
   { to: "/ai/sobre", label: "Sobre", desc: "Versão e novidades do STH AI", icon: Info },
 ];
 
