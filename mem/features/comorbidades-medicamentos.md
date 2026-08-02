@@ -7,3 +7,6 @@ type: feature
 - Obrigatórios nos formulários admin/aluno (usar "Nenhuma"/"Nenhum" quando não houver). No STH AI ficam na fase 2 do onboarding e no perfil.
 - Devem SEMPRE entrar no contexto de IA: `_shared/student-context.ts`, `sth-ai-app` (profileBlock), `generate-diet-ai` (clinicalBlock) e `sthia-clinical-analysis`.
 - Regra de conteúdo: IA adapta alimentos, macros, volume/intensidade e recomendações a essas condições, mas NUNCA prescreve, altera ou sugere suspensão de medicamento.
+
+## Uso obrigatório de TODO o cadastro
+`sth-ai-app` também carrega `public.profiles` (objetivo, NEAT, rotina de treino/cardio, protocolo atual, informações adicionais, macros calculados) e injeta no prompt como "CADASTRO COMPLETO STH METHOD" com a regra inegociável: nenhum campo preenchido pode ser ignorado na geração de cardápio, treino ou análise.
