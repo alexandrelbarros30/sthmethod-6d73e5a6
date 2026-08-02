@@ -24,23 +24,46 @@ export default function AiLogin() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate(next, { replace: true });
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session) navigate(next, { replace: true });
+    });
+    return () => sub.subscription.unsubscribe();
   }, [navigate, next]);
+
+  const friendlyError = (msg: string) => {
+    const m = msg.toLowerCase();
+    if (m.includes("already registered") || m.includes("already been registered"))
+      return "Este e-mail já possui conta. Faça login ou recupere a senha.";
+    if (m.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
+    if (m.includes("password should be")) return "A senha deve ter no mínimo 6 caracteres.";
+    if (m.includes("email rate limit") || m.includes("too many"))
+      return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    return msg;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
     setLoading(true);
     try {
       if (isSignUp) {
         if (!fullName.trim()) { toast.error("Informe seu nome"); return; }
+        if (password.length < 6) { toast.error("A senha deve ter no mínimo 6 caracteres."); return; }
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
-            data: { full_name: fullName },
+            data: { full_name: fullName.trim() },
             emailRedirectTo: `${window.location.origin}/ai/onboarding`,
           },
         });
         if (error) throw error;
+        // Supabase devolve um usuário "fantasma" (sem identities) quando o e-mail já existe
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          toast.error("Este e-mail já possui conta. Faça login para continuar.");
+          setIsSignUp(false);
+          return;
+        }
         if (!data.session) {
           toast.success("Conta criada. Confirme seu e-mail para continuar.");
           return;
@@ -48,11 +71,11 @@ export default function AiLogin() {
         navigate("/ai/onboarding", { replace: true });
         return;
       }
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
       if (error) throw error;
       navigate(next, { replace: true });
     } catch (err: any) {
-      toast.error(err?.message || "Não foi possível entrar");
+      toast.error(friendlyError(err?.message || "") || "Não foi possível entrar");
     } finally {
       setLoading(false);
     }
