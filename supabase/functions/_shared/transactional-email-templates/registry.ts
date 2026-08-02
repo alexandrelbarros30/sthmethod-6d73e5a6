@@ -22,6 +22,13 @@ import { template as identityVerificationCode } from './identity-verification-co
 import { template as casPasswordReset } from './cas-password-reset.tsx'
 import { template as authorizedContactVerification } from './authorized-contact-verification.tsx'
 import { template as adminAuthorizationChange } from './admin-authorization-change.tsx'
+import { template as sthAiWelcome } from './sth-ai-welcome.tsx'
+import { template as sthAiPaymentApproved } from './sth-ai-payment-approved.tsx'
+import { template as sthAiPaymentPending } from './sth-ai-payment-pending.tsx'
+import { template as sthAiPaymentFailed } from './sth-ai-payment-failed.tsx'
+import { template as sthAiSubscriptionCancelled } from './sth-ai-subscription-cancelled.tsx'
+import { template as sthAiSubscriptionExpired } from './sth-ai-subscription-expired.tsx'
+import { template as sthAiPasswordChanged } from './sth-ai-password-changed.tsx'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -54,4 +61,11 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'cas-password-reset': casPasswordReset,
   'authorized-contact-verification': authorizedContactVerification,
   'admin-authorization-change': adminAuthorizationChange,
+  'sth-ai-welcome': sthAiWelcome,
+  'sth-ai-payment-approved': sthAiPaymentApproved,
+  'sth-ai-payment-pending': sthAiPaymentPending,
+  'sth-ai-payment-failed': sthAiPaymentFailed,
+  'sth-ai-subscription-cancelled': sthAiSubscriptionCancelled,
+  'sth-ai-subscription-expired': sthAiSubscriptionExpired,
+  'sth-ai-password-changed': sthAiPasswordChanged,
 }

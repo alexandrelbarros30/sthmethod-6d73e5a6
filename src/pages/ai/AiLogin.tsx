@@ -69,6 +69,14 @@ export default function AiLogin() {
           toast.success("Conta criada. Confirme seu e-mail para continuar.");
           return;
         }
+        supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "sth-ai-welcome",
+            recipientEmail: cleanEmail,
+            idempotencyKey: `sthai-welcome-${data.user?.id ?? cleanEmail}`,
+            templateData: { name: fullName.trim() },
+          },
+        }).catch(() => {});
         navigate("/ai/onboarding", { replace: true });
         return;
       }
@@ -125,6 +133,13 @@ export default function AiLogin() {
           <Button type="submit" size="lg" className="w-full rounded-2xl" disabled={loading}>
             {loading ? "Aguarde…" : isSignUp ? "Criar conta" : "Entrar"}
           </Button>
+          {!isSignUp && (
+            <div className="text-center">
+              <Link to="/ai/esqueci-senha" className="text-[13px] text-muted-foreground hover:text-foreground underline">
+                Esqueci minha senha
+              </Link>
+            </div>
+          )}
         </form>
 
         <div className="mt-6 flex items-center gap-3">
