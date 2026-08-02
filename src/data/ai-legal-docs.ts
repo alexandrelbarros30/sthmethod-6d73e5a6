@@ -352,6 +352,131 @@ export const AI_LEGAL_DOCS: AiLegalDoc[] = [
       },
     ],
   },
+  {
+    slug: "politica-de-privacidade",
+    title: "Política de Privacidade e Proteção de Dados Pessoais",
+    subtitle: "Como a STH AI coleta, utiliza e protege seus dados",
+    code: "STHAI-PP-001",
+    version: "1.0",
+    status: "Vigente",
+    sections: [
+      {
+        title: "1. Introdução",
+        paragraphs: [
+          "A STH AI valoriza a privacidade e a proteção dos dados de seus usuários.",
+          "Esta Política de Privacidade tem como objetivo informar como os dados pessoais são coletados, utilizados, armazenados e protegidos durante a utilização da plataforma.",
+          "A STH AI realiza o tratamento de dados conforme a legislação brasileira aplicável, incluindo a Lei Geral de Proteção de Dados Pessoais (LGPD).",
+        ],
+      },
+      {
+        title: "2. Quem é responsável pelo tratamento dos dados",
+        paragraphs: [
+          "A STH AI é responsável pelo gerenciamento dos dados coletados dentro da plataforma, adotando medidas técnicas e administrativas para garantir segurança, privacidade e uso adequado das informações.",
+        ],
+      },
+      {
+        title: "3. Dados coletados",
+        paragraphs: ["Durante a utilização da plataforma poderão ser coletados:"],
+        bullets: [
+          "Dados cadastrais: nome completo, data de nascimento, gênero quando informado, e-mail, telefone e informações de cadastro.",
+          "Dados corporais: peso, altura, medidas corporais, percentual de gordura quando informado, histórico de evolução e fotografias corporais.",
+          "Dados relacionados à alimentação: registros do diário alimentar, refeições cadastradas e informações analisadas pelo STH Food AI.",
+          "Dados relacionados à saúde: exames laboratoriais enviados pelo usuário, informações relacionadas a objetivos, histórico informado pelo usuário e informações necessárias para personalização das análises.",
+          "Dados técnicos: informações de acesso, dispositivo utilizado, registros de utilização e informações necessárias para segurança da plataforma.",
+        ],
+      },
+      {
+        title: "4. Dados sensíveis",
+        paragraphs: [
+          "A STH AI poderá tratar dados considerados sensíveis pela LGPD, incluindo informações relacionadas à saúde, exames laboratoriais, fotografias corporais e informações físicas e metabólicas.",
+          "O tratamento desses dados ocorre somente para as finalidades informadas nesta Política e mediante consentimento adequado do usuário quando necessário.",
+        ],
+      },
+      {
+        title: "5. Finalidade do tratamento dos dados",
+        paragraphs: ["Os dados coletados poderão ser utilizados para:"],
+        bullets: [
+          "criação e gerenciamento da conta;",
+          "funcionamento da plataforma;",
+          "geração personalizada de treinos;",
+          "geração personalizada de cardápios;",
+          "análises inteligentes;",
+          "acompanhamento de evolução;",
+          "funcionamento do STH Food AI;",
+          "análise de fotografias de evolução corporal;",
+          "melhoria dos sistemas de inteligência artificial;",
+          "segurança da plataforma;",
+          "cumprimento de obrigações legais.",
+        ],
+      },
+      {
+        title: "6. Uso da Inteligência Artificial",
+        paragraphs: [
+          "A STH AI utiliza inteligência artificial para processar informações fornecidas pelo usuário e gerar análises personalizadas conforme a metodologia STH Method.",
+          "O usuário reconhece que a qualidade das respostas depende das informações inseridas, que a IA utiliza dados fornecidos para personalização e que recomendações podem ser aprimoradas conforme novos dados sejam adicionados.",
+        ],
+      },
+      {
+        title: "7. Fotografias Corporais",
+        paragraphs: [
+          "As imagens enviadas pelo usuário possuem finalidade exclusiva de acompanhamento de evolução corporal, comparação entre períodos, geração de análises visuais e histórico pessoal dentro da plataforma.",
+          "As imagens não serão utilizadas publicamente sem autorização expressa do usuário.",
+        ],
+      },
+      {
+        title: "8. Compartilhamento de dados",
+        paragraphs: [
+          "A STH AI não comercializa dados pessoais dos usuários.",
+          "Os dados poderão ser compartilhados somente quando necessário para funcionamento da plataforma, processamento tecnológico, armazenamento seguro, cumprimento de obrigações legais e atendimento de solicitações das autoridades competentes.",
+        ],
+      },
+      {
+        title: "9. Armazenamento e segurança",
+        paragraphs: [
+          "A STH AI adota medidas técnicas e administrativas para proteger os dados contra acesso não autorizado, perda, alteração indevida e divulgação irregular.",
+          "Nenhum sistema conectado à internet possui risco zero, mas são aplicadas práticas de segurança compatíveis com a natureza das informações tratadas.",
+        ],
+      },
+      {
+        title: "10. Prazo de armazenamento",
+        paragraphs: [
+          "Os dados permanecerão armazenados enquanto a conta estiver ativa, forem necessários para prestação dos serviços ou houver obrigação legal de manutenção.",
+          "O usuário poderá solicitar informações sobre seus dados conforme previsto na legislação.",
+        ],
+      },
+      {
+        title: "11. Direitos do usuário",
+        paragraphs: [
+          "O usuário poderá solicitar, conforme a LGPD: confirmação da existência de tratamento, acesso aos dados, correção de informações, atualização cadastral, informações sobre uso dos dados e exclusão quando aplicável.",
+        ],
+      },
+      {
+        title: "12. Responsabilidade do usuário",
+        paragraphs: [
+          "O usuário declara que as informações fornecidas são verdadeiras, que possui autorização para enviar informações inseridas na plataforma e compreende que dados incorretos podem comprometer análises geradas pela IA.",
+        ],
+      },
+      {
+        title: "13. Alterações desta Política",
+        paragraphs: [
+          "Esta Política poderá ser atualizada para acompanhar mudanças legais, melhorias de segurança ou evolução da plataforma.",
+          "Alterações relevantes poderão exigir novo aceite do usuário.",
+        ],
+      },
+      {
+        title: "14. Contato",
+        paragraphs: [
+          "Para dúvidas relacionadas à privacidade ou solicitações sobre dados pessoais, o usuário poderá utilizar os canais oficiais disponibilizados pela STH AI.",
+        ],
+      },
+      {
+        title: "15. Vigência",
+        paragraphs: [
+          "Esta Política entra em vigor na data de sua publicação e permanece válida enquanto estiver disponível na plataforma.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const getAiLegalDoc = (slug?: string) =>
