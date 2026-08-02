@@ -69,6 +69,10 @@ export default function AiOnboarding() {
           ...a,
         });
         setStep(data.phase1_complete ? 1 : 0);
+      } else {
+        const { data: authUser } = await supabase.auth.getUser();
+        const metaName = (authUser?.user?.user_metadata as any)?.full_name || "";
+        if (metaName) setForm((f) => ({ ...f, full_name: metaName }));
       }
       setReady(true);
     })();
