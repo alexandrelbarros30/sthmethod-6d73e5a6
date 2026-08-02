@@ -200,6 +200,8 @@ const AdminAIHistory = lazyWithRetry(() => import("./pages/admin/AdminAIHistory"
 const AiLanding = lazyWithRetry(() => import("./pages/ai/AiLanding"));
 const AiOnboarding = lazyWithRetry(() => import("./pages/ai/AiOnboarding"));
 const AiLogin = lazyWithRetry(() => import("./pages/ai/AiLogin"));
+const AiForgotPassword = lazyWithRetry(() => import("./pages/ai/AiForgotPassword"));
+const AiResetPassword = lazyWithRetry(() => import("./pages/ai/AiResetPassword"));
 const AiDashboard = lazyWithRetry(() => import("./pages/ai/AiDashboard"));
 const AiModule = lazyWithRetry(() => import("./pages/ai/AiModule"));
 const AiProgress = lazyWithRetry(() => import("./pages/ai/AiProgress"));
@@ -264,6 +266,8 @@ const App = () => (
             <Route path="/ai" element={<Suspense fallback={<LazyFallback />}><AiLanding /></Suspense>} />
             <Route path="/ai/login" element={<Suspense fallback={<LazyFallback />}><AiLogin /></Suspense>} />
             <Route path="/ai/onboarding" element={<Suspense fallback={<LazyFallback />}><AiOnboarding /></Suspense>} />
+            <Route path="/ai/esqueci-senha" element={<Suspense fallback={<LazyFallback />}><AiForgotPassword /></Suspense>} />
+            <Route path="/ai/redefinir-senha" element={<Suspense fallback={<LazyFallback />}><AiResetPassword /></Suspense>} />
             <Route path="/ai/app" element={<Suspense fallback={<LazyFallback />}><AiDashboard /></Suspense>} />
             <Route path="/ai/app/progresso" element={<Suspense fallback={<LazyFallback />}><AiProgress /></Suspense>} />
             <Route path="/ai/app/saude" element={<Suspense fallback={<LazyFallback />}><AiHealth /></Suspense>} />
