@@ -267,6 +267,7 @@ const App = () => (
             <Route path="/ai/app/diario" element={<Suspense fallback={<LazyFallback />}><AiFood /></Suspense>} />
             <Route path="/ai/app/perfil" element={<Suspense fallback={<LazyFallback />}><AiProfile /></Suspense>} />
             <Route path="/ai/app/imagens" element={<Suspense fallback={<LazyFallback />}><AiBodyImages /></Suspense>} />
+            <Route path="/ai/sobre" element={<Suspense fallback={<LazyFallback />}><AiSobre /></Suspense>} />
             <Route path="/ai/leitura/:id" element={<Suspense fallback={<LazyFallback />}><AiLeituraVisual /></Suspense>} />
             <Route path="/ai/app/:slug" element={<Suspense fallback={<LazyFallback />}><AiModule /></Suspense>} />
             <Route path="/ai/assinatura" element={<Suspense fallback={<LazyFallback />}><AiSubscription /></Suspense>} />
