@@ -31,6 +31,8 @@ interface Props {
   onChange: (brief: string) => void;
   /** Modo perfil: esconde a revisão do cadastro e mostra botão de salvar explícito. */
   standalone?: boolean;
+  /** Modo solicitação: grupos em janelas expansíveis fechadas, cada uma com seu botão salvar. */
+  collapsible?: boolean;
 }
 
 type Field = { key: string; label: string; options: { value: string; label: string }[]; when?: (v: Record<string, string>) => boolean };
@@ -141,7 +143,38 @@ const LEVEL_LABELS: Record<string, string> = {
   avancado: "Avançado",
 };
 
-export default function AiWorkoutBriefing({ profile, onChange, standalone }: Props) {
+const GROUPS: { id: string; title: string; description: string; icon: JSX.Element; keys: string[] }[] = [
+  {
+    id: "treino",
+    title: "Treino",
+    description: "Objetivo, NEAT, frequência, duração e intensidade",
+    icon: <Dumbbell className="h-4 w-4" />,
+    keys: [
+      "objective",
+      "physical_activity_level",
+      "activity_type",
+      "training_days_per_week",
+      "training_duration_minutes",
+      "training_intensity",
+    ],
+  },
+  {
+    id: "cardio",
+    title: "Cardio",
+    description: "Frequência, duração e intensidade do cardio",
+    icon: <HeartPulse className="h-4 w-4" />,
+    keys: ["does_cardio", "cardio_days_per_week", "cardio_duration_minutes", "cardio_intensity"],
+  },
+  {
+    id: "contexto",
+    title: "Local e limitações",
+    description: "Onde treina e regiões sensíveis",
+    icon: <MapPin className="h-4 w-4" />,
+    keys: ["training_place", "injury_area"],
+  },
+];
+
+export default function AiWorkoutBriefing({ profile, onChange, standalone, collapsible }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
   const [values, setValues] = useState<Record<string, string>>({});
   const hydrated = useRef(false);
