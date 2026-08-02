@@ -37,7 +37,7 @@ const ROUTES: Record<AiKind, string> = {
 };
 
 const tile =
-  "group relative overflow-hidden rounded-3xl border border-border/70 bg-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_18px_50px_-30px_hsl(var(--primary)/0.75)] sm:p-5";
+  "group relative overflow-hidden rounded-[2rem] border border-border/70 bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ocean-teal/40 hover:shadow-[0_18px_50px_-30px_hsl(var(--ocean-teal)/0.75)] sm:p-5";
 
 const Ring = ({ pct, size = 104, stroke = 9 }: { pct: number; size?: number; stroke?: number }) => {
   const radius = (size - stroke) / 2;
@@ -45,13 +45,13 @@ const Ring = ({ pct, size = 104, stroke = 9 }: { pct: number; size?: number; str
   const clamped = Math.max(0, Math.min(100, pct));
   return (
     <svg width={size} height={size} className="-rotate-90 shrink-0" aria-hidden>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={stroke} opacity={0.12} />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--ocean-teal))" strokeWidth={stroke} opacity={0.12} />
       <circle
         cx={size / 2}
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="hsl(var(--primary))"
+        stroke="hsl(var(--ocean-teal))"
         strokeWidth={stroke}
         strokeLinecap="round"
         strokeDasharray={c}
@@ -220,7 +220,7 @@ export default function AiDashboard() {
             aria-hidden
           />
           <div className="relative flex items-start justify-between gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-mint/15 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-ocean-teal">
               <Flame className="h-3 w-3" /> Constância
             </span>
             <Badge variant={today ? "secondary" : "outline"} className="text-[10px]">
@@ -237,7 +237,7 @@ export default function AiDashboard() {
               </span>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold leading-tight tracking-tight">
+              <p className="font-urbanist text-sm font-bold leading-tight tracking-tight text-ocean-deep">
                 {streak > 0 ? `${streak} ${streak === 1 ? "dia" : "dias"} seguidos` : "Comece sua sequência hoje"}
               </p>
               <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
@@ -248,7 +248,7 @@ export default function AiDashboard() {
 
           <div className="relative mt-4 flex items-center gap-1.5">
             {last7.map((d, i) => (
-              <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${d.done ? "bg-primary" : "bg-muted"}`} />
+              <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${d.done ? "bg-ocean-teal" : "bg-muted"}`} />
             ))}
           </div>
         </Link>
@@ -259,10 +259,13 @@ export default function AiDashboard() {
         </div>
 
         {/* Peso — compacto */}
-        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex items-center justify-between gap-3 lg:col-span-2`}>
+        <Link
+          to="/ai/app/progresso"
+          className={`${tile} col-span-2 flex items-center justify-between gap-3 border-ocean-mint/25 bg-ocean-mint/10 lg:col-span-2`}
+        >
           <div>
             <MicroLabel>Peso atual</MicroLabel>
-            <p className="mt-1.5 text-xl font-semibold leading-none tracking-tight">
+            <p className="mt-1.5 font-urbanist text-xl font-extrabold leading-none tracking-tight text-ocean-mid">
               {weight != null ? `${weight} kg` : "—"}
             </p>
             <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
@@ -271,20 +274,23 @@ export default function AiDashboard() {
                 : "registre suas medidas"}
             </p>
           </div>
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-white/70 text-ocean-teal">
             <Scale className="h-4 w-4" />
           </span>
         </Link>
 
         {/* Leitura STHIA */}
-        <Link to="/ai/app/progresso" className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-4`}>
+        <Link
+          to="/ai/app/progresso"
+          className={`${tile} col-span-2 flex flex-col justify-between border-transparent bg-gradient-to-br from-ocean-teal to-ocean-mint text-white shadow-lg shadow-ocean-teal/20 lg:col-span-4`}
+        >
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+            <span className="inline-flex items-center gap-1.5 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-white/90">
               <BrainCircuit className="h-3.5 w-3.5" /> Leitura preditiva
             </span>
-            <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight className="h-4 w-4 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-          <p className="mt-3 line-clamp-3 max-w-[70ch] text-[15px] font-light leading-[1.7] tracking-[0.01em] text-muted-foreground">
+          <p className="mt-3 line-clamp-3 max-w-[70ch] text-[15px] font-light leading-[1.7] tracking-[0.01em] text-white/90">
             {insightText || "Registre alguns dias e a inteligência gera sua leitura de tendência automaticamente."}
           </p>
         </Link>
