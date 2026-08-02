@@ -18,18 +18,18 @@ const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone, onUndo }: Props)
   const doneLabel = doneAt ? doneAt.split("-").reverse().join("/") : null;
 
   return (
-    <div className="group relative col-span-2 flex flex-col justify-between overflow-hidden rounded-3xl border border-border/70 bg-card p-5 transition-all duration-300 hover:border-primary/40 lg:col-span-3 lg:p-6">
+    <div className="group relative col-span-2 flex flex-col justify-between overflow-hidden rounded-[2rem] border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:border-ocean-teal/40 lg:col-span-3 lg:p-6">
       <div
-        className="pointer-events-none absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
+        className="pointer-events-none absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-ocean-mint/20 blur-3xl"
         aria-hidden
       />
       <div className="relative flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-mint/15 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-ocean-teal">
           <Dumbbell className="h-3 w-3" /> Treino de hoje
         </span>
         <span
           className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
-            done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+            done ? "bg-ocean-teal/15 text-ocean-teal" : "bg-muted text-muted-foreground"
           }`}
         >
           {done ? "Realizado" : "Pendente"}
@@ -37,7 +37,7 @@ const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone, onUndo }: Props)
       </div>
 
       <div className="relative mt-4">
-        <p className="text-lg font-semibold leading-tight tracking-tight sm:text-xl">
+        <p className="font-urbanist text-lg font-bold leading-tight tracking-tight text-ocean-deep sm:text-xl">
           {workout ? (done ? "Treino concluído" : "Hora de treinar") : "Nenhum treino ativo"}
         </p>
         <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
@@ -50,7 +50,10 @@ const AiWorkoutReminderCard = ({ workout, done, doneAt, onDone, onUndo }: Props)
       </div>
 
       <div className="relative mt-5 flex items-center gap-2">
-        <Button className="flex-1 gap-2" onClick={() => navigate("/ai/app/treino")}>
+        <Button
+          className="flex-1 gap-2 bg-ocean-deep font-urbanist font-bold text-white hover:bg-ocean-mid"
+          onClick={() => navigate("/ai/app/treino")}
+        >
           {workout ? "Ir para o treino" : "Gerar treino"} <ArrowRight className="h-4 w-4" />
         </Button>
         {done ? (
