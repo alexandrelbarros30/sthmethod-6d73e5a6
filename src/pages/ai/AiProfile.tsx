@@ -384,7 +384,7 @@ export default function AiProfile() {
         {showRotina ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </button>
 
-      {showRotina && <AiWorkoutBriefing profile={liveProfile} onChange={() => {}} />}
+      {showRotina && <AiWorkoutBriefing profile={liveProfile} onChange={() => {}} standalone />}
 
       <Card className="mt-5 space-y-4 p-5">
         <div>
