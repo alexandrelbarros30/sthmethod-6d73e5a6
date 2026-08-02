@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 interface ProfileAvatarProps {
   /** Diameter in px */
@@ -25,6 +26,10 @@ const ProfileAvatar = ({ size = 48, editable = false, className = "", onClick, o
   const [url, setUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // O bucket "body-images" é privado: a URL pública não renderiza.
+  // Resolvemos uma signed URL a partir do caminho contido na URL salva.
+  const { url: signedUrl } = useSignedUrl("body-images", null, url || null);
+  const displaySrc = signedUrl || "";
 
   useEffect(() => {
     if (profile?.avatar_url) setUrl(profile.avatar_url);
@@ -93,7 +98,7 @@ const ProfileAvatar = ({ size = 48, editable = false, className = "", onClick, o
         onClick={onClick}
         style={onClick ? { cursor: "pointer" } : undefined}
       >
-        <AvatarImage src={url} alt="Foto de perfil" className="object-cover" />
+        <AvatarImage src={displaySrc} alt="Foto de perfil" className="object-cover" />
         <AvatarFallback className="bg-muted font-semibold text-foreground" style={{ fontSize: size / 2.6 }}>
           {initial}
         </AvatarFallback>
