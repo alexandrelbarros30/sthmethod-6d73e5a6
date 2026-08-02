@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ const SLUG_TO_KIND: Record<string, AiKind> = {
 export default function AiModule() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const kind = SLUG_TO_KIND[slug ?? ""] ?? "diet";
   const mod = AI_MODULES[kind];
   const { generations, subscription, profile, loading, refresh, unlimited } = useAiApp();
@@ -38,6 +39,10 @@ export default function AiModule() {
   const [workoutBrief, setWorkoutBrief] = useState("");
   const [dietBrief, setDietBrief] = useState("");
   const [requestOpen, setRequestOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("solicitar") === "1") setRequestOpen(true);
+  }, [searchParams]);
 
   const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);

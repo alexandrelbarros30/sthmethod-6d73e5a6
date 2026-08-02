@@ -177,7 +177,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false }: P
             </div>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link to="/ai/onboarding?next=/ai/app/cardapio">
+            <Link to="/ai/onboarding?next=/ai/app/cardapio%3Fsolicitar%3D1">
               <Pencil className="mr-2 h-4 w-4" /> Editar cadastro
             </Link>
           </Button>
