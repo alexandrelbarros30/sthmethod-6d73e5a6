@@ -57,10 +57,7 @@ export default function AiLanding() {
               <div className="relative rounded-[40px] bg-card p-10 shadow-apple-xl border border-border/40 group transition-all duration-500 hover:border-primary/30">
                 <div className="absolute -inset-1 rounded-[44px] bg-gradient-to-r from-primary/20 to-transparent opacity-0 blur-xl transition-opacity duration-700 group-hover:opacity-100" />
                 <div className="relative flex flex-col items-center">
-                  <AiLogoMark
-                    className="mb-5 h-24 w-24 rounded-[28px] shadow-lg shadow-primary/30"
-                    iconClassName="h-11 w-11"
-                  />
+                  <AiLogoMark className="mb-5 h-24 w-24 rounded-[28px] shadow-lg shadow-primary/30" />
                   <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">System Active</span>
                   <h2 className="text-3xl font-bold tracking-tight">STH AI</h2>
                 </div>
