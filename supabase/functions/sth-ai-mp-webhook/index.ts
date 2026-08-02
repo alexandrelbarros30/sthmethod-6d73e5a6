@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const paymentId = payload?.data?.id ?? payload?.id;
     if (!paymentId) return new Response('ok', { headers: corsHeaders });
 
-    const token = Deno.env.get('MP_ACCESS_TOKEN')!;
+    const token = (Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN') ?? Deno.env.get('MP_ACCESS_TOKEN'))!;
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
