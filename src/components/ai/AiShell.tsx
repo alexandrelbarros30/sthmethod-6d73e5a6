@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
-import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed } from "lucide-react";
+import { Brain, LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard } from "lucide-react";
 
 const NAV = [
   { to: "/ai/app", label: "Início", icon: LayoutGrid },
@@ -16,8 +16,10 @@ const NAV = [
 const SECONDARY_NAV = [
   { to: "/ai/app/analise", label: "Análise", icon: LineChart },
   { to: "/ai/app/progresso", label: "Evolução", icon: Flame },
+  { to: "/ai/app/imagens", label: "Imagens", icon: Camera },
   { to: "/ai/app/saude", label: "Saúde", icon: HeartPulse },
   { to: "/ai/app/coaches", label: "Coaches", icon: UserRound },
+  { to: "/ai/assinatura", label: "Assinatura", icon: CreditCard },
 ];
 
 export default function AiShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
