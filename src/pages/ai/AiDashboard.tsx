@@ -4,6 +4,7 @@ import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { AI_MODULES, AiKind, daysLeftInCycle, latestOf, useAiApp } from "@/hooks/useAiApp";
 import { useAiProgress } from "@/hooks/useAiProgress";
 import { useAiOffer, useAiInsight } from "@/hooks/useAiGrowth";
