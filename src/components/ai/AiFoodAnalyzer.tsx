@@ -11,8 +11,32 @@ import { toast } from "sonner";
 import { MEAL_TYPES } from "@/lib/food-diary-storage";
 import { cn } from "@/lib/utils";
 import { Camera, Check, Image as ImageIcon, Loader2, Mic, Sparkles, Square, Tag, Utensils } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Camera as NativeCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 
 type Mode = "photo" | "label" | "text" | "audio";
+
+const isNative = () => {
+  try { return Capacitor.isNativePlatform(); } catch { return false; }
+};
+
+// No APK o <input type="file" capture> abre a câmera do sistema, mas o
+// Android pode destruir a Activity do WebView e o onChange nunca dispara —
+// a foto some sem erro. O plugin nativo devolve o base64 direto.
+async function nativeCapture(source: CameraSource): Promise<string | null> {
+  const shot = await NativeCamera.getPhoto({
+    quality: 80,
+    allowEditing: false,
+    resultType: CameraResultType.Base64,
+    source,
+    width: 1400,
+    correctOrientation: true,
+  });
+  if (!shot?.base64String) return null;
+  const fmt = (shot.format || "jpeg").toLowerCase();
+  const mime = fmt === "png" ? "image/png" : fmt === "webp" ? "image/webp" : "image/jpeg";
+  return `data:${mime};base64,${shot.base64String}`;
+}
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const DRAFT_KEY = "sth_food_ai_photo_draft";
