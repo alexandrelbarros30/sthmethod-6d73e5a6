@@ -10,6 +10,8 @@ import { useAiOffer, useAiInsight } from "@/hooks/useAiGrowth";
 import { useAiHealth } from "@/hooks/useAiHealth";
 import AiOfferCard from "@/components/ai/AiOfferCard";
 import AiHydrationCard from "@/components/ai/AiHydrationCard";
+import AiNextMealCard from "@/components/ai/AiNextMealCard";
+import AiWorkoutReminderCard from "@/components/ai/AiWorkoutReminderCard";
 import {
   Loader2,
   ArrowRight,
@@ -20,7 +22,6 @@ import {
   HeartPulse,
   UserRound,
   UtensilsCrossed,
-  Footprints,
   Scale,
   BrainCircuit,
   Camera,
@@ -79,10 +80,9 @@ const MicroLabel = ({ children }: { children: React.ReactNode }) => (
 
 export default function AiDashboard() {
   const { profile, subscription, generations, loading, user } = useAiApp();
-  const { streak, today, last7, measurements } = useAiProgress();
+  const { streak, today, last7, measurements, saveCheckin } = useAiProgress();
   const { offer, dismiss } = useAiOffer();
   const { insight } = useAiInsight();
-  const { days: healthDays } = useAiHealth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,22 +90,6 @@ export default function AiDashboard() {
     if (!user) navigate("/ai/login?next=/ai/app");
     else if (!profile?.phase1_complete) navigate("/ai/onboarding");
   }, [loading, user, profile, navigate]);
-
-  const health = useMemo(() => {
-    const week = healthDays.slice(0, 7);
-    const steps = week.map((d) => d.steps ?? 0);
-    const kcal = week.map((d) => d.active_kcal ?? 0);
-    const avg = (arr: number[]) => (arr.length ? Math.round(arr.reduce((s, n) => s + n, 0) / arr.length) : 0);
-    return {
-      steps: healthDays[0]?.steps ?? null,
-      kcal: healthDays[0]?.active_kcal ?? null,
-      stepsAvg: avg(steps),
-      kcalAvg: avg(kcal),
-      stepsSeries: [...steps].reverse(),
-      kcalSeries: [...kcal].reverse(),
-      hasData: healthDays.length > 0,
-    };
-  }, [healthDays]);
 
   if (loading) {
     return (
