@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "./lib/app-version";
 import { enableNativeFullscreen } from "./lib/native-fullscreen";
-import { friendlyMessage } from "./lib/friendly-errors";
+import { friendlyMessage, toFriendlyError } from "./lib/friendly-errors";
 import { toast as sonnerToast } from "sonner";
 import { installRequestIdInterceptor } from "./lib/request-id";
 
@@ -144,6 +144,13 @@ if (typeof window !== "undefined") {
   const showFriendly = (err: unknown) => {
     try {
       if (isAdminRoute()) return; // admin já tem telas técnicas próprias
+      // Erros genéricos (STH-000) vêm quase sempre de tarefas de segundo plano
+      // (plugins nativos, sincronizações, extensões) e só poluem a tela do aluno.
+      if (toFriendlyError(err).code === "STH-000") {
+        // eslint-disable-next-line no-console
+        console.warn("[background-error ignorado]", err);
+        return;
+      }
       sonnerToast.error(friendlyMessage(err));
     } catch (_) {}
   };
