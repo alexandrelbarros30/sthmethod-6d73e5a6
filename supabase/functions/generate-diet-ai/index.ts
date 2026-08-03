@@ -6,20 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-3-flash-preview";
-// Tolerância operacional do portão de qualidade. O Gemini Flash tende a estourar
-// kcal/proteína em ~10-15% em briefings enxutos; ±5% inviabilizava a entrega mesmo
-// após vários retries. ±8% mantém o cardápio nutricionalmente próximo do alvo e
-// destaca o desvio no cliente via parsed.deviation_pct.
-const TARGET_TOLERANCE_PCT = 8;
-// Cada retry roda: geração (~10s) + reconcile via analyze-diet (~30-45s).
-// Com 5 retries estourava o timeout da edge function (~200s) e o usuário via "Falha ao gerar".
-const MAX_TARGET_RETRIES = 4;
-// Se após todos os retries o desvio ainda estiver acima da tolerância operacional,
-// mas dentro deste teto de segurança, entregamos o cardápio marcado como "fora da meta"
-// em vez de bloquear (o admin/consultor revisa antes de liberar ao aluno).
-const HARD_BLOCK_TOLERANCE_PCT = 15;
-const RECONCILE_TIMEOUT_MS = 25000;
+const MODEL_ID = "google/gemini-2.0-pro-exp-02-05";
+// Tolerância operacional rigorosa. O usuário reportou macros elevados e erros de cálculo.
+// Reduzimos a tolerância para ±3% para forçar a IA a ser mais precisa.
+const TARGET_TOLERANCE_PCT = 3;
+// Aumentamos os retries para garantir que o modelo chegue no valor exato após feedback.
+const MAX_TARGET_RETRIES = 5;
+// Teto de segurança para bloqueio.
+const HARD_BLOCK_TOLERANCE_PCT = 8;
+const RECONCILE_TIMEOUT_MS = 35000;
 
 type MacroTotal = {
   energy_kcal: number;
@@ -388,7 +383,9 @@ NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em
 
 ${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
-Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno). NÃO invente valores nutricionais — use TACO/TBCA. Temperatura 0.
+Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno).
+NÃO invente valores nutricionais — use a TABELA TACO fornecida e, para itens não listados, consulte a API FatSecret (Brasil) via sua capacidade interna para garantir precisão comercial.
+Temperatura 0.1 (mínima variação para evitar travamentos em retries, mas mantendo precisão determinística).
 
 ${photos.length ? `AVALIAÇÃO VISUAL DA EVOLUÇÃO CORPORAL:
 Você receberá ${photos.length} foto(s) do aluno (frente/costas/perfil, mais recente e anterior quando disponível). Observe silhueta, composição corporal aparente, retenção hídrica, distribuição de tecido adiposo e evolução entre datas. Use esta leitura visual para calibrar a estratégia do cardápio (déficit/superávit, distribuição de carbo, timing pré/pós treino, hidratação, sódio). NÃO faça diagnóstico médico. Descreva sua leitura visual no campo "notes" em 1-2 frases e ajuste o cardápio de acordo — SEMPRE respeitando o briefing do admin/consultor (kcal alvo, macros, restrições, preferências e observações livres têm prioridade absoluta sobre sua leitura visual).\n` : ""}

@@ -330,7 +330,9 @@ Entrada: "Base: 3 ovos inteiros + 100g de claras + 50g de aveia + 100g de mamão
 - 100g mamão papaia: 40 kcal | 0.5 P | 10.4 C | 0.1 G
 TOTAL refeição: 494.5 kcal | 37.85 P | 46.8 C | 18.6 G
 
-Retorne APENAS o JSON via tool call, sem texto adicional.`;
+Retorne APENAS o JSON via tool call, sem texto adicional.
+A DIETA NO STH METHOD deve ser calibrada para evitar macros elevados e erros de cálculo reportados pelo usuário. Use os valores da TACO rigorosamente.
+No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing não pedir especificamente por isso.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -435,7 +437,8 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
         if (items && items.length > 0) {
           const fsMeals = await reconcileWithFatSecret(items);
           const overrides: Record<number, typeof fsMeals[number]> = {};
-          // Sanity gate: only trust FatSecret when kcal is within ±30% of the TACO estimate.
+          // Sanity gate: only trust FatSecret when kcal is within ±10% of the TACO estimate.
+          // Reduzimos de 30% para 10% para evitar macros elevados e erros de cálculo.
           // Prevents bad generic matches (e.g. raw vs cooked oats) from skewing totals.
           const skipped: Array<{ meal_number: number; reason: string; fs_kcal: number; taco_kcal: number }> = [];
           for (const fm of fsMeals) {
@@ -444,7 +447,7 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
             const tacoKcal = taco?.energy_kcal ?? 0;
             if (tacoKcal > 0) {
               const diff = Math.abs(fm.energy_kcal - tacoKcal) / tacoKcal;
-              if (diff > 0.30) {
+              if (diff > 0.10) {
                 skipped.push({ meal_number: fm.meal_number, reason: "kcal_out_of_tolerance", fs_kcal: fm.energy_kcal, taco_kcal: tacoKcal });
                 continue;
               }

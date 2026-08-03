@@ -1,6 +1,6 @@
 // STH METHOD — cálculo determinístico de kcal/macros do cardápio.
 // Metodologia: os valores da refeição são calculados SOBRE A REFEIÇÃO BASE,
-// item a item, com tabela TACO/TBCA (valores por 100g/100ml).
+// item a item, com tabela TACO (4ª Edição) e validação cruzada FatSecret.
 // Isso substitui a estimativa da IA, que não é confiável para números.
 
 type Macro = { kcal: number; p: number; c: number; f: number };
