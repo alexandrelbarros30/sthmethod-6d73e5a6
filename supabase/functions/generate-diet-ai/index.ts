@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-pro-exp-02-05";
+const MODEL_ID = "google/gemini-2.5-pro";
 // Tolerância operacional rigorosa. O usuário reportou macros elevados e erros de cálculo.
 // Reduzimos a tolerância para ±3% para forçar a IA a ser mais precisa.
 const TARGET_TOLERANCE_PCT = 3;
@@ -384,7 +384,7 @@ NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em
 ${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
 Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno).
-NÃO invente valores nutricionais — use a TABELA TACO fornecida e, para itens não listados, consulte a API FatSecret (Brasil) via sua capacidade interna para garantir precisão comercial.
+NÃO invente valores nutricionais — use a TABELA TACO fornecida e, para itens não listados, consulte a FatSecret (Brasil) para garantir precisão comercial. O uso da FatSecret é OBRIGATÓRIO para garantir que kcal e macronutrientes não fiquem elevados e fora da realidade brasileira.
 Temperatura 0.1 (mínima variação para evitar travamentos em retries, mas mantendo precisão determinística).
 
 ${photos.length ? `AVALIAÇÃO VISUAL DA EVOLUÇÃO CORPORAL:
