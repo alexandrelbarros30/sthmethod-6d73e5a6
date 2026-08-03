@@ -13,7 +13,9 @@ export default function AiLogin() {
   useSthAiTheme();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const next = params.get("next") || "/ai/app";
+  const nextParam = params.get("next");
+  const storedNext = typeof window !== "undefined" ? sessionStorage.getItem("sthai_oauth_next") : null;
+  const next = nextParam || storedNext || "/ai/app";
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,10 +25,16 @@ export default function AiLogin() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate(next, { replace: true });
+      if (data.session) {
+        try { sessionStorage.removeItem("sthai_oauth_next"); } catch {}
+        navigate(next, { replace: true });
+      }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate(next, { replace: true });
+      if (session) {
+        try { sessionStorage.removeItem("sthai_oauth_next"); } catch {}
+        navigate(next, { replace: true });
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate, next]);
@@ -156,8 +164,9 @@ export default function AiLogin() {
           onClick={async () => {
             try {
               setLoading(true);
+              try { sessionStorage.setItem("sthai_oauth_next", next); } catch {}
               const result = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: `${window.location.origin}/ai/login?next=${encodeURIComponent(next)}`,
+                redirect_uri: `${window.location.origin}/ai/login`,
               });
               if (result.error) {
                 toast.error("Não foi possível entrar com o Google");
