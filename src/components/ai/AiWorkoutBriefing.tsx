@@ -227,12 +227,26 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
   async function saveRoutine() {
     if (!profile?.user_id) return;
     setSavingRoutine(true);
+    
+    const currentAnswers = (profile.answers ?? {}) as Record<string, string>;
+    const newAnswers = { ...currentAnswers, ...values };
+    
     const { error } = await supabase
       .from("ai_app_profiles")
-      .update({ answers: { ...((profile.answers ?? {}) as Record<string, string>), ...values } })
+      .update({ answers: newAnswers })
       .eq("user_id", profile.user_id);
+      
     setSavingRoutine(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { 
+      toast.error("Erro ao salvar rotina", { description: error.message }); 
+      return; 
+    }
+    
+    // Atualiza localmente para garantir consistência imediata
+    if (profile) {
+      profile.answers = newAnswers;
+    }
+    
     toast.success("Rotina atualizada — a IA já usa esses dados na próxima geração.");
   }
 
