@@ -85,6 +85,14 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
 
   async function saveGroup() {
     if (!profile?.user_id) return;
+
+    if (!objective || !kcal || !meals || !protein || !carbs || !fat) {
+      toast.error("Preenchimento obrigatório!", {
+        description: "Você precisa definir Objetivo, Kcal, Refeições e todos os Macros para continuar."
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from("ai_app_profiles")
       .update({
@@ -335,25 +343,71 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs">Kcal alvo</Label>
-                <Input inputMode="numeric" value={kcal} onChange={(e) => setKcal(e.target.value)} placeholder="2500" />
+                <Label className="text-xs flex items-center gap-1">
+                  Kcal alvo <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
+                </Label>
+                <Input 
+                  inputMode="numeric" 
+                  value={kcal} 
+                  onChange={(e) => setKcal(e.target.value)} 
+                  placeholder="2500" 
+                  className={!kcal ? "border-primary/50" : ""}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Nº refeições</Label>
-                <Input inputMode="numeric" value={meals} onChange={(e) => setMeals(e.target.value)} placeholder="5" />
+                <Label className="text-xs flex items-center gap-1">
+                  Nº refeições <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
+                </Label>
+                <Input 
+                  inputMode="numeric" 
+                  value={meals} 
+                  onChange={(e) => setMeals(e.target.value)} 
+                  placeholder="5" 
+                  className={!meals ? "border-primary/50" : ""}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Proteína (g)</Label>
-                <Input inputMode="numeric" value={protein} onChange={(e) => setProtein(e.target.value)} placeholder="180" />
+                <Label className="text-xs flex items-center gap-1">
+                  Proteína (g) <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
+                </Label>
+                <Input 
+                  inputMode="numeric" 
+                  value={protein} 
+                  onChange={(e) => setProtein(e.target.value)} 
+                  placeholder="180" 
+                  className={!protein ? "border-primary/50" : ""}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Carbo (g)</Label>
-                <Input inputMode="numeric" value={carbs} onChange={(e) => setCarbs(e.target.value)} placeholder="300" />
+                <Label className="text-xs flex items-center gap-1">
+                  Carbo (g) <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
+                </Label>
+                <Input 
+                  inputMode="numeric" 
+                  value={carbs} 
+                  onChange={(e) => setCarbs(e.target.value)} 
+                  placeholder="300" 
+                  className={!carbs ? "border-primary/50" : ""}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Lipídio (g)</Label>
-                <Input inputMode="numeric" value={fat} onChange={(e) => setFat(e.target.value)} placeholder="70" />
+                <Label className="text-xs flex items-center gap-1">
+                  Lipídio (g) <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
+                </Label>
+                <Input 
+                  inputMode="numeric" 
+                  value={fat} 
+                  onChange={(e) => setFat(e.target.value)} 
+                  placeholder="70" 
+                  className={!fat ? "border-primary/50" : ""}
+                />
               </div>
+            </div>
+            <div className="mt-2 rounded-lg bg-primary/10 p-3 border border-primary/20">
+              <p className="text-[11px] leading-relaxed text-primary font-medium">
+                ⚠️ <strong>Atenção:</strong> O preenchimento de todos os campos acima (Objetivo, Kcal e Macros) é <strong>obrigatório</strong>. 
+                Estes dados são fundamentais para que a STHia calcule e elabore seu cardápio com precisão.
+              </p>
             </div>
           </AiEditSection>
 
