@@ -153,8 +153,8 @@ function grams(item: string): number | null {
   const unit = n.match(/^(\d+(?:[.,]\d+)?)\s+(claras?|ovos?|unidades?|fatias?|colheres?|colher)/);
   if (unit) {
     const qty = parseFloat(unit[1].replace(",", "."));
-    if (/clara/.test(unit[2])) return qty * 33;
-    if (/ovo/.test(unit[2])) return qty * 50;
+    if (/clara/.test(unit[2])) return qty * 30; // 30g por clara (ajuste conservador FatSecret)
+    if (/ovo/.test(unit[2])) return qty * 45;   // 45-50g por ovo (médio)
     if (/fatia/.test(unit[2])) return qty * 25;
     if (/colher/.test(unit[2])) return qty * 15;
     return qty * 100;
