@@ -23,6 +23,8 @@ interface ProfileAvatarProps {
  */
 const ProfileAvatar = ({ size = 48, editable = false, className = "", onClick, onUpdated }: ProfileAvatarProps) => {
   const { user, profile } = useAuth();
+  // Clicar na própria foto abre o seletor quando o avatar é editável
+  // e nenhuma ação de clique customizada foi definida.
   const [url, setUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -95,8 +97,10 @@ const ProfileAvatar = ({ size = 48, editable = false, className = "", onClick, o
     <div className={`relative inline-flex shrink-0 ${className}`} style={{ width: size, height: size }}>
       <Avatar
         className="h-full w-full border border-border/60"
-        onClick={onClick}
-        style={onClick ? { cursor: "pointer" } : undefined}
+        onClick={onClick ?? (editable && !uploading ? () => inputRef.current?.click() : undefined)}
+        role={onClick || editable ? "button" : undefined}
+        aria-label={!onClick && editable ? "Alterar foto de perfil" : undefined}
+        style={onClick || editable ? { cursor: "pointer" } : undefined}
       >
         <AvatarImage src={displaySrc} alt="Foto de perfil" className="object-cover" />
         <AvatarFallback className="bg-muted font-semibold text-foreground" style={{ fontSize: size / 2.6 }}>
