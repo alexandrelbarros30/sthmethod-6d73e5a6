@@ -48,7 +48,14 @@ export function useHealthConnect(
         const granted = await requestHealthPermissions();
         if (!granted && !opts?.silent) throw new Error("permission");
         const rows = await readNativeHealthDays(30);
-        const useful = rows.filter((r) => r.steps != null || r.active_kcal != null || r.resting_hr != null);
+        const useful = rows.filter(
+          (r) =>
+            r.steps != null ||
+            r.active_kcal != null ||
+            r.resting_hr != null ||
+            r.sleep_minutes != null ||
+            r.weight_kg != null,
+        );
         if (useful.length > 0) await importRows(useful, "samsung_health");
         const now = new Date().toISOString();
         localStorage.setItem(LAST_SYNC_KEY, now);
