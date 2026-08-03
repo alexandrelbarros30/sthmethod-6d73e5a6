@@ -6,12 +6,20 @@ import {
   openHealthSettings,
   readNativeHealthDays,
   requestHealthPermissions,
+  sthHealthAvailable,
 } from "@/lib/health-connect";
 import type { HealthDay } from "@/hooks/useAiHealth";
 
 type Status = "checking" | "unsupported" | "unavailable" | "ready";
 
 const LAST_SYNC_KEY = "sth_ai_hc_last_sync";
+
+export interface SyncReport {
+  read: number;
+  imported: number;
+  error: string | null;
+  at: string;
+}
 
 /**
  * Sincroniza o Galaxy Watch (Samsung Health → Health Connect) dentro do app
@@ -23,6 +31,7 @@ export function useHealthConnect(
   const [status, setStatus] = useState<Status>("checking");
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(() => localStorage.getItem(LAST_SYNC_KEY));
+  const [report, setReport] = useState<SyncReport | null>(null);
   const autoRan = useRef(false);
 
   useEffect(() => {
@@ -32,7 +41,9 @@ export function useHealthConnect(
         if (alive) setStatus("unsupported");
         return;
       }
-      const ok = await healthAvailable();
+      // O módulo nativo próprio (sth-health) responde mesmo quando o plugin
+      // capacitor-health falha; qualquer um dos dois já habilita a sincronização.
+      const ok = (await sthHealthAvailable()) || (await healthAvailable());
       if (alive) setStatus(ok ? "ready" : "unavailable");
     })();
     return () => {
@@ -44,10 +55,14 @@ export function useHealthConnect(
     async (opts?: { silent?: boolean }) => {
       if (!isNativeHealthPlatform()) return 0;
       setSyncing(true);
+      let read = 0;
+      let imported = 0;
+      let error: string | null = null;
       try {
         const granted = await requestHealthPermissions();
         if (!granted && !opts?.silent) throw new Error("permission");
         const rows = await readNativeHealthDays(30);
+        read = rows.length;
         const useful = rows.filter(
           (r) =>
             r.steps != null ||
@@ -56,12 +71,24 @@ export function useHealthConnect(
             r.sleep_minutes != null ||
             r.weight_kg != null,
         );
-        if (useful.length > 0) await importRows(useful, "samsung_health");
+        if (useful.length > 0) {
+          try {
+            await importRows(useful, "samsung_health");
+            imported = useful.length;
+          } catch (e) {
+            error = `Falha ao salvar no servidor: ${(e as Error)?.message ?? "erro desconhecido"}`;
+            throw e;
+          }
+        }
         const now = new Date().toISOString();
         localStorage.setItem(LAST_SYNC_KEY, now);
         setLastSync(now);
-        return useful.length;
+        return imported;
+      } catch (e) {
+        if (!error) error = (e as Error)?.message ?? "erro desconhecido";
+        throw e;
       } finally {
+        setReport({ read, imported, error, at: new Date().toISOString() });
         setSyncing(false);
       }
     },
@@ -83,5 +110,5 @@ export function useHealthConnect(
     return () => document.removeEventListener("visibilitychange", run);
   }, [status, sync]);
 
-  return { status, syncing, lastSync, sync, openHealthSettings, openHealthConnectStore };
+  return { status, syncing, lastSync, report, sync, openHealthSettings, openHealthConnectStore };
 }

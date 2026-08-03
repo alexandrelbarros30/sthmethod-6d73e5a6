@@ -35,7 +35,7 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
   const [diag, setDiag] = useState<{ code: string; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
   const [selfTest, setSelfTest] = useState<HealthSelfTestResult | null>(null);
-  const { status, syncing, lastSync, sync, openHealthSettings, openHealthConnectStore } = useHealthConnect(onImport);
+  const { status, syncing, lastSync, report, sync, openHealthSettings, openHealthConnectStore } = useHealthConnect(onImport);
   const isNative = status === "ready" || status === "unavailable";
 
   useEffect(() => {
@@ -92,8 +92,13 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
           "O Health Connect respondeu, mas não devolveu dados. Abra Samsung Health › Health Connect e confirme que Passos, Calorias e FC estão permitidos para o STH.",
         );
       }
-    } catch {
-      toast.error("Permissão não concedida. Toque em Permissões e autorize Passos, Calorias ativas e Frequência cardíaca.");
+    } catch (e) {
+      const msg = (e as Error)?.message ?? "";
+      toast.error(
+        msg === "permission"
+          ? "Permissão não concedida. Toque em Permissões e autorize Passos, Calorias ativas e Frequência cardíaca."
+          : `Não foi possível sincronizar: ${msg || "erro desconhecido"}`,
+      );
     }
   }
 
@@ -145,6 +150,12 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
             {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Stethoscope className="mr-2 h-4 w-4" />}
             Testar leitura
           </Button>
+          {report && (
+            <p className="w-full text-[11px] text-muted-foreground">
+              Última leitura: {report.read} dia(s) lidos do Health Connect · {report.imported} salvo(s) no STH
+              {report.error ? ` · erro: ${report.error}` : ""}
+            </p>
+          )}
           {selfTest && selfTest.checks.length > 0 && (
             <div className="w-full space-y-1 rounded-xl border border-border/50 bg-background/60 p-2">
               <p className="text-[11px] font-medium">{selfTest.summary}</p>
