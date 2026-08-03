@@ -432,7 +432,7 @@ export default function AiDashboard() {
 
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          {editing ? "Toque em − para remover, + para incluir e nas setas para mover." : "Sua tela inicial personalizada."}
+          {editing ? "Organize, troque e escolha o que aparece." : "Sua tela inicial personalizada."}
         </p>
         <Button size="sm" variant={editing ? "default" : "outline"} onClick={() => setEditing((v) => !v)}>
           {editing ? <Check className="mr-2 h-4 w-4" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
@@ -440,83 +440,81 @@ export default function AiDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-        {ordered.map((id, i) => {
-          if (hidden.has(id)) return null;
-          const wrap = `relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`;
-          if (!editing)
-            return (
-              <div key={id} className={wrap}>
-                {nodes[id]}
-              </div>
-            );
-          return (
-            <div key={id} className={wrap}>
-              <div className="pointer-events-none w-full opacity-90 [&_a]:pointer-events-none">{nodes[id]}</div>
-              <button
-                type="button"
-                onClick={() => toggle(id)}
-                aria-label={`Remover ${WIDGET_META.find((w) => w.id === id)?.label ?? id}`}
-                className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-lg ring-2 ring-background"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <div className="absolute bottom-2 right-2 z-10 flex gap-1">
-                <button
-                  type="button"
-                  disabled={i === 0}
-                  onClick={() => move(id, -1)}
-                  aria-label="Mover para cima"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow ring-1 ring-border disabled:opacity-40"
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  disabled={i === ordered.length - 1}
-                  onClick={() => move(id, 1)}
-                  aria-label="Mover para baixo"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow ring-1 ring-border disabled:opacity-40"
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {editing && (
-        <div className="mt-6">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Adicionar widgets
-          </p>
-          {ordered.filter((id) => hidden.has(id)).length === 0 ? (
-            <p className="text-sm text-muted-foreground">Todos os widgets já estão na sua tela inicial.</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-              {ordered
-                .filter((id) => hidden.has(id))
-                .map((id) => (
-                  <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`}>
-                    <div className="pointer-events-none w-full opacity-50 grayscale [&_a]:pointer-events-none">
-                      {nodes[id]}
-                    </div>
+      {editing ? (
+        <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/60 backdrop-blur-sm">
+          <ul className="divide-y divide-border/60">
+            {ordered.map((id, i) => {
+              const label = WIDGET_META.find((w) => w.id === id)?.label ?? id;
+              const isOn = !hidden.has(id);
+              const swappable = ordered.filter((x) => hidden.has(x) && x !== id);
+              return (
+                <li key={id} className="flex items-center gap-3 px-3 py-3 sm:px-4">
+                  <div className="flex flex-col">
                     <button
                       type="button"
-                      onClick={() => toggle(id)}
-                      aria-label={`Incluir ${WIDGET_META.find((w) => w.id === id)?.label ?? id}`}
-                      className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background"
+                      disabled={i === 0}
+                      onClick={() => move(id, -1)}
+                      aria-label={`Mover ${label} para cima`}
+                      className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
                     >
-                      <Plus className="h-4 w-4" />
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={i === ordered.length - 1}
+                      onClick={() => move(id, 1)}
+                      aria-label={`Mover ${label} para baixo`}
+                      className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                ))}
-            </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className={`truncate text-sm font-medium ${isOn ? "" : "text-muted-foreground"}`}>{label}</p>
+                    <p className="text-[11px] text-muted-foreground">{isOn ? "Na tela inicial" : "Oculto"}</p>
+                  </div>
+
+                  {isOn && swappable.length > 0 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="ghost" className="h-8 px-2 text-xs text-muted-foreground">
+                          <Repeat className="mr-1.5 h-3.5 w-3.5" /> Trocar
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="max-h-72 overflow-auto">
+                        {swappable.map((other) => (
+                          <DropdownMenuItem key={other} onSelect={() => replace(id, other)}>
+                            {WIDGET_META.find((w) => w.id === other)?.label ?? other}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+
+                  <Switch checked={isOn} onCheckedChange={() => toggle(id)} aria-label={`Exibir ${label}`} />
+                </li>
+              );
+            })}
+          </ul>
+          <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-3 sm:px-4">
+            <Button size="sm" variant="ghost" onClick={reset}>
+              <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
+            </Button>
+            <Button size="sm" onClick={() => setEditing(false)}>
+              <Check className="mr-2 h-4 w-4" /> Concluir
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
+          {ordered.map((id) =>
+            hidden.has(id) ? null : (
+              <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`}>
+                {nodes[id]}
+              </div>
+            ),
           )}
-          <Button size="sm" variant="ghost" className="mt-4" onClick={reset}>
-            <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
-          </Button>
         </div>
       )}
 
