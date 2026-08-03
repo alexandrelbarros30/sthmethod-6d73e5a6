@@ -3,10 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, RefreshCw, Settings2, Smartphone, Upload, Watch } from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCw, Settings2, Smartphone, Stethoscope, Upload, Watch } from "lucide-react";
 import { parseHealthCsv, type HealthDay, type HealthSource } from "@/hooks/useAiHealth";
 import { useHealthConnect } from "@/hooks/useHealthConnect";
 import { healthDiagnostics } from "@/lib/health-connect";
+import { runHealthSelfTest, type HealthSelfTestResult } from "@/lib/health-selftest";
 
 const NATIVE_STEPS = [
   "Instale/atualize o app Health Connect (Play Store) — no Galaxy Watch 4 ele é obrigatório; o Samsung Health sozinho não envia dados.",
@@ -32,6 +33,8 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [diag, setDiag] = useState<{ code: string; message: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [selfTest, setSelfTest] = useState<HealthSelfTestResult | null>(null);
   const { status, syncing, lastSync, sync, openHealthSettings, openHealthConnectStore } = useHealthConnect(onImport);
   const isNative = status === "ready" || status === "unavailable";
 
@@ -44,6 +47,20 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
       alive = false;
     };
   }, [status]);
+
+  async function runSelfTest() {
+    setTesting(true);
+    try {
+      const res = await runHealthSelfTest(7);
+      setSelfTest(res);
+      if (res.ok) toast.success(res.summary);
+      else toast.error(res.summary);
+    } catch {
+      toast.error("Não foi possível executar o teste de leitura.");
+    } finally {
+      setTesting(false);
+    }
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -124,6 +141,31 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
           <Button size="sm" variant="ghost" onClick={() => openHealthSettings()}>
             <Settings2 className="mr-2 h-4 w-4" /> Permissões
           </Button>
+          <Button size="sm" variant="ghost" disabled={testing} onClick={runSelfTest}>
+            {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Stethoscope className="mr-2 h-4 w-4" />}
+            Testar leitura
+          </Button>
+          {selfTest && selfTest.checks.length > 0 && (
+            <div className="w-full space-y-1 rounded-xl border border-border/50 bg-background/60 p-2">
+              <p className="text-[11px] font-medium">{selfTest.summary}</p>
+              {selfTest.checks.map((c) => (
+                <div key={c.key} className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span>{c.label}</span>
+                  <span
+                    className={
+                      c.status === "ok"
+                        ? "text-primary"
+                        : c.status === "empty"
+                          ? "text-muted-foreground"
+                          : "text-destructive"
+                    }
+                  >
+                    {c.status === "ok" ? `OK · último ${c.lastValue}` : c.detail}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
