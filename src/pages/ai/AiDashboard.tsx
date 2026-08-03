@@ -31,14 +31,30 @@ import {
   BrainCircuit,
   Camera,
 } from "lucide-react";
-import { ArrowDown, ArrowUp, LayoutGrid, RotateCcw, Check, Repeat } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const WIDGET_META: WidgetMeta[] = [
   { id: "next-meal", label: "Refeição de agora" },
@@ -62,17 +78,14 @@ const ROUTES: Record<AiKind, string> = {
   analysis: "/ai/app/analise",
 };
 
-/** Largura de cada widget na grade (Samsung Health style: faixas largas + duplas). */
-const SPAN: Record<string, string> = {
-  "next-meal": "col-span-2 lg:col-span-6",
-  workout: "col-span-2 lg:col-span-6",
-  insight: "col-span-2 lg:col-span-6",
-  streak: "col-span-1 lg:col-span-3",
-  hydration: "col-span-1 lg:col-span-3",
-  weight: "col-span-1 lg:col-span-3",
-  images: "col-span-1 lg:col-span-3",
-};
-const spanOf = (id: string) => SPAN[id] ?? "col-span-1 lg:col-span-2";
+/**
+ * A largura pertence à POSIÇÃO, não ao widget: qualquer assunto cabe em qualquer
+ * card. Padrão Samsung Health: faixa larga seguida de duas metades.
+ */
+const slotSpan = (index: number) =>
+  index % 3 === 0 ? "col-span-2 lg:col-span-6" : "col-span-1 lg:col-span-3";
+
+const labelOf = (id: string) => WIDGET_META.find((w) => w.id === id)?.label ?? id;
 
 const tile =
   "group relative overflow-hidden rounded-3xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ocean-teal/40 hover:shadow-[0_18px_50px_-30px_hsl(var(--ocean-teal)/0.75)] sm:rounded-[2rem] sm:p-5";
