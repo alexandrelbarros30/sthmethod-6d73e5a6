@@ -30,9 +30,11 @@ const testCases = [
 
 console.log("Running STHia Macro Audit...");
 testCases.forEach(tc => {
-  const html = `<p><strong>Refeição 01: Test</strong></p><p><strong>100 kcal · P 10 g / C 10 g / G 2 g</strong></p><p><strong>"⭐ BASE:</strong> ${tc.text}<strong>"</strong></p>`;
+  const html = `<p><strong>Refeição 01: Test</strong></p><p><strong>0 kcal · P 0 g / C 0 g / G 0 g</strong></p><p><strong>"⭐ BASE:</strong> ${tc.text}<strong>"</strong></p>`;
   const result = recalcDietMacros(html);
   console.log(`\nTest: ${tc.name}`);
   console.log(`Input Text: ${tc.text}`);
-  console.log(`Result HTML: ${result.html.match(/(\d+ kcal · P \d+g \/ C \d+g \/ G \d+g)/)?.[1]}`);
+  console.log(`Matched: ${result.recalculated > 0}`);
+  const match = result.html.match(/(\d+ kcal · P \d+g \/ C \d+g \/ G \d+g)/);
+  console.log(`Result HTML: ${match ? match[1] : "NO MATCH"}`);
 });
