@@ -31,10 +31,16 @@ const testCases = [
 console.log("Running STHia Macro Audit...");
 testCases.forEach(tc => {
   const html = `<p><strong>Refeição 01: Test</strong></p><p><strong>0 kcal · P 0 g / C 0 g / G 0 g</strong></p><p><strong>⭐ BASE:</strong> ${tc.text}</p>`;
+  
+  // Test regex separately
+  const MEAL_BLOCK_RE = /(<p><strong>Refei[çc][ãa]o\s*\d+[^<]*?<\/strong><\/p>\s*<p><strong>)(\d[\d.]*)\s*kcal\s*·\s*P\s*(\d+)\s*g\s*\/\s*C\s*(\d+)\s*g\s*\/\s*G\s*(\d+)\s*g(<\/strong><\/p>\s*<p><strong>"?\s*⭐?\s*BASE:<\/strong>\s*)([^<]+)/gi;
+  const matchRegex = MEAL_BLOCK_RE.test(html);
+  
   const result = recalcDietMacros(html);
   console.log(`\nTest: ${tc.name}`);
-  console.log(`Input Text: ${tc.text}`);
-  console.log(`Matched: ${result.recalculated > 0}`);
+  console.log(`Regex Match: ${matchRegex}`);
+  console.log(`Matched Recalc: ${result.recalculated > 0}`);
+  
   const match = result.html.match(/(\d+ kcal · P \d+g \/ C \d+g \/ G \d+g)/);
   console.log(`Result HTML: ${match ? match[1] : "NO MATCH"}`);
 });
