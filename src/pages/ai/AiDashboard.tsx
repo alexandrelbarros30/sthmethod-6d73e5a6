@@ -568,6 +568,10 @@ export default function AiDashboard() {
         </Link>
     ),
     ...Object.fromEntries(SHORTCUTS.map((s) => [s.to, shortcutNode(s)])),
+    "health-steps": <AiHealthMetricCard metric="steps" />,
+    "health-kcal": <AiHealthMetricCard metric="active_kcal" />,
+    "health-hr": <AiHealthMetricCard metric="resting_hr" />,
+    "health-sleep": <AiHealthMetricCard metric="sleep_minutes" />,
   };
 
   return (
