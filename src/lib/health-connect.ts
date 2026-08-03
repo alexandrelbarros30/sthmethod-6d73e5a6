@@ -55,6 +55,26 @@ export async function requestHealthPermissions() {
   }
 }
 
+/** Diagnóstico legível do porquê a sincronização do relógio não está disponível. */
+export async function healthDiagnostics() {
+  if (!isNativeHealthPlatform()) {
+    return { code: "web" as const, message: "Você está no navegador. A sincronização automática só existe no aplicativo Android do STH AI." };
+  }
+  const p = await plugin();
+  if (!p) {
+    return { code: "plugin" as const, message: "O módulo de saúde não está disponível nesta versão do app. Atualize o aplicativo." };
+  }
+  try {
+    const { available } = await p.isHealthAvailable();
+    if (!available) {
+      return { code: "hc-missing" as const, message: "O app Health Connect não está instalado ou está desatualizado neste celular." };
+    }
+  } catch {
+    return { code: "hc-missing" as const, message: "Não foi possível falar com o Health Connect neste celular." };
+  }
+  return { code: "ready" as const, message: "Health Connect disponível." };
+}
+
 export async function openHealthSettings() {
   const p = await plugin();
   if (!p) return;
