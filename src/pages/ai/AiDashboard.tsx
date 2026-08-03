@@ -207,8 +207,24 @@ export default function AiDashboard() {
   const { offer, dismiss } = useAiOffer();
   const { insight } = useAiInsight();
   const navigate = useNavigate();
-  const { ordered, hidden, move, toggle, replace, reset } = useAiWidgets(WIDGET_META);
+  const { ordered, hidden, toggle, replace, reset, setOrderIds } = useAiWidgets(WIDGET_META);
   const [editing, setEditing] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
+  );
+
+  const onDragEnd = useCallback(
+    (e: DragEndEvent) => {
+      const { active, over } = e;
+      if (!over || active.id === over.id) return;
+      const from = ordered.indexOf(String(active.id));
+      const to = ordered.indexOf(String(over.id));
+      if (from < 0 || to < 0) return;
+      setOrderIds(arrayMove(ordered, from, to));
+    },
+    [ordered, setOrderIds],
+  );
 
   useEffect(() => {
     if (loading) return;
