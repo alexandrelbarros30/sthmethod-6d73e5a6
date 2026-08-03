@@ -144,10 +144,16 @@ export function useMealTracking() {
     queryFn: async () => {
       let q = supabase
         .from("diet_meals")
-        .select("id, name, time, sort_order, image_url, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
+        .select("id, name, time, sort_order, image_url, diet_id, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
         .eq("user_id", targetUserId!)
         .eq("app_context", "sth_method");
-      if (currentDiet?.id) q = q.or(`diet_id.eq.${currentDiet.id},diet_id.is.null`);
+      
+      if (currentDiet?.id) {
+        q = q.eq("diet_id", currentDiet.id);
+      } else {
+        q = q.is("diet_id", null);
+      }
+      
       const { data, error } = await q.order("sort_order", { ascending: true });
       if (error) throw error;
       return (data || []) as MealWithFoods[];
