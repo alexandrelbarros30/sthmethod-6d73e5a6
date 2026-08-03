@@ -141,6 +141,31 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
           <Button size="sm" variant="ghost" onClick={() => openHealthSettings()}>
             <Settings2 className="mr-2 h-4 w-4" /> Permissões
           </Button>
+          <Button size="sm" variant="ghost" disabled={testing} onClick={runSelfTest}>
+            {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Stethoscope className="mr-2 h-4 w-4" />}
+            Testar leitura
+          </Button>
+          {selfTest && selfTest.checks.length > 0 && (
+            <div className="w-full space-y-1 rounded-xl border border-border/50 bg-background/60 p-2">
+              <p className="text-[11px] font-medium">{selfTest.summary}</p>
+              {selfTest.checks.map((c) => (
+                <div key={c.key} className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span>{c.label}</span>
+                  <span
+                    className={
+                      c.status === "ok"
+                        ? "text-primary"
+                        : c.status === "empty"
+                          ? "text-muted-foreground"
+                          : "text-destructive"
+                    }
+                  >
+                    {c.status === "ok" ? `OK · último ${c.lastValue}` : c.detail}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
