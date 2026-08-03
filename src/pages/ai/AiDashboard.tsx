@@ -117,6 +117,90 @@ const MicroLabel = ({ children }: { children: React.ReactNode }) => (
   <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{children}</span>
 );
 
+/** Card arrastável no modo edição (fora do componente para não perder o estado). */
+function SortableTile({
+  id,
+  span,
+  onRemove,
+  onSwap,
+  swappable,
+  children,
+}: {
+  id: string;
+  span: string;
+  onRemove: () => void;
+  onSwap: (withId: string) => void;
+  swappable: string[];
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`relative flex ${span} touch-none ${isDragging ? "z-20 opacity-90" : ""}`}
+    >
+      <div
+        className={`relative w-full overflow-hidden rounded-3xl ring-2 ring-dashed ring-ocean-teal/40 sm:rounded-[2rem] ${
+          isDragging ? "shadow-[0_24px_60px_-24px_hsl(var(--ocean-teal)/0.8)]" : ""
+        }`}
+      >
+        <div className="pointer-events-none select-none [&_*]:pointer-events-none [&>*]:h-full [&>*]:w-full">
+          {children}
+        </div>
+
+        <div className="absolute inset-0 flex flex-col justify-between bg-background/45 p-2 backdrop-blur-[1px]">
+          <div className="flex items-start justify-between gap-2">
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              aria-label={`Arrastar ${labelOf(id)}`}
+              className="inline-flex cursor-grab items-center gap-1 rounded-full bg-card/95 px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-sm active:cursor-grabbing"
+            >
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" /> Arrastar
+            </button>
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label={`Remover ${labelOf(id)}`}
+              className="grid h-7 w-7 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-sm"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex items-end justify-between gap-2">
+            <span className="truncate rounded-full bg-card/95 px-2.5 py-1 text-[11px] font-semibold shadow-sm">
+              {labelOf(id)}
+            </span>
+            {swappable.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-full bg-card/95 px-2.5 py-1 text-[11px] font-semibold shadow-sm"
+                  >
+                    <Repeat className="h-3.5 w-3.5 text-muted-foreground" /> Trocar
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-72 overflow-auto">
+                  <DropdownMenuLabel className="text-xs">Substituir por</DropdownMenuLabel>
+                  {swappable.map((other) => (
+                    <DropdownMenuItem key={other} onSelect={() => onSwap(other)}>
+                      {labelOf(other)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AiDashboard() {
   const { profile, subscription, generations, loading, user } = useAiApp();
   const { streak, today, last7, measurements, saveCheckin, setWorkoutDone } = useAiProgress();
