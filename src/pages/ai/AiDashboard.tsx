@@ -18,7 +18,7 @@ import AiWorkoutReminderCard from "@/components/ai/AiWorkoutReminderCard";
 import AiHealthMetricCard from "@/components/ai/AiHealthMetricCard";
 import ProfileAvatar from "@/components/shared/ProfileAvatar";
 import { useAiWidgets, type WidgetMeta } from "@/hooks/useAiWidgets";
-import { useAiHomeStyle, AI_HOME_STYLES } from "@/hooks/useAiHomeStyle";
+import { useAiHomeStyle } from "@/hooks/useAiHomeStyle";
 import {
   Loader2,
   ArrowRight,
@@ -244,7 +244,7 @@ export default function AiDashboard() {
   const { insight } = useAiInsight();
   const navigate = useNavigate();
   const { ordered, hidden, toggle, replace, reset, setOrderIds } = useAiWidgets(WIDGET_META);
-  const { style, setStyle, slotSpan, gridClass } = useAiHomeStyle();
+  const { slotSpan, gridClass } = useAiHomeStyle();
   const [editing, setEditing] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -568,17 +568,7 @@ export default function AiDashboard() {
   };
 
   return (
-    <AiShell title={`Olá, ${firstName}`} subtitle="Sua inteligência de nutrição, treino e evolução.">
-      <Card className="mb-4 flex items-center gap-3 p-4">
-        <ProfileAvatar size={52} onClick={() => navigate("/ai/app/perfil")} />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{profile?.full_name || firstName}</p>
-          <Link to="/ai/app/perfil" className="text-xs text-primary hover:underline">
-            Alterar foto de perfil
-          </Link>
-        </div>
-      </Card>
-
+    <AiShell avatar title={`Olá, ${firstName}`} subtitle="Sua inteligência de nutrição, treino e evolução.">
       {offer && (
         <div className="mb-4">
           <AiOfferCard offer={offer} onDismiss={dismiss} />
@@ -605,25 +595,6 @@ export default function AiDashboard() {
           {editing ? <Check className="mr-2 h-4 w-4" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
           {editing ? "Concluir" : "Editar widgets"}
         </Button>
-      </div>
-
-      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
-        {AI_HOME_STYLES.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStyle(s.id)}
-            aria-pressed={style === s.id}
-            className={`min-w-0 shrink-0 rounded-2xl border px-3 py-2 text-left transition-colors ${
-              style === s.id
-                ? "border-ocean-teal/60 bg-ocean-mint/15 text-ocean-teal"
-                : "border-border/70 bg-card text-muted-foreground hover:border-ocean-teal/40"
-            }`}
-          >
-            <span className="block text-xs font-bold">{s.label}</span>
-            <span className="block whitespace-nowrap text-[10px] opacity-80">{s.hint}</span>
-          </button>
-        ))}
       </div>
 
       {editing ? (
