@@ -5,6 +5,8 @@ const KEY = "sth_ai_home_widgets_v1";
 export interface WidgetMeta {
   id: string;
   label: string;
+  /** Não aparece na tela até o aluno incluir pela galeria. */
+  defaultHidden?: boolean;
 }
 
 interface StoredLayout {
@@ -41,7 +43,13 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
     return [...fromStore, ...rest];
   }, [defaults, layout.order]);
 
-  const hidden = useMemo(() => new Set(layout.hidden), [layout.hidden]);
+  const hidden = useMemo(() => {
+    const set = new Set(layout.hidden);
+    for (const d of defaults) {
+      if (d.defaultHidden && !layout.order.includes(d.id)) set.add(d.id);
+    }
+    return set;
+  }, [defaults, layout.hidden, layout.order]);
 
   const move = useCallback(
     (id: string, dir: -1 | 1) => {
