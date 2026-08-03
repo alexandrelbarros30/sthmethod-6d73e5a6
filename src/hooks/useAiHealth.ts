@@ -34,12 +34,12 @@ export function useAiHealth() {
   const [sources, setSources] = useState<HealthSource[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!opts?.silent) setLoading(true);
     const [{ data: d }, { data: s }] = await Promise.all([
       supabase
         .from("ai_app_health_days")
@@ -114,7 +114,8 @@ export function useAiHealth() {
           { user_id: user.id, provider, status: "connected", last_sync_at: new Date().toISOString() },
           { onConflict: "user_id,provider" },
         );
-      await refresh();
+      // silencioso: evita o "piscar" da tela a cada sincronização automática
+      await refresh({ silent: true });
       return rows.length;
     },
     [user?.id, refresh],
