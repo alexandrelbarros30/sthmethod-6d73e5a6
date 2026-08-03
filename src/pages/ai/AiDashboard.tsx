@@ -218,12 +218,15 @@ export default function AiDashboard() {
     (e: DragEndEvent) => {
       const { active, over } = e;
       if (!over || active.id === over.id) return;
-      const from = ordered.indexOf(String(active.id));
-      const to = ordered.indexOf(String(over.id));
+      const visible = ordered.filter((x) => !hidden.has(x));
+      const from = visible.indexOf(String(active.id));
+      const to = visible.indexOf(String(over.id));
       if (from < 0 || to < 0) return;
-      setOrderIds(arrayMove(ordered, from, to));
+      const moved = arrayMove(visible, from, to);
+      let k = 0;
+      setOrderIds(ordered.map((id) => (hidden.has(id) ? id : moved[k++])));
     },
-    [ordered, setOrderIds],
+    [ordered, hidden, setOrderIds],
   );
 
   useEffect(() => {
