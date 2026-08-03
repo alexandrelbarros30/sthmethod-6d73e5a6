@@ -341,7 +341,7 @@ No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing n
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         temperature: 0,
         messages: [
           { role: "system", content: systemPrompt },
