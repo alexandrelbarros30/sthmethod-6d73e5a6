@@ -788,6 +788,24 @@ export type Database = {
         }
         Relationships: []
       }
+      app_contexts: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       app_releases: {
         Row: {
           created_by: string | null
@@ -3486,6 +3504,7 @@ export type Database = {
       }
       diet_meals: {
         Row: {
+          app_context: string | null
           created_at: string
           diet_id: string | null
           id: string
@@ -3496,6 +3515,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_context?: string | null
           created_at?: string
           diet_id?: string | null
           id?: string
@@ -3506,6 +3526,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_context?: string | null
           created_at?: string
           diet_id?: string | null
           id?: string
@@ -3515,7 +3536,15 @@ export type Database = {
           time?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diet_meals_app_context_fkey"
+            columns: ["app_context"]
+            isOneToOne: false
+            referencedRelation: "app_contexts"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       diet_planning: {
         Row: {
@@ -4095,6 +4124,7 @@ export type Database = {
       }
       food_diary_entries: {
         Row: {
+          app_context: string | null
           carbs_g: number
           created_at: string
           energy_kcal: number
@@ -4114,6 +4144,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_context?: string | null
           carbs_g?: number
           created_at?: string
           energy_kcal?: number
@@ -4133,6 +4164,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_context?: string | null
           carbs_g?: number
           created_at?: string
           energy_kcal?: number
@@ -4151,7 +4183,15 @@ export type Database = {
           unit?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "food_diary_entries_app_context_fkey"
+            columns: ["app_context"]
+            isOneToOne: false
+            referencedRelation: "app_contexts"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       food_diary_goals: {
         Row: {
@@ -6298,6 +6338,7 @@ export type Database = {
       }
       student_diets: {
         Row: {
+          app_context: string | null
           carbs_g: number | null
           content: string | null
           created_at: string
@@ -6320,6 +6361,7 @@ export type Database = {
           visible: boolean
         }
         Insert: {
+          app_context?: string | null
           carbs_g?: number | null
           content?: string | null
           created_at?: string
@@ -6342,6 +6384,7 @@ export type Database = {
           visible?: boolean
         }
         Update: {
+          app_context?: string | null
           carbs_g?: number | null
           content?: string | null
           created_at?: string
@@ -6363,7 +6406,15 @@ export type Database = {
           user_id?: string
           visible?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "student_diets_app_context_fkey"
+            columns: ["app_context"]
+            isOneToOne: false
+            referencedRelation: "app_contexts"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       student_exercise_logs: {
         Row: {

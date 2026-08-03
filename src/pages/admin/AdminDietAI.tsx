@@ -406,6 +406,7 @@ const AdminDietAI = () => {
         carbs_g: result.total.carbs_g,
         fat_g: result.total.fat_g,
         hydration_l: result.hydration_l || null,
+        app_context: 'sth_method',
       } as any).select("id").single();
       if (error) throw error;
 

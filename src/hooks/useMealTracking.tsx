@@ -79,6 +79,7 @@ export function useMealTracking() {
         .select("id, title, tab_label, content, energy_kcal, protein_g, carbs_g, fat_g, hydration_l, start_date, end_date, is_active, created_at")
         .eq("user_id", targetUserId!)
         .eq("is_active", true)
+        .eq("app_context", "sth_method")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -144,7 +145,8 @@ export function useMealTracking() {
       let q = supabase
         .from("diet_meals")
         .select("id, name, time, sort_order, image_url, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
-        .eq("user_id", targetUserId!);
+        .eq("user_id", targetUserId!)
+        .eq("app_context", "sth_method");
       if (currentDiet?.id) q = q.or(`diet_id.eq.${currentDiet.id},diet_id.is.null`);
       const { data, error } = await q.order("sort_order", { ascending: true });
       if (error) throw error;

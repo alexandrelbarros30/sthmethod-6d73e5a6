@@ -39,6 +39,7 @@ export default function AiFood() {
       .select("id, meal_type, meal_label, item_name, quantity, unit, energy_kcal, protein_g, carbs_g, fat_g")
       .eq("user_id", user.id)
       .eq("log_date", date)
+      .eq("app_context", "sth_ai")
       .order("created_at", { ascending: true });
     setEntries(((data ?? []) as unknown) as Entry[]);
     setLoading(false);

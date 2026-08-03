@@ -299,7 +299,7 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
       for (let i = 0; i < meals.length; i++) {
         const meal = meals[i];
         const { data: insertedMeal, error: insertMealError } = await supabase
-          .from("diet_meals").insert({ user_id: studentId, name: meal.name, time: meal.time, sort_order: i }).select("id").single();
+          .from("diet_meals").insert({ user_id: studentId, name: meal.name, time: meal.time, sort_order: i, app_context: 'sth_method' }).select("id").single();
         if (insertMealError) throw insertMealError;
 
         if (insertedMeal && meal.foods.length > 0) {
