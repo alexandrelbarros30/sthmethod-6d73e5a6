@@ -71,6 +71,11 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
 
   const reset = useCallback(() => setLayout({ order: [], hidden: [] }), []);
 
+  /** Define a ordem completa (usado pelo arrastar-e-soltar). */
+  const setOrderIds = useCallback((ids: string[]) => {
+    setLayout((prev) => ({ ...prev, order: ids }));
+  }, []);
+
   /** Troca o widget `id` (visível) pelo widget `withId` (oculto), na mesma posição. */
   const replace = useCallback(
     (id: string, withId: string) => {
@@ -94,5 +99,5 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
     [defaults],
   );
 
-  return { ordered, hidden, move, toggle, replace, reset };
+  return { ordered, hidden, move, toggle, replace, reset, setOrderIds };
 }
