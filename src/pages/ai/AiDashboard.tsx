@@ -222,11 +222,17 @@ function SortableTile({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="max-h-72 overflow-auto">
-                  <DropdownMenuLabel className="text-xs">Substituir por</DropdownMenuLabel>
-                  {swappable.map((other) => (
-                    <DropdownMenuItem key={other} onSelect={() => onSwap(other)}>
-                      {labelOf(other)}
-                    </DropdownMenuItem>
+                  {byGroup(swappable).map(([group, list]) => (
+                    <div key={group}>
+                      <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {group}
+                      </DropdownMenuLabel>
+                      {list.map((other) => (
+                        <DropdownMenuItem key={other} onSelect={() => onSwap(other)}>
+                          {labelOf(other)}
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
