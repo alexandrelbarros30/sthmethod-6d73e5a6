@@ -418,10 +418,55 @@ export default function AiDashboard() {
         </Card>
       )}
 
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {editing ? "Reordene ou oculte os cards da sua tela inicial." : "Sua tela inicial personalizada."}
+        </p>
+        <Button size="sm" variant={editing ? "default" : "outline"} onClick={() => setEditing((v) => !v)}>
+          {editing ? <Check className="mr-2 h-4 w-4" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
+          {editing ? "Concluir" : "Editar widgets"}
+        </Button>
+      </div>
+
+      {editing && (
+        <Card className="mb-4 p-3">
+          <div className="space-y-2">
+            {ordered.map((id, i) => {
+              const meta = WIDGET_META.find((w) => w.id === id);
+              const off = hidden.has(id);
+              return (
+                <div
+                  key={id}
+                  className={`flex items-center gap-2 rounded-2xl border border-border/50 p-2.5 ${off ? "opacity-50" : ""}`}
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{meta?.label ?? id}</span>
+                  <Button size="icon" variant="ghost" disabled={i === 0} onClick={() => move(id, -1)} aria-label="Mover para cima">
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    disabled={i === ordered.length - 1}
+                    onClick={() => move(id, 1)}
+                    aria-label="Mover para baixo"
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => toggle(id)} aria-label={off ? "Mostrar" : "Ocultar"}>
+                    {off ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+          <Button size="sm" variant="ghost" className="mt-3" onClick={reset}>
+            <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
+          </Button>
+        </Card>
+      )}
+
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-        {ordered.map((id) =>
-          hidden.has(id) ? null : <ReactFragmentWidget key={id}>{nodes[id]}</ReactFragmentWidget>,
-        )}
+        {ordered.map((id) => (hidden.has(id) ? null : <Fragment key={id}>{nodes[id]}</Fragment>))}
       </div>
 
       <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-4 text-xs leading-relaxed text-muted-foreground sm:p-5">
