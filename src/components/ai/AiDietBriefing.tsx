@@ -86,9 +86,9 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
   async function saveGroup() {
     if (!profile?.user_id) return;
 
-    if (!objective || !kcal || !meals || !protein || !carbs || !fat) {
+    if (!objective) {
       toast.error("Preenchimento obrigatório!", {
-        description: "Você precisa definir Objetivo, Kcal, Refeições e todos os Macros para continuar."
+        description: "Você precisa definir o Objetivo para continuar. Os demais dados (Kcal e Macros) serão calculados automaticamente pela STHia se deixados em branco."
       });
       return;
     }
