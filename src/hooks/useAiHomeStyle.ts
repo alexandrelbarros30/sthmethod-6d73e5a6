@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 const KEY = "sth_ai_home_style_v1";
 
@@ -10,16 +10,32 @@ export const AI_HOME_STYLES: { id: AiHomeStyle; label: string; hint: string }[] 
   { id: "focus", label: "Foco", hint: "um card por linha, leitura ampla" },
 ];
 
+function read(): AiHomeStyle {
+  const raw = typeof localStorage !== "undefined" ? localStorage.getItem(KEY) : null;
+  return raw === "dense" || raw === "focus" || raw === "mosaic" ? raw : "mosaic";
+}
+
+const listeners = new Set<() => void>();
+let current: AiHomeStyle = read();
+
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
 /** Estilo visual da tela inicial (cards e grade), persistido no dispositivo. */
 export function useAiHomeStyle() {
-  const [style, setStyle] = useState<AiHomeStyle>(() => {
-    const raw = localStorage.getItem(KEY);
-    return raw === "dense" || raw === "focus" || raw === "mosaic" ? raw : "mosaic";
-  });
+  const style = useSyncExternalStore(subscribe, () => current, () => current);
 
-  useEffect(() => {
-    localStorage.setItem(KEY, style);
-  }, [style]);
+  const setStyle = useCallback((next: AiHomeStyle) => {
+    current = next;
+    try {
+      localStorage.setItem(KEY, next);
+    } catch {
+      /* storage indisponível */
+    }
+    listeners.forEach((l) => l());
+  }, []);
 
   /** Classe de span do slot conforme o estilo escolhido. */
   const slotSpan = useCallback(
