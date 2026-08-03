@@ -487,31 +487,37 @@ export default function AiDashboard() {
       </div>
 
       {editing && (
-        <Card className="mt-4 p-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Adicionar widgets</p>
+        <div className="mt-6">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Adicionar widgets
+          </p>
           {ordered.filter((id) => hidden.has(id)).length === 0 ? (
             <p className="text-sm text-muted-foreground">Todos os widgets já estão na sua tela inicial.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
               {ordered
                 .filter((id) => hidden.has(id))
                 .map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => toggle(id)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:text-primary"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    {WIDGET_META.find((w) => w.id === id)?.label ?? id}
-                  </button>
+                  <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`}>
+                    <div className="pointer-events-none w-full opacity-50 grayscale [&_a]:pointer-events-none">
+                      {nodes[id]}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggle(id)}
+                      aria-label={`Incluir ${WIDGET_META.find((w) => w.id === id)?.label ?? id}`}
+                      className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
                 ))}
             </div>
           )}
-          <Button size="sm" variant="ghost" className="mt-3" onClick={reset}>
+          <Button size="sm" variant="ghost" className="mt-4" onClick={reset}>
             <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
           </Button>
-        </Card>
+        </div>
       )}
 
       <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-4 text-xs leading-relaxed text-muted-foreground sm:p-5">
