@@ -10,7 +10,7 @@ import { healthDiagnostics } from "@/lib/health-connect";
 
 const NATIVE_STEPS = [
   "Instale/atualize o app Health Connect (Play Store) — no Galaxy Watch 4 ele é obrigatório; o Samsung Health sozinho não envia dados.",
-  "No celular Galaxy: Samsung Health › Configurações › Health Connect › ative Passos, Calorias ativas, Frequência cardíaca e Treinos.",
+  "No celular Galaxy: Samsung Health › Configurações › Health Connect › ative Passos, Calorias, Sono, Peso, Frequência cardíaca e Treinos.",
   "Abra o Galaxy Wearable/Samsung Health e toque em Sincronizar agora para o relógio subir os dados do dia.",
   "Toque em Sincronizar agora aqui e autorize o STH METHOD no Health Connect.",
   "Pronto: a cada abertura do app os dados do Galaxy Watch 4/5/6/7 entram automaticamente.",
@@ -91,8 +91,8 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
             <Watch className="h-4 w-4 text-primary" /> Samsung Galaxy Watch
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Passos, calorias ativas e frequência cardíaca do relógio entram automaticamente. Sono e peso vêm pelo CSV do
-            Samsung Health ou pelo registro manual do dia.
+            Passos, calorias, sono, peso e frequência cardíaca de repouso do relógio entram automaticamente pelo Health
+            Connect. No navegador, use o CSV do Samsung Health ou o registro manual do dia.
           </p>
         </div>
         <div className="flex items-center gap-2">
