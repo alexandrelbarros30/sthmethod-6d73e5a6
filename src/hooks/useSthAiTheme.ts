@@ -14,7 +14,9 @@ export function useSthAiTheme() {
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", mode === "midnight");
-    root.classList.add("theme-sth-green");
+    // Midnight é um tema escuro completo: não pode herdar as superfícies
+    // claras do tema STH green / Ocean.
+    root.classList.toggle("theme-sth-green", mode !== "midnight");
     root.classList.toggle("theme-sth-ai", mode === "ocean");
     root.classList.toggle("theme-sth-ai-classic", mode === "classic");
     root.classList.toggle("theme-sth-ai-midnight", mode === "midnight");
