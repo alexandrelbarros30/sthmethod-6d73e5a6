@@ -162,7 +162,11 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
   useEffect(() => () => { try { camStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ } }, []);
 
   async function openCamera() {
-    if (!navigator.mediaDevices?.getUserMedia) { cameraInputRef.current?.click(); return; }
+    const fallback = () => {
+      if (isNative()) { void nativePickImage("camera"); return; }
+      cameraInputRef.current?.click();
+    };
+    if (!navigator.mediaDevices?.getUserMedia) { fallback(); return; }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 } },
@@ -177,7 +181,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
         v.play().catch(() => { /* noop */ });
       }, 50);
     } catch {
-      cameraInputRef.current?.click();
+      fallback();
     }
   }
 
@@ -337,14 +341,10 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
     try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ mode, dataUrl, at: Date.now() })); } catch { /* noop */ }
   }
 
-  // Câmera/galeria: usa o plugin nativo no APK e o <input file> no navegador.
-  async function pickImage(from: "camera" | "gallery") {
-    setErrMsg(null);
-    if (!isNative()) {
-      if (from === "camera") { void openCamera(); return; }
-      galleryInputRef.current?.click();
-      return;
-    }
+  // Plugin nativo (APK). Para a câmera é apenas fallback: abrir a câmera do
+  // sistema troca de Activity e o Android pode destruir o WebView, perdendo a
+  // foto sem erro. Por isso a captura preferencial no APK é dentro do app.
+  async function nativePickImage(from: "camera" | "gallery") {
     setPreparing(true);
     try {
       const dataUrl = await nativeCapture(from === "camera" ? CameraSource.Camera : CameraSource.Photos);
@@ -361,6 +361,15 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
     } finally {
       setPreparing(false);
     }
+  }
+
+  // Câmera/galeria: no APK a galeria usa o plugin nativo; a câmera usa a
+  // captura embutida (getUserMedia), que não sai do WebView.
+  async function pickImage(from: "camera" | "gallery") {
+    setErrMsg(null);
+    if (from === "camera") { void openCamera(); return; }
+    if (isNative()) { void nativePickImage("gallery"); return; }
+    galleryInputRef.current?.click();
   }
 
   async function analyze() {
