@@ -35,7 +35,8 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
   const [diag, setDiag] = useState<{ code: string; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
   const [selfTest, setSelfTest] = useState<HealthSelfTestResult | null>(null);
-  const { status, syncing, lastSync, report, sync, openHealthSettings, openHealthConnectStore } = useHealthConnect(onImport);
+  const { status, syncing, lastSync, report, live, liveAt, readLive, sync, openHealthSettings, openHealthConnectStore } =
+    useHealthConnect(onImport);
   const isNative = status === "ready" || status === "unavailable";
 
   useEffect(() => {
@@ -134,6 +135,40 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
           )}
         </div>
       </div>
+
+      {status === "ready" && (
+        <div className="mt-4 rounded-2xl border border-border/50 bg-card/60 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2 text-xs font-semibold">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+              </span>
+              Ao vivo no relógio
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => void readLive()}>
+              <RefreshCw className="mr-2 h-3.5 w-3.5" /> Atualizar
+            </Button>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {[
+              { label: "Passos", value: live?.steps != null ? live.steps.toLocaleString("pt-BR") : "—" },
+              { label: "Kcal ativas", value: live?.active_kcal != null ? live.active_kcal.toLocaleString("pt-BR") : "—" },
+              { label: "FC repouso", value: live?.resting_hr != null ? `${live.resting_hr} bpm` : "—" },
+              { label: "Sono", value: live?.sleep_minutes != null ? `${(live.sleep_minutes / 60).toFixed(1)} h` : "—" },
+              { label: "Peso", value: live?.weight_kg != null ? `${live.weight_kg} kg` : "—" },
+            ].map((m) => (
+              <div key={m.label} className="rounded-xl border border-border/40 bg-background/60 p-2">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{m.label}</p>
+                <p className="mt-0.5 text-sm font-semibold">{m.value}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {liveAt ? `Leitura de ${new Date(liveAt).toLocaleTimeString("pt-BR")} · atualiza sozinho a cada 30s` : "Aguardando primeira leitura do relógio…"}
+          </p>
+        </div>
+      )}
 
       {status === "ready" && (
         <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 p-3">
