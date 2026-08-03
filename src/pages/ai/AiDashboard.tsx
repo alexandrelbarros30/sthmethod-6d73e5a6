@@ -70,7 +70,40 @@ const WIDGET_META: WidgetMeta[] = [
   { id: "/ai/app/diario", label: "Diário alimentar" },
   { id: "/ai/app/saude", label: "Saúde e wearables" },
   { id: "/ai/app/coaches", label: "Coaches humanos" },
+  { id: "health-steps", label: "Passos" },
+  { id: "health-kcal", label: "Kcal ativas" },
+  { id: "health-hr", label: "FC de repouso" },
+  { id: "health-sleep", label: "Sono" },
 ];
+
+/** Assunto de cada widget: usado para agrupar a troca e a galeria por tema. */
+const WIDGET_GROUP: Record<string, string> = {
+  "next-meal": "Nutrição",
+  "mod-diet": "Nutrição",
+  "/ai/app/diario": "Nutrição",
+  hydration: "Nutrição",
+  workout: "Treino",
+  "mod-workout": "Treino",
+  streak: "Progresso",
+  weight: "Progresso",
+  images: "Progresso",
+  insight: "Inteligência",
+  "mod-analysis": "Inteligência",
+  "/ai/app/coaches": "Inteligência",
+  "/ai/app/saude": "Saúde e wearables",
+  "health-steps": "Saúde e wearables",
+  "health-kcal": "Saúde e wearables",
+  "health-hr": "Saúde e wearables",
+  "health-sleep": "Saúde e wearables",
+};
+
+const GROUP_ORDER = ["Saúde e wearables", "Nutrição", "Treino", "Progresso", "Inteligência", "Outros"];
+
+const groupOf = (id: string) => WIDGET_GROUP[id] ?? "Outros";
+
+/** Agrupa ids por assunto, preservando a ordem de GROUP_ORDER. */
+const byGroup = (ids: string[]) =>
+  GROUP_ORDER.map((g) => [g, ids.filter((id) => groupOf(id) === g)] as const).filter(([, list]) => list.length > 0);
 
 const ROUTES: Record<AiKind, string> = {
   diet: "/ai/app/cardapio",
