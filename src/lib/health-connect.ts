@@ -10,6 +10,9 @@ export interface NativeHealthDay {
 
 type HealthPlugin = typeof import("capacitor-health")["Health"];
 
+/** Permissões que o plugin realmente suporta (sono/peso não existem nele). */
+const PERMISSIONS = ["READ_STEPS", "READ_ACTIVE_CALORIES", "READ_TOTAL_CALORIES", "READ_HEART_RATE", "READ_WORKOUTS"] as const;
+
 let cached: HealthPlugin | null = null;
 
 export function isNativeHealthPlatform() {
@@ -42,9 +45,8 @@ export async function healthAvailable() {
 export async function requestHealthPermissions() {
   const p = await plugin();
   if (!p) return false;
-  const permissions = ["READ_STEPS", "READ_ACTIVE_CALORIES", "READ_HEART_RATE", "READ_WORKOUTS"] as const;
   try {
-    const res = await p.requestHealthPermissions({ permissions: [...permissions] as never });
+    const res = await p.requestHealthPermissions({ permissions: [...PERMISSIONS] as never });
     const granted = res?.permissions ?? [];
     if (Array.isArray(granted) && granted.length > 0) {
       return granted.some((entry) => Object.values(entry).some(Boolean));
@@ -54,6 +56,29 @@ export async function requestHealthPermissions() {
     return false;
   }
 }
+
+/** Lista as permissões de saúde ainda não concedidas (Android/Health Connect). */
+export async function missingHealthPermissions(): Promise<string[]> {
+  const p = await plugin();
+  if (!p) return [];
+  try {
+    const res = await p.checkHealthPermissions({ permissions: [...PERMISSIONS] as never });
+    const entries = res?.permissions ?? [];
+    const state: Record<string, boolean> = {};
+    for (const entry of entries) Object.assign(state, entry);
+    return PERMISSIONS.filter((perm) => state[perm] === false);
+  } catch {
+    return [];
+  }
+}
+
+const PERMISSION_LABEL: Record<string, string> = {
+  READ_STEPS: "Passos",
+  READ_ACTIVE_CALORIES: "Calorias ativas",
+  READ_TOTAL_CALORIES: "Calorias totais",
+  READ_HEART_RATE: "Frequência cardíaca",
+  READ_WORKOUTS: "Treinos",
+};
 
 /** Diagnóstico legível do porquê a sincronização do relógio não está disponível. */
 export async function healthDiagnostics() {
@@ -71,6 +96,13 @@ export async function healthDiagnostics() {
     }
   } catch {
     return { code: "hc-missing" as const, message: "Não foi possível falar com o Health Connect neste celular." };
+  }
+  const missing = await missingHealthPermissions();
+  if (missing.length > 0) {
+    return {
+      code: "permissions" as const,
+      message: `Faltam permissões no Health Connect: ${missing.map((m) => PERMISSION_LABEL[m] ?? m).join(", ")}. Toque em Permissões e libere para o STH.`,
+    };
   }
   return { code: "ready" as const, message: "Health Connect disponível." };
 }
@@ -96,7 +128,16 @@ export async function openHealthConnectStore() {
 }
 
 const iso = (d: Date) => d.toISOString();
-const dayKey = (value: string) => new Date(value).toISOString().slice(0, 10);
+
+/** Chave YYYY-MM-DD no fuso do aparelho (o plugin devolve LocalDateTime sem offset). */
+const dayKey = (value: string) => {
+  const local = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (local && !/[zZ]|[+-]\d{2}:\d{2}$/.test(value)) return value.slice(0, 10);
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value.slice(0, 10);
+  const tzAdjusted = new Date(d.getTime() - d.getTimezoneOffset() * 60_000);
+  return tzAdjusted.toISOString().slice(0, 10);
+};
 
 /**
  * Lê os últimos `days` dias de passos, calorias ativas e FC de repouso
@@ -107,16 +148,27 @@ export async function readNativeHealthDays(days = 30): Promise<NativeHealthDay[]
   if (!p) return [];
 
   const end = new Date();
+  // Alinha o início à meia-noite local: sem isso o Health Connect fatia os
+  // "dias" a partir da hora atual e mistura passos de dois dias no mesmo balde.
   const start = new Date(end.getTime() - days * 86_400_000);
+  start.setHours(0, 0, 0, 0);
   const rows = new Map<string, NativeHealthDay>();
   const touch = (day: string) => {
     if (!rows.has(day)) rows.set(day, { day, steps: null, active_kcal: null, resting_hr: null });
     return rows.get(day)!;
   };
 
-  const aggregate = async (dataType: "steps" | "active-calories", field: "steps" | "active_kcal") => {
+  const aggregate = async (
+    dataType: "steps" | "active-calories" | "total-calories",
+    field: "steps" | "active_kcal",
+  ) => {
     try {
-      const res = await p.queryAggregated({ startDate: iso(start), endDate: iso(end), dataType, bucket: "day" });
+      const res = await p.queryAggregated({
+        startDate: iso(start),
+        endDate: iso(end),
+        dataType: dataType as never,
+        bucket: "day",
+      });
       for (const sample of res?.aggregatedData ?? []) {
         if (!Number.isFinite(sample.value) || sample.value <= 0) continue;
         touch(dayKey(sample.startDate))[field] = Math.round(sample.value);
@@ -128,6 +180,10 @@ export async function readNativeHealthDays(days = 30): Promise<NativeHealthDay[]
 
   await aggregate("steps", "steps");
   await aggregate("active-calories", "active_kcal");
+  // Alguns Galaxy Watch só expõem calorias totais; usamos como reserva.
+  if ([...rows.values()].every((r) => r.active_kcal == null)) {
+    await aggregate("total-calories", "active_kcal");
+  }
 
   try {
     const res = await p.queryWorkouts({
