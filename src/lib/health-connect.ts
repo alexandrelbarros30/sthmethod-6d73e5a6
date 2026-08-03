@@ -1,4 +1,4 @@
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 /** Amostra diária agregada vinda do Health Connect / Apple Saúde. */
 export interface NativeHealthDay {
@@ -6,6 +6,37 @@ export interface NativeHealthDay {
   steps: number | null;
   active_kcal: number | null;
   resting_hr: number | null;
+  sleep_minutes: number | null;
+  weight_kg: number | null;
+}
+
+/**
+ * Ponte nativa própria do STH (módulo Android `sth-health`). Cobre sono, peso,
+ * FC de repouso e calorias totais — tipos que o plugin capacitor-health não lê.
+ */
+interface SthHealthPlugin {
+  isAvailable(): Promise<{ available: boolean }>;
+  checkHealthPermissions(): Promise<{ available: boolean; missing: string[] }>;
+  requestHealthPermissions(): Promise<{ granted: boolean }>;
+  openSettings(): Promise<void>;
+  readDays(options: { days: number }): Promise<{ days: Partial<NativeHealthDay>[] }>;
+}
+
+const SthHealth = registerPlugin<SthHealthPlugin>("SthHealth");
+
+let sthNativeOk: boolean | null = null;
+
+/** Diz se o módulo nativo próprio está presente e com Health Connect ativo. */
+export async function sthHealthAvailable() {
+  if (!isNativeHealthPlatform() || Capacitor.getPlatform() !== "android") return false;
+  if (sthNativeOk != null) return sthNativeOk;
+  try {
+    const res = await SthHealth.isAvailable();
+    sthNativeOk = res?.available === true;
+  } catch {
+    sthNativeOk = false;
+  }
+  return sthNativeOk;
 }
 
 type HealthPlugin = typeof import("capacitor-health")["Health"];
@@ -43,6 +74,14 @@ export async function healthAvailable() {
 }
 
 export async function requestHealthPermissions() {
+  if (await sthHealthAvailable()) {
+    try {
+      const res = await SthHealth.requestHealthPermissions();
+      if (res?.granted) return true;
+    } catch {
+      /* cai para o plugin padrão */
+    }
+  }
   const p = await plugin();
   if (!p) return false;
   try {
@@ -59,6 +98,14 @@ export async function requestHealthPermissions() {
 
 /** Lista as permissões de saúde ainda não concedidas (Android/Health Connect). */
 export async function missingHealthPermissions(): Promise<string[]> {
+  if (await sthHealthAvailable()) {
+    try {
+      const res = await SthHealth.checkHealthPermissions();
+      return res?.missing ?? [];
+    } catch {
+      return [];
+    }
+  }
   const p = await plugin();
   if (!p) return [];
   try {
@@ -78,12 +125,29 @@ const PERMISSION_LABEL: Record<string, string> = {
   READ_TOTAL_CALORIES: "Calorias totais",
   READ_HEART_RATE: "Frequência cardíaca",
   READ_WORKOUTS: "Treinos",
+  steps: "Passos",
+  active_kcal: "Calorias ativas",
+  total_kcal: "Calorias totais",
+  sleep: "Sono",
+  weight: "Peso",
+  resting_hr: "Frequência cardíaca de repouso",
+  heart_rate: "Frequência cardíaca",
 };
 
 /** Diagnóstico legível do porquê a sincronização do relógio não está disponível. */
 export async function healthDiagnostics() {
   if (!isNativeHealthPlatform()) {
     return { code: "web" as const, message: "Você está no navegador. A sincronização automática só existe no aplicativo Android do STH AI." };
+  }
+  if (await sthHealthAvailable()) {
+    const missingNative = await missingHealthPermissions();
+    if (missingNative.length > 0) {
+      return {
+        code: "permissions" as const,
+        message: `Faltam permissões no Health Connect: ${missingNative.map((m) => PERMISSION_LABEL[m] ?? m).join(", ")}. Toque em Permissões e libere para o STH.`,
+      };
+    }
+    return { code: "ready" as const, message: "Health Connect disponível (passos, calorias, sono, peso e FC de repouso)." };
   }
   const p = await plugin();
   if (!p) {
@@ -108,6 +172,14 @@ export async function healthDiagnostics() {
 }
 
 export async function openHealthSettings() {
+  if (await sthHealthAvailable()) {
+    try {
+      await SthHealth.openSettings();
+      return;
+    } catch {
+      /* cai para o plugin padrão */
+    }
+  }
   const p = await plugin();
   if (!p) return;
   try {
@@ -144,6 +216,26 @@ const dayKey = (value: string) => {
  * (menor média de treino do dia) e devolve linhas prontas para o banco.
  */
 export async function readNativeHealthDays(days = 30): Promise<NativeHealthDay[]> {
+  // Caminho preferido: módulo nativo próprio (sono, peso e FC de repouso inclusos).
+  if (await sthHealthAvailable()) {
+    try {
+      const res = await SthHealth.readDays({ days });
+      const parsed = (res?.days ?? [])
+        .filter((r): r is Partial<NativeHealthDay> & { day: string } => typeof r?.day === "string")
+        .map((r) => ({
+          day: r.day,
+          steps: r.steps ?? null,
+          active_kcal: r.active_kcal ?? null,
+          resting_hr: r.resting_hr ?? null,
+          sleep_minutes: r.sleep_minutes ?? null,
+          weight_kg: r.weight_kg ?? null,
+        }));
+      if (parsed.length > 0) return parsed.sort((a, b) => a.day.localeCompare(b.day));
+    } catch {
+      /* cai para o plugin capacitor-health */
+    }
+  }
+
   const p = await plugin();
   if (!p) return [];
 
@@ -154,7 +246,8 @@ export async function readNativeHealthDays(days = 30): Promise<NativeHealthDay[]
   start.setHours(0, 0, 0, 0);
   const rows = new Map<string, NativeHealthDay>();
   const touch = (day: string) => {
-    if (!rows.has(day)) rows.set(day, { day, steps: null, active_kcal: null, resting_hr: null });
+    if (!rows.has(day))
+      rows.set(day, { day, steps: null, active_kcal: null, resting_hr: null, sleep_minutes: null, weight_kg: null });
     return rows.get(day)!;
   };
 
