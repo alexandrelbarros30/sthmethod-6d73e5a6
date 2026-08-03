@@ -25,10 +25,16 @@ export default function AiLogin() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate(next, { replace: true });
+      if (data.session) {
+        try { sessionStorage.removeItem("sthai_oauth_next"); } catch {}
+        navigate(next, { replace: true });
+      }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate(next, { replace: true });
+      if (session) {
+        try { sessionStorage.removeItem("sthai_oauth_next"); } catch {}
+        navigate(next, { replace: true });
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate, next]);
