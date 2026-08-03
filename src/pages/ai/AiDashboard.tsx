@@ -267,7 +267,12 @@ export default function AiDashboard() {
   );
 
   const visibleIds = useMemo(() => ordered.filter((x) => !hidden.has(x)), [ordered, hidden]);
-  const hiddenIds = useMemo(() => ordered.filter((x) => hidden.has(x)), [ordered, hidden]);
+  // Robusto: qualquer widget do catálogo que não esteja visível pode ser incluído,
+  // mesmo que o layout salvo no aparelho seja anterior aos cards de saúde.
+  const hiddenIds = useMemo(() => {
+    const vis = new Set(visibleIds);
+    return WIDGET_META.map((w) => w.id).filter((id) => !vis.has(id));
+  }, [visibleIds]);
 
   useEffect(() => {
     if (loading) return;
