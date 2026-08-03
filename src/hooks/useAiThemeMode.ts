@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type AiThemeMode = "ocean" | "classic";
+export type AiThemeMode = "ocean" | "classic" | "midnight";
 
 const KEY = "sth-ai-theme-mode";
 const EVT = "sth-ai-theme-mode-change";
 
+const MODES: AiThemeMode[] = ["ocean", "classic", "midnight"];
+
 export function getAiThemeMode(): AiThemeMode {
   if (typeof window === "undefined") return "ocean";
-  return localStorage.getItem(KEY) === "classic" ? "classic" : "ocean";
+  const raw = localStorage.getItem(KEY) as AiThemeMode | null;
+  return raw && MODES.includes(raw) ? raw : "ocean";
 }
 
 export function setAiThemeMode(mode: AiThemeMode) {
@@ -15,7 +18,7 @@ export function setAiThemeMode(mode: AiThemeMode) {
   window.dispatchEvent(new CustomEvent<AiThemeMode>(EVT, { detail: mode }));
 }
 
-/** Modo de tema do STH AI: Ocean Premium (padrão) ou STH Clássico (verde). */
+/** Modo de tema do STH AI: Ocean Premium (padrão), STH Clássico (verde) ou Midnight (escuro). */
 export function useAiThemeMode() {
   const [mode, setMode] = useState<AiThemeMode>(getAiThemeMode);
 
@@ -31,7 +34,8 @@ export function useAiThemeMode() {
   }, []);
 
   const toggle = useCallback(() => {
-    setAiThemeMode(getAiThemeMode() === "ocean" ? "classic" : "ocean");
+    const i = MODES.indexOf(getAiThemeMode());
+    setAiThemeMode(MODES[(i + 1) % MODES.length]);
   }, []);
 
   return { mode, setMode: setAiThemeMode, toggle };

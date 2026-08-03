@@ -31,7 +31,7 @@ import {
   BrainCircuit,
   Camera,
 } from "lucide-react";
-import { ArrowDown, ArrowUp, Eye, EyeOff, LayoutGrid, RotateCcw, Check } from "lucide-react";
+import { ArrowDown, ArrowUp, LayoutGrid, RotateCcw, Check, Minus, Plus } from "lucide-react";
 
 const WIDGET_META: WidgetMeta[] = [
   { id: "next-meal", label: "Refeição de agora" },
@@ -54,6 +54,18 @@ const ROUTES: Record<AiKind, string> = {
   workout: "/ai/app/treino",
   analysis: "/ai/app/analise",
 };
+
+/** Largura de cada widget na grade (Samsung Health style). */
+const SPAN: Record<string, string> = {
+  "next-meal": "col-span-2 lg:col-span-3",
+  workout: "col-span-2 lg:col-span-3",
+  streak: "col-span-2 lg:col-span-3",
+  hydration: "col-span-2 lg:col-span-3",
+  weight: "col-span-2 sm:col-span-1 lg:col-span-2",
+  insight: "col-span-2 sm:col-span-1 lg:col-span-4",
+  images: "col-span-2 sm:col-span-1 lg:col-span-2",
+};
+const spanOf = (id: string) => SPAN[id] ?? "col-span-2 sm:col-span-1 lg:col-span-2";
 
 const tile =
   "group relative overflow-hidden rounded-3xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ocean-teal/40 hover:shadow-[0_18px_50px_-30px_hsl(var(--ocean-teal)/0.75)] sm:rounded-[2rem] sm:p-5";
@@ -418,9 +430,9 @@ export default function AiDashboard() {
         </Card>
       )}
 
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          {editing ? "Reordene ou oculte os cards da sua tela inicial." : "Sua tela inicial personalizada."}
+          {editing ? "Toque em − para remover e nas setas para mover." : "Sua tela inicial personalizada."}
         </p>
         <Button size="sm" variant={editing ? "default" : "outline"} onClick={() => setEditing((v) => !v)}>
           {editing ? <Check className="mr-2 h-4 w-4" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
@@ -428,46 +440,73 @@ export default function AiDashboard() {
         </Button>
       </div>
 
-      {editing && (
-        <Card className="mb-4 p-3">
-          <div className="space-y-2">
-            {ordered.map((id, i) => {
-              const meta = WIDGET_META.find((w) => w.id === id);
-              const off = hidden.has(id);
-              return (
-                <div
-                  key={id}
-                  className={`flex items-center gap-2 rounded-2xl border border-border/50 p-2.5 ${off ? "opacity-50" : ""}`}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
+        {ordered.map((id, i) => {
+          if (hidden.has(id)) return null;
+          if (!editing) return <Fragment key={id}>{nodes[id]}</Fragment>;
+          return (
+            <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full`}>
+              <div className="pointer-events-none w-full opacity-90 [&_a]:pointer-events-none">{nodes[id]}</div>
+              <button
+                type="button"
+                onClick={() => toggle(id)}
+                aria-label={`Remover ${WIDGET_META.find((w) => w.id === id)?.label ?? id}`}
+                className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-lg ring-2 ring-background"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <div className="absolute bottom-2 right-2 z-10 flex gap-1">
+                <button
+                  type="button"
+                  disabled={i === 0}
+                  onClick={() => move(id, -1)}
+                  aria-label="Mover para cima"
+                  className="grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow ring-1 ring-border disabled:opacity-40"
                 >
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{meta?.label ?? id}</span>
-                  <Button size="icon" variant="ghost" disabled={i === 0} onClick={() => move(id, -1)} aria-label="Mover para cima">
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={i === ordered.length - 1}
-                    onClick={() => move(id, 1)}
-                    aria-label="Mover para baixo"
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={i === ordered.length - 1}
+                  onClick={() => move(id, 1)}
+                  aria-label="Mover para baixo"
+                  className="grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow ring-1 ring-border disabled:opacity-40"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {editing && (
+        <Card className="mt-4 p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Adicionar widgets</p>
+          {ordered.filter((id) => hidden.has(id)).length === 0 ? (
+            <p className="text-sm text-muted-foreground">Todos os widgets já estão na sua tela inicial.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {ordered
+                .filter((id) => hidden.has(id))
+                .map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => toggle(id)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:text-primary"
                   >
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="ghost" onClick={() => toggle(id)} aria-label={off ? "Mostrar" : "Ocultar"}>
-                    {off ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+                    <Plus className="h-3.5 w-3.5" />
+                    {WIDGET_META.find((w) => w.id === id)?.label ?? id}
+                  </button>
+                ))}
+            </div>
+          )}
           <Button size="sm" variant="ghost" className="mt-3" onClick={reset}>
             <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
           </Button>
         </Card>
       )}
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-        {ordered.map((id) => (hidden.has(id) ? null : <Fragment key={id}>{nodes[id]}</Fragment>))}
-      </div>
 
       <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-4 text-xs leading-relaxed text-muted-foreground sm:p-5">
         <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
