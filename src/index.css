@@ -1263,6 +1263,27 @@ html, body {
   html.theme-sth-ai-midnight .bg-card\/90 {
     background-color: hsl(var(--card) / 0.92) !important;
   }
+
+  /* Textos/ícones que usam os azuis profundos do tema claro ficariam
+     praticamente invisíveis no fundo escuro — passam a usar texto claro. */
+  html.theme-sth-ai-midnight .text-ocean-deep,
+  html.theme-sth-ai-midnight .text-ocean-mid {
+    color: hsl(var(--foreground)) !important;
+  }
+  html.theme-sth-ai-midnight .text-ocean-teal {
+    color: hsl(var(--ocean-mint)) !important;
+  }
+  /* Barras/preenchimentos escuros ganham contraste sobre a trilha escura */
+  html.theme-sth-ai-midnight .bg-ocean-deep,
+  html.theme-sth-ai-midnight .bg-ocean-mid {
+    background-color: hsl(var(--ocean-teal)) !important;
+  }
+  html.theme-sth-ai-midnight .border-ocean-deep\/25 {
+    border-color: hsl(var(--ocean-teal) / 0.35) !important;
+  }
+  html.theme-sth-ai-midnight .bg-ocean-deep\/10 {
+    background-color: hsl(var(--ocean-teal) / 0.12) !important;
+  }
 }
 
 /* =====================================================================

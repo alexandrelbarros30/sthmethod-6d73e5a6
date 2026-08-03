@@ -112,9 +112,11 @@ export default function AiModule() {
       {kind === "workout" && <AiWorkoutBriefing profile={profile} onChange={setWorkoutBrief} collapsible />}
       {kind === "diet" && <AiDietBriefing profile={profile} onChange={setDietBrief} collapsible />}
       <Card className="space-y-3 p-5">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium">Campo livre — conte os detalhes</p>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="w-full text-sm font-medium sm:w-auto sm:flex-1 sm:min-w-0">
+            Campo livre — conte os detalhes
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
             <AiVoiceInput onTranscribe={(t) => setInstruction((v) => appendTranscript(v, t))} />
             <AiFieldTipsDialog kind={kind} />
           </div>
