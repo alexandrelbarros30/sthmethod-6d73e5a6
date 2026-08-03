@@ -178,136 +178,13 @@ export default function AiDashboard() {
       .replace(/\s+/g, " ")
       .trim() ?? "";
 
-  return (
-    <AiShell title={`Olá, ${firstName}`} subtitle="Sua inteligência de nutrição, treino e evolução.">
-      <Card className="mb-4 flex items-center gap-3 p-4">
-        <ProfileAvatar size={52} onClick={() => navigate("/ai/app/perfil")} />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{profile?.full_name || firstName}</p>
-          <Link to="/ai/app/perfil" className="text-xs text-primary hover:underline">
-            Alterar foto de perfil
-          </Link>
-        </div>
-      </Card>
+  const SHORTCUTS = [
+          { to: "/ai/app/diario", label: "Diário alimentar", hint: "registre refeições e água", icon: UtensilsCrossed },
+          { to: "/ai/app/saude", label: "Saúde e wearables", hint: "Galaxy Watch e Health Connect", icon: HeartPulse },
+          { to: "/ai/app/coaches", label: "Coaches humanos", hint: "acompanhamento profissional", icon: UserRound },
+        ];
 
-      {offer && (
-        <div className="mb-4">
-          <AiOfferCard offer={offer} onDismiss={dismiss} />
-        </div>
-      )}
-
-      {!subscription && !offer && (
-        <Card className="mb-4 flex flex-col gap-3 border-primary/30 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold">Ative seu plano para gerar seus programas</p>
-            <p className="mt-1 text-sm text-muted-foreground">A partir de R$ 39,90/mês, sem fidelidade.</p>
-          </div>
-          <Button asChild>
-            <Link to="/ai/assinatura">Ver planos <ArrowRight className="ml-2 h-4 w-4" /></Link>
-          </Button>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-        {/* Refeição de agora — destaque principal */}
-        <AiNextMealCard diet={latestOf(generations, "diet")} />
-
-        {/* Treino do dia — lembrete */}
-        <AiWorkoutReminderCard
-          workout={latestOf(generations, "workout")}
-          done={!!today?.workout_done}
-          doneAt={today?.workout_done ? today.checkin_date : null}
-          onDone={markWorkoutDone}
-          onUndo={undoWorkout}
-        />
-
-        {/* Constância — compacto */}
-        <Link
-          to="/ai/app/progresso"
-          className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-3`}
-        >
-          <div
-            className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl transition-opacity duration-500 group-hover:opacity-80"
-            aria-hidden
-          />
-          <div className="relative flex items-start justify-between gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-mint/15 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-ocean-teal">
-              <Flame className="h-3 w-3" /> Constância
-            </span>
-            <Badge variant={today ? "secondary" : "outline"} className="text-[10px]">
-              {today ? "Check-in feito" : "Pendente"}
-            </Badge>
-          </div>
-
-          <div className="relative mt-4 flex items-center gap-4">
-            <div className="relative grid place-items-center">
-              <Ring pct={adherencePct} size={68} stroke={7} />
-              <span className="absolute text-center">
-                <span className="block text-lg font-semibold leading-none tracking-tight">{adherence7}</span>
-                <span className="block text-[9px] text-muted-foreground">/7 dias</span>
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="font-urbanist text-sm font-bold leading-tight tracking-tight text-ocean-deep">
-                {streak > 0 ? `${streak} ${streak === 1 ? "dia" : "dias"} seguidos` : "Comece sua sequência hoje"}
-              </p>
-              <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
-                {today ? "Tudo registrado por hoje." : "Registre seu dia em 5 segundos."}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative mt-4 flex items-center gap-1.5">
-            {last7.map((d, i) => (
-              <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${d.done ? "bg-ocean-teal" : "bg-muted"}`} />
-            ))}
-          </div>
-        </Link>
-
-        {/* Hidratação */}
-        <div className="col-span-2 lg:col-span-3">
-          <AiHydrationCard />
-        </div>
-
-        {/* Peso — compacto */}
-        <Link
-          to="/ai/app/progresso"
-          className={`${tile} col-span-2 flex items-center justify-between gap-3 border-ocean-mint/25 bg-ocean-mint/10 sm:col-span-1 lg:col-span-2`}
-        >
-          <div className="min-w-0">
-            <MicroLabel>Peso atual</MicroLabel>
-            <p className="mt-1.5 font-urbanist text-2xl font-extrabold leading-none tracking-tight text-ocean-mid">
-              {weight != null ? `${weight} kg` : "—"}
-            </p>
-            <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
-              {weightDelta != null
-                ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg desde a última`
-                : "registre suas medidas"}
-            </p>
-          </div>
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-background/70 text-ocean-teal">
-            <Scale className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} />
-          </span>
-        </Link>
-
-        {/* Leitura STHIA */}
-        <Link
-          to="/ai/app/progresso"
-          className={`${tile} col-span-2 flex min-h-[9.5rem] flex-col justify-between border-transparent bg-gradient-to-br from-ocean-teal to-ocean-mint text-white shadow-lg shadow-ocean-teal/20 sm:col-span-1 lg:col-span-4`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-white/90">
-              <BrainCircuit className="h-3.5 w-3.5" /> Leitura preditiva
-            </span>
-            <ArrowUpRight className="h-4 w-4 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </div>
-          <p className="mt-3 line-clamp-4 max-w-[70ch] text-sm font-light leading-relaxed tracking-[0.01em] text-white/90 sm:text-[15px] sm:leading-[1.7]">
-            {insightText || "Registre alguns dias e a inteligência gera sua leitura de tendência automaticamente."}
-          </p>
-        </Link>
-
-        {/* Módulos de IA */}
-        {(Object.keys(AI_MODULES) as AiKind[]).map((kind) => {
+  const moduleNode = (kind: AiKind) => {
           const mod = AI_MODULES[kind];
           const gen = latestOf(generations, kind);
           const left = daysLeftInCycle(gen, mod.cycleDays);
@@ -352,10 +229,122 @@ export default function AiDashboard() {
               </div>
             </Link>
           );
-        })}
+  };
 
-        {/* Imagens corporais */}
-        <Link to="/ai/app/imagens" className={`${tile} col-span-2 flex min-h-[10.5rem] flex-col justify-between sm:col-span-1 lg:col-span-2`}>
+  const shortcutNode = (s: (typeof SHORTCUTS)[number]) => (
+          <Link key={s.to} to={s.to} className={`${tile} col-span-2 flex items-center justify-between gap-2 py-3.5 sm:col-span-1 lg:col-span-2`}>
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
+                <s.icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{s.label}</span>
+                <span className="block truncate text-xs text-muted-foreground">{s.hint}</span>
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </Link>
+  );
+
+  const nodes: Record<string, React.ReactNode> = {
+    "next-meal": <AiNextMealCard diet={latestOf(generations, "diet")} />,
+    workout: (
+      <AiWorkoutReminderCard
+          workout={latestOf(generations, "workout")}
+          done={!!today?.workout_done}
+          doneAt={today?.workout_done ? today.checkin_date : null}
+          onDone={markWorkoutDone}
+          onUndo={undoWorkout}
+        />
+    ),
+    streak: (
+      <Link
+          to="/ai/app/progresso"
+          className={`${tile} col-span-2 flex flex-col justify-between lg:col-span-3`}
+        >
+          <div
+            className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl transition-opacity duration-500 group-hover:opacity-80"
+            aria-hidden
+          />
+          <div className="relative flex items-start justify-between gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-mint/15 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-ocean-teal">
+              <Flame className="h-3 w-3" /> Constância
+            </span>
+            <Badge variant={today ? "secondary" : "outline"} className="text-[10px]">
+              {today ? "Check-in feito" : "Pendente"}
+            </Badge>
+          </div>
+
+          <div className="relative mt-4 flex items-center gap-4">
+            <div className="relative grid place-items-center">
+              <Ring pct={adherencePct} size={68} stroke={7} />
+              <span className="absolute text-center">
+                <span className="block text-lg font-semibold leading-none tracking-tight">{adherence7}</span>
+                <span className="block text-[9px] text-muted-foreground">/7 dias</span>
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="font-urbanist text-sm font-bold leading-tight tracking-tight text-ocean-deep">
+                {streak > 0 ? `${streak} ${streak === 1 ? "dia" : "dias"} seguidos` : "Comece sua sequência hoje"}
+              </p>
+              <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+                {today ? "Tudo registrado por hoje." : "Registre seu dia em 5 segundos."}
+              </p>
+            </div>
+          </div>
+
+          <div className="relative mt-4 flex items-center gap-1.5">
+            {last7.map((d, i) => (
+              <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${d.done ? "bg-ocean-teal" : "bg-muted"}`} />
+            ))}
+          </div>
+        </Link>
+    ),
+    hydration: (
+      <div className="col-span-2 lg:col-span-3">
+          <AiHydrationCard />
+        </div>
+    ),
+    weight: (
+      <Link
+          to="/ai/app/progresso"
+          className={`${tile} col-span-2 flex items-center justify-between gap-3 border-ocean-mint/25 bg-ocean-mint/10 sm:col-span-1 lg:col-span-2`}
+        >
+          <div className="min-w-0">
+            <MicroLabel>Peso atual</MicroLabel>
+            <p className="mt-1.5 font-urbanist text-2xl font-extrabold leading-none tracking-tight text-ocean-mid">
+              {weight != null ? `${weight} kg` : "—"}
+            </p>
+            <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
+              {weightDelta != null
+                ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg desde a última`
+                : "registre suas medidas"}
+            </p>
+          </div>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-background/70 text-ocean-teal">
+            <Scale className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} />
+          </span>
+        </Link>
+    ),
+    insight: (
+      <Link
+          to="/ai/app/progresso"
+          className={`${tile} col-span-2 flex min-h-[9.5rem] flex-col justify-between border-transparent bg-gradient-to-br from-ocean-teal to-ocean-mint text-white shadow-lg shadow-ocean-teal/20 sm:col-span-1 lg:col-span-4`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-white/90">
+              <BrainCircuit className="h-3.5 w-3.5" /> Leitura preditiva
+            </span>
+            <ArrowUpRight className="h-4 w-4 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </div>
+          <p className="mt-3 line-clamp-4 max-w-[70ch] text-sm font-light leading-relaxed tracking-[0.01em] text-white/90 sm:text-[15px] sm:leading-[1.7]">
+            {insightText || "Registre alguns dias e a inteligência gera sua leitura de tendência automaticamente."}
+          </p>
+        </Link>
+    ),
+    ...Object.fromEntries((Object.keys(AI_MODULES) as AiKind[]).map((kind) => [`mod-${kind}`, moduleNode(kind)])),
+    images: (
+      <Link to="/ai/app/imagens" className={`${tile} col-span-2 flex min-h-[10.5rem] flex-col justify-between sm:col-span-1 lg:col-span-2`}>
           <div className="flex items-start justify-between gap-2">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
               <Camera className="h-5 w-5" />
@@ -375,26 +364,44 @@ export default function AiDashboard() {
             </span>
           </div>
         </Link>
+    ),
+    ...Object.fromEntries(SHORTCUTS.map((s) => [s.to, shortcutNode(s)])),
+  };
 
-        {/* Atalhos */}
-        {[
-          { to: "/ai/app/diario", label: "Diário alimentar", hint: "registre refeições e água", icon: UtensilsCrossed },
-          { to: "/ai/app/saude", label: "Saúde e wearables", hint: "Galaxy Watch e Health Connect", icon: HeartPulse },
-          { to: "/ai/app/coaches", label: "Coaches humanos", hint: "acompanhamento profissional", icon: UserRound },
-        ].map((s) => (
-          <Link key={s.to} to={s.to} className={`${tile} col-span-2 flex items-center justify-between gap-2 py-3.5 sm:col-span-1 lg:col-span-2`}>
-            <span className="flex min-w-0 items-center gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
-                <s.icon className="h-4 w-4" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold">{s.label}</span>
-                <span className="block truncate text-xs text-muted-foreground">{s.hint}</span>
-              </span>
-            </span>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+  return (
+    <AiShell title={`Olá, ${firstName}`} subtitle="Sua inteligência de nutrição, treino e evolução.">
+      <Card className="mb-4 flex items-center gap-3 p-4">
+        <ProfileAvatar size={52} onClick={() => navigate("/ai/app/perfil")} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{profile?.full_name || firstName}</p>
+          <Link to="/ai/app/perfil" className="text-xs text-primary hover:underline">
+            Alterar foto de perfil
           </Link>
-        ))}
+        </div>
+      </Card>
+
+      {offer && (
+        <div className="mb-4">
+          <AiOfferCard offer={offer} onDismiss={dismiss} />
+        </div>
+      )}
+
+      {!subscription && !offer && (
+        <Card className="mb-4 flex flex-col gap-3 border-primary/30 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold">Ative seu plano para gerar seus programas</p>
+            <p className="mt-1 text-sm text-muted-foreground">A partir de R$ 39,90/mês, sem fidelidade.</p>
+          </div>
+          <Button asChild>
+            <Link to="/ai/assinatura">Ver planos <ArrowRight className="ml-2 h-4 w-4" /></Link>
+          </Button>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
+        {ordered.map((id) =>
+          hidden.has(id) ? null : <ReactFragmentWidget key={id}>{nodes[id]}</ReactFragmentWidget>,
+        )}
       </div>
 
       <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-4 text-xs leading-relaxed text-muted-foreground sm:p-5">
