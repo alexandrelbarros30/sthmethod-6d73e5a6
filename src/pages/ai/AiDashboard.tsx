@@ -71,10 +71,10 @@ const WIDGET_META: WidgetMeta[] = [
   { id: "/ai/app/diario", label: "Diário alimentar" },
   { id: "/ai/app/saude", label: "Saúde e wearables" },
   { id: "/ai/app/coaches", label: "Coaches humanos" },
-  { id: "health-steps", label: "Passos" },
-  { id: "health-kcal", label: "Kcal ativas" },
-  { id: "health-hr", label: "FC de repouso" },
-  { id: "health-sleep", label: "Sono" },
+  { id: "health-steps", label: "Passos", defaultHidden: true },
+  { id: "health-kcal", label: "Kcal ativas", defaultHidden: true },
+  { id: "health-hr", label: "FC de repouso", defaultHidden: true },
+  { id: "health-sleep", label: "Sono", defaultHidden: true },
 ];
 
 /** Assunto de cada widget: usado para agrupar a troca e a galeria por tema. */
