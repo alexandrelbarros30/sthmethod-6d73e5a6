@@ -15,6 +15,7 @@ import AiOfferCard from "@/components/ai/AiOfferCard";
 import AiHydrationCard from "@/components/ai/AiHydrationCard";
 import AiNextMealCard from "@/components/ai/AiNextMealCard";
 import AiWorkoutReminderCard from "@/components/ai/AiWorkoutReminderCard";
+import AiHealthMetricCard from "@/components/ai/AiHealthMetricCard";
 import ProfileAvatar from "@/components/shared/ProfileAvatar";
 import { useAiWidgets, type WidgetMeta } from "@/hooks/useAiWidgets";
 import {
@@ -70,7 +71,40 @@ const WIDGET_META: WidgetMeta[] = [
   { id: "/ai/app/diario", label: "Diário alimentar" },
   { id: "/ai/app/saude", label: "Saúde e wearables" },
   { id: "/ai/app/coaches", label: "Coaches humanos" },
+  { id: "health-steps", label: "Passos", defaultHidden: true },
+  { id: "health-kcal", label: "Kcal ativas", defaultHidden: true },
+  { id: "health-hr", label: "FC de repouso", defaultHidden: true },
+  { id: "health-sleep", label: "Sono", defaultHidden: true },
 ];
+
+/** Assunto de cada widget: usado para agrupar a troca e a galeria por tema. */
+const WIDGET_GROUP: Record<string, string> = {
+  "next-meal": "Nutrição",
+  "mod-diet": "Nutrição",
+  "/ai/app/diario": "Nutrição",
+  hydration: "Nutrição",
+  workout: "Treino",
+  "mod-workout": "Treino",
+  streak: "Progresso",
+  weight: "Progresso",
+  images: "Progresso",
+  insight: "Inteligência",
+  "mod-analysis": "Inteligência",
+  "/ai/app/coaches": "Inteligência",
+  "/ai/app/saude": "Saúde e wearables",
+  "health-steps": "Saúde e wearables",
+  "health-kcal": "Saúde e wearables",
+  "health-hr": "Saúde e wearables",
+  "health-sleep": "Saúde e wearables",
+};
+
+const GROUP_ORDER = ["Saúde e wearables", "Nutrição", "Treino", "Progresso", "Inteligência", "Outros"];
+
+const groupOf = (id: string) => WIDGET_GROUP[id] ?? "Outros";
+
+/** Agrupa ids por assunto, preservando a ordem de GROUP_ORDER. */
+const byGroup = (ids: string[]) =>
+  GROUP_ORDER.map((g) => [g, ids.filter((id) => groupOf(id) === g)] as const).filter(([, list]) => list.length > 0);
 
 const ROUTES: Record<AiKind, string> = {
   diet: "/ai/app/cardapio",
@@ -189,11 +223,17 @@ function SortableTile({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="max-h-72 overflow-auto">
-                  <DropdownMenuLabel className="text-xs">Substituir por</DropdownMenuLabel>
-                  {swappable.map((other) => (
-                    <DropdownMenuItem key={other} onSelect={() => onSwap(other)}>
-                      {labelOf(other)}
-                    </DropdownMenuItem>
+                  {byGroup(swappable).map(([group, list]) => (
+                    <div key={group}>
+                      <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {group}
+                      </DropdownMenuLabel>
+                      {list.map((other) => (
+                        <DropdownMenuItem key={other} onSelect={() => onSwap(other)}>
+                          {labelOf(other)}
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -528,6 +568,10 @@ export default function AiDashboard() {
         </Link>
     ),
     ...Object.fromEntries(SHORTCUTS.map((s) => [s.to, shortcutNode(s)])),
+    "health-steps": <AiHealthMetricCard metric="steps" />,
+    "health-kcal": <AiHealthMetricCard metric="active_kcal" />,
+    "health-hr": <AiHealthMetricCard metric="resting_hr" />,
+    "health-sleep": <AiHealthMetricCard metric="sleep_minutes" />,
   };
 
   return (
@@ -594,21 +638,28 @@ export default function AiDashboard() {
           <div className="mt-4 rounded-3xl border border-border/70 bg-card/60 p-4 backdrop-blur-sm sm:p-5">
             <p className="text-sm font-semibold">Adicionar widget</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Toque em + para incluir na tela. Qualquer assunto cabe em qualquer card.
+              Toque em + para incluir na tela. Escolha por assunto — em Saúde você tem passos, kcal ativas, FC e sono.
             </p>
             {hiddenIds.length === 0 ? (
               <p className="mt-3 text-xs text-muted-foreground">Todos os widgets já estão na sua tela inicial.</p>
             ) : (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {hiddenIds.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => toggle(id)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-ocean-teal/40 bg-ocean-mint/10 px-3 py-1.5 text-xs font-semibold text-ocean-teal transition-colors hover:bg-ocean-mint/20"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> {labelOf(id)}
-                  </button>
+              <div className="mt-3 space-y-3">
+                {byGroup(hiddenIds).map(([group, list]) => (
+                  <div key={group}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{group}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-2">
+                      {list.map((id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => toggle(id)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-ocean-teal/40 bg-ocean-mint/10 px-3 py-1.5 text-xs font-semibold text-ocean-teal transition-colors hover:bg-ocean-mint/20"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> {labelOf(id)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

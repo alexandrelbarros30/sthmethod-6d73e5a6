@@ -5,6 +5,8 @@ const KEY = "sth_ai_home_widgets_v1";
 export interface WidgetMeta {
   id: string;
   label: string;
+  /** Não aparece na tela até o aluno incluir pela galeria. */
+  defaultHidden?: boolean;
 }
 
 interface StoredLayout {
@@ -41,7 +43,13 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
     return [...fromStore, ...rest];
   }, [defaults, layout.order]);
 
-  const hidden = useMemo(() => new Set(layout.hidden), [layout.hidden]);
+  const hidden = useMemo(() => {
+    const set = new Set(layout.hidden);
+    for (const d of defaults) {
+      if (d.defaultHidden && !layout.order.includes(d.id)) set.add(d.id);
+    }
+    return set;
+  }, [defaults, layout.hidden, layout.order]);
 
   const move = useCallback(
     (id: string, dir: -1 | 1) => {
@@ -49,7 +57,7 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
         const known = new Set(defaults.map((d) => d.id));
         const base = [
           ...prev.order.filter((x) => known.has(x)),
-          ...defaults.map((d) => d.id).filter((x) => !prev.order.includes(x)),
+          ...defaults.filter((d) => !prev.order.includes(d.id) && !d.defaultHidden).map((d) => d.id),
         ];
         const i = base.indexOf(id);
         const j = i + dir;
@@ -62,12 +70,22 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
     [defaults],
   );
 
-  const toggle = useCallback((id: string) => {
-    setLayout((prev) => ({
-      ...prev,
-      hidden: prev.hidden.includes(id) ? prev.hidden.filter((x) => x !== id) : [...prev.hidden, id],
-    }));
-  }, []);
+  const toggle = useCallback(
+    (id: string) => {
+      setLayout((prev) => {
+        const meta = defaults.find((d) => d.id === id);
+        const isHidden = prev.hidden.includes(id) || (!!meta?.defaultHidden && !prev.order.includes(id));
+        if (!isHidden) return { ...prev, hidden: [...prev.hidden, id] };
+        const known = new Set(defaults.map((d) => d.id));
+        const base = [
+          ...prev.order.filter((x) => known.has(x) && x !== id),
+          ...defaults.filter((d) => !prev.order.includes(d.id) && !d.defaultHidden && d.id !== id).map((d) => d.id),
+        ];
+        return { order: [...base, id], hidden: prev.hidden.filter((x) => x !== id) };
+      });
+    },
+    [defaults],
+  );
 
   const reset = useCallback(() => setLayout({ order: [], hidden: [] }), []);
 
@@ -83,7 +101,9 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
         const known = new Set(defaults.map((d) => d.id));
         const base = [
           ...prev.order.filter((x) => known.has(x)),
-          ...defaults.map((d) => d.id).filter((x) => !prev.order.includes(x)),
+          ...defaults
+            .filter((d) => !prev.order.includes(d.id) && (!d.defaultHidden || d.id === withId))
+            .map((d) => d.id),
         ];
         const i = base.indexOf(id);
         const j = base.indexOf(withId);
