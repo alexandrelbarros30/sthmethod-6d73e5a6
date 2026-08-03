@@ -15,7 +15,7 @@ const TABLE: Array<[string, Macro]> = [
   ["macarrao", { kcal: 111, p: 3.4, c: 23.5, f: 0.6 }],
   ["cuscuz", { kcal: 113, p: 2.3, c: 25.0, f: 0.4 }],
   ["quinoa", { kcal: 120, p: 4.4, c: 21.3, f: 1.9 }],
-  ["aveia", { kcal: 347, p: 13.9, c: 56.6, f: 7.2 }], // FatSecret/TACO: ~350-360kcal. 394 era cru seco sem processar ou marca específica.
+  ["aveia", { kcal: 340, p: 14.0, c: 51.0, f: 7.0 }], // FatSecret Médio: 340kcal, ~50-55g Carb, ~14g Prot. Aveia em flocos.
   ["farelo de aveia", { kcal: 366, p: 14.0, c: 60.0, f: 7.0 }],
   ["granola", { kcal: 471, p: 11.5, c: 65.0, f: 18.0 }],
   ["tapioca pronta", { kcal: 240, p: 0, c: 60.0, f: 0 }],
@@ -98,7 +98,7 @@ const TABLE: Array<[string, Macro]> = [
 
   // frutas e doces naturais
   ["banana", { kcal: 92, p: 1.3, c: 23.8, f: 0.1 }],
-  ["mamao", { kcal: 40, p: 0.5, c: 10.4, f: 0.1 }],
+  ["mamao", { kcal: 40, p: 0.5, c: 9.5, f: 0.1 }],
   ["maca", { kcal: 56, p: 0.3, c: 15.2, f: 0 }],
   ["laranja", { kcal: 45, p: 1.0, c: 11.5, f: 0.1 }],
   ["abacaxi", { kcal: 48, p: 0.9, c: 12.3, f: 0.1 }],
