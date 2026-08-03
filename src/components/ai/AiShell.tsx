@@ -4,8 +4,14 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { useAiThemeMode } from "@/hooks/useAiThemeMode";
-import { LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf } from "lucide-react";
+import { LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf, Moon } from "lucide-react";
 import AiLogoMark from "@/components/ai/AiLogoMark";
+
+const THEME_UI = {
+  ocean: { label: "Ocean", icon: Waves, next: "STH clássico" },
+  classic: { label: "Clássico", icon: Leaf, next: "Midnight" },
+  midnight: { label: "Midnight", icon: Moon, next: "Ocean Premium" },
+} as const;
 
 const NAV = [
   { to: "/ai/app", label: "Início", icon: LayoutGrid },
@@ -29,6 +35,8 @@ export default function AiShell({ children, title, subtitle }: { children: React
   const navigate = useNavigate();
   useSthAiTheme();
   const { mode, toggle } = useAiThemeMode();
+  const theme = THEME_UI[mode];
+  const ThemeIcon = theme.icon;
 
   async function logout() {
     await supabase.auth.signOut();
@@ -50,12 +58,12 @@ export default function AiShell({ children, title, subtitle }: { children: React
               variant="ghost"
               size="sm"
               onClick={toggle}
-              aria-label={mode === "ocean" ? "Usar tema STH clássico" : "Usar tema Ocean Premium"}
-              title={mode === "ocean" ? "Tema: Ocean Premium" : "Tema: STH clássico"}
+              aria-label={`Usar tema ${theme.next}`}
+              title={`Tema: ${theme.label} · tocar para ${theme.next}`}
               className="gap-1.5 px-2"
             >
-              {mode === "ocean" ? <Waves className="h-4 w-4" /> : <Leaf className="h-4 w-4" />}
-              <span className="hidden text-xs sm:inline">{mode === "ocean" ? "Ocean" : "Clássico"}</span>
+              <ThemeIcon className="h-4 w-4" />
+              <span className="hidden text-xs sm:inline">{theme.label}</span>
             </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to="/ai/assinatura">Plano</Link>
