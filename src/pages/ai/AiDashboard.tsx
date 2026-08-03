@@ -229,6 +229,9 @@ export default function AiDashboard() {
     [ordered, hidden, setOrderIds],
   );
 
+  const visibleIds = useMemo(() => ordered.filter((x) => !hidden.has(x)), [ordered, hidden]);
+  const hiddenIds = useMemo(() => ordered.filter((x) => hidden.has(x)), [ordered, hidden]);
+
   useEffect(() => {
     if (loading) return;
     if (!user) navigate("/ai/login?next=/ai/app");
