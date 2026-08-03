@@ -73,6 +73,8 @@ const PERMISSIONS = [
   'android.permission.health.READ_WEIGHT',
 ];
 
+PERMISSIONS.push('android.permission.health.READ_RESTING_HEART_RATE');
+
 const QUERIES = `    <queries>
         <package android:name="com.google.android.apps.healthdata" />
     </queries>
