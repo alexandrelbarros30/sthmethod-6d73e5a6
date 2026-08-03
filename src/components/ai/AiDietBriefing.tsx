@@ -327,7 +327,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             icon={<Target className="h-4 w-4" />}
             title="Metas e macros"
             description="Objetivo, kcal, refeições e macronutrientes"
-            pending={[objective, kcal, meals, protein, carbs, fat].filter((v) => !String(v).trim()).length}
+            pending={!objective ? 1 : 0}
             onSave={saveGroup}
           >
             <div className="space-y-1.5">
