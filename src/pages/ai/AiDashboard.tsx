@@ -18,7 +18,7 @@ import AiWorkoutReminderCard from "@/components/ai/AiWorkoutReminderCard";
 import AiHealthMetricCard from "@/components/ai/AiHealthMetricCard";
 import ProfileAvatar from "@/components/shared/ProfileAvatar";
 import { useAiWidgets, type WidgetMeta } from "@/hooks/useAiWidgets";
-import { useAiHomeStyle, AI_HOME_STYLES } from "@/hooks/useAiHomeStyle";
+import { useAiHomeStyle } from "@/hooks/useAiHomeStyle";
 import {
   Loader2,
   ArrowRight,
@@ -244,7 +244,7 @@ export default function AiDashboard() {
   const { insight } = useAiInsight();
   const navigate = useNavigate();
   const { ordered, hidden, toggle, replace, reset, setOrderIds } = useAiWidgets(WIDGET_META);
-  const { style, setStyle, slotSpan, gridClass } = useAiHomeStyle();
+  const { slotSpan, gridClass } = useAiHomeStyle();
   const [editing, setEditing] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
