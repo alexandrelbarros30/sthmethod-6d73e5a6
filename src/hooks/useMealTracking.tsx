@@ -80,7 +80,6 @@ export function useMealTracking() {
         .eq("user_id", targetUserId!)
         .eq("is_active", true)
         .eq("app_context", "sth_method")
-        .eq("app_context", "sth_method")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];

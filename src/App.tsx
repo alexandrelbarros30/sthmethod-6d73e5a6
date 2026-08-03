@@ -1,4 +1,5 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
+import { fixWallaceValentimContext } from "@/lib/fix-wallace-context";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -245,7 +246,15 @@ const DynamicHead = () => {
   return null;
 };
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    // Corrige dados legados do aluno Wallace Valentim que estavam misturados
+    fixWallaceValentimContext().then(res => {
+      if (res.success) console.log('Contextos de Wallace Valentim sincronizados.');
+    });
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -502,6 +511,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
