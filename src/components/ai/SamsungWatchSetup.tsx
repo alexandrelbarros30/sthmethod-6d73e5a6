@@ -3,10 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, RefreshCw, Settings2, Smartphone, Upload, Watch } from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCw, Settings2, Smartphone, Stethoscope, Upload, Watch } from "lucide-react";
 import { parseHealthCsv, type HealthDay, type HealthSource } from "@/hooks/useAiHealth";
 import { useHealthConnect } from "@/hooks/useHealthConnect";
 import { healthDiagnostics } from "@/lib/health-connect";
+import { runHealthSelfTest, type HealthSelfTestResult } from "@/lib/health-selftest";
 
 const NATIVE_STEPS = [
   "Instale/atualize o app Health Connect (Play Store) — no Galaxy Watch 4 ele é obrigatório; o Samsung Health sozinho não envia dados.",
