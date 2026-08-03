@@ -185,7 +185,8 @@ export async function readNativeHealthDays(days = 30): Promise<NativeHealthDay[]
   start.setHours(0, 0, 0, 0);
   const rows = new Map<string, NativeHealthDay>();
   const touch = (day: string) => {
-    if (!rows.has(day)) rows.set(day, { day, steps: null, active_kcal: null, resting_hr: null });
+    if (!rows.has(day))
+      rows.set(day, { day, steps: null, active_kcal: null, resting_hr: null, sleep_minutes: null, weight_kg: null });
     return rows.get(day)!;
   };
 
