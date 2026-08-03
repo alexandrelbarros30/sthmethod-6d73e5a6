@@ -432,7 +432,7 @@ const AdminDietAI = () => {
           }));
         const { data: insertedMeals, error: mealsErr } = await supabase
           .from("diet_meals")
-          .insert(mealRows as any)
+          .insert(mealRows.map(m => ({ ...m, app_context: 'sth_method' })) as any)
           .select("id, sort_order");
         if (mealsErr) throw mealsErr;
 
