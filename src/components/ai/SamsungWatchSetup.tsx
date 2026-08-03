@@ -48,8 +48,21 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
     };
   }, [status]);
 
+  async function runSelfTest() {
+    setTesting(true);
+    try {
+      const res = await runHealthSelfTest(7);
+      setSelfTest(res);
+      if (res.ok) toast.success(res.summary);
+      else toast.error(res.summary);
+    } catch {
+      toast.error("Não foi possível executar o teste de leitura.");
+    } finally {
+      setTesting(false);
+    }
+  }
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    void 0;
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
