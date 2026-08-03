@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,12 +6,14 @@ import { toast } from "sonner";
 import { CheckCircle2, Loader2, RefreshCw, Settings2, Smartphone, Upload, Watch } from "lucide-react";
 import { parseHealthCsv, type HealthDay, type HealthSource } from "@/hooks/useAiHealth";
 import { useHealthConnect } from "@/hooks/useHealthConnect";
+import { healthDiagnostics } from "@/lib/health-connect";
 
 const NATIVE_STEPS = [
+  "Instale/atualize o app Health Connect (Play Store) — no Galaxy Watch 4 ele é obrigatório; o Samsung Health sozinho não envia dados.",
   "No celular Galaxy: Samsung Health › Configurações › Health Connect › ative Passos, Calorias ativas, Sono, Frequência cardíaca e Peso.",
-  "Confirme que o relógio está sincronizado com o Samsung Health (Configurações › Sincronizar agora).",
+  "Abra o Galaxy Wearable/Samsung Health e toque em Sincronizar agora para o relógio subir os dados do dia.",
   "Toque em Sincronizar agora aqui e autorize o STH METHOD no Health Connect.",
-  "Pronto: a cada abertura do app os dados do Galaxy Watch entram automaticamente.",
+  "Pronto: a cada abertura do app os dados do Galaxy Watch 4/5/6/7 entram automaticamente.",
 ];
 
 const CSV_STEPS = [
@@ -29,8 +31,19 @@ interface Props {
 export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onImport }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [diag, setDiag] = useState<{ code: string; message: string } | null>(null);
   const { status, syncing, lastSync, sync, openHealthSettings, openHealthConnectStore } = useHealthConnect(onImport);
   const isNative = status === "ready" || status === "unavailable";
+
+  useEffect(() => {
+    let alive = true;
+    healthDiagnostics()
+      .then((d) => alive && setDiag(d))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [status]);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -55,9 +68,15 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
   async function runSync() {
     try {
       const n = await sync();
-      toast.success(n > 0 ? `${n} dias sincronizados do Galaxy Watch.` : "Nada novo para sincronizar por enquanto.");
+      if (n > 0) {
+        toast.success(`${n} dias sincronizados do Galaxy Watch.`);
+      } else {
+        toast.warning(
+          "O Health Connect respondeu, mas não devolveu dados. Abra Samsung Health › Health Connect e confirme que Passos, Calorias e FC estão permitidos para o STH.",
+        );
+      }
     } catch {
-      toast.error("Permissão não concedida. Autorize o STH METHOD no Health Connect.");
+      toast.error("Permissão não concedida. Toque em Permissões e autorize Passos, Calorias ativas e Frequência cardíaca.");
     }
   }
 
@@ -122,6 +141,13 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
         <p className="mt-4 rounded-2xl border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground">
           A sincronização automática do Galaxy Watch só funciona no aplicativo Android do STH METHOD (Health Connect não
           existe no navegador). Aqui no site você pode importar a exportação do Samsung Health em CSV.
+        </p>
+      )}
+
+      {diag && diag.code !== "ready" && (
+        <p className="mt-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+          <strong className="font-semibold">Por que não sincronizou: </strong>
+          {diag.message}
         </p>
       )}
 
