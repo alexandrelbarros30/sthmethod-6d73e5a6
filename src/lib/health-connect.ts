@@ -74,6 +74,14 @@ export async function healthAvailable() {
 }
 
 export async function requestHealthPermissions() {
+  if (await sthHealthAvailable()) {
+    try {
+      const res = await SthHealth.requestHealthPermissions();
+      if (res?.granted) return true;
+    } catch {
+      /* cai para o plugin padrão */
+    }
+  }
   const p = await plugin();
   if (!p) return false;
   try {
@@ -90,6 +98,14 @@ export async function requestHealthPermissions() {
 
 /** Lista as permissões de saúde ainda não concedidas (Android/Health Connect). */
 export async function missingHealthPermissions(): Promise<string[]> {
+  if (await sthHealthAvailable()) {
+    try {
+      const res = await SthHealth.checkHealthPermissions();
+      return res?.missing ?? [];
+    } catch {
+      return [];
+    }
+  }
   const p = await plugin();
   if (!p) return [];
   try {
@@ -109,6 +125,13 @@ const PERMISSION_LABEL: Record<string, string> = {
   READ_TOTAL_CALORIES: "Calorias totais",
   READ_HEART_RATE: "Frequência cardíaca",
   READ_WORKOUTS: "Treinos",
+  steps: "Passos",
+  active_kcal: "Calorias ativas",
+  total_kcal: "Calorias totais",
+  sleep: "Sono",
+  weight: "Peso",
+  resting_hr: "Frequência cardíaca de repouso",
+  heart_rate: "Frequência cardíaca",
 };
 
 /** Diagnóstico legível do porquê a sincronização do relógio não está disponível. */
@@ -139,6 +162,14 @@ export async function healthDiagnostics() {
 }
 
 export async function openHealthSettings() {
+  if (await sthHealthAvailable()) {
+    try {
+      await SthHealth.openSettings();
+      return;
+    } catch {
+      /* cai para o plugin padrão */
+    }
+  }
   const p = await plugin();
   if (!p) return;
   try {
