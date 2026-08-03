@@ -30,7 +30,7 @@ const testCases = [
 
 console.log("Running STHia Macro Audit...");
 testCases.forEach(tc => {
-  const html = `<p><strong>Refeição 01: Test</strong></p><p><strong>0 kcal · P 0 g / C 0 g / G 0 g</strong></p><p><strong>"⭐ BASE:</strong> ${tc.text}<strong>"</strong></p>`;
+  const html = `<p><strong>Refeição 01: Test</strong></p><p><strong>0 kcal · P 0 g / C 0 g / G 0 g</strong></p><p><strong>⭐ BASE:</strong> ${tc.text}</p>`;
   const result = recalcDietMacros(html);
   console.log(`\nTest: ${tc.name}`);
   console.log(`Input Text: ${tc.text}`);
