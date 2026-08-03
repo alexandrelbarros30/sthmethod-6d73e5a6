@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
@@ -55,17 +55,17 @@ const ROUTES: Record<AiKind, string> = {
   analysis: "/ai/app/analise",
 };
 
-/** Largura de cada widget na grade (Samsung Health style). */
+/** Largura de cada widget na grade (Samsung Health style: faixas largas + duplas). */
 const SPAN: Record<string, string> = {
-  "next-meal": "col-span-2 lg:col-span-3",
-  workout: "col-span-2 lg:col-span-3",
-  streak: "col-span-2 lg:col-span-3",
-  hydration: "col-span-2 lg:col-span-3",
-  weight: "col-span-2 sm:col-span-1 lg:col-span-2",
-  insight: "col-span-2 sm:col-span-1 lg:col-span-4",
-  images: "col-span-2 sm:col-span-1 lg:col-span-2",
+  "next-meal": "col-span-2 lg:col-span-6",
+  workout: "col-span-2 lg:col-span-6",
+  insight: "col-span-2 lg:col-span-6",
+  streak: "col-span-1 lg:col-span-3",
+  hydration: "col-span-1 lg:col-span-3",
+  weight: "col-span-1 lg:col-span-3",
+  images: "col-span-1 lg:col-span-3",
 };
-const spanOf = (id: string) => SPAN[id] ?? "col-span-2 sm:col-span-1 lg:col-span-2";
+const spanOf = (id: string) => SPAN[id] ?? "col-span-1 lg:col-span-2";
 
 const tile =
   "group relative overflow-hidden rounded-3xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ocean-teal/40 hover:shadow-[0_18px_50px_-30px_hsl(var(--ocean-teal)/0.75)] sm:rounded-[2rem] sm:p-5";
@@ -432,7 +432,7 @@ export default function AiDashboard() {
 
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          {editing ? "Toque em − para remover e nas setas para mover." : "Sua tela inicial personalizada."}
+          {editing ? "Toque em − para remover, + para incluir e nas setas para mover." : "Sua tela inicial personalizada."}
         </p>
         <Button size="sm" variant={editing ? "default" : "outline"} onClick={() => setEditing((v) => !v)}>
           {editing ? <Check className="mr-2 h-4 w-4" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
@@ -443,9 +443,15 @@ export default function AiDashboard() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
         {ordered.map((id, i) => {
           if (hidden.has(id)) return null;
-          if (!editing) return <Fragment key={id}>{nodes[id]}</Fragment>;
+          const wrap = `relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`;
+          if (!editing)
+            return (
+              <div key={id} className={wrap}>
+                {nodes[id]}
+              </div>
+            );
           return (
-            <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full`}>
+            <div key={id} className={wrap}>
               <div className="pointer-events-none w-full opacity-90 [&_a]:pointer-events-none">{nodes[id]}</div>
               <button
                 type="button"
@@ -481,31 +487,37 @@ export default function AiDashboard() {
       </div>
 
       {editing && (
-        <Card className="mt-4 p-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Adicionar widgets</p>
+        <div className="mt-6">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Adicionar widgets
+          </p>
           {ordered.filter((id) => hidden.has(id)).length === 0 ? (
             <p className="text-sm text-muted-foreground">Todos os widgets já estão na sua tela inicial.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
               {ordered
                 .filter((id) => hidden.has(id))
                 .map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => toggle(id)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:text-primary"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    {WIDGET_META.find((w) => w.id === id)?.label ?? id}
-                  </button>
+                  <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`}>
+                    <div className="pointer-events-none w-full opacity-50 grayscale [&_a]:pointer-events-none">
+                      {nodes[id]}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggle(id)}
+                      aria-label={`Incluir ${WIDGET_META.find((w) => w.id === id)?.label ?? id}`}
+                      className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
                 ))}
             </div>
           )}
-          <Button size="sm" variant="ghost" className="mt-3" onClick={reset}>
+          <Button size="sm" variant="ghost" className="mt-4" onClick={reset}>
             <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
           </Button>
-        </Card>
+        </div>
       )}
 
       <div className="mt-6 flex gap-3 rounded-2xl border border-border/40 bg-card/40 p-4 text-xs leading-relaxed text-muted-foreground sm:p-5">
