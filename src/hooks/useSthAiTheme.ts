@@ -13,12 +13,13 @@ export function useSthAiTheme() {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("dark");
+    root.classList.toggle("dark", mode === "midnight");
     root.classList.add("theme-sth-green");
     root.classList.toggle("theme-sth-ai", mode === "ocean");
     root.classList.toggle("theme-sth-ai-classic", mode === "classic");
+    root.classList.toggle("theme-sth-ai-midnight", mode === "midnight");
     return () => {
-      root.classList.remove("theme-sth-green", "theme-sth-ai", "theme-sth-ai-classic");
+      root.classList.remove("theme-sth-green", "theme-sth-ai", "theme-sth-ai-classic", "theme-sth-ai-midnight", "dark");
     };
   }, [mode]);
 
