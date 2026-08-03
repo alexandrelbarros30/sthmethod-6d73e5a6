@@ -331,7 +331,9 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             onSave={saveGroup}
           >
             <div className="space-y-1.5">
-              <Label className="text-xs">Objetivo</Label>
+              <Label className="text-xs flex items-center gap-1">
+                Objetivo <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
+              </Label>
               <Select value={objective} onValueChange={setObjective}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
