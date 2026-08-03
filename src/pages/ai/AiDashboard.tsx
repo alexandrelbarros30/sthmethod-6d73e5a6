@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AiShell from "@/components/ai/AiShell";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import AiHydrationCard from "@/components/ai/AiHydrationCard";
 import AiNextMealCard from "@/components/ai/AiNextMealCard";
 import AiWorkoutReminderCard from "@/components/ai/AiWorkoutReminderCard";
 import ProfileAvatar from "@/components/shared/ProfileAvatar";
+import { useAiWidgets, type WidgetMeta } from "@/hooks/useAiWidgets";
 import {
   Loader2,
   ArrowRight,
@@ -30,6 +31,23 @@ import {
   BrainCircuit,
   Camera,
 } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, LayoutGrid, RotateCcw, Check } from "lucide-react";
+
+const WIDGET_META: WidgetMeta[] = [
+  { id: "next-meal", label: "Refeição de agora" },
+  { id: "workout", label: "Treino do dia" },
+  { id: "streak", label: "Constância" },
+  { id: "hydration", label: "Hidratação" },
+  { id: "weight", label: "Peso atual" },
+  { id: "insight", label: "Leitura preditiva" },
+  { id: "mod-diet", label: "Cardápio" },
+  { id: "mod-workout", label: "Treino" },
+  { id: "mod-analysis", label: "Análise" },
+  { id: "images", label: "Imagens corporais" },
+  { id: "/ai/app/diario", label: "Diário alimentar" },
+  { id: "/ai/app/saude", label: "Saúde e wearables" },
+  { id: "/ai/app/coaches", label: "Coaches humanos" },
+];
 
 const ROUTES: Record<AiKind, string> = {
   diet: "/ai/app/cardapio",
@@ -73,6 +91,8 @@ export default function AiDashboard() {
   const { offer, dismiss } = useAiOffer();
   const { insight } = useAiInsight();
   const navigate = useNavigate();
+  const { ordered, hidden, move, toggle, reset } = useAiWidgets(WIDGET_META);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (loading) return;
