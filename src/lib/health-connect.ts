@@ -1,4 +1,4 @@
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 /** Amostra diária agregada vinda do Health Connect / Apple Saúde. */
 export interface NativeHealthDay {
@@ -6,6 +6,37 @@ export interface NativeHealthDay {
   steps: number | null;
   active_kcal: number | null;
   resting_hr: number | null;
+  sleep_minutes: number | null;
+  weight_kg: number | null;
+}
+
+/**
+ * Ponte nativa própria do STH (módulo Android `sth-health`). Cobre sono, peso,
+ * FC de repouso e calorias totais — tipos que o plugin capacitor-health não lê.
+ */
+interface SthHealthPlugin {
+  isAvailable(): Promise<{ available: boolean }>;
+  checkHealthPermissions(): Promise<{ available: boolean; missing: string[] }>;
+  requestHealthPermissions(): Promise<{ granted: boolean }>;
+  openSettings(): Promise<void>;
+  readDays(options: { days: number }): Promise<{ days: Partial<NativeHealthDay>[] }>;
+}
+
+const SthHealth = registerPlugin<SthHealthPlugin>("SthHealth");
+
+let sthNativeOk: boolean | null = null;
+
+/** Diz se o módulo nativo próprio está presente e com Health Connect ativo. */
+export async function sthHealthAvailable() {
+  if (!isNativeHealthPlatform() || Capacitor.getPlatform() !== "android") return false;
+  if (sthNativeOk != null) return sthNativeOk;
+  try {
+    const res = await SthHealth.isAvailable();
+    sthNativeOk = res?.available === true;
+  } catch {
+    sthNativeOk = false;
+  }
+  return sthNativeOk;
 }
 
 type HealthPlugin = typeof import("capacitor-health")["Health"];
