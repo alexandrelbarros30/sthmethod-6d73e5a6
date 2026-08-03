@@ -33,6 +33,8 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [diag, setDiag] = useState<{ code: string; message: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [selfTest, setSelfTest] = useState<HealthSelfTestResult | null>(null);
   const { status, syncing, lastSync, sync, openHealthSettings, openHealthConnectStore } = useHealthConnect(onImport);
   const isNative = status === "ready" || status === "unavailable";
 
@@ -47,6 +49,7 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
   }, [status]);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    void 0;
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
