@@ -114,3 +114,84 @@ if (!xml.includes('PermissionsRationaleActivity')) {
 
 fs.writeFileSync(file, xml);
 console.log('AndroidManifest.xml atualizado com Health Connect.');
+
+// ---------------------------------------------------------------------------
+// Modulo nativo `sth-health`: ponte com o Health Connect para sono, peso,
+// FC de repouso e calorias totais (tipos que o capacitor-health nao expoe).
+// ---------------------------------------------------------------------------
+import path from 'node:path';
+
+const MODULE_SRC = 'native/android/sth-health';
+const MODULE_DEST = 'android/sth-health';
+
+if (fs.existsSync(MODULE_SRC)) {
+  fs.rmSync(MODULE_DEST, { recursive: true, force: true });
+  fs.cpSync(MODULE_SRC, MODULE_DEST, { recursive: true });
+  console.log('Modulo sth-health copiado para android/sth-health.');
+
+  const settingsFile = fs.existsSync('android/settings.gradle')
+    ? 'android/settings.gradle'
+    : 'android/settings.gradle.kts';
+  if (fs.existsSync(settingsFile)) {
+    let settings = fs.readFileSync(settingsFile, 'utf8');
+    if (!settings.includes("':sth-health'") && !settings.includes('":sth-health"')) {
+      const kts = settingsFile.endsWith('.kts');
+      settings += kts
+        ? `\ninclude(":sth-health")\nproject(":sth-health").projectDir = File("./sth-health")\n`
+        : `\ninclude ':sth-health'\nproject(':sth-health').projectDir = new File('./sth-health')\n`;
+      fs.writeFileSync(settingsFile, settings);
+      console.log(`${settingsFile} atualizado com :sth-health.`);
+    }
+  }
+
+  let gradleApp = fs.readFileSync(appGradleFile, 'utf8');
+  if (!gradleApp.includes("project(':sth-health')")) {
+    gradleApp = gradleApp.replace(
+      /dependencies\s*\{/,
+      "dependencies {\n    implementation project(':sth-health')",
+    );
+    fs.writeFileSync(appGradleFile, gradleApp);
+    console.log('app/build.gradle: dependencia :sth-health adicionada.');
+  }
+
+  // Registro do plugin no MainActivity (Java ou Kotlin).
+  const javaRoot = 'android/app/src/main/java';
+  const stack = [javaRoot];
+  let mainActivity = null;
+  while (stack.length > 0 && !mainActivity) {
+    const dir = stack.pop();
+    if (!fs.existsSync(dir)) continue;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) stack.push(full);
+      else if (/^MainActivity\.(java|kt)$/.test(entry.name)) mainActivity = full;
+    }
+  }
+
+  if (!mainActivity) {
+    console.log('MainActivity nao encontrada — plugin sth-health nao registrado.');
+  } else {
+    let source = fs.readFileSync(mainActivity, 'utf8');
+    if (!source.includes('SthHealthPlugin')) {
+      if (mainActivity.endsWith('.java')) {
+        source = source.replace(
+          /public class MainActivity extends BridgeActivity \{/,
+          `public class MainActivity extends BridgeActivity {\n    @Override\n    public void onCreate(android.os.Bundle savedInstanceState) {\n        registerPlugin(com.sthmethod.health.SthHealthPlugin.class);\n        super.onCreate(savedInstanceState);\n    }\n`,
+        );
+      } else {
+        source = source.replace(
+          /class MainActivity\s*:\s*BridgeActivity\(\)\s*\{?/,
+          `class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        registerPlugin(com.sthmethod.health.SthHealthPlugin::class.java)\n        super.onCreate(savedInstanceState)\n    }`,
+        );
+        if (!source.includes('SthHealthPlugin')) {
+          source = source.replace(
+            /class MainActivity\s*:\s*BridgeActivity\(\)/,
+            `class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        registerPlugin(com.sthmethod.health.SthHealthPlugin::class.java)\n        super.onCreate(savedInstanceState)\n    }\n}\n// legacy`,
+          );
+        }
+      }
+      fs.writeFileSync(mainActivity, source);
+      console.log(`Plugin sth-health registrado em ${mainActivity}.`);
+    }
+  }
+}
