@@ -424,6 +424,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
         log_date: addDate,
         meal_type: addMeal,
         meal_label: meal?.label || addMeal,
+        app_context: 'sth_ai',
         food_id: null,
         item_name: String(f.name || "Alimento"),
         quantity: Number(f.estimated_weight_g) || 0,
