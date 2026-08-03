@@ -93,23 +93,34 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
       return;
     }
 
+    const currentAnswers = (profile.answers ?? {}) as Record<string, string>;
+    const newAnswers = {
+      ...currentAnswers,
+      diet_objective: objective,
+      diet_kcal: kcal,
+      diet_meals: meals,
+      diet_protein: protein,
+      diet_carbs: carbs,
+      diet_fat: fat,
+      diet_restrictions: restrictions,
+      diet_preferences: preferences,
+    };
+
     const { error } = await supabase
       .from("ai_app_profiles")
-      .update({
-        answers: {
-          ...((profile.answers ?? {}) as Record<string, string>),
-          diet_objective: objective,
-          diet_kcal: kcal,
-          diet_meals: meals,
-          diet_protein: protein,
-          diet_carbs: carbs,
-          diet_fat: fat,
-          diet_restrictions: restrictions,
-          diet_preferences: preferences,
-        },
-      })
+      .update({ answers: newAnswers })
       .eq("user_id", profile.user_id);
-    if (error) { toast.error(error.message); return; }
+
+    if (error) { 
+      toast.error("Erro ao salvar dados", { description: error.message }); 
+      return; 
+    }
+    
+    // Atualiza localmente para garantir consistência imediata
+    if (profile) {
+      profile.answers = newAnswers;
+    }
+    
     toast.success("Dados salvos — a IA já usa esses valores na próxima geração.");
   }
 
@@ -139,12 +150,24 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, objective]);
 
-  // Pré-preenche objetivo e metas com base no gasto energético calculado
+  // Carrega dados iniciais do perfil
   useEffect(() => {
-    if (!objective) setObjective(GOAL_TO_OBJECTIVE[profile?.goal ?? ""] || "manter_peso");
-    if (answers.diet_restrictions) setRestrictions(answers.diet_restrictions);
-    if (answers.diet_preferences) setPreferences(answers.diet_preferences);
-    if (answers.diet_meals) setMeals(answers.diet_meals);
+    if (!profile?.user_id) return;
+    
+    const initialAnswers = (profile.answers ?? {}) as Record<string, string>;
+    
+    if (initialAnswers.diet_objective) setObjective(initialAnswers.diet_objective);
+    else if (!objective) setObjective(GOAL_TO_OBJECTIVE[profile?.goal ?? ""] || "manter_peso");
+    
+    if (initialAnswers.diet_kcal) setKcal(initialAnswers.diet_kcal);
+    if (initialAnswers.diet_meals) setMeals(initialAnswers.diet_meals);
+    if (initialAnswers.diet_protein) setProtein(initialAnswers.diet_protein);
+    if (initialAnswers.diet_carbs) setCarbs(initialAnswers.diet_carbs);
+    if (initialAnswers.diet_fat) setFat(initialAnswers.diet_fat);
+    
+    if (initialAnswers.diet_restrictions) setRestrictions(initialAnswers.diet_restrictions);
+    if (initialAnswers.diet_preferences) setPreferences(initialAnswers.diet_preferences);
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.user_id]);
 
@@ -153,11 +176,15 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
     const key = `${profile?.user_id}-${objective}`;
     if (seeded.current === key) return;
     seeded.current = key;
-    setKcal(String(macros.dailyCalories));
-    setProtein(String(macros.proteinG));
-    setCarbs(String(macros.carbsG));
-    setFat(String(macros.fatG));
-  }, [macros, objective, profile?.user_id]);
+    
+    const initialAnswers = (profile?.answers ?? {}) as Record<string, string>;
+    
+    // Só auto-preenche se o campo estiver vazio no banco de dados para não sobrescrever o que o aluno salvou
+    if (!initialAnswers.diet_kcal) setKcal(String(macros.dailyCalories));
+    if (!initialAnswers.diet_protein) setProtein(String(macros.proteinG));
+    if (!initialAnswers.diet_carbs) setCarbs(String(macros.carbsG));
+    if (!initialAnswers.diet_fat) setFat(String(macros.fatG));
+  }, [macros, objective, profile?.user_id, profile?.answers]);
 
   const review = useMemo(
     () =>
