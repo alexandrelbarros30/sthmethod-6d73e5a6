@@ -15,7 +15,7 @@ const TABLE: Array<[string, Macro]> = [
   ["macarrao", { kcal: 111, p: 3.4, c: 23.5, f: 0.6 }],
   ["cuscuz", { kcal: 113, p: 2.3, c: 25.0, f: 0.4 }],
   ["quinoa", { kcal: 120, p: 4.4, c: 21.3, f: 1.9 }],
-  ["aveia", { kcal: 394, p: 13.9, c: 66.6, f: 8.5 }],
+  ["aveia", { kcal: 347, p: 13.9, c: 56.6, f: 7.2 }], // FatSecret/TACO: ~350-360kcal. 394 era cru seco sem processar ou marca específica.
   ["farelo de aveia", { kcal: 366, p: 14.0, c: 60.0, f: 7.0 }],
   ["granola", { kcal: 471, p: 11.5, c: 65.0, f: 18.0 }],
   ["tapioca pronta", { kcal: 240, p: 0, c: 60.0, f: 0 }],
@@ -55,9 +55,9 @@ const TABLE: Array<[string, Macro]> = [
   ["sardinha", { kcal: 208, p: 24.6, c: 0, f: 11.5 }],
   ["camarao", { kcal: 90, p: 19.0, c: 0, f: 1.2 }],
   ["peito de peru", { kcal: 110, p: 18.0, c: 2.0, f: 3.0 }],
-  ["ovo", { kcal: 143, p: 13.0, c: 1.6, f: 9.5 }],
-  ["clara", { kcal: 43, p: 10.9, c: 0.7, f: 0 }],
-  ["gema", { kcal: 322, p: 13.6, c: 0.6, f: 28.7 }],
+  ["ovo", { kcal: 143, p: 13.0, c: 0.7, f: 9.5 }], // FatSecret: ~72kcal por ovo (50g)
+  ["clara", { kcal: 43, p: 10.0, c: 0.7, f: 0.1 }],
+  ["gema", { kcal: 322, p: 15.8, c: 3.6, f: 26.5 }],
 
   // laticínios e suplementos
   ["iogurte grego", { kcal: 60, p: 9.0, c: 4.0, f: 0.5 }],
