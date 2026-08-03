@@ -139,6 +139,16 @@ export async function healthDiagnostics() {
   if (!isNativeHealthPlatform()) {
     return { code: "web" as const, message: "Você está no navegador. A sincronização automática só existe no aplicativo Android do STH AI." };
   }
+  if (await sthHealthAvailable()) {
+    const missingNative = await missingHealthPermissions();
+    if (missingNative.length > 0) {
+      return {
+        code: "permissions" as const,
+        message: `Faltam permissões no Health Connect: ${missingNative.map((m) => PERMISSION_LABEL[m] ?? m).join(", ")}. Toque em Permissões e libere para o STH.`,
+      };
+    }
+    return { code: "ready" as const, message: "Health Connect disponível (passos, calorias, sono, peso e FC de repouso)." };
+  }
   const p = await plugin();
   if (!p) {
     return { code: "plugin" as const, message: "O módulo de saúde não está disponível nesta versão do app. Atualize o aplicativo." };
