@@ -396,20 +396,22 @@ Você receberá ${photos.length} foto(s) do aluno (frente/costas/perfil, mais re
 FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), exatamente como o exemplo:
 
 <p><strong>Refeição 01: Desjejum (Ativação Metabólica)</strong></p>
-<p><strong>"⭐ BASE:</strong> Omelete de 1 ovo inteiro + 3 claras de ovo + 40g de farelo de aveia integral + 100g de mamão formosa.</p>
+<p><strong>"⭐ ALIMENTAÇÃO BASE:</strong> Omelete de 1 ovo inteiro + 3 claras de ovo + 40g de farelo de aveia integral + 100g de mamão formosa.</p>
 <p><strong>Opção 2:</strong> Shake com 30g de Whey Protein + 40g de farelo de aveia + 100g de morangos.</p>
 <p><strong>Opção 3:</strong> 2 fatias de pão integral (50g) + 100g de peito de frango desfiado + 30g de queijo cottage zero.</p>
 <p><strong>Opção 4:</strong> 170g de iogurte grego zero açúcar + 25g de Whey + 25g de granola integral.<strong>"</strong></p>
 <p><strong>Refeição 02: Almoço (Sustentação Anabólica)</strong></p>
-<p><strong>"⭐ BASE:</strong> ... </p>
+<p><strong>"⭐ ALIMENTAÇÃO BASE:</strong> ... </p>
 <p><strong>Opção 2:</strong> ...</p>
 <p><strong>Opção 3:</strong> ...</p>
 <p><strong>Opção 4:</strong> ...<strong>"</strong></p>
 
 REGRAS DE FORMATAÇÃO (obrigatórias):
 - Cada refeição começa com <p><strong>Refeição NN: Nome (Subtítulo estratégico)</strong></p> (números 01, 02, 03...). NUNCA usar <ul>/<li> no cabeçalho — o cabeçalho não pode aparecer com bolinha/marcador de lista.
-- Cada refeição tem SEMPRE 4 blocos: "⭐ BASE" + Opção 2 + Opção 3 + Opção 4 (substituições isocalóricas equivalentes em kcal e macros à BASE, com tolerância ±5%).
-- Rótulos entre <strong>...</strong>. Abre aspas dupla no BASE (<strong>"⭐ BASE:</strong>) e fecha aspas dupla no fim da Opção 4 (<strong>"</strong></p>).
+- Cada refeição tem SEMPRE 4 blocos: "⭐ ALIMENTAÇÃO BASE" + Opção 2 + Opção 3 + Opção 4 (substituições isocalóricas equivalentes em kcal e macros à ALIMENTAÇÃO BASE, com tolerância ±5%).
+- Rótulos entre <strong>...</strong>. Abre aspas dupla na BASE (<strong>"⭐ ALIMENTAÇÃO BASE:</strong>) e fecha aspas dupla no fim da Opção 4 (<strong>"</strong></p>).
+- O CÁLCULO e a APRESENTAÇÃO dos valores (macros/kcal) por refeição devem ser baseados EXCLUSIVAMENTE na ALIMENTAÇÃO BASE. As demais opções são alternativas equivalentes que seguem o mesmo valor nutricional.
+
 - Quantidades explícitas em g/ml/unidades. Nomes de alimentos em português BR.
 - OVOS E CLARAS (regra inviolável): sempre em UNIDADES, nunca em gramas. Escreva "2 ovos inteiros", "3 claras de ovo" — NUNCA "100g de ovo" ou "90g de clara". Para o cálculo use 1 ovo médio = 50g e 1 clara = 33g.
 - Nomes de refeição típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia (adaptar ao número pedido).
@@ -631,7 +633,7 @@ REGRAS:
           `Metas do admin: ${targetsForRetry.energy_kcal ?? "livre"} kcal | P ${targetsForRetry.protein_g ?? "livre"}g | C ${targetsForRetry.carbs_g ?? "livre"}g | G ${targetsForRetry.fat_g ?? "livre"}g\n` +
           `Nº de refeições obrigatório: ${expectedMeals}\n` +
           `Desvios %: ${JSON.stringify(gate.deviation_pct)}\n\n` +
-          `REFAÇA do zero ajustando as GRAMAGENS dos alimentos BASE de cada refeição. Some as BASES antes de responder. O campo total deve ser exatamente a soma das refeições e deve ficar dentro de ±${TARGET_TOLERANCE_PCT}% das metas. Mantenha ${expectedMeals} refeições, cada uma com ⭐ BASE + Opção 2 + Opção 3 + Opção 4. Devolva apenas via tool call.`;
+          `REFAÇA do zero ajustando as GRAMAGENS dos alimentos ALIMENTAÇÃO BASE de cada refeição. Some as BASES antes de responder. O campo total deve ser exatamente a soma das refeições e deve ficar dentro de ±${TARGET_TOLERANCE_PCT}% das metas. Mantenha ${expectedMeals} refeições, cada uma com ⭐ ALIMENTAÇÃO BASE + Opção 2 + Opção 3 + Opção 4. Devolva apenas via tool call.`;
         const retryMessages = [
           ...baseMessages,
           { role: "assistant", content: null, tool_calls: [toolCall] },
