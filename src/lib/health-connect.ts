@@ -216,6 +216,26 @@ const dayKey = (value: string) => {
  * (menor média de treino do dia) e devolve linhas prontas para o banco.
  */
 export async function readNativeHealthDays(days = 30): Promise<NativeHealthDay[]> {
+  // Caminho preferido: módulo nativo próprio (sono, peso e FC de repouso inclusos).
+  if (await sthHealthAvailable()) {
+    try {
+      const res = await SthHealth.readDays({ days });
+      const parsed = (res?.days ?? [])
+        .filter((r): r is Partial<NativeHealthDay> & { day: string } => typeof r?.day === "string")
+        .map((r) => ({
+          day: r.day,
+          steps: r.steps ?? null,
+          active_kcal: r.active_kcal ?? null,
+          resting_hr: r.resting_hr ?? null,
+          sleep_minutes: r.sleep_minutes ?? null,
+          weight_kg: r.weight_kg ?? null,
+        }));
+      if (parsed.length > 0) return parsed.sort((a, b) => a.day.localeCompare(b.day));
+    } catch {
+      /* cai para o plugin capacitor-health */
+    }
+  }
+
   const p = await plugin();
   if (!p) return [];
 
