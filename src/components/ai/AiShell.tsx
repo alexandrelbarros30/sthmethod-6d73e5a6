@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { useAiThemeMode } from "@/hooks/useAiThemeMode";
-import { LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf, Moon } from "lucide-react";
+import { useAiHomeStyle, AI_HOME_STYLES } from "@/hooks/useAiHomeStyle";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import ProfileAvatar from "@/components/shared/ProfileAvatar";
+import { LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf, Moon, Check } from "lucide-react";
 import AiLogoMark from "@/components/ai/AiLogoMark";
 
 const THEME_UI = {
@@ -30,11 +33,12 @@ const SECONDARY_NAV = [
   { to: "/ai/assinatura", label: "Assinatura", icon: CreditCard },
 ];
 
-export default function AiShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
+export default function AiShell({ children, title, subtitle, avatar }: { children: ReactNode; title: string; subtitle?: string; avatar?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
   useSthAiTheme();
   const { mode, toggle } = useAiThemeMode();
+  const { style, setStyle } = useAiHomeStyle();
   const theme = THEME_UI[mode];
   const ThemeIcon = theme.icon;
 
@@ -54,6 +58,27 @@ export default function AiShell({ children, title, subtitle }: { children: React
             </span>
           </Link>
           <div className="flex items-center gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5 px-2" aria-label="Estilo da tela inicial" title="Estilo da tela inicial">
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden text-xs sm:inline">
+                    {AI_HOME_STYLES.find((s) => s.id === style)?.label}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {AI_HOME_STYLES.map((s) => (
+                  <DropdownMenuItem key={s.id} onSelect={() => setStyle(s.id)} className="gap-2">
+                    <Check className={`h-4 w-4 shrink-0 ${style === s.id ? "opacity-100" : "opacity-0"}`} />
+                    <span className="min-w-0">
+                      <span className="block text-xs font-semibold">{s.label}</span>
+                      <span className="block text-[10px] text-muted-foreground">{s.hint}</span>
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="ghost"
               size="sm"
@@ -96,9 +121,12 @@ export default function AiShell({ children, title, subtitle }: { children: React
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
-          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        <div className="mb-6 flex items-center gap-3">
+          {avatar && <ProfileAvatar size={52} editable className="shrink-0" />}
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+            {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+          </div>
         </div>
         {children}
       </main>
