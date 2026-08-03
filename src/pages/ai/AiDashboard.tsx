@@ -168,14 +168,14 @@ function SortableTile({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`relative flex ${span} touch-none ${isDragging ? "z-20 opacity-90" : ""}`}
+      className={`relative flex min-w-0 ${span} touch-none ${isDragging ? "z-20 opacity-90" : ""}`}
     >
       <div
         className={`relative w-full overflow-hidden rounded-3xl ring-2 ring-dashed ring-ocean-teal/40 sm:rounded-[2rem] ${
           isDragging ? "shadow-[0_24px_60px_-24px_hsl(var(--ocean-teal)/0.8)]" : ""
         }`}
       >
-        <div className="pointer-events-none select-none [&_*]:pointer-events-none [&>*]:h-full [&>*]:w-full">
+        <div className="ai-slot pointer-events-none select-none [&_*]:pointer-events-none [&>*]:h-full [&>*]:w-full">
           {children}
         </div>
 
