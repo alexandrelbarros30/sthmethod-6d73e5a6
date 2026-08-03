@@ -71,5 +71,28 @@ export function useAiWidgets(defaults: WidgetMeta[]) {
 
   const reset = useCallback(() => setLayout({ order: [], hidden: [] }), []);
 
-  return { ordered, hidden, move, toggle, reset };
+  /** Troca o widget `id` (visível) pelo widget `withId` (oculto), na mesma posição. */
+  const replace = useCallback(
+    (id: string, withId: string) => {
+      setLayout((prev) => {
+        const known = new Set(defaults.map((d) => d.id));
+        const base = [
+          ...prev.order.filter((x) => known.has(x)),
+          ...defaults.map((d) => d.id).filter((x) => !prev.order.includes(x)),
+        ];
+        const i = base.indexOf(id);
+        const j = base.indexOf(withId);
+        if (i < 0 || j < 0 || i === j) return prev;
+        const next = [...base];
+        [next[i], next[j]] = [next[j], next[i]];
+        const hidden = new Set(prev.hidden);
+        hidden.delete(withId);
+        hidden.add(id);
+        return { order: next, hidden: [...hidden] };
+      });
+    },
+    [defaults],
+  );
+
+  return { ordered, hidden, move, toggle, replace, reset };
 }
