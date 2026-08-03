@@ -52,14 +52,14 @@ const AiHydrationCard = () => {
 
   return (
     <div className="rounded-3xl border border-border/70 bg-card p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-          <Droplets className="h-3.5 w-3.5 text-info" /> Hidratação de hoje
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <span className="inline-flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase leading-tight tracking-[0.12em] text-muted-foreground">
+          <Droplets className="h-3.5 w-3.5 shrink-0 text-info" /> <span className="truncate">Hidratação de hoje</span>
         </span>
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : (
-          <span className="font-mono text-xs font-bold tabular-nums text-foreground">
+          <span className="shrink-0 whitespace-nowrap font-mono text-xs font-bold tabular-nums text-foreground">
             {(ml / 1000).toFixed(1)}
             <span className="text-muted-foreground"> / {(goalMl / 1000).toFixed(1)} L</span>
           </span>
@@ -73,15 +73,15 @@ const AiHydrationCard = () => {
         />
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <p className="text-[11px] text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 text-[11px] leading-tight text-muted-foreground">
           {Math.floor(ml / GLASS_ML)} copos de 250 ml · <span className="font-semibold text-info">{pct}%</span>
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button size="sm" variant="ghost" disabled={loading || ml === 0} onClick={() => update(-GLASS_ML)}>
             <Minus className="h-3.5 w-3.5" />
           </Button>
-          <Button size="sm" variant="outline" className="gap-1.5" disabled={loading} onClick={() => update(GLASS_ML)}>
+          <Button size="sm" variant="outline" className="gap-1.5 whitespace-nowrap" disabled={loading} onClick={() => update(GLASS_ML)}>
             <Plus className="h-3.5 w-3.5" /> 250 ml
           </Button>
         </div>
