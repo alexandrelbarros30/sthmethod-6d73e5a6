@@ -31,7 +31,14 @@ import {
   BrainCircuit,
   Camera,
 } from "lucide-react";
-import { ArrowDown, ArrowUp, LayoutGrid, RotateCcw, Check, Minus, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, LayoutGrid, RotateCcw, Check, Repeat } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const WIDGET_META: WidgetMeta[] = [
   { id: "next-meal", label: "Refeição de agora" },
@@ -103,7 +110,7 @@ export default function AiDashboard() {
   const { offer, dismiss } = useAiOffer();
   const { insight } = useAiInsight();
   const navigate = useNavigate();
-  const { ordered, hidden, move, toggle, reset } = useAiWidgets(WIDGET_META);
+  const { ordered, hidden, move, toggle, replace, reset } = useAiWidgets(WIDGET_META);
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
