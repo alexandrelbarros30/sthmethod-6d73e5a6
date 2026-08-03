@@ -1179,6 +1179,92 @@ html, body {
   }
 }
 
+@layer base {
+  /* =====================================================================
+     MIDNIGHT — normalização final de legibilidade.
+     Qualquer utilitário claro hardcoded (white/slate/zinc/gray/neutral)
+     passa a usar as superfícies e textos do tema escuro.
+     ===================================================================== */
+  html.theme-sth-ai-midnight,
+  html.theme-sth-ai-midnight body {
+    background: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Superfícies claras → card escuro */
+  html.theme-sth-ai-midnight [class*="bg-white"],
+  html.theme-sth-ai-midnight .bg-slate-50,
+  html.theme-sth-ai-midnight .bg-slate-100,
+  html.theme-sth-ai-midnight .bg-zinc-50,
+  html.theme-sth-ai-midnight .bg-zinc-100,
+  html.theme-sth-ai-midnight .bg-gray-50,
+  html.theme-sth-ai-midnight .bg-gray-100,
+  html.theme-sth-ai-midnight .bg-neutral-50,
+  html.theme-sth-ai-midnight .bg-neutral-100 {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+  }
+
+  /* Textos escuros → texto claro */
+  html.theme-sth-ai-midnight .text-slate-900,
+  html.theme-sth-ai-midnight .text-slate-800,
+  html.theme-sth-ai-midnight .text-zinc-800,
+  html.theme-sth-ai-midnight .text-neutral-800,
+  html.theme-sth-ai-midnight .text-gray-800 {
+    color: hsl(var(--foreground)) !important;
+  }
+  html.theme-sth-ai-midnight .text-slate-700,
+  html.theme-sth-ai-midnight .text-slate-600,
+  html.theme-sth-ai-midnight .text-slate-500,
+  html.theme-sth-ai-midnight .text-zinc-700,
+  html.theme-sth-ai-midnight .text-zinc-600,
+  html.theme-sth-ai-midnight .text-zinc-500,
+  html.theme-sth-ai-midnight .text-gray-700,
+  html.theme-sth-ai-midnight .text-gray-600,
+  html.theme-sth-ai-midnight .text-gray-500,
+  html.theme-sth-ai-midnight .text-neutral-700,
+  html.theme-sth-ai-midnight .text-neutral-600,
+  html.theme-sth-ai-midnight .text-neutral-500 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  /* Bordas claras */
+  html.theme-sth-ai-midnight [class*="border-slate-2"],
+  html.theme-sth-ai-midnight [class*="border-zinc-2"],
+  html.theme-sth-ai-midnight [class*="border-gray-2"],
+  html.theme-sth-ai-midnight [class*="border-neutral-2"],
+  html.theme-sth-ai-midnight [class*="border-white"] {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Listas, tabelas e itens de menu */
+  html.theme-sth-ai-midnight [role="menu"],
+  html.theme-sth-ai-midnight [role="listbox"],
+  html.theme-sth-ai-midnight [role="option"],
+  html.theme-sth-ai-midnight [cmdk-list],
+  html.theme-sth-ai-midnight [cmdk-item] {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+  }
+  html.theme-sth-ai-midnight [role="option"][data-highlighted],
+  html.theme-sth-ai-midnight [cmdk-item][data-selected="true"] {
+    background-color: hsl(var(--accent)) !important;
+    color: hsl(var(--accent-foreground)) !important;
+  }
+  html.theme-sth-ai-midnight table thead th {
+    background-color: hsl(var(--secondary)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Badges/superfícies translúcidas do tema claro */
+  html.theme-sth-ai-midnight .bg-background\/80,
+  html.theme-sth-ai-midnight .bg-background\/90,
+  html.theme-sth-ai-midnight .bg-card\/80,
+  html.theme-sth-ai-midnight .bg-card\/90 {
+    background-color: hsl(var(--card) / 0.92) !important;
+  }
+}
+
 /* =====================================================================
    THEME 90D — Alunos com plano de 90 dias
    Override de tokens semânticos: paleta azul ciano "cirúrgica".
