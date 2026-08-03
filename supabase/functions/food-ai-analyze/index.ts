@@ -1,5 +1,5 @@
 // STH METHOD FOOD AI — analyze a plate photo, a free-text description or a label image.
-// Combines Gemini multimodal via Lovable AI Gateway with FatSecret reconciliation.
+// Isolates data using app_context: 'sth_ai' by default.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { FOOD_AI_SYSTEM_PROMPT } from '../_shared/food-ai-prompt.ts';
 
