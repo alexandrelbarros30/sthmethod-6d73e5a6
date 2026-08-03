@@ -190,7 +190,7 @@ export function computeBaseMacros(baseText: string): { macro: Macro; coverage: n
 }
 
 const MEAL_BLOCK_RE =
-  /(<p><strong>Refei[çc][ãa]o\s*\d+[^<]*?)(\d[\d.]*)\s*kcal\s*·\s*P\s*(\d+)\s*g\s*\/\s*C\s*(\d+)\s*g\s*\/\s*G\s*(\d+)\s*g(<\/strong><\/p>\s*<p><strong>"?\s*⭐?\s*BASE:<\/strong>\s*)([^<]+)/gi;
+  /(<p><strong>Refei[çc][ãa]o\s*\d+[^<]*?<\/strong><\/p>\s*<p><strong>)(\d[\d.]*)\s*kcal\s*·\s*P\s*(\d+)\s*g\s*\/\s*C\s*(\d+)\s*g\s*\/\s*G\s*(\d+)\s*g(<\/strong><\/p>\s*<p><strong>"?\s*⭐?\s*BASE:<\/strong>\s*)([^<]+)/gi;
 
 /**
  * Recalcula, no HTML gerado pela IA, as kcal e macros de cada refeição a partir
