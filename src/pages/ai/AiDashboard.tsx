@@ -83,7 +83,9 @@ const ROUTES: Record<AiKind, string> = {
  * card. Padrão Samsung Health: faixa larga seguida de duas metades.
  */
 const slotSpan = (index: number) =>
-  index % 3 === 0 ? "col-span-2 lg:col-span-6" : "col-span-1 lg:col-span-3";
+  index % 3 === 0
+    ? "col-span-2 lg:col-span-6"
+    : "col-span-2 min-[430px]:col-span-1 lg:col-span-3";
 
 const labelOf = (id: string) => WIDGET_META.find((w) => w.id === id)?.label ?? id;
 
@@ -114,7 +116,9 @@ const Ring = ({ pct, size = 104, stroke = 9 }: { pct: number; size?: number; str
 };
 
 const MicroLabel = ({ children }: { children: React.ReactNode }) => (
-  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{children}</span>
+  <span className="block text-[10px] font-bold uppercase leading-tight tracking-[0.12em] text-muted-foreground">
+    {children}
+  </span>
 );
 
 /** Card arrastável no modo edição (fora do componente para não perder o estado). */
@@ -424,24 +428,24 @@ export default function AiDashboard() {
             className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl transition-opacity duration-500 group-hover:opacity-80"
             aria-hidden
           />
-          <div className="relative flex items-start justify-between gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-mint/15 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-ocean-teal">
-              <Flame className="h-3 w-3" /> Constância
+          <div className="relative flex flex-wrap items-start justify-between gap-2">
+            <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-ocean-mint/15 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase leading-tight tracking-[0.12em] text-ocean-teal">
+              <Flame className="h-3 w-3 shrink-0" /> <span className="truncate">Constância</span>
             </span>
-            <Badge variant={today ? "secondary" : "outline"} className="text-[10px]">
+            <Badge variant={today ? "secondary" : "outline"} className="shrink-0 whitespace-nowrap text-[10px]">
               {today ? "Check-in feito" : "Pendente"}
             </Badge>
           </div>
 
-          <div className="relative mt-4 flex items-center gap-4">
-            <div className="relative grid place-items-center">
+          <div className="relative mt-4 flex flex-wrap items-center gap-4">
+            <div className="relative grid shrink-0 place-items-center">
               <Ring pct={adherencePct} size={68} stroke={7} />
               <span className="absolute text-center">
                 <span className="block text-lg font-semibold leading-none tracking-tight">{adherence7}</span>
                 <span className="block text-[9px] text-muted-foreground">/7 dias</span>
               </span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1 basis-28">
               <p className="font-urbanist text-sm font-bold leading-tight tracking-tight text-ocean-deep">
                 {streak > 0 ? `${streak} ${streak === 1 ? "dia" : "dias"} seguidos` : "Comece sua sequência hoje"}
               </p>
@@ -468,7 +472,7 @@ export default function AiDashboard() {
           to="/ai/app/progresso"
           className={`${tile} col-span-2 flex items-center justify-between gap-3 border-ocean-mint/25 bg-ocean-mint/10 sm:col-span-1 lg:col-span-2`}
         >
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <MicroLabel>Peso atual</MicroLabel>
             <p className="mt-1.5 font-urbanist text-2xl font-extrabold leading-none tracking-tight text-ocean-mid">
               {weight != null ? `${weight} kg` : "—"}
@@ -489,11 +493,11 @@ export default function AiDashboard() {
           to="/ai/app/progresso"
           className={`${tile} col-span-2 flex min-h-[9.5rem] flex-col justify-between border-transparent bg-gradient-to-br from-ocean-teal to-ocean-mint text-white shadow-lg shadow-ocean-teal/20 sm:col-span-1 lg:col-span-4`}
         >
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-white/90">
-              <BrainCircuit className="h-3.5 w-3.5" /> Leitura preditiva
+          <div className="flex items-start justify-between gap-2">
+            <span className="inline-flex min-w-0 items-center gap-1.5 font-urbanist text-[10px] font-bold uppercase leading-tight tracking-[0.12em] text-white/90">
+              <BrainCircuit className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Leitura preditiva</span>
             </span>
-            <ArrowUpRight className="h-4 w-4 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight className="h-4 w-4 shrink-0 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
           <p className="mt-3 line-clamp-4 max-w-[70ch] text-sm font-light leading-relaxed tracking-[0.01em] text-white/90 sm:text-[15px] sm:leading-[1.7]">
             {insightText || "Registre alguns dias e a inteligência gera sua leitura de tendência automaticamente."}
