@@ -345,70 +345,54 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  Kcal alvo <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
-                </Label>
+                <Label className="text-xs">Kcal alvo</Label>
                 <Input 
                   inputMode="numeric" 
                   value={kcal} 
                   onChange={(e) => setKcal(e.target.value)} 
-                  placeholder="2500" 
-                  className={!kcal ? "border-primary/50" : ""}
+                  placeholder="Ex: 2500" 
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  Nº refeições <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
-                </Label>
+                <Label className="text-xs">Nº refeições</Label>
                 <Input 
                   inputMode="numeric" 
                   value={meals} 
                   onChange={(e) => setMeals(e.target.value)} 
-                  placeholder="5" 
-                  className={!meals ? "border-primary/50" : ""}
+                  placeholder="Ex: 5" 
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  Proteína (g) <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
-                </Label>
+                <Label className="text-xs">Proteína (g)</Label>
                 <Input 
                   inputMode="numeric" 
                   value={protein} 
                   onChange={(e) => setProtein(e.target.value)} 
-                  placeholder="180" 
-                  className={!protein ? "border-primary/50" : ""}
+                  placeholder="Ex: 180" 
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  Carbo (g) <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
-                </Label>
+                <Label className="text-xs">Carbo (g)</Label>
                 <Input 
                   inputMode="numeric" 
                   value={carbs} 
                   onChange={(e) => setCarbs(e.target.value)} 
-                  placeholder="300" 
-                  className={!carbs ? "border-primary/50" : ""}
+                  placeholder="Ex: 300" 
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  Lipídio (g) <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
-                </Label>
+                <Label className="text-xs">Lipídio (g)</Label>
                 <Input 
                   inputMode="numeric" 
                   value={fat} 
                   onChange={(e) => setFat(e.target.value)} 
-                  placeholder="70" 
-                  className={!fat ? "border-primary/50" : ""}
+                  placeholder="Ex: 70" 
                 />
               </div>
             </div>
             <div className="mt-2 rounded-lg bg-primary/10 p-3 border border-primary/20">
               <p className="text-[11px] leading-relaxed text-primary font-medium">
-                ⚠️ <strong>Atenção:</strong> O preenchimento de todos os campos acima (Objetivo, Kcal e Macros) é <strong>obrigatório</strong>. 
-                Estes dados são fundamentais para que a STHia calcule e elabore seu cardápio com precisão.
+                💡 <strong>Dica STHia:</strong> Apenas o <strong>Objetivo</strong> é obrigatório. Se você deixar os outros campos em branco, a STHia trabalhará sincronizando todos os seus dados para entregar o melhor resultado automático.
               </p>
             </div>
           </AiEditSection>
