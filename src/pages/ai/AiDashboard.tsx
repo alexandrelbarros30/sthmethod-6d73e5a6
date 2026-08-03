@@ -432,7 +432,7 @@ export default function AiDashboard() {
 
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          {editing ? "Toque em − para remover e nas setas para mover." : "Sua tela inicial personalizada."}
+          {editing ? "Toque em − para remover, + para incluir e nas setas para mover." : "Sua tela inicial personalizada."}
         </p>
         <Button size="sm" variant={editing ? "default" : "outline"} onClick={() => setEditing((v) => !v)}>
           {editing ? <Check className="mr-2 h-4 w-4" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
@@ -443,9 +443,15 @@ export default function AiDashboard() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
         {ordered.map((id, i) => {
           if (hidden.has(id)) return null;
-          if (!editing) return <Fragment key={id}>{nodes[id]}</Fragment>;
+          const wrap = `relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`;
+          if (!editing)
+            return (
+              <div key={id} className={wrap}>
+                {nodes[id]}
+              </div>
+            );
           return (
-            <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full`}>
+            <div key={id} className={wrap}>
               <div className="pointer-events-none w-full opacity-90 [&_a]:pointer-events-none">{nodes[id]}</div>
               <button
                 type="button"
