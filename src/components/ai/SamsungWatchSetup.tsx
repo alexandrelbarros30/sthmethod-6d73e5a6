@@ -150,9 +150,6 @@ export default function SamsungWatchSetup({ source, onConnect, onDisconnect, onI
             {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Stethoscope className="mr-2 h-4 w-4" />}
             Testar leitura
           </Button>
-          {selfTest && selfTest.checks.length > 0 && (
-            <div className="w-full" />
-          )}
           {report && (
             <p className="w-full text-[11px] text-muted-foreground">
               Última leitura: {report.read} dia(s) lidos do Health Connect · {report.imported} salvo(s) no STH
