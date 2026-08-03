@@ -183,12 +183,6 @@ if (fs.existsSync(MODULE_SRC)) {
           /class MainActivity\s*:\s*BridgeActivity\(\)\s*\{?/,
           `class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        registerPlugin(com.sthmethod.health.SthHealthPlugin::class.java)\n        super.onCreate(savedInstanceState)\n    }`,
         );
-        if (!source.includes('SthHealthPlugin')) {
-          source = source.replace(
-            /class MainActivity\s*:\s*BridgeActivity\(\)/,
-            `class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        registerPlugin(com.sthmethod.health.SthHealthPlugin::class.java)\n        super.onCreate(savedInstanceState)\n    }\n}\n// legacy`,
-          );
-        }
       }
       fs.writeFileSync(mainActivity, source);
       console.log(`Plugin sth-health registrado em ${mainActivity}.`);
