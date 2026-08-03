@@ -555,7 +555,7 @@ export default function AiDashboard() {
 
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          {editing ? "Organize, troque e escolha o que aparece." : "Sua tela inicial personalizada."}
+          {editing ? "Arraste os cards para organizar. Toque em − para remover e + para incluir." : "Sua tela inicial personalizada."}
         </p>
         <Button size="sm" variant={editing ? "default" : "outline"} onClick={() => setEditing((v) => !v)}>
           {editing ? <Check className="mr-2 h-4 w-4" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
@@ -564,80 +564,64 @@ export default function AiDashboard() {
       </div>
 
       {editing ? (
-        <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/60 backdrop-blur-sm">
-          <ul className="divide-y divide-border/60">
-            {ordered.map((id, i) => {
-              const label = WIDGET_META.find((w) => w.id === id)?.label ?? id;
-              const isOn = !hidden.has(id);
-              const swappable = ordered.filter((x) => hidden.has(x) && x !== id);
-              return (
-                <li key={id} className="flex items-center gap-3 px-3 py-3 sm:px-4">
-                  <div className="flex flex-col">
-                    <button
-                      type="button"
-                      disabled={i === 0}
-                      onClick={() => move(id, -1)}
-                      aria-label={`Mover ${label} para cima`}
-                      className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={i === ordered.length - 1}
-                      onClick={() => move(id, 1)}
-                      aria-label={`Mover ${label} para baixo`}
-                      className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+        <>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={visibleIds} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
+                {visibleIds.map((id, i) => (
+                  <SortableTile
+                    key={id}
+                    id={id}
+                    span={slotSpan(i)}
+                    swappable={hiddenIds}
+                    onRemove={() => toggle(id)}
+                    onSwap={(other) => replace(id, other)}
+                  >
+                    {nodes[id]}
+                  </SortableTile>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
-                  <div className="min-w-0 flex-1">
-                    <p className={`truncate text-sm font-medium ${isOn ? "" : "text-muted-foreground"}`}>{label}</p>
-                    <p className="text-[11px] text-muted-foreground">{isOn ? "Na tela inicial" : "Oculto"}</p>
-                  </div>
-
-                  {isOn && swappable.length > 0 && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="ghost" className="h-8 px-2 text-xs text-muted-foreground">
-                          <Repeat className="mr-1.5 h-3.5 w-3.5" /> Trocar
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="max-h-72 overflow-auto">
-                        {swappable.map((other) => (
-                          <DropdownMenuItem key={other} onSelect={() => replace(id, other)}>
-                            {WIDGET_META.find((w) => w.id === other)?.label ?? other}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-
-                  <Switch checked={isOn} onCheckedChange={() => toggle(id)} aria-label={`Exibir ${label}`} />
-                </li>
-              );
-            })}
-          </ul>
-          <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-3 sm:px-4">
-            <Button size="sm" variant="ghost" onClick={reset}>
-              <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
-            </Button>
-            <Button size="sm" onClick={() => setEditing(false)}>
-              <Check className="mr-2 h-4 w-4" /> Concluir
-            </Button>
+          <div className="mt-4 rounded-3xl border border-border/70 bg-card/60 p-4 backdrop-blur-sm sm:p-5">
+            <p className="text-sm font-semibold">Adicionar widget</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Toque em + para incluir na tela. Qualquer assunto cabe em qualquer card.
+            </p>
+            {hiddenIds.length === 0 ? (
+              <p className="mt-3 text-xs text-muted-foreground">Todos os widgets já estão na sua tela inicial.</p>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {hiddenIds.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => toggle(id)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-ocean-teal/40 bg-ocean-mint/10 px-3 py-1.5 text-xs font-semibold text-ocean-teal transition-colors hover:bg-ocean-mint/20"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> {labelOf(id)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <Button size="sm" variant="ghost" onClick={reset}>
+                <RotateCcw className="mr-2 h-4 w-4" /> Restaurar padrão
+              </Button>
+              <Button size="sm" onClick={() => setEditing(false)}>
+                <Check className="mr-2 h-4 w-4" /> Concluir
+              </Button>
+            </div>
           </div>
-        </div>
+        </>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-          {ordered.map((id) =>
-            hidden.has(id) ? null : (
-              <div key={id} className={`relative flex ${spanOf(id)} [&>*]:w-full [&>*]:h-full`}>
-                {nodes[id]}
-              </div>
-            ),
-          )}
+          {visibleIds.map((id, i) => (
+            <div key={id} className={`relative flex ${slotSpan(i)} [&>*]:h-full [&>*]:w-full`}>
+              {nodes[id]}
+            </div>
+          ))}
         </div>
       )}
 
