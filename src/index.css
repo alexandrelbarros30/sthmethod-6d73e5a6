@@ -1090,6 +1090,85 @@ html, body {
   }
 }
 
+@layer base {
+  /* =====================================================================
+     MIDNIGHT (STH AI) — desfaz as superfícies brancas do STH LIGHT PREMIUM.
+     Precisa vir DEPOIS do bloco .theme-sth-green e usar os tokens escuros.
+     ===================================================================== */
+  html.theme-sth-ai-midnight body {
+    background: hsl(var(--background)) !important;
+    color: hsl(var(--foreground));
+  }
+
+  html.theme-sth-ai-midnight .rounded-2xl.border.bg-card,
+  html.theme-sth-ai-midnight .rounded-xl.border.bg-card,
+  html.theme-sth-ai-midnight .rounded-lg.border.bg-card,
+  html.theme-sth-ai-midnight .rounded-3xl.border.bg-background {
+    background: hsl(var(--card)) !important;
+    border-color: hsl(var(--border)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    box-shadow:
+      0 1px 2px hsl(0 0% 0% / 0.5),
+      0 12px 32px -18px hsl(0 0% 0% / 0.8) !important;
+  }
+
+  html.theme-sth-ai-midnight [role="dialog"],
+  html.theme-sth-ai-midnight [data-radix-popper-content-wrapper] > * {
+    background: hsl(var(--popover)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+    box-shadow: 0 32px 64px -24px hsl(0 0% 0% / 0.75) !important;
+  }
+
+  html.theme-sth-ai-midnight input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  html.theme-sth-ai-midnight textarea,
+  html.theme-sth-ai-midnight [role="combobox"],
+  html.theme-sth-ai-midnight select {
+    background: hsl(var(--secondary)) !important;
+    border-color: hsl(var(--border)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+  html.theme-sth-ai-midnight input::placeholder,
+  html.theme-sth-ai-midnight textarea::placeholder {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  html.theme-sth-ai-midnight input:focus-visible,
+  html.theme-sth-ai-midnight textarea:focus-visible,
+  html.theme-sth-ai-midnight [role="combobox"]:focus-visible {
+    background: hsl(var(--surface-hover)) !important;
+    border-color: hsl(var(--primary) / 0.6) !important;
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18) !important;
+  }
+
+  html.theme-sth-ai-midnight aside.fixed.left-0,
+  html.theme-sth-ai-midnight .fixed.top-0.left-0.right-0.h-12,
+  html.theme-sth-ai-midnight .rounded-full.border.bg-background\/90 {
+    background: hsl(var(--card) / 0.92) !important;
+    border-color: hsl(var(--border)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  html.theme-sth-ai-midnight [data-sonner-toast] {
+    background: hsl(var(--popover)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+  }
+
+  /* Utilitários brancos hardcoded em cards/listas ficam legíveis no escuro */
+  html.theme-sth-ai-midnight .bg-white,
+  html.theme-sth-ai-midnight .bg-white\/90,
+  html.theme-sth-ai-midnight .bg-white\/80 {
+    background: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+  }
+  html.theme-sth-ai-midnight .text-black,
+  html.theme-sth-ai-midnight .text-zinc-900,
+  html.theme-sth-ai-midnight .text-neutral-900,
+  html.theme-sth-ai-midnight .text-gray-900 {
+    color: hsl(var(--foreground)) !important;
+  }
+}
+
 /* =====================================================================
    THEME 90D — Alunos com plano de 90 dias
    Override de tokens semânticos: paleta azul ciano "cirúrgica".
