@@ -40,6 +40,7 @@ export default function AiFood() {
       .eq("user_id", user.id)
       .eq("log_date", date)
       .eq("app_context", "sth_ai")
+      .eq("app_context", "sth_ai")
       .order("created_at", { ascending: true });
     setEntries(((data ?? []) as unknown) as Entry[]);
     setLoading(false);
