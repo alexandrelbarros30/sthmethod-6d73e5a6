@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Mic, Square } from "lucide-react";
+import { Loader2, Mic, Pause, Play, Square, X } from "lucide-react";
 
 /**
  * Botão de ditado por voz para campos livres do STH AI.
@@ -43,6 +43,7 @@ interface Props {
 
 export default function AiVoiceInput({ onTranscribe, className, label = "Falar", size = "sm" }: Props) {
   const [recording, setRecording] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [busy, setBusy] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -51,11 +52,49 @@ export default function AiVoiceInput({ onTranscribe, className, label = "Falar",
   const streamRef = useRef<MediaStream | null>(null);
   const pcmRef = useRef<Float32Array[]>([]);
   const timerRef = useRef<number | null>(null);
+  const pausedRef = useRef(false);
 
   function cleanupStream() {
     try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
     streamRef.current = null;
     if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+  }
+
+  /** Encerra captura sem transcrever (usado por "Cancelar" / Esc). */
+  function teardown() {
+    try { nodeRef.current?.disconnect(); sourceRef.current?.disconnect(); } catch { /* noop */ }
+    nodeRef.current = null; sourceRef.current = null;
+    const ctx = ctxRef.current;
+    ctxRef.current = null;
+    try { void ctx?.close(); } catch { /* noop */ }
+    cleanupStream();
+    pausedRef.current = false;
+    setPaused(false);
+    setRecording(false);
+  }
+
+  function cancel() {
+    if (!recording) return;
+    teardown();
+    pcmRef.current = [];
+    toast.info("Gravação cancelada");
+  }
+
+  function togglePause() {
+    if (!recording) return;
+    const next = !pausedRef.current;
+    pausedRef.current = next;
+    setPaused(next);
+    const ctx = ctxRef.current;
+    if (next) {
+      void ctx?.suspend?.().catch(() => {});
+      if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+    } else {
+      void ctx?.resume?.().catch(() => {});
+      if (!timerRef.current) {
+        timerRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000) as unknown as number;
+      }
+    }
   }
 
   async function start() {
@@ -68,7 +107,12 @@ export default function AiVoiceInput({ onTranscribe, className, label = "Falar",
       const source = ctx.createMediaStreamSource(stream);
       const node = ctx.createScriptProcessor(4096, 1, 1);
       pcmRef.current = [];
-      node.onaudioprocess = (e) => pcmRef.current.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+      pausedRef.current = false;
+      setPaused(false);
+      node.onaudioprocess = (e) => {
+        if (pausedRef.current) return;
+        pcmRef.current.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+      };
       source.connect(node);
       node.connect(ctx.destination);
       ctxRef.current = ctx; nodeRef.current = node; sourceRef.current = source;
@@ -86,6 +130,8 @@ export default function AiVoiceInput({ onTranscribe, className, label = "Falar",
     nodeRef.current = null; sourceRef.current = null;
     cleanupStream();
     setRecording(false);
+    pausedRef.current = false;
+    setPaused(false);
     const rate = ctx?.sampleRate || 44100;
     try { await ctx?.close(); } catch { /* noop */ }
     ctxRef.current = null;
@@ -118,26 +164,76 @@ export default function AiVoiceInput({ onTranscribe, className, label = "Falar",
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
 
+  // Atalhos: Ctrl/Cmd+Shift+M grava/para, Ctrl/Cmd+Shift+P pausa/retoma, Esc cancela.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+      if (mod && e.shiftKey && key === "m") {
+        e.preventDefault();
+        if (busy) return;
+        void (recording ? stop() : start());
+      } else if (mod && e.shiftKey && key === "p") {
+        e.preventDefault();
+        togglePause();
+      } else if (e.key === "Escape" && recording) {
+        e.preventDefault();
+        cancel();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recording, busy]);
+
   return (
-    <Button
-      type="button"
-      size={size}
-      variant={recording ? "destructive" : "outline"}
-      className={className}
-      disabled={busy}
-      onClick={recording ? stop : start}
-      aria-label={recording ? "Parar gravação e transcrever" : "Gravar áudio e transcrever"}
-      title={recording ? "Parar e transcrever" : "Falar e transcrever"}
-    >
-      {busy ? (
-        <Loader2 className={`h-4 w-4 animate-spin ${size === "icon" ? "" : "mr-1.5"}`} />
-      ) : recording ? (
-        <Square className={`h-4 w-4 ${size === "icon" ? "" : "mr-1.5"}`} />
-      ) : (
-        <Mic className={`h-4 w-4 ${size === "icon" ? "" : "mr-1.5"}`} />
+    <div className={`flex items-center gap-1.5 ${className ?? ""}`}>
+      <Button
+        type="button"
+        size={size}
+        variant={recording ? "destructive" : "outline"}
+        disabled={busy}
+        onClick={recording ? stop : start}
+        aria-label={recording ? "Parar gravação e transcrever (Ctrl+Shift+M)" : "Gravar áudio e transcrever (Ctrl+Shift+M)"}
+        title={recording ? "Parar e transcrever (Ctrl/Cmd+Shift+M)" : "Falar e transcrever (Ctrl/Cmd+Shift+M)"}
+      >
+        {busy ? (
+          <Loader2 className={`h-4 w-4 animate-spin ${size === "icon" ? "" : "mr-1.5"}`} />
+        ) : recording ? (
+          <Square className={`h-4 w-4 ${size === "icon" ? "" : "mr-1.5"}`} />
+        ) : (
+          <Mic className={`h-4 w-4 ${size === "icon" ? "" : "mr-1.5"}`} />
+        )}
+        {size !== "icon" && (busy ? "Transcrevendo…" : recording ? `Parar ${mm}:${ss}` : label)}
+      </Button>
+
+      {recording && (
+        <>
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            onClick={togglePause}
+            aria-label={paused ? "Retomar gravação (Ctrl+Shift+P)" : "Pausar gravação (Ctrl+Shift+P)"}
+            title={paused ? "Retomar (Ctrl/Cmd+Shift+P)" : "Pausar (Ctrl/Cmd+Shift+P)"}
+          >
+            {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={cancel}
+            aria-label="Cancelar gravação (Esc)"
+            title="Cancelar (Esc)"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </>
       )}
-      {size !== "icon" && (busy ? "Transcrevendo…" : recording ? `Parar ${mm}:${ss}` : label)}
-    </Button>
+
+      {recording && paused && <span className="text-xs text-muted-foreground">Pausado</span>}
+    </div>
   );
 }
 
