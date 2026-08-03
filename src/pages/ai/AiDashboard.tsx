@@ -638,21 +638,28 @@ export default function AiDashboard() {
           <div className="mt-4 rounded-3xl border border-border/70 bg-card/60 p-4 backdrop-blur-sm sm:p-5">
             <p className="text-sm font-semibold">Adicionar widget</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Toque em + para incluir na tela. Qualquer assunto cabe em qualquer card.
+              Toque em + para incluir na tela. Escolha por assunto — em Saúde você tem passos, kcal ativas, FC e sono.
             </p>
             {hiddenIds.length === 0 ? (
               <p className="mt-3 text-xs text-muted-foreground">Todos os widgets já estão na sua tela inicial.</p>
             ) : (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {hiddenIds.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => toggle(id)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-ocean-teal/40 bg-ocean-mint/10 px-3 py-1.5 text-xs font-semibold text-ocean-teal transition-colors hover:bg-ocean-mint/20"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> {labelOf(id)}
-                  </button>
+              <div className="mt-3 space-y-3">
+                {byGroup(hiddenIds).map(([group, list]) => (
+                  <div key={group}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{group}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-2">
+                      {list.map((id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => toggle(id)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-ocean-teal/40 bg-ocean-mint/10 px-3 py-1.5 text-xs font-semibold text-ocean-teal transition-colors hover:bg-ocean-mint/20"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> {labelOf(id)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
