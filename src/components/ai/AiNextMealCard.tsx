@@ -40,11 +40,11 @@ const AiNextMealCard = ({ diet }: { diet: AiGeneration | null }) => {
         aria-hidden
       />
       <div className="relative flex flex-wrap items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase tracking-[0.18em] text-ocean-mint backdrop-blur-md">
-          <Utensils className="h-3 w-3" /> Refeição de agora
+        <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-urbanist text-[10px] font-bold uppercase leading-tight tracking-[0.12em] text-ocean-mint backdrop-blur-md">
+          <Utensils className="h-3 w-3 shrink-0" /> <span className="truncate">Refeição de agora</span>
         </span>
         {current?.time && (
-          <span className="inline-flex items-center gap-1 font-mono text-xs font-bold tabular-nums text-white/70">
+          <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-mono text-xs font-bold tabular-nums text-white/70">
             <Clock className="h-3.5 w-3.5" /> {current.time}
           </span>
         )}
@@ -61,7 +61,7 @@ const AiNextMealCard = ({ diet }: { diet: AiGeneration | null }) => {
             )}
           </div>
 
-          <div className="relative mt-4 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
+          <div className="relative mt-4 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center [&>span]:min-w-0 [&>span]:whitespace-nowrap">
             <span className="inline-flex items-baseline justify-center gap-1 rounded-lg border border-ocean-mint/40 bg-ocean-mint/15 px-2.5 py-1.5 font-mono text-[12px] font-extrabold tabular-nums text-ocean-mint">
               {current.kcal}
               <span className="text-[9px] font-semibold uppercase tracking-[0.14em] opacity-75">kcal</span>
