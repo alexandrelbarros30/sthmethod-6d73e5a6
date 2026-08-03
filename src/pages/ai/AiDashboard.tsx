@@ -18,6 +18,7 @@ import AiWorkoutReminderCard from "@/components/ai/AiWorkoutReminderCard";
 import AiHealthMetricCard from "@/components/ai/AiHealthMetricCard";
 import ProfileAvatar from "@/components/shared/ProfileAvatar";
 import { useAiWidgets, type WidgetMeta } from "@/hooks/useAiWidgets";
+import { useAiHomeStyle, AI_HOME_STYLES } from "@/hooks/useAiHomeStyle";
 import {
   Loader2,
   ArrowRight,
@@ -112,15 +113,6 @@ const ROUTES: Record<AiKind, string> = {
   analysis: "/ai/app/analise",
 };
 
-/**
- * A largura pertence à POSIÇÃO, não ao widget: qualquer assunto cabe em qualquer
- * card. Padrão Samsung Health: faixa larga seguida de duas metades.
- */
-const slotSpan = (index: number) =>
-  index % 3 === 0
-    ? "col-span-2 lg:col-span-6"
-    : "col-span-2 min-[430px]:col-span-1 lg:col-span-3";
-
 const labelOf = (id: string) => WIDGET_META.find((w) => w.id === id)?.label ?? id;
 
 const tile =
@@ -176,14 +168,14 @@ function SortableTile({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`relative flex ${span} touch-none ${isDragging ? "z-20 opacity-90" : ""}`}
+      className={`relative flex min-w-0 ${span} touch-none ${isDragging ? "z-20 opacity-90" : ""}`}
     >
       <div
         className={`relative w-full overflow-hidden rounded-3xl ring-2 ring-dashed ring-ocean-teal/40 sm:rounded-[2rem] ${
           isDragging ? "shadow-[0_24px_60px_-24px_hsl(var(--ocean-teal)/0.8)]" : ""
         }`}
       >
-        <div className="pointer-events-none select-none [&_*]:pointer-events-none [&>*]:h-full [&>*]:w-full">
+        <div className="ai-slot pointer-events-none select-none [&_*]:pointer-events-none [&>*]:h-full [&>*]:w-full">
           {children}
         </div>
 
@@ -252,6 +244,7 @@ export default function AiDashboard() {
   const { insight } = useAiInsight();
   const navigate = useNavigate();
   const { ordered, hidden, toggle, replace, reset, setOrderIds } = useAiWidgets(WIDGET_META);
+  const { style, setStyle, slotSpan, gridClass } = useAiHomeStyle();
   const [editing, setEditing] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -614,11 +607,30 @@ export default function AiDashboard() {
         </Button>
       </div>
 
+      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+        {AI_HOME_STYLES.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => setStyle(s.id)}
+            aria-pressed={style === s.id}
+            className={`min-w-0 shrink-0 rounded-2xl border px-3 py-2 text-left transition-colors ${
+              style === s.id
+                ? "border-ocean-teal/60 bg-ocean-mint/15 text-ocean-teal"
+                : "border-border/70 bg-card text-muted-foreground hover:border-ocean-teal/40"
+            }`}
+          >
+            <span className="block text-xs font-bold">{s.label}</span>
+            <span className="block whitespace-nowrap text-[10px] opacity-80">{s.hint}</span>
+          </button>
+        ))}
+      </div>
+
       {editing ? (
         <>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={visibleIds} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
+              <div className={gridClass}>
                 {visibleIds.map((id, i) => (
                   <SortableTile
                     key={id}
@@ -674,9 +686,9 @@ export default function AiDashboard() {
           </div>
         </>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
+        <div className={gridClass}>
           {visibleIds.map((id, i) => (
-            <div key={id} className={`relative flex ${slotSpan(i)} [&>*]:h-full [&>*]:w-full`}>
+            <div key={id} className={`ai-slot relative flex min-w-0 ${slotSpan(i)} [&>*]:h-full [&>*]:w-full`}>
               {nodes[id]}
             </div>
           ))}

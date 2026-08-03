@@ -1780,3 +1780,23 @@ html.theme-sth-green h4 {
   font-family: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: -0.02em;
 }
+
+/* ===== Estilos de visualização da tela inicial do STH AI =====
+   A largura pertence à posição; aqui só ajustamos densidade para que
+   qualquer texto caiba com folga em cards menores. */
+.ai-home-dense .ai-slot > * {
+  padding: 0.75rem !important;
+  border-radius: 1.25rem !important;
+}
+.ai-home-dense .ai-slot .font-urbanist.text-2xl,
+.ai-home-dense .ai-slot .text-2xl {
+  font-size: 1.25rem !important;
+  line-height: 1.15 !important;
+}
+.ai-home-dense .ai-slot p,
+.ai-home-dense .ai-slot span {
+  overflow-wrap: anywhere;
+}
+.ai-home-focus .ai-slot > * {
+  min-height: 0;
+}
