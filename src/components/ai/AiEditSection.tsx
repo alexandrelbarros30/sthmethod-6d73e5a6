@@ -37,6 +37,8 @@ export default function AiEditSection({
     setSaving(true);
     try {
       await onSave();
+      // Fecha a janela colapsável automaticamente após salvar com sucesso
+      setOpen(false);
     } finally {
       setSaving(false);
     }
