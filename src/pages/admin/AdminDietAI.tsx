@@ -291,7 +291,7 @@ const AdminDietAI = () => {
       const msg = e.message || "";
       const details = e?.details || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("Calibração STHia: Ovos e claras devem ser em UNIDADES. Ex: '4 ovos inteiros + 3 claras'.", { duration: 15000 });
+        toast.error("O cérebro da STHIA foi calibrado: formatação limpa (sem * ou ( ) no título), ovos em unidades e cardápio brasileiro ativados. O texto pula uma linha entre refeições.", { duration: 15000 });
       } else {
         toast.error(`${msg}${details ? ` - ${details}` : ""}` || "Falha ao gerar");
       }
