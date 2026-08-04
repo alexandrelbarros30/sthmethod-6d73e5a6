@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-flash-001"; // Switching to Flash for maximum stability and speed
+const MODEL_ID = "google/gemini-2.0-flash"; // Switching to Flash for maximum stability and speed
 const TARGET_TOLERANCE_PCT = 3.0; // Increased tolerance to 3.0% to avoid retry/timeout loops
 const MAX_TARGET_RETRIES = 3; // Reduced retries to avoid timeouts
 const HARD_BLOCK_TOLERANCE_PCT = 8;
