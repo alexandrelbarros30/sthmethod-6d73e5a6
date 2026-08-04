@@ -6,10 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-flash-001";
+const MODEL_ID = "google/gemini-2.0-pro";
 // Tolerância operacional rigorosa. O usuário reportou macros elevados e erros de cálculo.
-// Reduzimos a tolerância para ±3% para forçar a IA a ser mais precisa.
-const TARGET_TOLERANCE_PCT = 2.5;
+// Reduzimos a tolerância para ±2% para forçar a IA a ser mais precisa.
+const TARGET_TOLERANCE_PCT = 2.0;
 // Aumentamos os retries para garantir que o modelo chegue no valor exato após feedback.
 const MAX_TARGET_RETRIES = 6;
 // Teto de segurança para bloqueio.
