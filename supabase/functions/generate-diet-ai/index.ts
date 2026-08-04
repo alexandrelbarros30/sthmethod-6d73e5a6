@@ -181,10 +181,11 @@ const buildMealBudgetImpl = (targets: MacroTargets, nMeals: number) => {
 };
 
 const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
-- Ovo inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio=50g)
-- Clara: 43 kcal | 10.9 P | 0.7 C | 0 G
-- Aveia flocos: 394 kcal | 13.9 P | 66.6 C | 8.5 G
+- Ovo inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio = 45g)
+- Clara de ovo crua: 43 kcal | 10.9 P | 0.7 C | 0 G (1 clara = 30g)
+- Aveia em flocos: 340 kcal | 14.0 P | 51.0 C | 7.0 G
 - Mamão papaia: 40 kcal | 0.5 P | 10.4 C | 0.1 G
+- Mamão formosa: 45 kcal | 0.8 P | 11.6 C | 0.1 G
 - Banana prata: 98 kcal | 1.3 P | 26 C | 0.1 G
 - Arroz branco cozido: 128 kcal | 2.5 P | 28.1 C | 0.2 G
 - Arroz integral cozido: 124 kcal | 2.6 P | 25.8 C | 1 G
@@ -192,7 +193,7 @@ const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
 - Batata inglesa cozida: 52 kcal | 1.2 P | 11.9 C | 0 G
 - Batata doce cozida: 77 kcal | 0.6 P | 18.4 C | 0.1 G
 - Macarrão cozido: 111 kcal | 3.4 P | 23.5 C | 0.6 G
-- Pão francês: 300 kcal | 8 P | 58.6 C | 3.1 G (1 un=50g)
+- Pão francês: 300 kcal | 8 P | 58.6 C | 3.1 G (1 un = 50g)
 - Tapioca hidratada: 240 kcal | 0 P | 60 C | 0 G
 - Peito frango cozido s/pele: 163 kcal | 32 P | 0 C | 3.2 G
 - Patinho cozido: 219 kcal | 35.9 P | 0 C | 7.3 G
@@ -202,8 +203,8 @@ const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
 - Leite integral: 61 kcal | 2.9 P | 4.3 C | 3.2 G
 - Iogurte natural desnatado: 41 kcal | 4.6 P | 5.6 C | 0.1 G
 - Queijo minas frescal: 264 kcal | 17.4 P | 3.2 C | 20.2 G
-- Whey concentrado: 400 kcal | 80 P | 7 C | 6 G (1 scoop=30g)
-- Azeite oliva: 884 kcal | 0 P | 0 C | 100 G (1 cs=13g)
+- Whey concentrado: 400 kcal | 80 P | 7 C | 6 G (1 scoop = 30g)
+- Azeite oliva: 884 kcal | 0 P | 0 C | 100 G (1 cs = 13g)
 - Pasta amendoim: 596 kcal | 25 P | 15 C | 50 G
 - Abacate: 96 kcal | 1.2 P | 6 C | 8.4 G
 - Brócolis cozido: 25 kcal | 2.1 P | 4 C | 0.4 G`;
