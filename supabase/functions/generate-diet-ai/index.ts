@@ -296,7 +296,7 @@ ESTRUTURA OBRIGATÓRIA:
 - Cada refeição deve ter 4 opções dentro de aspas (1 Base com emoji ⭐ + 3 Alternativas).
 - Mantenha um espaçamento claro entre as refeições.
 - Não use tabelas Markdown.
-- Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "80g de claras de ovo" - mantenha a coerência com o exemplo acima).
+- Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
 
 REGRAS CRÍTICAS:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
