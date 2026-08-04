@@ -54,6 +54,17 @@ export default function AiInstalar() {
               <Download className="mr-2 h-4 w-4" /> Baixar APK do STH AI ({APK_SIZE_MB} MB)
             </a>
           </Button>
+          <div className="mt-4 p-4 border border-dashed border-primary/30 rounded-2xl bg-primary/5">
+             <p className="text-xs text-primary font-medium mb-2">Instalação Direta (Experimental)</p>
+             <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
+               Após a geração do build da STHia, você pode baixar o arquivo APK diretamente para seu dispositivo Android.
+             </p>
+             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto text-[11px] h-8 rounded-xl border-primary/20 hover:bg-primary/10">
+               <a href="/baixar-apk" rel="noopener noreferrer">
+                 <Download className="mr-1.5 h-3 w-3" /> Link Direto (Build)
+               </a>
+             </Button>
+          </div>
           <p className="mt-3 text-xs text-muted-foreground">
             Preferir sem instalar? Abra <Link to="/ai/app" className="underline">o app pelo navegador</Link> e use “Instalar app” no menu do Chrome.
           </p>
