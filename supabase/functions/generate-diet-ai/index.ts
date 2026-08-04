@@ -224,7 +224,6 @@ serve(async (req) => {
               parameters: {
                 type: "object",
                 properties: {
-                  diet_text: { type: "string" },
                   meals: {
                     type: "array",
                     items: {
@@ -232,12 +231,17 @@ serve(async (req) => {
                       properties: {
                         meal_number: { type: "number" },
                         meal_name: { type: "string" },
+                        options: { 
+                          type: "array", 
+                          items: { type: "string" },
+                          description: "Exatamente 4 opções (1 Base + 3 Alternativas). A primeira deve ser a BASE."
+                        },
                         energy_kcal: { type: "number" },
                         protein_g: { type: "number" },
                         carbs_g: { type: "number" },
                         fat_g: { type: "number" },
                       },
-                      required: ["meal_number", "meal_name", "energy_kcal", "protein_g", "carbs_g", "fat_g"]
+                      required: ["meal_number", "meal_name", "options", "energy_kcal", "protein_g", "carbs_g", "fat_g"]
                     }
                   },
                   total: {
@@ -250,7 +254,7 @@ serve(async (req) => {
                     }
                   }
                 },
-                required: ["diet_text", "meals", "total"]
+                required: ["meals", "total"]
               }
             }
           }],
