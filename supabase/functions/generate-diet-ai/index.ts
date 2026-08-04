@@ -274,33 +274,30 @@ ESTILO E CULTURA:
 - Ofereça um cardápio tipicamente BRASILEIRO (Arroz, feijão, carnes grelhadas, frutas tropicais, cuscuz, tapioca, mandioca).
 - A base e as opções alternativas devem refletir alimentos comuns na culinária do Brasil.
 
-REGRAS DE FORMATAÇÃO (PADRÃO STHia):
-Você DEVE obrigatoriamente seguir este exemplo de formatação para o texto HTML final:
+REGRAS DE FORMATAÇÃO (PADRÃO STHia - OBRIGATÓRIO):
+Você DEVE seguir EXATAMENTE este exemplo de formatação para o texto HTML final. É mandatório que o bloco de opções esteja entre aspas e que ovos/claras sejam em unidades:
 
 Refeição 01: Desjejum Metabólico
-
 "⭐ BASE: 4 ovos inteiros mexidos + 3 claras de ovo + 100g de mamão.
 Opção 2: 150g de peito de frango desfiado + 2 fatias de pão de forma integral + 1 ovo cozido.
 Opção 3: 200g de iogurte grego natural (zero açúcar) + 30g de Whey Protein + 15g de sementes de abóbora.
 Opção 4: Omelete de 3 ovos + 50g de queijo cottage + 100g de morangos."
 
 Refeição 02: Densidade e Suporte
-
 "⭐ BASE: 180g de patinho moído ou filé mignon (pesado cozido) + 80g de arroz integral + Salada de folhas verdes à vontade (azeite: 10ml).
 Opção 2: 180g de peito de frango grelhado + 100g de batata doce cozida + Brócolis e couve-flor à vontade.
 Opção 3: 200g de filé de tilápia ou pescada + 80g de quinoa cozida + Espargos salteados.
 Opção 4: 180g de lombo suíno magro + 100g de abóbora cabotiá assada + Mix de folhas."
 
-(E assim por diante para todas as refeições solicitadas).
-
 ESTRUTURA OBRIGATÓRIA (CRÍTICO):
 1. O TÍTULO da refeição NÃO deve ter NENHUMA formatação Markdown (SEM asteriscos, SEM parênteses, SEM negrito). Apenas o texto limpo: "Refeição XX: Nome".
-2. DEVE pular UMA LINHA entre o TÍTULO e o bloco de opções.
-3. O bloco de opções (BASE + Alternativas) deve estar OBRIGATORIAMENTE agrupado entre aspas duplas (") começando na BASE e terminando na última OPÇÃO.
+2. O bloco de opções (BASE + Alternativas) deve estar OBRIGATORIAMENTE agrupado entre um único par de aspas duplas (") começando imediatamente na BASE e terminando na última OPÇÃO.
+3. Use uma quebra de linha simples (\n) entre o TÍTULO e o início das aspas.
 4. Mantenha um espaçamento claro entre as refeições (pule uma linha entre o fechamento das aspas de uma refeição e o título da próxima).
 5. Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
 6. A base deve começar com o emoji ⭐ e o texto "BASE:".
-7. Não use tabelas Markdown.
+7. Cada refeição DEVE ter exatamente 4 opções (1 Base + 3 Alternativas).
+8. Não use tabelas Markdown.
 
 REGRAS CRÍTICAS:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
