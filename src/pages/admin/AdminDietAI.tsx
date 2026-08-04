@@ -109,6 +109,7 @@ const AdminDietAI = () => {
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Contra-resposta (correção do cardápio já gerado)
   const [counterNote, setCounterNote] = useState("");
