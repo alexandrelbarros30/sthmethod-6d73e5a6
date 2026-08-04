@@ -291,7 +291,7 @@ const AdminDietAI = () => {
       const msg = e.message || "";
       const details = e?.details || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("Execute esta instrucao no projeto: Implemente a geração automática do cardápio usando FatSecret API e TACO, garantindo que o resultado seja salvo e exibido após a requisição.\nImplemente uma tela de status/progresso no admin para acompanhar quando o cardápio está em processamento e quando é finalizado ou bloqueado.", { duration: 15000 });
+        toast.error("Execute esta instrucao no projeto: Parece que não está resolvendo o problema. Está colocando o meu pedido de resolucao no popup quando da errado e não resolve", { duration: 15000 });
       } else {
         toast.error(`${msg}${details ? ` - ${details}` : ""}` || "Falha ao gerar");
       }
