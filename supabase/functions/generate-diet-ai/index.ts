@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 const MODEL_ID = "google/gemini-2.0-flash";
-const TARGET_TOLERANCE_PCT = 3.0;
-const MAX_TARGET_RETRIES = 3;
-const HARD_BLOCK_TOLERANCE_PCT = 8;
+const TARGET_TOLERANCE_PCT = 6.0;
+const MAX_TARGET_RETRIES = 4;
+const HARD_BLOCK_TOLERANCE_PCT = 12;
 const RECONCILE_TIMEOUT_MS = 110000;
 
 type MacroTotal = {
@@ -276,6 +276,7 @@ REGRAS CRÍTICAS:
 3. Para cada refeição, comece o bloco de alimentos com o rótulo "ALIMENTAÇÃO BASE:" e liste os itens principais. Itens sob "OPÇÕES/SUBSTITUIÇÕES:" são secundários.
 4. O total calórico e macros da refeição devem considerar APENAS a ALIMENTAÇÃO BASE.
 5. Em revisões, NÃO aumente as calorias se o usuário não pediu.
+6. Se houver desvio de macros, a prioridade absoluta é atingir a meta de Kcal e Proteínas, mesmo que precise ajustar as porções dos carboidratos.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
