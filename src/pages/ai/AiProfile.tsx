@@ -369,7 +369,7 @@ export default function AiProfile() {
             <Label>Nível de estresse</Label>
             <Select value={form.stress} onValueChange={(v) => set("stress", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                 <SelectItem value="baixo">Baixo</SelectItem>
                 <SelectItem value="medio">Médio</SelectItem>
                 <SelectItem value="alto">Alto</SelectItem>
