@@ -181,9 +181,9 @@ const buildMealBudgetImpl = (targets: MacroTargets, nMeals: number) => {
 };
 
 const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
-- Ovo inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio = 45g)
-- Clara de ovo crua: 43 kcal | 10.9 P | 0.7 C | 0 G (1 clara = 30g)
-- Aveia em flocos: 340 kcal | 14.0 P | 51.0 C | 7.0 G
+- Ovo inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio = 50g)
+- Clara de ovo crua: 43 kcal | 10.9 P | 0.7 C | 0 G (1 clara = 33g)
+- Aveia em flocos: 394 kcal | 13.9 P | 66.6 C | 8.5 G
 - Mamão papaia: 40 kcal | 0.5 P | 10.4 C | 0.1 G
 - Mamão formosa: 45 kcal | 0.8 P | 11.6 C | 0.1 G
 - Banana prata: 98 kcal | 1.3 P | 26 C | 0.1 G
