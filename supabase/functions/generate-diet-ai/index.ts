@@ -6,11 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-pro";
-const TARGET_TOLERANCE_PCT = 2.0;
-const MAX_TARGET_RETRIES = 6;
-const HARD_BLOCK_TOLERANCE_PCT = 6;
-const RECONCILE_TIMEOUT_MS = 110000; // Increased to 110s to prevent 500 timeouts during heavy reconciliation
+const MODEL_ID = "google/gemini-2.0-flash-001"; // Switching to Flash for maximum stability and speed
+const TARGET_TOLERANCE_PCT = 3.0; // Increased tolerance to 3.0% to avoid retry/timeout loops
+const MAX_TARGET_RETRIES = 3; // Reduced retries to avoid timeouts
+const HARD_BLOCK_TOLERANCE_PCT = 8;
+const RECONCILE_TIMEOUT_MS = 60000; // Reset to 60s for faster failure/retry cycle
 
 type MacroTotal = {
   energy_kcal: number;

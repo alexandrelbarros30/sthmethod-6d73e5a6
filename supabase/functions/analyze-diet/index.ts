@@ -125,7 +125,7 @@ async function extractItems(plainText: string, apiKey: string): Promise<Extracte
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.0-pro",
+        model: "google/gemini-2.0-flash-001",
         temperature: 0,
         messages: [
           { role: "system", content: sys },
@@ -341,7 +341,7 @@ No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing n
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-pro",
+        model: "google/gemini-2.0-flash-001",
         temperature: 0,
         messages: [
           { role: "system", content: systemPrompt },
