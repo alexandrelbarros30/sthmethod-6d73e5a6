@@ -278,16 +278,17 @@ const AdminDietAI = () => {
     onSuccess: (data: any) => {
       setResult({ ...data, diet_text: stripMealMacroLines(data.diet_text) });
       setReview(null);
+      setIsPreviewOpen(true); // Open preview automatically
       if (data?._correction) {
         setCounterHistory((h) => [...h, data._correction]);
         setCounterNote("");
         // A contra-resposta pode redefinir metas (ex.: kcal 2300) — reflete no briefing.
         const t = (data as any)?.targets;
         if (t?.energy_kcal) setKcalTarget(String(t.energy_kcal));
-        toast.success("Cardápio corrigido com a sua contra-resposta");
+        toast.success("Cardápio corrigido e pronto para pré-visualização");
       } else {
         setCounterHistory([]);
-        toast.success("Cardápio gerado pela STHIA");
+        toast.success("Cardápio gerado pela STHIA e pronto para pré-visualização");
       }
     },
     onError: (e: any) => {
