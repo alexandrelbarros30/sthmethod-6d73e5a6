@@ -639,7 +639,19 @@ const AdminDietAI = () => {
                 className="w-full"
               >
                 {generateMut.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando...</>
+                  <div className="space-y-2 w-full">
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                      <span>STHIA Processando...</span>
+                      <span>6.0% Tolerância</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-secondary overflow-hidden rounded-full">
+                      <div className="h-full bg-primary animate-[shimmer_2s_infinite] w-full origin-left" />
+                    </div>
+                    <div className="flex items-center justify-center gap-2 py-1 text-xs text-primary animate-pulse">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Consultando FatSecret & TACO...
+                    </div>
+                  </div>
                 ) : (
                   <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio com STHIA</>
                 )}
