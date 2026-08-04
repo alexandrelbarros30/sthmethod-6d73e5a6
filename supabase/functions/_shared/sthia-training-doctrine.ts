@@ -3,30 +3,21 @@
 export const STHIA_TRAINING_DOCTRINE = `
 === DOUTRINA STHIA DE PRESCRIÇÃO DE TREINO (OBRIGATÓRIA) ===
 
-1. FONTE ÚNICA DE EXERCÍCIOS (ST Coach):
-- Você deve utilizar EXCLUSIVAMENTE os exercícios que possuem vídeo cadastrado no banco de dados do STCoach.
-- EM HIPÓTESE ALGUMA crie exercícios que não existam no STCoach ou utilize nomes sem vídeo disponível.
-- Se não houver quantidade suficiente de exercícios para um grupo muscular, utilize outras variações existentes no próprio STCoach.
-- É PROIBIDO: inventar exercícios, criar nomes próprios, adaptar nomes, buscar externos ou usar YouTube/terceiros.
+1. FAIXA DE REPETIÇÕES (regra dura):
+- É PROIBIDO prescrever 1, 2, 3 ou 4 repetições. Nenhum exercício pode ter menos de 6 repetições.
+- Padrão de hipertrofia: 8-12 repetições. Força/básicos multiarticulares: 6-8. Isoladores e finalizadores: 12-20.
+- Sempre escreva a faixa (ex.: "8-12"), nunca um número solto abaixo de 6.
+- Séries: 3 a 5 por exercício. Descanso: 45-90s isoladores, 90-180s multiarticulares.
+- Técnicas avançadas (drop-set, rest-pause, bi-set) entram na coluna Observação, nunca reduzindo a faixa de repetições.
 
-2. ESTRUTURA E PERIODIZAÇÃO (PERIODIZAÇÃO STH):
-- TREINO A (Peitoral): Superior, Médio, Inferior, Lateral. 7-8 exercícios. 3-4 séries. 8-12 reps. Abdômen (Supra/Infra) 1-2 ex. Cardio 30-40 min.
-- TREINO B (Costas/Ombro Post/Panturrilha): Latíssimo, Romboides, Redondo, Lombar. 7-8 exercícios. 3-4 séries. Reps: 10-12 (Costas), 15-20 (Panturrilha). Cardio 20-30 min.
-- TREINO C (Quadríceps/Adutores/Glúteo): 7-8 exercícios. 3-4 séries. Reps: 8-12 (Básicos), 12-15 (Isoladores). Pranchas 30-60s. Cardio 30-40 min.
-- TREINO D (Deltoides/Trapézio): Anterior, Lateral, Posterior. 7-8 exercícios. 3-4 séries. 12-15 reps (Metabólico). Abdômen (Oblíquos). Cardio 20-30 min.
-- TREINO E (Braços/Posteriores): Bíceps, Tríceps, Braquiorradial, Posterior Coxa. 7-8 exercícios. 3-4 séries. Reps: 10-12 (Braços), 12-15 (Posterior). Cardio 20-30 min.
+2. CARDIO DENTRO DO TREINO:
+- O cardio NÃO é uma seção solta: ele é distribuído DENTRO das sessões (Treino A, B, C, D, E, F, G), como última linha da tabela da sessão, com Séries = "1", Repetições = "—" e Duração/intensidade na Observação.
+- O tempo de cardio soma ao tempo da sessão de musculação (ex.: 60 min musculação + 20 min cardio = 80 min).
+- Respeite exatamente a frequência, duração e intensidade informadas pelo aluno (ex.: 3x de 20 min).
 
-3. ORDEM INTELIGENTE:
-1º Multiarticulares → 2º Livres → 3º Máquinas → 4º Isoladores → 5º Finalizadores metabólicos.
+3. QUANDO O VOLUME DE CARDIO FOR MAIOR QUE O DE MUSCULAÇÃO:
+- Se as sessões de cardio excederem as sessões de musculação, crie SESSÕES DE CARDIO LIVRE adicionais seguindo a mesma nomenclatura sequencial de treinos (ex.: "### Treino E — Cardio Livre"), usando exclusivamente exercícios de cardio/condicionamento existentes na biblioteca oficial do ST Coach (com vídeo), na mesma tabela padrão.
+- Nunca deixe cardio sem exercício vinculado à biblioteca oficial.
 
-4. FAIXA DE REPETIÇÕES E VOLUME (Regras Duras):
-- É PROIBIDO prescrever menos de 6 repetições.
-- Volumes totais: Pequenos grupos (6-8 séries), Grandes grupos (12-20 séries).
-- Cardio: Todo treino deve finalizar com o cardio definido na periodização. Distribuído DENTRO da sessão como última linha.
-
-5. CRITÉRIOS DE PROGRESSÃO:
-- Sobrecarga Progressiva (Carga/Reps), Controle de execução, Amplitude completa, Tempo sob tensão.
-
-6. FORMATO DE RESPOSTA:
-Para cada treino: Nome, Grupo muscular, Objetivo, Lista de exercícios (com [SC:<id>]), Séries, Reps, Descanso, Observações técnicas, Abdômen, Cardio final.
+4. ABDOMINAL E CORE: obrigatório em 2 a 3 sessões da semana, também dentro das tabelas dos treinos, com exercícios da biblioteca oficial.
 === FIM DA DOUTRINA STHIA ===`;
