@@ -120,7 +120,7 @@ type ExtractedMeal = { meal_number: number; meal_name: string; items: ExtractedI
 
 async function extractItems(plainText: string, apiKey: string): Promise<ExtractedMeal[] | null> {
   try {
-    const sys = `Extraia APENAS os alimentos BASE (ignore substituições/opções/alternativas/OU) de cada refeição do cardápio, convertendo cada quantidade para GRAMAS (para líquidos, use ml tratado como gramas 1:1). Use estas conversões: 1 ovo=50g; 1 col. sopa azeite=13g; 1 col. sopa pasta amendoim=15g; 1 fatia pão forma=25g; 1 pão francês=50g; 1 scoop whey=30g; 1 xícara arroz cozido=150g; 1 concha média feijão=80g; 1 filé médio frango=120g; 1 fatia média queijo=30g. Refeição 1=Café da Manhã, 2=Lanche Manhã, 3=Almoço, 4=Lanche Tarde, 5=Jantar, 6=Ceia. Retorne apenas via tool call.`;
+    const sys = `Extraia APENAS os alimentos BASE (ignore substituições/opções/alternativas/OU) de cada refeição do cardápio, convertendo cada quantidade para GRAMAS (para líquidos, use ml tratado como gramas 1:1). Use estas conversões: 1 ovo=50g; 1 col. sopa azeite=13g; 1 col. sopa pasta amendoim=15g; 1 fatia pão forma=25g; 1 pão francês=50g; 1 scoop whey=30g; 1 xícara arroz cozido=150g; 1 concha média feijão=80g; 1 filé médio frango=120g; 1 fatia média queijo=30g. Refeição 1=Café da Manhã, 2=Lanche Manhã, 3=Almoço, 4=Lanche Tarde, 5=Jantar, 6=Ceia. TEMPERATURA 0. Retorne apenas via tool call.`;
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },

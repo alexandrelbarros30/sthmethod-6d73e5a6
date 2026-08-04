@@ -290,7 +290,7 @@ const AdminDietAI = () => {
     onError: (e: any) => {
       const msg = e.message || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("O cérebro da STHIA está sendo recalibrado. NÃO É POSSIVEL JAÉ A QUINTA QUE ERRO PERSISTE E VOCE MEU AMIGO NAO RESOLVE, FALA QUE CONSERTOU MAS NADA ACONTECE, TEMPO É DINHEIRIOO", { duration: 8000 });
+        toast.error("O cérebro da STHIA está sendo recalibrado para maior precisão. Por favor, tente novamente em instantes. A auditoria rigorosa de TACO/FatSecret pode causar tempos de resposta maiores em horários de pico.", { duration: 10000 });
       } else {
         toast.error(msg || "Falha ao gerar");
       }

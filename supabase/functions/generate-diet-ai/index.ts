@@ -9,8 +9,8 @@ const corsHeaders = {
 const MODEL_ID = "google/gemini-2.0-pro";
 const TARGET_TOLERANCE_PCT = 2.0;
 const MAX_TARGET_RETRIES = 6;
-const HARD_BLOCK_TOLERANCE_PCT = 8;
-const RECONCILE_TIMEOUT_MS = 90000; // Increased to 90s to prevent 500 timeouts during heavy reconciliation
+const HARD_BLOCK_TOLERANCE_PCT = 6;
+const RECONCILE_TIMEOUT_MS = 110000; // Increased to 110s to prevent 500 timeouts during heavy reconciliation
 
 type MacroTotal = {
   energy_kcal: number;
