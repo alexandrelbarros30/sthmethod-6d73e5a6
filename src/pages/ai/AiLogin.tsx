@@ -115,6 +115,9 @@ export default function AiLogin() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Acesso exclusivo ao STH METHOD AI — cardápio, treino e evolução em ciclos.
+          <Link to="/ai/instalar" className="block mt-2 text-primary hover:underline font-medium">
+            Baixar o arquivo APK direto (Pós-Build STHia)
+          </Link>
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
