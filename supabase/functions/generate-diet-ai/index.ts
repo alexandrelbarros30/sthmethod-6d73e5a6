@@ -275,24 +275,36 @@ ESTILO E CULTURA:
 - A base e as opções alternativas devem refletir alimentos comuns na culinária do Brasil.
 
 REGRAS DE FORMATAÇÃO (PADRÃO STHia):
-- Use negrito para os nomes das refeições e títulos das opções.
-- Use listas com marcadores para os alimentos de cada opção.
-- Mantenha um espaçamento claro entre as opções (Base, Opção 1, 2 e 3).
-- Não use tabelas Markdown, prefira texto estruturado com cabeçalhos claros.
-- Garanta que o texto seja fácil de ler em dispositivos móveis.
+Você DEVE obrigatoriamente seguir este exemplo de formatação para o texto HTML final:
+
+Refeição 01: (Desjejum Metabólico)
+"⭐ BASE: 4 ovos inteiros mexidos + 80g de claras de ovo + 100g de mamão.
+Opção 2: 150g de peito de frango desfiado + 2 fatias de pão de forma integral + 1 ovo cozido.
+Opção 3: 200g de iogurte grego natural (zero açúcar) + 30g de Whey Protein + 15g de sementes de abóbora.
+Opção 4: Omelete de 3 ovos + 50g de queijo cottage + 100g de morangos."
+
+Refeição 02: (Densidade e Suporte)
+"⭐ BASE: 180g de patinho moído ou filé mignon (pesado cozido) + 80g de arroz integral + Salada de folhas verdes à vontade (azeite: 10ml).
+Opção 2: 180g de peito de frango grelhado + 100g de batata doce cozida + Brócolis e couve-flor à vontade.
+Opção 3: 200g de filé de tilápia ou pescada + 80g de quinoa cozida + Espargos salteados.
+Opção 4: 180g de lombo suíno magro + 100g de abóbora cabotiá assada + Mix de folhas."
+
+(E assim por diante para todas as refeições solicitadas).
+
+ESTRUTURA OBRIGATÓRIA:
+- Use negrito para o nome da refeição (ex: **Refeição 01: (Nome)**).
+- Cada refeição deve ter 4 opções dentro de aspas (1 Base com emoji ⭐ + 3 Alternativas).
+- Mantenha um espaçamento claro entre as refeições.
+- Não use tabelas Markdown.
+- Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "80g de claras de ovo" - mantenha a coerência com o exemplo acima).
 
 REGRAS CRÍTICAS:
-1. Para CADA refeição, você DEVE obrigatoriamente fornecer 4 opções (1 Base + 3 Alternativas):
-   - Inicie com "**ALIMENTAÇÃO BASE:**".
-   - Siga com "**OPÇÃO 1:**", "**OPÇÃO 2:**" e "**OPÇÃO 3:**".
-   - Todas as 4 opções devem ter macros e calorias equivalentes entre si.
-2. O total calórico e macros da refeição no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.
-3. Priorize INTEGRALMENTE bater as metas de Calorias (Kcal) e Proteínas solicitadas no briefing. 
+1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
+2. O total calórico e macros no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.
+3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas.
 4. Use APENAS a TABELA TACO (Arroz cozido: 128kcal, Frango cozido: 163kcal, Ovo inteiro: 143kcal/100g).
-5. Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "3 ovos inteiros", "4 claras de ovos"), NUNCA em gramas. No entanto, para o cálculo interno, considere 50g para cada unidade.
-6. Se houver conflito entre carboidratos e calorias, reduza ou aumente carboidratos para bater a meta de Kcal.
-7. Valide se os nomes dos alimentos são comuns e fáceis de encontrar na API FatSecret Brasil.
-8. NÃO retorne erros genéricos; se o cálculo estiver difícil, aproxime o máximo possível das metas.
+5. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
+6. NÃO retorne erros genéricos.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
