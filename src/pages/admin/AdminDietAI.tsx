@@ -291,7 +291,7 @@ const AdminDietAI = () => {
       const msg = e.message || "";
       const details = e?.details || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("O cérebro da STHIA está pronto e calibrado. Por favor, tente gerar o cardápio novamente.", { duration: 10000 });
+        toast.error("O cérebro da STHIA foi atualizado para incluir as 4 opções por refeição. Por favor, tente gerar o cardápio novamente.", { duration: 10000 });
       } else {
         toast.error(`${msg}${details ? ` - ${details}` : ""}` || "Falha ao gerar");
       }
