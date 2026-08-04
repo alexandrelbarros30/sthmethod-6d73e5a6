@@ -64,7 +64,7 @@ function formatOuKeyword(text: string, keyPrefix: string): React.ReactNode {
     <React.Fragment key={keyPrefix}>
       {ouParts.map((part, i) =>
         /^\s+ou\s+$/i.test(part) ? (
-          <span key={`${keyPrefix}-ou-${i}`} className="text-muted-foreground font-normal italic">
+          <span key={`${keyPrefix}-ou-${i}`} className="text-[#a1a1aa] font-normal italic">
             {part}
           </span>
         ) : (
@@ -180,7 +180,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
           <p
             className={`text-sm leading-relaxed font-body ${
               isNote
-                ? "text-muted-foreground italic"
+                ? "text-[#a1a1aa] italic"
                 : "text-white"
             }`}
           >
