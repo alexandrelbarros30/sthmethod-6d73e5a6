@@ -29,7 +29,7 @@ function highlightQuantities(text: string): React.ReactNode[] {
       parts.push(formatOuKeyword(text.slice(lastIndex, match.index), `pre-${match.index}`));
     }
     parts.push(
-      <strong key={match.index} className="text-foreground font-bold">
+      <strong key={match.index} className="text-white font-bold">
         {match[0]}
       </strong>
     );
@@ -44,7 +44,7 @@ function highlightQuantities(text: string): React.ReactNode[] {
     const standaloneMatch = STANDALONE_NUM_RE.exec(text);
     if (standaloneMatch) {
       return [
-        <strong key="num" className="text-foreground font-bold">
+        <strong key="num" className="text-white font-bold">
           {standaloneMatch[1]}
         </strong>,
         formatOuKeyword(text.slice(standaloneMatch[1].length), "rest"),
@@ -64,7 +64,7 @@ function formatOuKeyword(text: string, keyPrefix: string): React.ReactNode {
     <React.Fragment key={keyPrefix}>
       {ouParts.map((part, i) =>
         /^\s+ou\s+$/i.test(part) ? (
-          <span key={`${keyPrefix}-ou-${i}`} className="text-muted-foreground font-normal italic">
+          <span key={`${keyPrefix}-ou-${i}`} className="text-[#a1a1aa] font-normal italic">
             {part}
           </span>
         ) : (
@@ -153,7 +153,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
     if (isSectionTitle) {
       elements.push(
         <div key={`title-${i}`} className="text-center pt-4 pb-6">
-          <h2 className="text-base font-bold tracking-[0.2em] uppercase text-foreground font-display">
+          <h2 className="text-base font-bold tracking-[0.2em] uppercase text-white font-display">
             {line}
           </h2>
         </div>
@@ -162,7 +162,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
       foodItemIndex = 0;
       elements.push(
         <div key={`meal-${i}`} className="mt-8 mb-4 first:mt-2">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground font-display underline underline-offset-4 decoration-primary/60 decoration-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-white font-display underline underline-offset-4 decoration-primary/60 decoration-2">
             {line}
           </h3>
         </div>
@@ -173,15 +173,15 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
       foodItemIndex++;
 
       elements.push(
-        <div key={`food-${i}`} className={`py-1.5 px-2 flex items-start gap-2 rounded ${foodItemIndex % 2 === 0 ? 'bg-muted/50' : ''}`}>
+        <div key={`food-${i}`} className={`py-1.5 px-2 flex items-start gap-2 rounded ${foodItemIndex % 2 === 0 ? 'bg-white/5' : ''}`}>
           {!isNote && (
-            <span className="text-foreground font-bold text-sm leading-relaxed select-none mt-px">•</span>
+            <span className="text-white font-bold text-sm leading-relaxed select-none mt-px">•</span>
           )}
           <p
             className={`text-sm leading-relaxed font-body ${
               isNote
-                ? "text-muted-foreground italic"
-                : "text-foreground"
+                ? "text-[#a1a1aa] italic"
+                : "text-white"
             }`}
           >
             {isNote ? line : highlightQuantities(line)}

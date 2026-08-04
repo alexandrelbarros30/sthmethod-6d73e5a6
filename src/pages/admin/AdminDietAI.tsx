@@ -963,12 +963,12 @@ const AdminDietAI = () => {
             </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 mt-4 p-4 border rounded-lg bg-white">
+          <ScrollArea className="flex-1 mt-4 p-4 border rounded-lg bg-[#000000]">
             {result && (
               <div className="space-y-6">
                 {isEditingInline ? (
                   <Textarea
-                    className="min-h-[400px] font-mono text-sm leading-relaxed whitespace-pre-wrap p-4"
+                    className="min-h-[400px] font-mono text-sm leading-relaxed whitespace-pre-wrap p-4 bg-[#000000] text-white border-primary/20"
                     value={editableDietText}
                     onChange={(e) => setEditableDietText(e.target.value)}
                     placeholder="Edite o conteúdo do cardápio aqui..."
