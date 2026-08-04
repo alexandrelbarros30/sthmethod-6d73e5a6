@@ -95,6 +95,11 @@ const AdminDiet = () => {
     }
     return proceed;
   };
+
+  const generateDietAI = () => {
+    if (!selected?.user_id) return;
+    navigate(`/admin/dieta-ia?uid=${selected.user_id}`);
+  };
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
 
