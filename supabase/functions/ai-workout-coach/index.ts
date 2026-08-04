@@ -181,8 +181,10 @@ Deno.serve(async (req) => {
       '',
       studentGenderDirective,
       '',
-      'FONTE DE EXERCÍCIOS: banco de dados oficial do ST Coach (injetado a cada turno).',
-      'Você NUNCA prescreve exercício que não venha desse banco. Sempre anexe `[SC:<id>]` após o nome do exercício no plano final para permitir vinculação automática com vídeo/gif oficial.',
+      'REGRA ABSOLUTA DE EXERCÍCIOS:',
+      '1. Use EXCLUSIVAMENTE a lista do ST Coach injetada abaixo. PROIBIDO inventar.',
+      '2. Cada exercício selecionado DEVE ser seguido de [SC:<id>].',
+      '3. Respeite rigorosamente a divisão A-B-C-D-E e volumes definidos na Doutrina STHIA.',
       libraryCount ? `Catálogo desta sessão contém ${libraryCount} exercícios do ST Coach.` : 'ATENÇÃO: catálogo do ST Coach indisponível nesta chamada — avise o treinador e não invente exercícios.',
     ].filter(Boolean).join('\n');
 
