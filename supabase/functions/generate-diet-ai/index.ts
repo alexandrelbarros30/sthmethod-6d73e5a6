@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 const MODEL_ID = "google/gemini-2.0-flash";
-const TARGET_TOLERANCE_PCT = 6.0;
-const MAX_TARGET_RETRIES = 4;
-const HARD_BLOCK_TOLERANCE_PCT = 12;
+const TARGET_TOLERANCE_PCT = 10.0;
+const MAX_TARGET_RETRIES = 5;
+const HARD_BLOCK_TOLERANCE_PCT = 20;
 const RECONCILE_TIMEOUT_MS = 110000;
 
 type MacroTotal = {
@@ -271,13 +271,14 @@ serve(async (req) => {
 Sua missão é gerar cardápios precisos seguindo a TABELA TACO (4ª Edição) e validando via API FatSecret.
 
 REGRAS CRÍTICAS:
-1. Use APENAS a TABELA TACO (Arroz cozido: 128kcal, Frango cozido: 163kcal, Ovo inteiro: 143kcal/100g).
-2. Ovos devem ser apresentados em UNIDADES no texto (ex: "3 ovos inteiros"), mas calculados como 50g cada.
-3. Para cada refeição, comece o bloco de alimentos com o rótulo "ALIMENTAÇÃO BASE:" e liste os itens principais. Itens sob "OPÇÕES/SUBSTITUIÇÕES:" são secundários.
-4. O total calórico e macros da refeição devem considerar APENAS a ALIMENTAÇÃO BASE.
-5. Em revisões, NÃO aumente as calorias se o usuário não pediu.
-6. Se houver desvio de macros, a prioridade absoluta é atingir a meta de Kcal e Proteínas, mesmo que precise ajustar as porções dos carboidratos.
+1. Priorize INTEGRALMENTE bater as metas de Calorias (Kcal) e Proteínas solicitadas no briefing. 
+2. Use APENAS a TABELA TACO (Arroz cozido: 128kcal, Frango cozido: 163kcal, Ovo inteiro: 143kcal/100g).
+3. Ovos devem ser apresentados em UNIDADES no texto (ex: "3 ovos inteiros"), mas calculados como 50g cada.
+4. Para cada refeição, comece o bloco de alimentos com o rótulo "ALIMENTAÇÃO BASE:" e liste os itens principais.
+5. O total calórico e macros da refeição devem considerar APENAS a ALIMENTAÇÃO BASE.
+6. Se houver conflito entre carboidratos e calorias, reduza ou aumente carboidratos para bater a meta de Kcal.
 7. Valide se os nomes dos alimentos são comuns e fáceis de encontrar na API FatSecret Brasil.
+8. NÃO retorne erros genéricos; se o cálculo estiver difícil, aproxime o máximo possível das metas.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
