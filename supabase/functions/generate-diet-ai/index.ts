@@ -293,14 +293,14 @@ Opção 4: 180g de lombo suíno magro + 100g de abóbora cabotiá assada + Mix d
 
 (E assim por diante para todas as refeições solicitadas).
 
-ESTRUTURA OBRIGATÓRIA:
-- O TÍTULO da refeição NÃO deve ter NENHUMA formatação Markdown (SEM asteriscos, SEM parênteses, SEM negrito). Apenas o texto limpo: "Refeição XX: Nome".
-- Pule uma linha entre o TÍTULO e o bloco de opções.
-- O bloco de opções (BASE + Alternativas) deve estar obrigatoriamente entre aspas duplas (").
-- A base deve começar com o emoji ⭐ e o texto "BASE:".
-- Mantenha um espaçamento claro entre as refeições (pule uma linha entre o bloco de aspas de uma refeição e o título da próxima).
-- Não use tabelas Markdown.
-- Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
+ESTRUTURA OBRIGATÓRIA (CRÍTICO):
+1. O TÍTULO da refeição NÃO deve ter NENHUMA formatação Markdown (SEM asteriscos, SEM parênteses, SEM negrito). Apenas o texto limpo: "Refeição XX: Nome".
+2. DEVE pular UMA LINHA entre o TÍTULO e o bloco de opções.
+3. O bloco de opções (BASE + Alternativas) deve estar OBRIGATORIAMENTE agrupado entre aspas duplas (") começando na BASE e terminando na última OPÇÃO.
+4. Mantenha um espaçamento claro entre as refeições (pule uma linha entre o fechamento das aspas de uma refeição e o título da próxima).
+5. Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
+6. A base deve começar com o emoji ⭐ e o texto "BASE:".
+7. Não use tabelas Markdown.
 
 REGRAS CRÍTICAS:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
