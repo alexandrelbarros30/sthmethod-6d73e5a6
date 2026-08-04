@@ -55,10 +55,10 @@ export default function AiInstalar() {
             </a>
           </Button>
           <div className="mt-4 p-4 border border-dashed border-primary/30 rounded-2xl bg-primary/5">
-             <p className="text-xs text-primary font-medium mb-2">Instalação Direta (Experimental)</p>
-             <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
-               Após a geração do build da STHia, você pode baixar o arquivo APK diretamente para seu dispositivo Android.
-             </p>
+            <p className="text-xs text-primary font-medium mb-2">Instalação Direta (Experimental)</p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
+              Versão 1.1.154 | Após a geração do build da STHia, baixe o arquivo APK atualizado abaixo.
+            </p>
               <Button asChild variant="outline" size="sm" className="w-full sm:w-auto text-[11px] h-8 rounded-xl border-primary/20 hover:bg-primary/10">
                 <a href={APK_URL} rel="noopener noreferrer" target="_blank">
                   <Download className="mr-1.5 h-3 w-3" /> Link Direto (Build Atualizado)
