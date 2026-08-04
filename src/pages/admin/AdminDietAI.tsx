@@ -830,6 +830,10 @@ const AdminDietAI = () => {
                         {reviewMut.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ClipboardCheck className="w-4 h-4 mr-1" />}
                         Revisar com IA
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsPreviewOpen(true)}>
+                        <Eye className="w-4 h-4 mr-1" />
+                        Pré-visualizar
+                      </Button>
                       <Button
                         size="sm"
                         onClick={saveToStudent}
