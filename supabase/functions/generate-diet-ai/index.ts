@@ -6,14 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-pro";
+const MODEL_ID = "google/gemini-2.0-flash-001";
 // Tolerância operacional rigorosa. O usuário reportou macros elevados e erros de cálculo.
 // Reduzimos a tolerância para ±3% para forçar a IA a ser mais precisa.
-const TARGET_TOLERANCE_PCT = 3;
+const TARGET_TOLERANCE_PCT = 2.5;
 // Aumentamos os retries para garantir que o modelo chegue no valor exato após feedback.
-const MAX_TARGET_RETRIES = 5;
+const MAX_TARGET_RETRIES = 6;
 // Teto de segurança para bloqueio.
-const HARD_BLOCK_TOLERANCE_PCT = 8;
+const HARD_BLOCK_TOLERANCE_PCT = 7;
 const RECONCILE_TIMEOUT_MS = 45000;
 
 type MacroTotal = {
@@ -181,33 +181,33 @@ const buildMealBudgetImpl = (targets: MacroTargets, nMeals: number) => {
 };
 
 const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
-- Ovo inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio = 50g)
-- Clara de ovo crua: 43 kcal | 10.9 P | 0.7 C | 0 G (1 clara = 33g)
-- Aveia em flocos: 394 kcal | 13.9 P | 66.6 C | 8.5 G
-- Mamão papaia: 40 kcal | 0.5 P | 10.4 C | 0.1 G
-- Mamão formosa: 45 kcal | 0.8 P | 11.6 C | 0.1 G
-- Banana prata: 98 kcal | 1.3 P | 26 C | 0.1 G
+- Ovo de galinha inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio = 50g)
+- Clara de ovo crua: 43 kcal | 10.9 P | 0.7 C | 0.0 G (1 clara = 33g)
+- Aveia em flocos crua: 394 kcal | 13.9 P | 66.6 C | 8.5 G
+- Mamão papaia cru: 40 kcal | 0.5 P | 10.4 C | 0.1 G
+- Mamão formosa cru: 45 kcal | 0.8 P | 11.6 C | 0.1 G
+- Banana prata: 98 kcal | 1.3 P | 26.0 C | 0.1 G
 - Arroz branco cozido: 128 kcal | 2.5 P | 28.1 C | 0.2 G
-- Arroz integral cozido: 124 kcal | 2.6 P | 25.8 C | 1 G
+- Arroz integral cozido: 124 kcal | 2.6 P | 25.8 C | 1.0 G
 - Feijão carioca cozido: 76 kcal | 4.8 P | 13.6 C | 0.5 G
-- Batata inglesa cozida: 52 kcal | 1.2 P | 11.9 C | 0 G
+- Batata inglesa cozida: 52 kcal | 1.2 P | 11.9 C | 0.0 G
 - Batata doce cozida: 77 kcal | 0.6 P | 18.4 C | 0.1 G
 - Macarrão cozido: 111 kcal | 3.4 P | 23.5 C | 0.6 G
-- Pão francês: 300 kcal | 8 P | 58.6 C | 3.1 G (1 un = 50g)
-- Tapioca hidratada: 240 kcal | 0 P | 60 C | 0 G
-- Peito frango cozido s/pele: 163 kcal | 32 P | 0 C | 3.2 G
-- Patinho cozido: 219 kcal | 35.9 P | 0 C | 7.3 G
-- Carne moída magra cozida: 212 kcal | 27 P | 0 C | 11 G
-- Tilápia cozida: 117 kcal | 25.5 P | 0 C | 1.7 G
-- Salmão grelhado: 211 kcal | 23.5 P | 0 C | 12.5 G
+- Pão francês: 300 kcal | 8.0 P | 58.6 C | 3.1 G (1 un = 50g)
+- Tapioca (goma hidratada): 240 kcal | 0.0 P | 60.0 C | 0.0 G
+- Peito de frango cozido s/ pele: 163 kcal | 32.0 P | 0.0 C | 3.2 G
+- Carne bovina patinho cozido: 219 kcal | 35.9 P | 0.0 C | 7.3 G
+- Carne moída magra cozida: 212 kcal | 27.0 P | 0.0 C | 11.0 G
+- Tilápia cozida: 117 kcal | 25.5 P | 0.0 C | 1.7 G
+- Salmão grelhado: 211 kcal | 23.5 P | 0.0 C | 12.5 G
 - Leite integral: 61 kcal | 2.9 P | 4.3 C | 3.2 G
 - Iogurte natural desnatado: 41 kcal | 4.6 P | 5.6 C | 0.1 G
 - Queijo minas frescal: 264 kcal | 17.4 P | 3.2 C | 20.2 G
-- Whey concentrado: 400 kcal | 80 P | 7 C | 6 G (1 scoop = 30g)
-- Azeite oliva: 884 kcal | 0 P | 0 C | 100 G (1 cs = 13g)
-- Pasta amendoim: 596 kcal | 25 P | 15 C | 50 G
-- Abacate: 96 kcal | 1.2 P | 6 C | 8.4 G
-- Brócolis cozido: 25 kcal | 2.1 P | 4 C | 0.4 G`;
+- Whey concentrado: 400 kcal | 80.0 P | 7.0 C | 6.0 G (1 scoop = 30g)
+- Azeite de oliva: 884 kcal | 0.0 P | 0.0 C | 100.0 G (1 cs = 13g)
+- Pasta de amendoim integral: 596 kcal | 25.0 P | 15.0 C | 50.0 G
+- Abacate: 96 kcal | 1.2 P | 6.0 C | 8.4 G
+- Brócolis cozido: 25 kcal | 2.1 P | 4.0 C | 0.4 G`;
 
 // Reconcile generated macros with the SAME analyzer used on the student diet screen
 // (supabase/functions/analyze-diet). This guarantees that "Cardápio IA (BETA)" and
@@ -385,8 +385,8 @@ NUNCA liste refeições prontas com gramagens (isso é do cardápio). Escreva em
 ${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
 Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno).
-NÃO invente valores nutricionais — use a TABELA TACO fornecida e, para itens não listados, consulte a FatSecret (Brasil) para garantir precisão comercial. O uso da FatSecret é OBRIGATÓRIO para garantir que kcal e macronutrientes não fiquem elevados e fora da realidade brasileira.
-Temperatura 0.1 (mínima variação para evitar travamentos em retries, mas mantendo precisão determinística).
+NÃO invente valores nutricionais — use a TABELA TACO fornecida e, para itens não listados, consulte a FatSecret (Brasil) para garantir precisão comercial. O uso da FatSecret é OBRIGATÓRIO para garantir que kcal e macronutrientes não fiquem elevados e fora da realidade brasileira. O cálculo final é auditado por um validador TACO 4ª Edição independente antes da liberação.
+Temperatura 0 (precisão determinística máxima).
 
 ${photos.length ? `AVALIAÇÃO VISUAL DA EVOLUÇÃO CORPORAL:
 Você receberá ${photos.length} foto(s) do aluno (frente/costas/perfil, mais recente e anterior quando disponível). Observe silhueta, composição corporal aparente, retenção hídrica, distribuição de tecido adiposo e evolução entre datas. Use esta leitura visual para calibrar a estratégia do cardápio (déficit/superávit, distribuição de carbo, timing pré/pós treino, hidratação, sódio). NÃO faça diagnóstico médico. Descreva sua leitura visual no campo "notes" em 1-2 frases e ajuste o cardápio de acordo — SEMPRE respeitando o briefing do admin/consultor (kcal alvo, macros, restrições, preferências e observações livres têm prioridade absoluta sobre sua leitura visual).\n` : ""}
