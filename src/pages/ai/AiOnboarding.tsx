@@ -201,7 +201,7 @@ export default function AiOnboarding() {
                   <Label>Sexo</Label>
                   <Select value={form.sex} onValueChange={(v) => set("sex", v)}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                       <SelectItem value="masculino">Masculino</SelectItem>
                       <SelectItem value="feminino">Feminino</SelectItem>
                     </SelectContent>
@@ -220,7 +220,7 @@ export default function AiOnboarding() {
                 <Label>Objetivo</Label>
                 <Select value={form.goal} onValueChange={(v) => set("goal", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                     <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
                     <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
                     <SelectItem value="recomposicao">Recomposição corporal</SelectItem>
@@ -233,7 +233,7 @@ export default function AiOnboarding() {
                 <Label>Nível de treino</Label>
                 <Select value={form.training_level} onValueChange={(v) => set("training_level", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                     <SelectItem value="iniciante">Iniciante</SelectItem>
                     <SelectItem value="intermediario">Intermediário</SelectItem>
                     <SelectItem value="avancado">Avançado</SelectItem>
@@ -282,7 +282,7 @@ export default function AiOnboarding() {
                 <Label>Orçamento para alimentação</Label>
                 <Select value={form.budget} onValueChange={(v) => set("budget", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                     <SelectItem value="economico">Econômico</SelectItem>
                     <SelectItem value="moderado">Moderado</SelectItem>
                     <SelectItem value="livre">Sem restrição</SelectItem>
@@ -306,7 +306,7 @@ export default function AiOnboarding() {
                   <Label>Nível de estresse</Label>
                   <Select value={form.stress} onValueChange={(v) => set("stress", v)}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                       <SelectItem value="baixo">Baixo</SelectItem>
                       <SelectItem value="medio">Médio</SelectItem>
                       <SelectItem value="alto">Alto</SelectItem>

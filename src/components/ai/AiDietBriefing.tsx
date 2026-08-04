@@ -363,7 +363,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
               </Label>
               <Select value={objective} onValueChange={setObjective}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                   {Object.entries(objectiveLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>{label}</SelectItem>
                   ))}

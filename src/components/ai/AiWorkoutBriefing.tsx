@@ -353,7 +353,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
                       </Label>
                       <Select value={values[f.key] ?? ""} onValueChange={(v) => handleSelect(f.key, v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                           {f.options.map((o) => (
                             <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
@@ -436,7 +436,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
               </Label>
               <Select value={values[f.key] ?? ""} onValueChange={(v) => handleSelect(f.key, v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                   {f.options.map((o) => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                   ))}
