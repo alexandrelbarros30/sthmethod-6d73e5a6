@@ -274,10 +274,17 @@ ESTILO E CULTURA:
 - Ofereça um cardápio tipicamente BRASILEIRO (Arroz, feijão, carnes grelhadas, frutas tropicais, cuscuz, tapioca, mandioca).
 - A base e as opções alternativas devem refletir alimentos comuns na culinária do Brasil.
 
+REGRAS DE FORMATAÇÃO (PADRÃO STHia):
+- Use negrito para os nomes das refeições e títulos das opções.
+- Use listas com marcadores para os alimentos de cada opção.
+- Mantenha um espaçamento claro entre as opções (Base, Opção 1, 2 e 3).
+- Não use tabelas Markdown, prefira texto estruturado com cabeçalhos claros.
+- Garanta que o texto seja fácil de ler em dispositivos móveis.
+
 REGRAS CRÍTICAS:
 1. Para CADA refeição, você DEVE obrigatoriamente fornecer 4 opções (1 Base + 3 Alternativas):
-   - Inicie com "ALIMENTAÇÃO BASE:".
-   - Siga com "OPÇÃO 1:", "OPÇÃO 2:" e "OPÇÃO 3:".
+   - Inicie com "**ALIMENTAÇÃO BASE:**".
+   - Siga com "**OPÇÃO 1:**", "**OPÇÃO 2:**" e "**OPÇÃO 3:**".
    - Todas as 4 opções devem ter macros e calorias equivalentes entre si.
 2. O total calórico e macros da refeição no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.
 3. Priorize INTEGRALMENTE bater as metas de Calorias (Kcal) e Proteínas solicitadas no briefing. 
