@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import AiLogoMark from "@/components/ai/AiLogoMark";
 import { Smartphone, Download, Share, PlusSquare, ShieldCheck, ArrowLeft } from "lucide-react";
 
-const APK_URL = "https://github.com/sthmethod/sthmethod/releases/download/ai-latest/sthai.apk";
+import apkAsset from "@/assets/sthai.apk.asset.json";
+
+const APK_URL = apkAsset.url;
+const APK_SIZE_MB = Math.round(apkAsset.size / 1024 / 1024);
 
 export default function AiInstalar() {
   useSthAiTheme();
@@ -47,8 +50,8 @@ export default function AiInstalar() {
             <li>3. Abra o app STH AI pelo ícone criado na tela inicial.</li>
           </ol>
           <Button asChild className="mt-4 w-full sm:w-auto">
-            <a href={APK_URL} rel="noopener">
-              <Download className="mr-2 h-4 w-4" /> Baixar APK do STH AI
+            <a href={APK_URL} rel="noopener" download="sthai.apk">
+              <Download className="mr-2 h-4 w-4" /> Baixar APK do STH AI ({APK_SIZE_MB} MB)
             </a>
           </Button>
           <p className="mt-3 text-xs text-muted-foreground">
