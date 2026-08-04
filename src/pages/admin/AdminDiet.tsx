@@ -15,7 +15,7 @@ import DietPlanningPanel from "@/components/student/DietPlanningPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save, ClipboardCopy } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save, ClipboardCopy, Sparkles } from "lucide-react";
 import DietAIAnalysis from "@/components/admin/DietAIAnalysis";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -94,6 +94,11 @@ const AdminDiet = () => {
       toast.warning("Salvamento cancelado. Ajuste o HTML conforme as novas regras.");
     }
     return proceed;
+  };
+
+  const generateDietAI = () => {
+    if (!selected?.user_id) return;
+    navigate(`/admin/dieta-ia?uid=${selected.user_id}`);
   };
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
@@ -654,12 +659,15 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
               )}
               {/* Add new diet button */}
               {!showNewForm && !editingId && (
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={() => setShowNewForm(true)} className="flex-1" variant="outline">
-                    <Plus className="w-4 h-4 mr-2" /> Adicionar Nova Dieta
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Button onClick={() => setShowNewForm(true)} variant="outline" className="w-full">
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar Dieta
                   </Button>
-                  <Button onClick={copyDietPrompt} variant="secondary" className="flex-1">
-                    <ClipboardCopy className="w-4 h-4 mr-2" /> Resgatar Dados p/ Cardápio
+                  <Button onClick={copyDietPrompt} variant="secondary" className="w-full">
+                    <ClipboardCopy className="w-4 h-4 mr-2" /> Resgatar Dados
+                  </Button>
+                  <Button onClick={generateDietAI} className="w-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20">
+                    <Sparkles className="w-4 h-4 mr-2" /> Gerar com STHIA
                   </Button>
                 </div>
               )}

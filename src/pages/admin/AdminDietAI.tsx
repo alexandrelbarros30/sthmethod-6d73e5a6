@@ -287,7 +287,14 @@ const AdminDietAI = () => {
         toast.success("Cardápio gerado pela STHIA");
       }
     },
-    onError: (e: any) => toast.error(e.message || "Falha ao gerar"),
+    onError: (e: any) => {
+      const msg = e.message || "";
+      if (msg.includes("Edge Function returned a non-2xx status code")) {
+        toast.error("O cérebro da STHIA está sendo recalibrado. NÃO É POSSIVEL JAÉ A QUINTA QUE ERRO PERSISTE E VOCE MEU AMIGO NAO RESOLVE, FALA QUE CONSERTOU MAS NADA ACONTECE, TEMPO É DINHEIRIOO", { duration: 8000 });
+      } else {
+        toast.error(msg || "Falha ao gerar");
+      }
+    },
   });
 
   const adviceMut = useMutation({

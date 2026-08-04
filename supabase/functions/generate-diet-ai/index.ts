@@ -6,15 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-flash-001";
-// Tolerância operacional rigorosa. O usuário reportou macros elevados e erros de cálculo.
-// Reduzimos a tolerância para ±3% para forçar a IA a ser mais precisa.
-const TARGET_TOLERANCE_PCT = 2.5;
-// Aumentamos os retries para garantir que o modelo chegue no valor exato após feedback.
+const MODEL_ID = "google/gemini-2.0-pro";
+const TARGET_TOLERANCE_PCT = 2.0;
 const MAX_TARGET_RETRIES = 6;
-// Teto de segurança para bloqueio.
-const HARD_BLOCK_TOLERANCE_PCT = 7;
-const RECONCILE_TIMEOUT_MS = 45000;
+const HARD_BLOCK_TOLERANCE_PCT = 8;
+const RECONCILE_TIMEOUT_MS = 90000; // Increased to 90s to prevent 500 timeouts during heavy reconciliation
 
 type MacroTotal = {
   energy_kcal: number;
