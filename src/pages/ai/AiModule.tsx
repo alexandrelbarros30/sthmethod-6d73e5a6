@@ -77,6 +77,7 @@ export default function AiModule() {
   const checklist = useMemo(() => buildChecklist(profile, kind), [profile, kind]);
   const checklistMissing = checklist.filter((i) => !i.ok);
   const briefingIncomplete = kind !== "analysis" && checklistMissing.length > 0;
+  const showRequestForm = briefingIncomplete || requestOpen || !current;
   const editHref = `/ai/onboarding?next=${encodeURIComponent(`/ai/app/${slug}?solicitar=1`)}`;
 
   /** Clique na red flag: leva até a tela do campo e volta para gerar/revisar. */
@@ -277,9 +278,9 @@ export default function AiModule() {
             </DialogContent>
           </Dialog>
         </>
-      ) : (
+      ) : showRequestForm ? (
         requestForm
-      )}
+      ) : null}
       {current && (
         <>
         {kind === "workout" && (
