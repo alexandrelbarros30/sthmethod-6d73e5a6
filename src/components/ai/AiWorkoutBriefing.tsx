@@ -248,6 +248,12 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
     }
     
     toast.success("Rotina atualizada — a IA já usa esses dados na próxima geração.");
+    // Fecha a janela colapsável após salvar com sucesso
+    if (collapsible) {
+      const button = document.activeElement as HTMLElement;
+      const section = button?.closest('[data-state="open"]')?.querySelector('button[aria-expanded="true"]') as HTMLElement;
+      if (section) section.click();
+    }
   }
 
   function handleSelect(key: string, v: string) {
