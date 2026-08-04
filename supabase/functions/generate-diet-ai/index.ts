@@ -292,9 +292,9 @@ Opção 4: 180g de lombo suíno magro + 100g de abóbora cabotiá assada + Mix d
 (E assim por diante para todas as refeições solicitadas).
 
 ESTRUTURA OBRIGATÓRIA:
-- Use negrito para o nome da refeição (ex: **Refeição 01: (Nome)**).
+- Use negrito para o nome da refeição (ex: Refeição 01: Desjejum). NÃO use asteriscos (*) ou parênteses duplos (( )) no título da refeição. Use apenas negrito simples.
 - Cada refeição deve ter 4 opções dentro de aspas (1 Base com emoji ⭐ + 3 Alternativas).
-- Mantenha um espaçamento claro entre as refeições.
+- Mantenha um espaçamento claro entre as refeições (pule uma linha entre o fim de uma refeição e o início da próxima).
 - Não use tabelas Markdown.
 - Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
 
