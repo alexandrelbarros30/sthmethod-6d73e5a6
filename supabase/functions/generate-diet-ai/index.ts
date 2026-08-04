@@ -278,7 +278,7 @@ REGRAS DE FORMATAÇÃO (PADRÃO STHia):
 Você DEVE obrigatoriamente seguir este exemplo de formatação para o texto HTML final:
 
 Refeição 01: (Desjejum Metabólico)
-"⭐ BASE: 4 ovos inteiros mexidos + 80g de claras de ovo + 100g de mamão.
+"⭐ BASE: 4 ovos inteiros mexidos + 3 claras de ovo + 100g de mamão.
 Opção 2: 150g de peito de frango desfiado + 2 fatias de pão de forma integral + 1 ovo cozido.
 Opção 3: 200g de iogurte grego natural (zero açúcar) + 30g de Whey Protein + 15g de sementes de abóbora.
 Opção 4: Omelete de 3 ovos + 50g de queijo cottage + 100g de morangos."
