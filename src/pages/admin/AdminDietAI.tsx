@@ -398,7 +398,7 @@ const AdminDietAI = () => {
   };
 
   const saveToStudent = async () => {
-    const finalContent = isEditingInline ? editableDietText : (result?.diet_text || "");
+    const finalContent = editableDietText || (result?.diet_text || "");
     if (!finalContent) {
       toast.error("Gere um cardápio antes de salvar.");
       return;
@@ -873,7 +873,7 @@ const AdminDietAI = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="rounded-lg border border-border bg-card p-4 max-h-[600px] overflow-y-auto">
-                    <DietContentRenderer content={result.diet_text} showHeader={false} />
+                    <DietContentRenderer content={editableDietText || result.diet_text} showHeader={false} />
                   </div>
 
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -979,18 +979,39 @@ const AdminDietAI = () => {
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5 text-primary" /> Pré-visualização do Cardápio
-            </DialogTitle>
-            <DialogDescription>
-              Confira a formatação final antes de salvar no rascunho do aluno.
-            </DialogDescription>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <DialogTitle className="flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-primary" /> Pré-visualização do Cardápio
+                </DialogTitle>
+                <DialogDescription>
+                  Confira a formatação final antes de salvar no rascunho do aluno.
+                </DialogDescription>
+              </div>
+              <Button 
+                variant={isEditingInline ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setIsEditingInline(!isEditingInline)}
+                className={isEditingInline ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}
+              >
+                {isEditingInline ? "Visualizar Renderizado" : "Editar Texto Direto"}
+              </Button>
+            </div>
           </DialogHeader>
           
           <ScrollArea className="flex-1 mt-4 p-4 border rounded-lg bg-white">
             {result && (
               <div className="space-y-6">
-                <DietContentRenderer content={result.diet_text} showHeader={false} />
+                {isEditingInline ? (
+                  <Textarea
+                    className="min-h-[400px] font-mono text-sm leading-relaxed whitespace-pre-wrap p-4"
+                    value={editableDietText}
+                    onChange={(e) => setEditableDietText(e.target.value)}
+                    placeholder="Edite o conteúdo do cardápio aqui..."
+                  />
+                ) : (
+                  <DietContentRenderer content={editableDietText || result.diet_text} showHeader={false} />
+                )}
               </div>
             )}
           </ScrollArea>
