@@ -415,16 +415,17 @@ const AdminDietAI = () => {
     try {
       const cleanContent = stripMealMacroLines(finalContent);
 
+      // Validate context before saving to ensure we have macro distribution
       const { data: dietRow, error } = await supabase.from("student_diets").insert({
         user_id: selectedStudent.user_id,
         title,
         tab_label: title,
         content: cleanContent,
-        energy_kcal: result.total.energy_kcal,
-        protein_g: result.total.protein_g,
-        carbs_g: result.total.carbs_g,
-        fat_g: result.total.fat_g,
-        hydration_l: result.hydration_l || null,
+        energy_kcal: result?.total?.energy_kcal || 0,
+        protein_g: result?.total?.protein_g || 0,
+        carbs_g: result?.total?.carbs_g || 0,
+        fat_g: result?.total?.fat_g || 0,
+        hydration_l: result?.hydration_l || null,
         app_context: 'sth_method',
       } as any).select("id").single();
       if (error) throw error;
