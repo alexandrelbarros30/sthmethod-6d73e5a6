@@ -6,11 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-pro";
-const TARGET_TOLERANCE_PCT = 2.0;
-const MAX_TARGET_RETRIES = 6;
-const HARD_BLOCK_TOLERANCE_PCT = 6;
-const RECONCILE_TIMEOUT_MS = 110000; // Increased to 110s to prevent 500 timeouts during heavy reconciliation
+const MODEL_ID = "google/gemini-2.0-flash"; // Switching to Flash for maximum stability and speed
+const TARGET_TOLERANCE_PCT = 3.0; // Increased tolerance to 3.0% to avoid retry/timeout loops
+const MAX_TARGET_RETRIES = 3; // Reduced retries to avoid timeouts
+const HARD_BLOCK_TOLERANCE_PCT = 8;
+const RECONCILE_TIMEOUT_MS = 60000; // Reset to 60s for faster failure/retry cycle
 
 type MacroTotal = {
   energy_kcal: number;
@@ -261,6 +261,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const body = await req.json().catch(() => ({}));
     const {
       mode = "generate", // "generate" | "review"
       brief = {},
@@ -272,7 +273,13 @@ serve(async (req) => {
       adviceText = "",
       previousDiet = "",
       correction = "",
-    } = await req.json();
+    } = body;
+
+    if (mode === "generate" && !brief && !freeText && !correction) {
+       return new Response(JSON.stringify({ error: "Parâmetros insuficientes para geração." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -295,16 +302,21 @@ serve(async (req) => {
     type PhotoItem = { label: string; url: string; taken_at: string };
     const photos: PhotoItem[] = [];
     if (includePhotos && studentId && !isReview) {
-      try {
-        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-        const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-        const { data: imgs } = await admin
-          .from("body_images")
-          .select("type, image_url, storage_path, uploaded_at")
-          .eq("user_id", studentId)
-          .order("uploaded_at", { ascending: false })
-          .limit(60);
+      // Validate studentId is a UUID to prevent PostgREST 400/500 errors
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(studentId)) {
+        try {
+          const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+          const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+          const { data: imgs, error: imgErr } = await admin
+            .from("body_images")
+            .select("type, image_url, storage_path, uploaded_at")
+            .eq("user_id", studentId)
+            .order("uploaded_at", { ascending: false })
+            .limit(40);
+          
+          if (imgErr) throw imgErr;
         const byType: Record<string, any[]> = {};
         for (const r of imgs || []) {
           const t = String(r.type || "").toLowerCase();
@@ -336,15 +348,18 @@ serve(async (req) => {
     // Comorbidades e medicamentos do cadastro (dados sensíveis que mudam a dieta)
     let clinicalBlock = "";
     if (studentId) {
-      try {
-        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-        const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const admin2 = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-        const { data: prof } = await admin2
-          .from("profiles")
-          .select("comorbidities, medications")
-          .eq("user_id", studentId)
-          .maybeSingle();
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(studentId)) {
+        try {
+          const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+          const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const admin2 = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+          const { data: prof, error: profErr } = await admin2
+            .from("profiles")
+            .select("comorbidities, medications")
+            .eq("user_id", studentId)
+            .maybeSingle();
+          if (profErr) throw profErr;
         const comorb = String(prof?.comorbidities || "").trim();
         const meds = String(prof?.medications || "").trim();
         if (comorb || meds) {
@@ -564,7 +579,7 @@ REGRAS:
     const callModel = async (messages: any[]) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Lovable-API-Key": LOVABLE_API_KEY,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -712,10 +727,16 @@ REGRAS:
     return new Response(JSON.stringify({ ...parsed, _meta: { model: MODEL_ID, usage: data?.usage || null, photos_used: photos.length, retries } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("generate-diet-ai error", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Return a 400 for known errors so the frontend doesn't show the generic 500 toast
+    const isClientError = e?.message?.includes("insuficientes") || e?.message?.includes("invalid");
+    return new Response(JSON.stringify({ 
+      error: e?.message || "Unknown error in diet generation engine",
+      details: e?.stack || null
+    }), {
+      status: isClientError ? 400 : 500, 
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
