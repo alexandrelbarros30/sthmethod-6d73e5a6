@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText, History, Lock, Trash2 } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText, History, Lock, Trash2, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { normalizeSearch } from "@/lib/utils";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Meal = {
   meal_number: number;
@@ -107,6 +109,7 @@ const AdminDietAI = () => {
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Contra-resposta (correção do cardápio já gerado)
   const [counterNote, setCounterNote] = useState("");
@@ -275,16 +278,17 @@ const AdminDietAI = () => {
     onSuccess: (data: any) => {
       setResult({ ...data, diet_text: stripMealMacroLines(data.diet_text) });
       setReview(null);
+      setIsPreviewOpen(true); // Open preview automatically
       if (data?._correction) {
         setCounterHistory((h) => [...h, data._correction]);
         setCounterNote("");
         // A contra-resposta pode redefinir metas (ex.: kcal 2300) — reflete no briefing.
         const t = (data as any)?.targets;
         if (t?.energy_kcal) setKcalTarget(String(t.energy_kcal));
-        toast.success("Cardápio corrigido com a sua contra-resposta");
+        toast.success("Cardápio corrigido e pronto para pré-visualização");
       } else {
         setCounterHistory([]);
-        toast.success("Cardápio gerado pela STHIA");
+        toast.success("Cardápio gerado pela STHIA e pronto para pré-visualização");
       }
     },
     onError: (e: any) => {
@@ -826,6 +830,10 @@ const AdminDietAI = () => {
                         {reviewMut.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ClipboardCheck className="w-4 h-4 mr-1" />}
                         Revisar com IA
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsPreviewOpen(true)}>
+                        <Eye className="w-4 h-4 mr-1" />
+                        Pré-visualizar
+                      </Button>
                       <Button
                         size="sm"
                         onClick={saveToStudent}
@@ -960,6 +968,40 @@ const AdminDietAI = () => {
           )}
         </div>
       </div>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" /> Pré-visualização do Cardápio
+            </DialogTitle>
+            <DialogDescription>
+              Confira a formatação final antes de salvar no rascunho do aluno.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 mt-4 p-4 border rounded-lg bg-white">
+            {result && (
+              <div className="space-y-6">
+                <DietContentRenderer content={result.diet_text} showHeader={false} />
+              </div>
+            )}
+          </ScrollArea>
+
+          <DialogFooter className="mt-4 gap-2">
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={() => {
+              setIsPreviewOpen(false);
+              saveToStudent();
+            }}>
+              <Save className="w-4 h-4 mr-2" />
+              Confirmar e Salvar no Rascunho
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
