@@ -300,14 +300,14 @@ Opção 4: 150g de lombo suíno magro + 80g de abóbora cabotiá assada + Mix de
 ESTRUTURA OBRIGATÓRIA (CRÍTICO):
 1. O TÍTULO da refeição NÃO deve ter NENHUMA formatação Markdown (SEM asteriscos, SEM parênteses, SEM negrito). Apenas o texto limpo: "Refeição XX: Nome".
 2. O bloco de opções (BASE + Alternativas) deve estar OBRIGATORIAMENTE agrupado entre um único par de aspas duplas (") começando imediatamente na BASE e terminando na última OPÇÃO.
-3. Use uma quebra de linha (Pressione ENTER) entre o TÍTULO e o início das aspas.
-4. Dentro das aspas, cada OPÇÃO deve estar em uma NOVA LINHA (Pressione ENTER após cada opção).
-5. Mantenha um espaçamento claro entre as refeições (Pressione ENTER DUAS VEZES após o fechamento das aspas para pular uma linha antes do próximo título).
+3. Use DUAS quebras de linha (\n\n) entre o TÍTULO e o início das aspas.
+4. Dentro das aspas, cada OPÇÃO deve ser separada por DUAS quebras de linha (\n\n) para criar parágrafos claros.
+5. Mantenha um espaçamento amplo entre as refeições (pule TRÊS ou QUATRO linhas após o fechamento das aspas).
 6. Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
 7. A base deve começar com o emoji ⭐ e o texto "BASE:".
 8. Cada refeição DEVE ter exatamente 4 opções (1 Base + 3 Alternativas).
 9. Não use tabelas Markdown.
-10. NUNCA remova as quebras de linha. O texto deve ser fácil de ler com parágrafos claros.
+10. NUNCA envie o texto "misturado". Se o texto não tiver parágrafos visíveis, ele será rejeitado. Cada opção é um parágrafo novo.
 
 REGRAS CRÍTICAS:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
