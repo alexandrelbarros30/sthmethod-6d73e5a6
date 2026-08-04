@@ -277,13 +277,15 @@ ESTILO E CULTURA:
 REGRAS DE FORMATAÇÃO (PADRÃO STHia):
 Você DEVE obrigatoriamente seguir este exemplo de formatação para o texto HTML final:
 
-Refeição 01: (Desjejum Metabólico)
+Refeição 01: Desjejum Metabólico
+
 "⭐ BASE: 4 ovos inteiros mexidos + 3 claras de ovo + 100g de mamão.
 Opção 2: 150g de peito de frango desfiado + 2 fatias de pão de forma integral + 1 ovo cozido.
 Opção 3: 200g de iogurte grego natural (zero açúcar) + 30g de Whey Protein + 15g de sementes de abóbora.
 Opção 4: Omelete de 3 ovos + 50g de queijo cottage + 100g de morangos."
 
-Refeição 02: (Densidade e Suporte)
+Refeição 02: Densidade e Suporte
+
 "⭐ BASE: 180g de patinho moído ou filé mignon (pesado cozido) + 80g de arroz integral + Salada de folhas verdes à vontade (azeite: 10ml).
 Opção 2: 180g de peito de frango grelhado + 100g de batata doce cozida + Brócolis e couve-flor à vontade.
 Opção 3: 200g de filé de tilápia ou pescada + 80g de quinoa cozida + Espargos salteados.
@@ -292,9 +294,11 @@ Opção 4: 180g de lombo suíno magro + 100g de abóbora cabotiá assada + Mix d
 (E assim por diante para todas as refeições solicitadas).
 
 ESTRUTURA OBRIGATÓRIA:
-- Use negrito para o nome da refeição (ex: Refeição 01: Desjejum). NÃO use asteriscos (*) ou parênteses duplos (( )) no título da refeição. Use apenas negrito simples.
-- Cada refeição deve ter 4 opções dentro de aspas (1 Base com emoji ⭐ + 3 Alternativas).
-- Mantenha um espaçamento claro entre as refeições (pule uma linha entre o fim de uma refeição e o início da próxima).
+- O TÍTULO da refeição NÃO deve ter NENHUMA formatação Markdown (SEM asteriscos, SEM parênteses, SEM negrito). Apenas o texto limpo: "Refeição XX: Nome".
+- Pule uma linha entre o TÍTULO e o bloco de opções.
+- O bloco de opções (BASE + Alternativas) deve estar obrigatoriamente entre aspas duplas (").
+- A base deve começar com o emoji ⭐ e o texto "BASE:".
+- Mantenha um espaçamento claro entre as refeições (pule uma linha entre o bloco de aspas de uma refeição e o título da próxima).
 - Não use tabelas Markdown.
 - Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
 
