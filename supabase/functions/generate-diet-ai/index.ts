@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.0-flash";
+const MODEL_ID = "google/gemini-2.5-flash";
 const TARGET_TOLERANCE_PCT = 10.0;
 const MAX_TARGET_RETRIES = 5;
 const HARD_BLOCK_TOLERANCE_PCT = 20;
