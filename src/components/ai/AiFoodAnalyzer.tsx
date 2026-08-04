@@ -737,7 +737,7 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
               <span className="text-xs font-medium text-muted-foreground">Refeição</span>
               <Select value={addMeal} onValueChange={setAddMeal}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                   {MEAL_TYPES.map((m) => (
                     <SelectItem key={m.key} value={m.key}>{m.label}</SelectItem>
                   ))}
