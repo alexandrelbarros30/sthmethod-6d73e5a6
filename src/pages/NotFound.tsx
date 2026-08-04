@@ -17,7 +17,7 @@ const NotFound = () => {
           Return to Home
         </a>
         <div className="mt-20 text-[10px] text-zinc-600">
-          Versão Beta 1.1.153
+          Versão Beta 1.1.154
         </div>
       </div>
     </div>
