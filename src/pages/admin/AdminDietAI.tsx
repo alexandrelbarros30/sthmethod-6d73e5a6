@@ -968,6 +968,40 @@ const AdminDietAI = () => {
           )}
         </div>
       </div>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" /> Pré-visualização do Cardápio
+            </DialogTitle>
+            <DialogDescription>
+              Confira a formatação final antes de salvar no rascunho do aluno.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 mt-4 p-4 border rounded-lg bg-white">
+            {result && (
+              <div className="space-y-6">
+                <DietContentRenderer content={result.diet_text} showHeader={false} />
+              </div>
+            )}
+          </ScrollArea>
+
+          <DialogFooter className="mt-4 gap-2">
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={() => {
+              setIsPreviewOpen(false);
+              saveToStudent();
+            }}>
+              <Save className="w-4 h-4 mr-2" />
+              Confirmar e Salvar no Rascunho
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
