@@ -46,6 +46,40 @@ const sumMealTotals = (meals: any[]): MacroTotal => {
   return total;
 };
 
+const formatDietText = (parsed: any): string => {
+  if (!parsed || !Array.isArray(parsed.meals)) return "";
+  
+  return parsed.meals.map((m: any) => {
+    const mealNumStr = String(m.meal_number).padStart(2, "0");
+    // Remove markdown/parentheses from meal name
+    const cleanName = (m.meal_name || "").replace(/[*()]/g, "").trim();
+    const title = `Refeição ${mealNumStr}: ${cleanName}`;
+    
+    // Format options with double newlines
+    const formattedOptions = (m.options || []).map((opt: string, idx: number) => {
+      let text = opt.trim();
+      if (idx === 0) {
+        // Ensure first option is marked as BASE and starts with ⭐
+        if (!text.includes("BASE:")) {
+          text = `BASE: ${text}`;
+        }
+        if (!text.startsWith("⭐")) {
+          text = `⭐ ${text}`;
+        }
+      } else {
+        // Ensure other options are numbered correctly
+        const prefix = `Opção ${idx + 1}:`;
+        if (!text.startsWith("Opção")) {
+          text = `${prefix} ${text}`;
+        }
+      }
+      return text;
+    }).join("\n\n");
+
+    return `${title}\n\n"${formattedOptions}"`;
+  }).join("\n\n\n\n");
+};
+
 const normalizeGeneratedMacros = (parsed: any) => {
   if (Array.isArray(parsed?.meals)) {
     parsed.meals = parsed.meals
@@ -66,6 +100,9 @@ const normalizeGeneratedMacros = (parsed: any) => {
     parsed.total.carbs_g = roundInt(parsed.total.carbs_g);
     parsed.total.fat_g = roundInt(parsed.total.fat_g);
   }
+  
+  // Always regenerate diet_text from JSON to ensure formatting
+  parsed.diet_text = formatDietText(parsed);
 };
 
 const computeQualityGate = (parsed: any, targets: MacroTargets | null, expectedMeals: number | null) => {
