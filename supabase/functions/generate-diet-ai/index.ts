@@ -275,19 +275,27 @@ ESTILO E CULTURA:
 - A base e as opções alternativas devem refletir alimentos comuns na culinária do Brasil.
 
 REGRAS DE FORMATAÇÃO (PADRÃO STHia - OBRIGATÓRIO):
-Você DEVE seguir EXATAMENTE este exemplo de formatação para o texto HTML final. É mandatório que o bloco de opções esteja entre aspas e que ovos/claras sejam em unidades:
+Você DEVE seguir EXATAMENTE este exemplo de formatação. O texto deve ter espaçamentos amplos (parágrafos) para não chegar "misturado" ao aluno. Use quebras de linha duplas (\n\n) entre cada opção:
 
 Refeição 01: Desjejum Metabólico
-"⭐ BASE: 4 ovos inteiros mexidos + 3 claras de ovo + 100g de mamão.
-Opção 2: 150g de peito de frango desfiado + 2 fatias de pão de forma integral + 1 ovo cozido.
-Opção 3: 200g de iogurte grego natural (zero açúcar) + 30g de Whey Protein + 15g de sementes de abóbora.
-Opção 4: Omelete de 3 ovos + 50g de queijo cottage + 100g de morangos."
+
+"⭐ BASE: 3 ovos inteiros mexidos + 2 claras de ovo + 100g de mamão.
+
+Opção 2: 100g de peito de frango desfiado + 2 fatias de pão de forma integral + 1 ovo cozido.
+
+Opção 3: 150g de iogurte grego natural (zero açúcar) + 20g de Whey Protein + 10g de sementes de abóbora.
+
+Opção 4: Omelete de 2 ovos + 30g de queijo cottage + 100g de morangos."
 
 Refeição 02: Densidade e Suporte
-"⭐ BASE: 180g de patinho moído ou filé mignon (pesado cozido) + 80g de arroz integral + Salada de folhas verdes à vontade (azeite: 10ml).
-Opção 2: 180g de peito de frango grelhado + 100g de batata doce cozida + Brócolis e couve-flor à vontade.
-Opção 3: 200g de filé de tilápia ou pescada + 80g de quinoa cozida + Espargos salteados.
-Opção 4: 180g de lombo suíno magro + 100g de abóbora cabotiá assada + Mix de folhas."
+
+"⭐ BASE: 150g de patinho moído ou filé mignon (pesado cozido) + 60g de arroz integral + Salada de folhas verdes à vontade (azeite: 10ml).
+
+Opção 2: 150g de peito de frango grelhado + 80g de batata doce cozida + Brócolis e couve-flor à vontade.
+
+Opção 3: 180g de filé de tilápia ou pescada + 60g de quinoa cozida + Espargos salteados.
+
+Opção 4: 150g de lombo suíno magro + 80g de abóbora cabotiá assada + Mix de folhas."
 
 ESTRUTURA OBRIGATÓRIA (CRÍTICO):
 1. O TÍTULO da refeição NÃO deve ter NENHUMA formatação Markdown (SEM asteriscos, SEM parênteses, SEM negrito). Apenas o texto limpo: "Refeição XX: Nome".
