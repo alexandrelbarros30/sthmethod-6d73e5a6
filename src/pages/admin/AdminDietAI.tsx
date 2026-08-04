@@ -110,6 +110,8 @@ const AdminDietAI = () => {
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isEditingInline, setIsEditingInline] = useState(false);
+  const [editableDietText, setEditableDietText] = useState("");
 
   // Contra-resposta (correção do cardápio já gerado)
   const [counterNote, setCounterNote] = useState("");
@@ -276,7 +278,9 @@ const AdminDietAI = () => {
       return { ...(data as GenResult), _correction: correction } as GenResult & { _correction?: string };
     },
     onSuccess: (data: any) => {
-      setResult({ ...data, diet_text: stripMealMacroLines(data.diet_text) });
+      const cleanText = stripMealMacroLines(data.diet_text);
+      setResult({ ...data, diet_text: cleanText });
+      setEditableDietText(cleanText);
       setReview(null);
       setIsPreviewOpen(true); // Open preview automatically
       if (data?._correction) {
@@ -387,12 +391,15 @@ const AdminDietAI = () => {
 
   const applyRevised = () => {
     if (!review?.revised_diet || !result) return;
-    setResult({ ...result, diet_text: stripMealMacroLines(review.revised_diet) });
+    const cleanText = stripMealMacroLines(review.revised_diet);
+    setResult({ ...result, diet_text: cleanText });
+    setEditableDietText(cleanText);
     toast.success("Cardápio revisado aplicado");
   };
 
   const saveToStudent = async () => {
-    if (!result) {
+    const finalContent = isEditingInline ? editableDietText : (result?.diet_text || "");
+    if (!finalContent) {
       toast.error("Gere um cardápio antes de salvar.");
       return;
     }
@@ -406,7 +413,7 @@ const AdminDietAI = () => {
     const title = name.trim() || defaultName;
     setSaving(true);
     try {
-      const cleanContent = stripMealMacroLines(result.diet_text || "");
+      const cleanContent = stripMealMacroLines(finalContent);
 
       const { data: dietRow, error } = await supabase.from("student_diets").insert({
         user_id: selectedStudent.user_id,
