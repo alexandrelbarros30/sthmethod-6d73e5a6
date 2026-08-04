@@ -291,7 +291,7 @@ const AdminDietAI = () => {
       const msg = e.message || "";
       const details = e?.details || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("Exemplo de formatação a ser usado: Refeição 01: (Desjejum Metabólico) \"⭐ BASE: 4 ovos...\"", { duration: 15000 });
+        toast.error("Calibração STHia: Ovos e claras devem ser em UNIDADES. Ex: '4 ovos inteiros + 3 claras'.", { duration: 15000 });
       } else {
         toast.error(`${msg}${details ? ` - ${details}` : ""}` || "Falha ao gerar");
       }

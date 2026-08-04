@@ -278,7 +278,7 @@ REGRAS DE FORMATAÇÃO (PADRÃO STHia):
 Você DEVE obrigatoriamente seguir este exemplo de formatação para o texto HTML final:
 
 Refeição 01: (Desjejum Metabólico)
-"⭐ BASE: 4 ovos inteiros mexidos + 80g de claras de ovo + 100g de mamão.
+"⭐ BASE: 4 ovos inteiros mexidos + 3 claras de ovo + 100g de mamão.
 Opção 2: 150g de peito de frango desfiado + 2 fatias de pão de forma integral + 1 ovo cozido.
 Opção 3: 200g de iogurte grego natural (zero açúcar) + 30g de Whey Protein + 15g de sementes de abóbora.
 Opção 4: Omelete de 3 ovos + 50g de queijo cottage + 100g de morangos."
@@ -296,7 +296,7 @@ ESTRUTURA OBRIGATÓRIA:
 - Cada refeição deve ter 4 opções dentro de aspas (1 Base com emoji ⭐ + 3 Alternativas).
 - Mantenha um espaçamento claro entre as refeições.
 - Não use tabelas Markdown.
-- Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "80g de claras de ovo" - mantenha a coerência com o exemplo acima).
+- Ovos e claras de ovos DEVEM ser apresentados em UNIDADES no texto (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
 
 REGRAS CRÍTICAS:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
