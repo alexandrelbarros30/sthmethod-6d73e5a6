@@ -111,6 +111,24 @@ export default function AiOnboarding() {
         return;
       }
     }
+    
+    // Auditoria: Garante que NENHUM campo seja perdido ao persistir
+    const fullAnswers = {
+      ...((form as any).answers ?? {}), // preserva respostas existentes
+      routine: form.routine,
+      meals_per_day: form.meals_per_day,
+      restrictions: form.restrictions,
+      comorbidities: form.comorbidities,
+      medications: form.medications,
+      dislikes: form.dislikes,
+      budget: form.budget,
+      training_days: form.training_days,
+      equipment: form.equipment,
+      limitations: form.limitations,
+      sleep: form.sleep,
+      stress: form.stress,
+    };
+
     setSaving(true);
     const { error } = await supabase.from("ai_app_profiles").upsert({
       user_id: user.id,
@@ -123,20 +141,7 @@ export default function AiOnboarding() {
       training_level: form.training_level || null,
       comorbidities: form.comorbidities || null,
       medications: form.medications || null,
-      answers: {
-        routine: form.routine,
-        meals_per_day: form.meals_per_day,
-        restrictions: form.restrictions,
-        comorbidities: form.comorbidities,
-        medications: form.medications,
-        dislikes: form.dislikes,
-        budget: form.budget,
-        training_days: form.training_days,
-        equipment: form.equipment,
-        limitations: form.limitations,
-        sleep: form.sleep,
-        stress: form.stress,
-      },
+      answers: fullAnswers,
       step: phase,
       phase1_complete: true,
       phase2_complete: phase === 2,
