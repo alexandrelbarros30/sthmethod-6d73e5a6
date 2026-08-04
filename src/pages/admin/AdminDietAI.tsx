@@ -291,7 +291,7 @@ const AdminDietAI = () => {
       const msg = e.message || "";
       const details = e?.details || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("Execute esta instrucao no projeto: Não está gerando e jantou esperado os instantes , me diga quando estiver pronto", { duration: 15000 });
+        toast.error("Execute esta instrucao no projeto: O cérebro está calibrado , posso solicitar o cardápio?", { duration: 15000 });
       } else {
         toast.error(`${msg}${details ? ` - ${details}` : ""}` || "Falha ao gerar");
       }
