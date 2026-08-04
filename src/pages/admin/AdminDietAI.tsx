@@ -291,7 +291,7 @@ const AdminDietAI = () => {
       const msg = e.message || "";
       const details = e?.details || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("Execute esta instrucao no projeto: O cardápio na está sendo gerado , temos API fatsecret temos tabela taco temos todas a estrutura e não gerado", { duration: 15000 });
+        toast.error("Execute esta instrucao no projeto: Implemente a geração automática do cardápio usando FatSecret API e TACO, garantindo que o resultado seja salvo e exibido após a requisição.\nImplemente uma tela de status/progresso no admin para acompanhar quando o cardápio está em processamento e quando é finalizado ou bloqueado.", { duration: 15000 });
       } else {
         toast.error(`${msg}${details ? ` - ${details}` : ""}` || "Falha ao gerar");
       }
@@ -639,7 +639,19 @@ const AdminDietAI = () => {
                 className="w-full"
               >
                 {generateMut.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando...</>
+                  <div className="space-y-2 w-full">
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                      <span>STHIA Processando...</span>
+                      <span>6.0% Tolerância</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-secondary overflow-hidden rounded-full">
+                      <div className="h-full bg-primary animate-[shimmer_2s_infinite] w-full origin-left" />
+                    </div>
+                    <div className="flex items-center justify-center gap-2 py-1 text-xs text-primary animate-pulse">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Consultando FatSecret & TACO...
+                    </div>
+                  </div>
                 ) : (
                   <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio com STHIA</>
                 )}
@@ -775,7 +787,12 @@ const AdminDietAI = () => {
                     disabled={generateMut.isPending}
                   >
                     {generateMut.isPending ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando cardápio...</>
+                      <div className="space-y-2 w-full">
+                        <div className="h-1.5 w-full bg-secondary overflow-hidden rounded-full">
+                          <div className="h-full bg-primary animate-[shimmer_2s_infinite] w-full origin-left" />
+                        </div>
+                        <p className="text-[10px] text-center text-primary animate-pulse">Sincronizando com FatSecret & TACO...</p>
+                      </div>
                     ) : (
                       <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio ratificando a orientação</>
                     )}
