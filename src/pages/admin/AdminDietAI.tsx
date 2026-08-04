@@ -787,7 +787,12 @@ const AdminDietAI = () => {
                     disabled={generateMut.isPending}
                   >
                     {generateMut.isPending ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando cardápio...</>
+                      <div className="space-y-2 w-full">
+                        <div className="h-1.5 w-full bg-secondary overflow-hidden rounded-full">
+                          <div className="h-full bg-primary animate-[shimmer_2s_infinite] w-full origin-left" />
+                        </div>
+                        <p className="text-[10px] text-center text-primary animate-pulse">Sincronizando com FatSecret & TACO...</p>
+                      </div>
                     ) : (
                       <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio ratificando a orientação</>
                     )}
