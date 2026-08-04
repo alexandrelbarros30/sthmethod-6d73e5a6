@@ -278,7 +278,7 @@ REGRAS CRÍTICAS:
 5. O total calórico e macros da refeição devem considerar APENAS a ALIMENTAÇÃO BASE.
 6. Se houver conflito entre carboidratos e calorias, reduza ou aumente carboidratos para bater a meta de Kcal.
 7. Valide se os nomes dos alimentos são comuns e fáceis de encontrar na API FatSecret Brasil.
-8. NÃO retorne erros genéricos; se o cálculo estiver difícil, aproxime o máximo possível das metas. ...`
+8. NÃO retorne erros genéricos; se o cálculo estiver difícil, aproxime o máximo possível das metas.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
