@@ -291,7 +291,7 @@ const AdminDietAI = () => {
       const msg = e.message || "";
       const details = e?.details || "";
       if (msg.includes("Edge Function returned a non-2xx status code")) {
-        toast.error("O cardápio não está sendo gerado. Verifique se o cérebro da STHia está seguindo as regras de formatação incluídas.", { duration: 10000 });
+        toast.error("Exemplo de formatação a ser usado: Refeição 01: (Desjejum Metabólico) \"⭐ BASE: 4 ovos...\"", { duration: 15000 });
       } else {
         toast.error(`${msg}${details ? ` - ${details}` : ""}` || "Falha ao gerar");
       }
