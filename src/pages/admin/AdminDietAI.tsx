@@ -431,60 +431,23 @@ const AdminDietAI = () => {
       if (error) throw error;
 
       // Create diet_meals + placeholder diet_foods so the student's interactive
-      // screen shows per-meal macros (kcal / P / C / G) instead of an equal split.
-      const dietId = (dietRow as any)?.id as string | undefined;
-      const meals = Array.isArray(result.meals) ? result.meals : [];
-      if (dietId && meals.length > 0) {
-        const defaultTime = (idx: number) => {
-          // 07:00, 10:00, 12:00, 15:00, 19:00, 21:00 for 6 meals, else spaced from 07:00
-          const fallback = ["07:00","10:00","12:00","15:00","19:00","21:00","23:00","05:00"];
-          return fallback[idx] || `${String(7 + idx * 3).padStart(2, "0")}:00`;
-        };
-        const mealRows = meals
-          .slice()
-          .sort((a, b) => (a.meal_number || 0) - (b.meal_number || 0))
-          .map((m, idx) => ({
-            user_id: selectedStudent.user_id,
-            diet_id: dietId,
-            name: (m.meal_name || `Refeição ${m.meal_number || idx + 1}`).toString().slice(0, 120),
-            time: defaultTime(idx),
-            sort_order: idx,
-          }));
-        const { data: insertedMeals, error: mealsErr } = await supabase
-          .from("diet_meals")
-          .insert(mealRows.map(m => ({ ...m, app_context: 'sth_method' })) as any)
-          .select("id, sort_order");
-        if (mealsErr) throw mealsErr;
+      // view is faithfully reconstructed from the AI's generated meal blocks.
+      // Passing mealMacros ensures the student's screen shows the correct distribution.
+      if (dietRow?.id) {
+        const mealMacros = (result?.meals || []).map(m => ({
+          meal_number: m.meal_number,
+          energy_kcal: m.energy_kcal,
+          protein_g: m.protein_g,
+          carbs_g: m.carbs_g,
+          fat_g: m.fat_g
+        }));
 
-        const orderedMeals = (insertedMeals || []).slice().sort((a: any, b: any) => a.sort_order - b.sort_order);
-        const foodRows = orderedMeals.map((row: any, idx: number) => {
-          const m = meals[idx];
-          const summary = Array.isArray(m?.items) && m.items.length
-            ? (m.items[0] || "").toString().slice(0, 200)
-            : (m?.meal_name || "Refeição");
-          return {
-            meal_id: row.id,
-            item: summary || "Refeição",
-            quantity: "1 porção",
-            sort_order: 0,
-            energy_kcal: Math.round(m?.energy_kcal || 0),
-            protein_g: Math.round(m?.protein_g || 0),
-            carbs_g: Math.round(m?.carbs_g || 0),
-            fat_g: Math.round(m?.fat_g || 0),
-            fiber_g: 0,
-            sugar_g: 0,
-            sodium_mg: 0,
-            cholesterol_mg: 0,
-            notes: "Macros por refeição gerados pela STHIA",
-          };
-        });
-        if (foodRows.length) {
-          const { error: foodsErr } = await supabase.from("diet_foods").insert(foodRows as any);
-          if (foodsErr) throw foodsErr;
-        }
+        const { syncStudentDietMeals } = await import("@/lib/diet-meal-sync");
+        await syncStudentDietMeals(selectedStudent.user_id, cleanContent, mealMacros, dietRow.id);
       }
 
-      toast.success("Cardápio salvo como rascunho na ficha do aluno");
+      toast.success("Cardápio salvo e rascunho gerado com sucesso!");
+      setIsPreviewOpen(false);
     } catch (e: any) {
       toast.error(e.message || "Falha ao salvar");
     } finally {
