@@ -307,7 +307,9 @@ ESTRUTURA OBRIGATÓRIA (CRÍTICO):
 7. A base deve começar com o emoji ⭐ e o texto "BASE:".
 8. Cada refeição DEVE ter exatamente 4 opções (1 Base + 3 Alternativas).
 9. Não use tabelas Markdown.
-10. NUNCA envie o texto "misturado". Se o texto não tiver parágrafos visíveis, ele será rejeitado. Cada opção é um parágrafo novo.
+10. NUNCA envie o texto "misturado". Se o texto não tiver parágrafos visíveis (pulos de linha duplos entre opções), ele será rejeitado. Cada opção deve estar em sua própria linha com espaço duplo.
+11. NUNCA coloque texto na mesma linha que o título da refeição. O título deve estar sozinho em sua linha, seguido por duas quebras de linha.
+12. Dentro das aspas, a "⭐ BASE" deve ser o início da primeira linha, e a "Opção 2" deve começar em uma nova linha após um pulo duplo. Não concatene opções na mesma linha.
 
 REGRAS CRÍTICAS:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
