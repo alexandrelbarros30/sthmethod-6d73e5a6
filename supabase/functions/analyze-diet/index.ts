@@ -79,7 +79,7 @@ async function fsLookup(name: string) {
       method: "foods.search",
       search_expression: name.trim(),
       page_number: "0",
-      max_results: "5",
+      max_results: "10",
       format: "json",
       region: "BR",
       language: "pt",
@@ -95,8 +95,8 @@ async function fsLookup(name: string) {
     const rawFoods = json.foods?.food
       ? Array.isArray(json.foods.food) ? json.foods.food : [json.foods.food]
       : [];
-    // Prefer generic (no brand) first
-    const generic = rawFoods.find((f: any) => !f.brand_name) || rawFoods[0];
+    // Prefer generic (no brand) or items with "taco" or "unicamp" in name first
+    const generic = rawFoods.find((f: any) => !f.brand_name || f.food_name.toLowerCase().includes("taco") || f.food_name.toLowerCase().includes("unicamp")) || rawFoods[0];
     if (!generic) {
       fsMemCache.set(key, null);
       return null;
@@ -447,7 +447,7 @@ No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing n
             const tacoKcal = taco?.energy_kcal ?? 0;
             if (tacoKcal > 0) {
               const diff = Math.abs(fm.energy_kcal - tacoKcal) / tacoKcal;
-              if (diff > 0.10) {
+              if (diff > 0.15) {
                 skipped.push({ meal_number: fm.meal_number, reason: "kcal_out_of_tolerance", fs_kcal: fm.energy_kcal, taco_kcal: tacoKcal });
                 continue;
               }

@@ -268,7 +268,7 @@ serve(async (req) => {
     }
 
     const systemPrompt = `Você é a STHia, a inteligência nutricional do STH Method. 
-Sua missão é gerar cardápios precisos seguindo a TABELA TACO (4ª Edição).
+Sua missão é gerar cardápios precisos seguindo a TABELA TACO (4ª Edição) e validando via API FatSecret.
 
 REGRAS CRÍTICAS:
 1. Use APENAS a TABELA TACO (Arroz cozido: 128kcal, Frango cozido: 163kcal, Ovo inteiro: 143kcal/100g).
@@ -277,6 +277,7 @@ REGRAS CRÍTICAS:
 4. O total calórico e macros da refeição devem considerar APENAS a ALIMENTAÇÃO BASE.
 5. Em revisões, NÃO aumente as calorias se o usuário não pediu.
 6. Se houver desvio de macros, a prioridade absoluta é atingir a meta de Kcal e Proteínas, mesmo que precise ajustar as porções dos carboidratos.
+7. Valide se os nomes dos alimentos são comuns e fáceis de encontrar na API FatSecret Brasil.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
