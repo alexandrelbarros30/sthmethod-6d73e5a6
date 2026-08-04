@@ -173,7 +173,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
       foodItemIndex++;
 
       elements.push(
-        <div key={`food-${i}`} className={`py-1.5 px-2 flex items-start gap-2 rounded ${foodItemIndex % 2 === 0 ? 'bg-muted/50' : ''}`}>
+        <div key={`food-${i}`} className={`py-1.5 px-2 flex items-start gap-2 rounded ${foodItemIndex % 2 === 0 ? 'bg-white/5' : ''}`}>
           {!isNote && (
             <span className="text-foreground font-bold text-sm leading-relaxed select-none mt-px">•</span>
           )}

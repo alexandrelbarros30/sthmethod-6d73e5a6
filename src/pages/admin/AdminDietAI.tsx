@@ -963,7 +963,7 @@ const AdminDietAI = () => {
             </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 mt-4 p-4 border rounded-lg bg-white">
+          <ScrollArea className="flex-1 mt-4 p-4 border rounded-lg bg-[#000000]">
             {result && (
               <div className="space-y-6">
                 {isEditingInline ? (
