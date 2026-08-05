@@ -75,7 +75,8 @@ export default function AiProfile() {
       setSavedAnswers(a);
       setForm((prev) => ({
         ...prev,
-        ...EMPTY,
+        // Auditoria: NO RESET. Mantém os dados locais do prev, limpa apenas se explicitamente vindo do banco.
+        ...prev,
         full_name: p.full_name ?? "", age: p.age?.toString() ?? "", sex: p.sex ?? "",
         weight_kg: p.weight_kg?.toString() ?? "", height_cm: p.height_cm?.toString() ?? "",
         goal: p.goal ?? "", training_level: p.training_level ?? "",

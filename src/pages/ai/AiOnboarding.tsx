@@ -67,7 +67,8 @@ export default function AiOnboarding() {
         const a = (data.answers ?? {}) as Record<string, string>;
         setForm((prev) => ({
           ...prev,
-          ...EMPTY,
+          // Auditoria: NO RESET. Mantém os dados locais do prev.
+          ...prev,
           full_name: data.full_name ?? "",
           age: data.age?.toString() ?? "",
           sex: data.sex ?? "",

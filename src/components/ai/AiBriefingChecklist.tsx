@@ -37,7 +37,7 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
       { key: "training_duration_minutes", label: "Duração do treino", ok: filled(a.training_duration_minutes), where: "briefing" },
       { key: "training_intensity", label: "Intensidade do treino", ok: filled(a.training_intensity), where: "briefing" },
       { key: "training_place", label: "Onde você treina", ok: filled(a.training_place), where: "briefing" },
-      { key: "injury_area", label: "Região sensível / lesões", ok: filled(a.injury_area), where: "briefing" },
+      { key: "limitations", label: "Limitações físicas / lesões", ok: filled(p.limitations) || filled(a.limitations), where: "cadastro" },
     );
     if (a.does_cardio === "sim") {
       base.push(
