@@ -81,10 +81,11 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
     .eq("id", payment.id)
     .is("subscription_applied_at", null);
 
-  // Espelha vencimento no SuperCoach (fire-and-forget).
+  // Espelha vencimento e ativa o aluno no SuperCoach (fire-and-forget).
   triggerSupercoachSync({
     userId: payment.user_id,
     expiresDate: endDate.toISOString().split("T")[0],
+    status: 2, // Ativo
   }).catch(() => {});
 }
 
