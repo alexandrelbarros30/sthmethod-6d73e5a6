@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { signInWithGoogleNative } from "@/utils/ai/auth-utils";
 import { Brain, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ export default function AiLogin() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const nextParam = params.get("next");
-  const storedNext = typeof window !== "undefined" ? sessionStorage.getItem("sthai_oauth_next") : null;
+  const storedNext = typeof window !== "undefined" ? (sessionStorage.getItem("sthai_oauth_next") || localStorage.getItem("sthai_oauth_next")) : null;
   const next = nextParam || storedNext || "/ai/app";
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -26,13 +27,13 @@ export default function AiLogin() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
-        try { sessionStorage.removeItem("sthai_oauth_next"); } catch {}
+        try { sessionStorage.removeItem("sthai_oauth_next"); localStorage.removeItem("sthai_oauth_next"); } catch {}
         navigate(next, { replace: true });
       }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       if (session) {
-        try { sessionStorage.removeItem("sthai_oauth_next"); } catch {}
+        try { sessionStorage.removeItem("sthai_oauth_next"); localStorage.removeItem("sthai_oauth_next"); } catch {}
         navigate(next, { replace: true });
       }
     });
@@ -169,8 +170,8 @@ export default function AiLogin() {
               setLoading(true);
               try { sessionStorage.setItem("sthai_oauth_next", next); } catch {}
               const result = await lovable.auth.signInWithOAuth("google", {
-                redirectTo: `${window.location.origin}/ai/login`,
-                skipBrowserRedirect: true,
+                redirect_uri: `${window.location.origin}/ai/login`,
+              });
               });
               if (result.error) {
                 toast.error("Não foi possível entrar com o Google");
