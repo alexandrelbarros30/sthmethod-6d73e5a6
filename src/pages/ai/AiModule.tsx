@@ -62,7 +62,12 @@ export default function AiModule() {
     focusField(`brief-${campoParam}`);
   }, [campoParam, loading]);
 
-  const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
+  const current = useMemo(() => {
+    if (versionId) {
+      return generations.find((g) => g.id === versionId) ?? null;
+    }
+    return latestOf(generations, kind);
+  }, [generations, kind, versionId]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
   const daysLeft = daysLeftInCycle(current, mod.cycleDays);
   const maxRevisions = kind === "analysis" ? 1 : 3;
