@@ -54,6 +54,7 @@ export default function AiOnboarding() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [ready, setReady] = useState(false);
+  const [data, setData] = useState<any>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -64,6 +65,7 @@ export default function AiOnboarding() {
     (async () => {
       const { data } = await supabase.from("ai_app_profiles").select("*").eq("user_id", user.id).maybeSingle();
       if (data) {
+        setData(data);
         const a = (data.answers ?? {}) as Record<string, string>;
         setForm((prev) => ({
           ...prev,
@@ -116,8 +118,8 @@ export default function AiOnboarding() {
     
     // Auditoria: Garante que NENHUM campo seja perdido ao persistir
     const fullAnswers = {
-      ...((form as any).answers ?? {}), // preserva respostas existentes
-      routine: form.routine,
+      ...(data?.answers ?? {}), // preserva respostas existentes vindas do banco
+      ...form, // mescla com o formulário atual
       meals_per_day: form.meals_per_day,
       restrictions: form.restrictions,
       comorbidities: form.comorbidities,
