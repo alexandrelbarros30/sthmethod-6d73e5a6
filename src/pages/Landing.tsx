@@ -133,7 +133,7 @@ const Landing = () => {
   const heroTitle = s("hero_title", "Transforme seu corpo com ciência, estratégia e acompanhamento real.");
   const heroSubtitle = s("hero_subtitle", "Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.");
   const ctaText = s("hero_cta_text", "Quero evoluir meu shape");
-  const ctaLink = s("hero_cta_link", "/login");
+  const ctaLink = s("hero_cta_link", "/ai/login?next=/ai/app");
   const cta2Text = s("hero_cta2_text", "Conhecer os planos");
   const cta2Link = s("hero_cta2_link", "#planos");
 
@@ -146,7 +146,7 @@ const Landing = () => {
   const ctaFinalTitle = s("cta_final_title", "Seu corpo não muda sozinho.");
   const ctaFinalSubtitle = s("cta_final_subtitle", "Com método e acompanhamento, muda de verdade.");
   const ctaFinalBtn1Text = s("cta_final_btn1_text", "Começar agora");
-  const ctaFinalBtn1Link = s("cta_final_btn1_link", "/login");
+  const ctaFinalBtn1Link = s("cta_final_btn1_link", "/ai/login?next=/ai/app");
   const ctaFinalBtn2Text = s("cta_final_btn2_text", "Falar com a consultoria");
   const ctaFinalBtn2Link = s("cta_final_btn2_link", "https://wa.me/");
 
@@ -170,7 +170,7 @@ const Landing = () => {
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to="/ai/home" className="flex items-center gap-2 shrink-0">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" style={{ height: `${logoSize}px` }} className="object-contain" />
             ) : (
@@ -196,8 +196,8 @@ const Landing = () => {
             <Link to="/free">
               <Button size="sm" variant="ghost" className="text-[11px] h-7 rounded-full hidden sm:inline-flex">Free</Button>
             </Link>
-            <Link to="/login">
-              <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar</Button>
+            <Link to="/ai/login?next=/ai/app">
+              <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar STH AI</Button>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -221,6 +221,9 @@ const Landing = () => {
             >
               <div className="px-5 py-4 flex flex-col gap-1 text-sm max-h-[70vh] overflow-y-auto">
                 {[
+                  { href: "/ai/home", label: "Início" },
+                  { href: "/ai/login?next=/ai/app", label: "Entrar no App" },
+                  { href: "/ai/instalar", label: "Baixar App" },
                   { href: "/como-funciona", label: "Como Funciona" },
                   { href: "#resultados", label: "Resultados" },
                   { href: "#planos", label: "Planos" },
@@ -231,7 +234,6 @@ const Landing = () => {
                   { href: "#simulador", label: "Simulador Corporal" },
                   { href: "/tendencias", label: "STH News" },
                   { href: "/diario-alimentar", label: "Diário Alimentar" },
-                  { href: "/baixar-app", label: "Baixar App" },
                   { href: "/sobre", label: "Novidades & Versão" },
                 ].map((item) => (
                   <LinkOrA
