@@ -21,7 +21,7 @@ serve(async (req) => {
     const { code, plan_id, payment_method } = await req.json();
     if (!code) throw new Error("Missing code");
 
-    // Fetch coupon by code (string) instead of ID for easier user input
+    // Fetch coupon by code (string)
     const { data: coupon, error } = await supabase
       .from("coupons")
       .select("*")
@@ -43,22 +43,20 @@ serve(async (req) => {
       return new Response(JSON.stringify({ valid: false, reason: "Cupom esgotado" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Rule: Pix à vista check (if specified in request)
+    // Rule: Pix à vista check
     if (payment_method && payment_method !== "pix") {
       return new Response(JSON.stringify({ valid: false, reason: "Cupom válido apenas para pagamentos via Pix à vista" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Rule: Eligibility check (No duplication with already discounted plans)
-    const allowedIds: string[] = Array.isArray(coupon.plan_ids) && coupon.plan_ids.length > 0
-      ? coupon.plan_ids
-      : (coupon.plan_id ? [coupon.plan_id] : []);
-    
+    // Rule: Eligibility check
     if (plan_id) {
       // Regra de ouro: Se o plano já contém 'oferta' ou 'fundador', não permite cupom
       if (plan_id.includes('oferta') || plan_id.includes('fundador')) {
         return new Response(JSON.stringify({ valid: false, reason: "Este plano já possui desconto promocional ativo e não aceita cupons adicionais" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
+      // Se houver plan_ids no cupom, validar contra o slug do plano (ignorando UUID por enquanto para compatibilidade)
+      const allowedIds: string[] = Array.isArray(coupon.plan_ids) ? coupon.plan_ids : [];
       if (allowedIds.length > 0 && !allowedIds.includes(plan_id)) {
         return new Response(JSON.stringify({ valid: false, reason: "Cupom não válido para este plano" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }

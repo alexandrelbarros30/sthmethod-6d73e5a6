@@ -2330,6 +2330,7 @@ export type Database = {
           expires_at: string | null
           id: string
           max_uses: number
+          metadata: Json | null
           plan_id: string | null
           plan_ids: string[]
           updated_at: string
@@ -2344,6 +2345,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number
+          metadata?: Json | null
           plan_id?: string | null
           plan_ids?: string[]
           updated_at?: string
@@ -2358,6 +2360,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number
+          metadata?: Json | null
           plan_id?: string | null
           plan_ids?: string[]
           updated_at?: string
