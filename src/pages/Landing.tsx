@@ -196,8 +196,8 @@ const Landing = () => {
             <Link to="/free">
               <Button size="sm" variant="ghost" className="text-[11px] h-7 rounded-full hidden sm:inline-flex">Free</Button>
             </Link>
-            <Link to="/ai/login?next=/ai/app">
-              <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar STH AI</Button>
+            <Link to="/login">
+              <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar STH METHOD</Button>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

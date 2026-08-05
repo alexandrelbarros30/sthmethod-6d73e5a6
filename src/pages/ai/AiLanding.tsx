@@ -58,7 +58,7 @@ export default function AiLanding() {
           <Link to="/ai" className="group flex items-center gap-3">
             <div className="relative">
               <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-              <AiLogoMark className="relative h-9 w-9" />
+              <img src="/logo-master-v1.svg" className="relative h-9 w-9" alt="STH AI Logo" />
             </div>
             <div className="flex flex-col -space-y-1">
               <span className="text-lg font-bold tracking-tight">STH AI</span>
@@ -138,7 +138,7 @@ export default function AiLanding() {
               <div className="relative group">
                 <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-tr from-primary/30 to-blue-500/30 blur-2xl opacity-50 transition-all duration-700 group-hover:opacity-80" />
                 <div className="relative flex flex-col items-center rounded-[32px] border border-white/10 bg-black/40 p-8 backdrop-blur-xl transition-all duration-500 group-hover:border-primary/30">
-                  <AiLogoMark className="h-24 w-24 mb-4" />
+                  <img src="/logo-master-v1.svg" className="h-24 w-24 mb-4" alt="STH AI Logo" />
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Neural Active</span>
@@ -237,7 +237,7 @@ export default function AiLanding() {
                       <div className="absolute inset-8 rounded-full border border-blue-500/10 animate-spin-reverse" />
                       <div className="absolute inset-16 rounded-full border border-white/5 animate-spin-slow" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <AiLogoMark className="h-20 w-20 shadow-2xl shadow-primary/40" />
+                        <img src="/logo-master-v1.svg" className="h-20 w-20 shadow-2xl shadow-primary/40" alt="STH AI Logo" />
                       </div>
                    </div>
                    
