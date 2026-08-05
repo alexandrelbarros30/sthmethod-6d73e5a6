@@ -183,6 +183,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
       const raw = String(answers[f.key] ?? "").trim();
       if (raw && f.options.some((o) => o.value === raw)) initial[f.key] = raw;
     }
+    // Garante que o estado local comece com o que está no JSON answers
     setValues(initial);
     hydrated.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
