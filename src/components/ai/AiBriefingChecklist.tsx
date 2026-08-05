@@ -163,17 +163,18 @@ export default function AiBriefingChecklist({ items, editHref, title, hideEdit, 
 
           // Se for cadastro e não estiver ok, enviamos para a tela de onboarding
           if (isCadastro && !i.ok) {
-            const currentPath = window.location.pathname + window.location.search;
-            const onboardingUrl = `/ai/onboarding?next=${encodeURIComponent(currentPath)}`;
+            const currentPath = location.pathname + location.search;
+            const onboardingUrl = `/ai/onboarding?campo=${i.key}&next=${encodeURIComponent(currentPath)}`;
             
             return (
               <li key={i.key}>
-                <Link
-                  to={onboardingUrl}
+                <button
+                  type="button"
+                  onClick={() => navigate(onboardingUrl)}
                   className="flex w-full items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 text-sm transition-colors hover:bg-destructive/10"
                 >
                   {Inner}
-                </Link>
+                </button>
               </li>
             );
           }
