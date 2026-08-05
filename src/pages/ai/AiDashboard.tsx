@@ -91,6 +91,7 @@ const WIDGET_GROUP: Record<string, string> = {
   weight: "Progresso",
   images: "Progresso",
   insight: "Inteligência",
+  "/ai/historico": "Inteligência",
   "mod-analysis": "Inteligência",
   "/ai/app/coaches": "Inteligência",
   "/ai/app/saude": "Saúde e wearables",
