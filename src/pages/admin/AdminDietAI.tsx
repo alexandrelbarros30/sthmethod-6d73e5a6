@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText, History, Lock, Trash2, Eye } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog, Stethoscope, FileText, History, Lock, Trash2, Eye, Brain } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -536,10 +536,23 @@ const AdminDietAI = () => {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="font-display flex items-center gap-2 text-base">
                 <Sparkles className="w-4 h-4 text-primary" /> Briefing
               </CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowSthiaPrompt(true)} className="h-8 gap-1.5 text-xs">
+                  <Brain className="w-3.5 h-3.5 text-primary" /> Prompt STHia
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={pullProtocol}
+                  disabled={!selectedStudent}
+                  className="h-8 gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0"
+                >
+                  <Stethoscope className="w-3.5 h-3.5" /> Puxar Protocolo
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
