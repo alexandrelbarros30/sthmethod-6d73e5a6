@@ -271,7 +271,7 @@ serve(async (req) => {
                         options: { 
                           type: "array", 
                           items: { type: "string" },
-                          description: "Exatamente 6 opções (1 Base + 5 Alternativas). A primeira deve ser a BASE."
+                          description: "Exatamente 4 opções (1 Base + 3 Alternativas). A primeira deve ser a BASE."
                         },
                         energy_kcal: { type: "number" },
                         protein_g: { type: "number" },
@@ -314,18 +314,17 @@ Sua missão é gerar cardápios precisos retornando um JSON estruturado.
 ESTILO E CULTURA:
 - Ofereça um cardápio tipicamente BRASILEIRO (Arroz, feijão, carnes grelhadas, frutas tropicais, cuscuz, tapioca, mandioca).
 
-DOUTRIANA STH METHOD (Formato de Saída):
-Embora você retorne um JSON, sua lógica interna de construção de refeições deve seguir a periodização da metodologia:
-1. Cada refeição deve ser composta por uma ALIMENTAÇÃO BASE + 5 opções de substituição (Total de 6 opções por refeição).
+REGRAS DE CONTEÚDO PARA O JSON:
+1. Para cada refeição, você deve fornecer EXATAMENTE 4 opções de alimentos.
 2. A primeira opção (índice 0 no array 'options') será a BASE.
 3. Ovos e claras de ovos DEVEM estar em UNIDADES (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
-4. Mantenha a equivalência nutricional RIGOROSA entre as 6 opções.
+4. Mantenha a equivalência nutricional entre as 4 opções.
 5. O JSON deve ser focado em dados puros. O backend cuidará da formatação visual (aspas, parágrafos, emojis).
 
 ESTRUTURA JSON (refeições):
 - meal_number: número da refeição.
 - meal_name: nome da refeição (ex: "Desjejum Metabólico"). Sem markdown.
-- options: array com exatamente 6 strings (Opção BASE + 5 Alternativas).
+- options: array com exatamente 4 strings (Opção BASE + 3 Alternativas).
 - energy_kcal, protein_g, carbs_g, fat_g: macros da ALIMENTAÇÃO BASE.
 
 IMPORTANTE: 
@@ -334,7 +333,7 @@ IMPORTANTE:
 - Priorize alimentos brasileiros e preparações simples.
 
 REGRAS CRÍTICAS:
-1. Para CADA refeição, forneça 6 opções (1 Base + 5 Alternativas) com equivalência nutricional.
+1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
 2. O total calórico e macros no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.
 3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas.
 4. Use APENAS a TABELA TACO (Arroz cozido: 128kcal, Frango cozido: 163kcal, Ovo inteiro: 143kcal/100g).
