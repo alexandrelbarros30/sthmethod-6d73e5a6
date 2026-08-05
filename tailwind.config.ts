@@ -193,6 +193,7 @@ export default {
         "spin-reverse": "spin-reverse 15s linear infinite",
         "grid-move": "grid-move 20s linear infinite",
         "fade-in": "fade-in 0.35s ease-out both",
+        "fade-in-up": "fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both",
         "scale-in": "scale-in 0.25s ease-out both",
         "slide-up": "slide-up 0.4s ease-out both",
       },
