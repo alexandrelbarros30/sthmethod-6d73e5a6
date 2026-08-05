@@ -191,16 +191,18 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
   useEffect(() => {
     if (!macros) return;
     const key = `${profile?.user_id}-${objective}`;
-    if (seeded.current === key) return;
-    seeded.current = key;
     
     const initialAnswers = (profile?.answers ?? {}) as Record<string, string>;
     
-    // Só auto-preenche se o campo estiver vazio no banco de dados para não sobrescrever o que o aluno salvou
-    if (!initialAnswers.diet_kcal) setKcal(String(macros.dailyCalories));
-    if (!initialAnswers.diet_protein) setProtein(String(macros.proteinG));
-    if (!initialAnswers.diet_carbs) setCarbs(String(macros.carbsG));
-    if (!initialAnswers.diet_fat) setFat(String(macros.fatG));
+    // Se o objetivo mudar, sempre atualizamos os macros para facilitar a condução do aluno
+    // a menos que o aluno tenha editado manualmente e a chave (user-objective) seja a mesma
+    if (seeded.current !== key) {
+      setKcal(String(macros.dailyCalories));
+      setProtein(String(macros.proteinG));
+      setCarbs(String(macros.carbsG));
+      setFat(String(macros.fatG));
+      seeded.current = key;
+    }
   }, [macros, objective, profile?.user_id, profile?.answers]);
 
   const review = useMemo(
