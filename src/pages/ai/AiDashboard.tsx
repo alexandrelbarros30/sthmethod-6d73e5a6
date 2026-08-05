@@ -273,7 +273,9 @@ export default function AiDashboard() {
   // mesmo que o layout salvo no aparelho seja anterior aos cards de saúde.
   const hiddenIds = useMemo(() => {
     const vis = new Set(visibleIds);
-    return WIDGET_META.map((w) => w.id).filter((id) => !vis.has(id));
+    // Garante que o histórico não fique preso como oculto se for novo
+    const metaIds = WIDGET_META.map((w) => w.id);
+    return metaIds.filter((id) => !vis.has(id));
   }, [visibleIds]);
 
   useEffect(() => {
