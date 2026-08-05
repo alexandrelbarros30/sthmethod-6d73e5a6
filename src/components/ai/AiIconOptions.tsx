@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
-import { Network, Cpu, Share2 } from "lucide-react";
+import { Network, Cpu, Share2, Layers, Zap, Infinity } from "lucide-react";
 
 export default function AiIconOptions() {
   const options = [
@@ -25,11 +25,32 @@ export default function AiIconOptions() {
       description: "Representa a expansão da inteligência STHia por todo o ecossistema.",
       icon: Share2,
       color: "from-white to-primary",
+    },
+    {
+      id: "layered-intelligence",
+      label: "Opção 4: Camadas de Inteligência",
+      description: "Representa a profundidade do método e o processamento multicamadas da IA.",
+      icon: Layers,
+      color: "from-emerald-400 to-emerald-700",
+    },
+    {
+      id: "performance-spark",
+      label: "Opção 5: Faísca de Performance",
+      description: "Representa o impacto imediato e a energia da evolução STH.",
+      icon: Zap,
+      color: "from-yellow-400 to-primary",
+    },
+    {
+      id: "infinite-evolution",
+      label: "Opção 6: Evolução Infinita",
+      description: "Focado na jornada contínua e no ciclo perpétuo de melhoria do aluno.",
+      icon: Infinity,
+      color: "from-primary to-emerald-400",
     }
   ];
 
   return (
-    <div className="grid gap-8 sm:grid-cols-3 p-6 bg-black rounded-[40px] border border-white/10">
+    <div className="grid gap-8 sm:grid-cols-3 p-6 bg-black rounded-[40px] border border-white/10 max-h-[70vh] overflow-y-auto custom-scrollbar">
       {options.map((opt) => (
         <div key={opt.id} className="flex flex-col items-center text-center group">
           <div className={cn(
