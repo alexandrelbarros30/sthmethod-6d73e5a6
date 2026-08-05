@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Button } from "@/components/ui/button";
-import { Salad, Dumbbell, LineChart, ShieldCheck, ArrowRight } from "lucide-react";
+import { Salad, Dumbbell, LineChart, ShieldCheck, ArrowRight, Palette } from "lucide-react";
 import { AI_PLANS } from "@/hooks/useAiApp";
 import AiLogoMark from "@/components/ai/AiLogoMark";
+import AiIconOptions from "@/components/ai/AiIconOptions";
+import { useState } from "react";
 
 const PILLARS = [
   {
@@ -25,6 +27,8 @@ const PILLARS = [
 
 export default function AiLanding() {
   useSthAiTheme();
+  const [showIconOptions, setShowIconOptions] = useState(false);
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Background tech layer */}
@@ -45,8 +49,24 @@ export default function AiLanding() {
           <Button asChild variant="ghost" size="sm">
             <Link to="/ai/login?next=/ai/app">Entrar</Link>
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(!showIconOptions)}>
+            <Palette className="h-4 w-4" />
+          </Button>
         </div>
       </header>
+
+      {showIconOptions && (
+        <div className="relative z-50 mx-auto max-w-4xl px-6 py-10 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-primary uppercase">Estudo de Identidade Visual</h2>
+              <p className="text-xs text-muted-foreground">Protótipos de Favicon e App Icon para o ecossistema STH AI</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(false)}>Fechar</Button>
+          </div>
+          <AiIconOptions />
+        </div>
+      )}
 
       {/* Hero */}
       <section className="relative z-10 mx-auto max-w-6xl px-6 pb-10 pt-6 lg:pt-10">
