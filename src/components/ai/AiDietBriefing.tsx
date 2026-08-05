@@ -374,7 +374,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             onOpenChange={(isOpen) => setActiveOpen(isOpen ? "metas" : null)}
             defaultOpen={Boolean(focusKey) && ["diet_objective", "diet_kcal", "diet_meals", "diet_protein", "diet_carbs", "diet_fat"].includes(focusKey)}
           >
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" id="brief-diet_objective">
               <Label className="text-xs flex items-center gap-1">
                 Objetivo <span className="text-[10px] text-primary font-bold">(Obrigatório)</span>
               </Label>
@@ -388,7 +388,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
               </Select>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5" id="brief-diet_kcal">
                 <Label className="text-xs">Kcal alvo</Label>
                 <Input 
                   inputMode="numeric" 
@@ -397,7 +397,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
                   placeholder="Ex: 2500" 
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5" id="brief-diet_meals">
                 <Label className="text-xs">Nº refeições</Label>
                 <Input 
                   inputMode="numeric" 
@@ -406,7 +406,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
                   placeholder="Ex: 5" 
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5" id="brief-diet_protein">
                 <Label className="text-xs">Proteína (g)</Label>
                 <Input 
                   inputMode="numeric" 
@@ -415,7 +415,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
                   placeholder="Ex: 180" 
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5" id="brief-diet_carbs">
                 <Label className="text-xs">Carbo (g)</Label>
                 <Input 
                   inputMode="numeric" 
@@ -424,7 +424,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
                   placeholder="Ex: 300" 
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5" id="brief-diet_fat">
                 <Label className="text-xs">Lipídio (g)</Label>
                 <Input 
                   inputMode="numeric" 
@@ -451,7 +451,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             onOpenChange={(isOpen) => setActiveOpen(isOpen ? "restricoes" : null)}
             defaultOpen={Boolean(focusKey) && ["diet_restrictions", "diet_preferences"].includes(focusKey)}
           >
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" id="brief-diet_restrictions">
               <Label className="text-xs">Restrições</Label>
               <Input
                 value={restrictions}
@@ -459,7 +459,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
                 placeholder="Sem lactose, sem glúten..."
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" id="brief-diet_preferences">
               <Label className="text-xs">Preferências</Label>
               <Input
                 value={preferences}
