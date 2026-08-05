@@ -1,46 +1,25 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="512" height="512" rx="128" fill="black"/>
-  <!-- Master V1: Fusão Biomecânica (Refined) -->
+  <!-- Master V1: Grid Layout (Musculação, Nutrição, Exames, IA) -->
   
-  <!-- Outer Glow for the whole group -->
-  <circle cx="256" cy="256" r="180" fill="url(#glow)" opacity="0.15"/>
+  <!-- Musculação (Halter - Top Left) -->
+  <path d="M100 160L160 100M120 180L180 120" stroke="#CCFF00" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="100" cy="160" r="30" stroke="#CCFF00" stroke-width="20"/>
+  <circle cx="180" cy="120" r="30" stroke="#CCFF00" stroke-width="20"/>
   
-  <!-- Core Integration Node (IA) -->
-  <circle cx="256" cy="256" r="40" fill="white" opacity="0.1"/>
-  <circle cx="256" cy="256" r="20" fill="white">
-    <animate attributeName="r" values="18;22;18" dur="3s" repeatCount="indefinite" />
+  <!-- Nutrição (Maçã - Top Right) -->
+  <path d="M380 120C340 120 320 140 320 180C320 220 340 260 380 260C420 260 440 220 440 180C440 140 420 120 380 120Z" fill="#10B981"/>
+  <path d="M380 120C380 100 390 90 400 80" stroke="#10B981" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Exames (Pulso/Activity - Bottom Left) -->
+  <path d="M80 380H120L140 320L180 440L200 380H240" stroke="#3B82F6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- IA/Network (Bottom Right) -->
+  <circle cx="360" cy="360" r="15" fill="white"/>
+  <circle cx="430" cy="360" r="15" fill="white"/>
+  <circle cx="395" cy="425" r="15" fill="white"/>
+  <path d="M360 360L395 425L430 360" stroke="white" stroke-width="6" stroke-dasharray="8 8"/>
+  <circle cx="395" cy="360" r="5" fill="#CCFF00" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite" />
   </circle>
-  
-  <!-- Musculação (Dumbbell - Top) -->
-  <g transform="translate(256, 120)">
-    <path d="M-60 0H60" stroke="#CCFF00" stroke-width="28" stroke-linecap="round"/>
-    <rect x="-75" y="-30" width="30" height="60" rx="8" fill="#CCFF00"/>
-    <rect x="45" y="-30" width="30" height="60" rx="8" fill="#CCFF00"/>
-    <line x1="0" y1="20" x2="0" y2="100" stroke="#CCFF00" stroke-width="4" stroke-dasharray="8 8" opacity="0.3"/>
-  </g>
-  
-  <!-- Nutrição (Apple - Bottom Left) -->
-  <g transform="translate(140, 360)">
-    <path d="M0 -40C-35 -40 -55 -20 -55 20C-55 60 -35 80 0 80C35 80 55 60 55 20C55 -20 35 -40 0 -40Z" fill="#10B981"/>
-    <path d="M0 -40C0 -55 10 -65 20 -70" stroke="#10B981" stroke-width="12" stroke-linecap="round"/>
-    <line x1="30" y1="-20" x2="100" y2="-80" stroke="#10B981" stroke-width="4" stroke-dasharray="8 8" opacity="0.3"/>
-  </g>
-  
-  <!-- Exames (Activity/Pulse - Bottom Right) -->
-  <g transform="translate(372, 360)">
-    <path d="M-60 0H-30L-15 -50L15 50L30 0H60" stroke="#3B82F6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="-30" y1="-20" x2="-100" y2="-80" stroke="#3B82F6" stroke-width="4" stroke-dasharray="8 8" opacity="0.3"/>
-  </g>
-
-  <!-- Neural Connections -->
-  <path d="M256 148 L256 236" stroke="white" stroke-width="2" opacity="0.2"/>
-  <path d="M185 340 L236 276" stroke="white" stroke-width="2" opacity="0.2"/>
-  <path d="M327 340 L276 276" stroke="white" stroke-width="2" opacity="0.2"/>
-
-  <defs>
-    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(200)">
-      <stop stop-color="#CCFF00"/>
-      <stop offset="1" stop-color="black" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
 </svg>
