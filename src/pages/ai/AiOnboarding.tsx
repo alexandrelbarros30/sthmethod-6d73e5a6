@@ -252,6 +252,31 @@ export default function AiOnboarding() {
             </>
           ) : (
             <>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Dumbbell className="h-4 w-4" />
+                  <span className="text-sm font-bold uppercase tracking-wider">Atividade Física</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Preencha sua rotina de treinos agora para que a IA entregue seus macros corretos desde o início.
+                </p>
+              </div>
+
+              <div id="f-activity_type" className="space-y-1.5 scroll-mt-24 p-1">
+                <Label>Qual atividade você pratica?</Label>
+                <Select value={form.routine} onValueChange={(v) => set("routine", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
+                    <SelectItem value="musculacao">Musculação</SelectItem>
+                    <SelectItem value="crossfit">Crossfit</SelectItem>
+                    <SelectItem value="corrida">Corrida / Ciclismo</SelectItem>
+                    <SelectItem value="lutas">Lutas</SelectItem>
+                    <SelectItem value="esportes_coletivos">Esportes coletivos</SelectItem>
+                    <SelectItem value="nenhuma">Nenhuma / Sedentário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div id="f-routine" className="space-y-1.5 scroll-mt-24 p-1">
                 <Label>Como é sua rotina no dia a dia?</Label>
                 <Textarea rows={2} value={form.routine} onChange={(e) => set("routine", e.target.value)} placeholder="Horários, trabalho, deslocamento..." />

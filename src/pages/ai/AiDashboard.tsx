@@ -383,10 +383,10 @@ export default function AiDashboard() {
       .trim() ?? "";
 
   const SHORTCUTS = [
-          { to: "/ai/app/diario", label: "Diário alimentar", hint: "registre refeições e água", icon: UtensilsCrossed },
-          { to: "/ai/app/saude", label: "Saúde e wearables", hint: "Galaxy Watch e Health Connect", icon: HeartPulse },
-          { to: "/ai/app/coaches", label: "Coaches humanos", hint: "acompanhamento profissional", icon: UserRound },
-        ];
+    { to: "/ai/app/diario", label: "Diário alimentar", hint: "registre refeições e água", icon: UtensilsCrossed },
+    { to: "/ai/app/treino", label: "Treino", hint: "cadastre atividade física", icon: Dumbbell },
+    { to: "/ai/app/saude", label: "Saúde e wearables", hint: "Galaxy Watch e Health Connect", icon: HeartPulse },
+  ];
 
   const moduleNode = (kind: AiKind) => {
           const mod = AI_MODULES[kind];
