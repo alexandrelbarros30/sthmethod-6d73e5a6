@@ -123,18 +123,39 @@ export default function AiOnboarding() {
     const fullAnswers = {
       ...(data?.answers ?? {}), // preserva respostas existentes vindas do banco
       ...form, // mescla com o formulário atual
-      meals_per_day: form.meals_per_day,
-      restrictions: form.restrictions,
-      comorbidities: form.comorbidities,
-      medications: form.medications,
-      dislikes: form.dislikes,
-      budget: form.budget,
-      training_days: form.training_days,
-      equipment: form.equipment,
-      limitations: form.limitations,
-      sleep: form.sleep,
-      stress: form.stress,
     };
+
+    // Recalcular macros se os campos essenciais estiverem presentes
+    if (form.weight_kg && form.height_cm && form.age) {
+      try {
+        const { calculateMacros } = await import("@/lib/macro-calculator");
+        const result = calculateMacros({
+          gender: form.sex as any || "masculino",
+          age: Number(form.age),
+          weight: Number(form.weight_kg),
+          height: Number(form.height_cm),
+          objective: form.goal || "manter_peso",
+          physicalActivityLevel: form.physical_activity_level,
+          activityType: form.activity_type || "musculacao",
+          trainingDaysPerWeek: Number(form.training_days) || 3,
+          doesCardio: false,
+        });
+
+        fullAnswers.daily_calories = String(result.dailyCalories);
+        fullAnswers.protein_target = String(result.proteinG);
+        fullAnswers.carbs_target = String(result.carbsG);
+        fullAnswers.fat_target = String(result.fatG);
+        
+        // Também atualiza os campos de briefing para o cardápio
+        fullAnswers.diet_objective = form.goal || "manter_peso";
+        fullAnswers.diet_kcal = String(result.dailyCalories);
+        fullAnswers.diet_protein = String(result.proteinG);
+        fullAnswers.diet_carbs = String(result.carbsG);
+        fullAnswers.diet_fat = String(result.fatG);
+      } catch (err) {
+        console.error("Erro ao pré-calcular macros no onboarding:", err);
+      }
+    }
 
     setSaving(true);
     const { error } = await supabase.from("ai_app_profiles").upsert({
