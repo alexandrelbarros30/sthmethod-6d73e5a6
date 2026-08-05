@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import AiLogoMark from "@/components/ai/AiLogoMark";
 import { Smartphone, Download, Share, PlusSquare, ShieldCheck, ArrowLeft } from "lucide-react";
 
-import apkAsset from "@/assets/sthai.apk.asset.json";
-
-const APK_URL = apkAsset.url;
-const APK_SIZE_MB = Math.round(apkAsset.size / 1024 / 1024);
+const APK_URL = "/ai/sthai.apk";
+const APK_SIZE_MB = 15; // Estimativa média para o app construído
 
 export default function AiInstalar() {
   useSthAiTheme();
@@ -50,7 +48,7 @@ export default function AiInstalar() {
             <li>3. Abra o app STH AI pelo ícone criado na tela inicial.</li>
           </ol>
           <Button asChild className="mt-4 w-full sm:w-auto">
-            <a href={APK_URL} rel="noopener noreferrer" target="_blank" download="sthai.apk">
+            <a href={APK_URL} rel="noopener noreferrer" download="sthai.apk">
               <Download className="mr-2 h-4 w-4" /> Baixar APK do STH AI ({APK_SIZE_MB} MB)
             </a>
           </Button>
@@ -60,8 +58,8 @@ export default function AiInstalar() {
               Versão 1.1.154 | Após a geração do build da STHia, baixe o arquivo APK atualizado abaixo.
             </p>
               <Button asChild variant="outline" size="sm" className="w-full sm:w-auto text-[11px] h-8 rounded-xl border-primary/20 hover:bg-primary/10">
-                <a href={APK_URL} rel="noopener noreferrer" target="_blank">
-                  <Download className="mr-1.5 h-3 w-3" /> Link Direto (Build Atualizado)
+                <a href={APK_URL} rel="noopener noreferrer">
+                  <Download className="mr-1.5 h-3 w-3" /> Link Direto (Build Local)
                 </a>
               </Button>
           </div>
