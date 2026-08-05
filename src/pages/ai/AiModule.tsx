@@ -151,6 +151,19 @@ export default function AiModule() {
         <p className="text-xs text-muted-foreground">
           Quanto mais detalhes você informar, melhor a entrega. Toque em "Como escrever aqui?" para ver o guia.
         </p>
+
+        {kind === "diet" && (
+          <div className="flex items-start gap-2 rounded-lg border border-ocean-teal/20 bg-ocean-teal/5 p-3">
+            <Sparkles className="h-4 w-4 shrink-0 text-ocean-teal mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-ocean-teal">Dica de Precisão</p>
+              <p className="text-[11px] leading-tight text-muted-foreground">
+                Você já atualizou sua atividade física na tela de treino? Ela incide diretamente sobre o cálculo dos macros geral.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button className="flex-1" onClick={() => run("create")} disabled={busy || cycleLocked || briefingIncomplete}>
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : cycleLocked || briefingIncomplete ? <Lock className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}

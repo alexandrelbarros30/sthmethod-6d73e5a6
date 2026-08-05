@@ -32,8 +32,9 @@ import {
   Scale,
   BrainCircuit,
   Camera,
+  Dumbbell,
 } from "lucide-react";
-import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus, History } from "lucide-react";
+import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus, History, Dumbbell as DumbbellIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -241,6 +242,7 @@ function SortableTile({
 
 export default function AiDashboard() {
   const { profile, subscription, generations, loading, user } = useAiApp();
+  const answers = (profile?.answers ?? {}) as Record<string, string>;
   const { streak, today, last7, measurements, saveCheckin, setWorkoutDone } = useAiProgress();
   const { offer, dismiss } = useAiOffer();
   const { insight } = useAiInsight();
@@ -383,10 +385,10 @@ export default function AiDashboard() {
       .trim() ?? "";
 
   const SHORTCUTS = [
-          { to: "/ai/app/diario", label: "Diário alimentar", hint: "registre refeições e água", icon: UtensilsCrossed },
-          { to: "/ai/app/saude", label: "Saúde e wearables", hint: "Galaxy Watch e Health Connect", icon: HeartPulse },
-          { to: "/ai/app/coaches", label: "Coaches humanos", hint: "acompanhamento profissional", icon: UserRound },
-        ];
+    { to: "/ai/app/diario", label: "Diário alimentar", hint: "registre refeições e água", icon: UtensilsCrossed },
+    { to: "/ai/app/treino", label: "Treino", hint: "cadastre atividade física", icon: Dumbbell },
+    { to: "/ai/app/saude", label: "Saúde e wearables", hint: "Galaxy Watch e Health Connect", icon: HeartPulse },
+  ];
 
   const moduleNode = (kind: AiKind) => {
           const mod = AI_MODULES[kind];
@@ -595,6 +597,26 @@ export default function AiDashboard() {
       {offer && (
         <div className="mb-4">
           <AiOfferCard offer={offer} onDismiss={dismiss} />
+        </div>
+      )}
+
+      {(!answers.physical_activity_level || answers.activity_type === "nenhuma") && (
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 ring-1 ring-amber-500/10">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-500">
+            <Dumbbell className="h-5 w-5" />
+          </div>
+          <div className="flex-1 space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Atenção aos macros</p>
+            <p className="text-sm font-medium leading-snug text-muted-foreground/90">
+              Para maior precisão dos macros é necessário cadastrar atividade física, assim evitar geração de cardápio equivocada.
+            </p>
+            <p className="text-[11px] font-semibold text-amber-600/80">
+              Dica: comece pela atividade física para melhor contagem de macros.
+            </p>
+            <Link to="/ai/app/treino" className="inline-flex items-center gap-1.5 text-xs font-bold text-ocean-teal hover:underline mt-2">
+              Cadastrar atividade física <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
         </div>
       )}
 

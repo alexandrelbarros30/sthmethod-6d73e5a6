@@ -12,7 +12,7 @@ import { focusField } from "@/lib/field-focus";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, ArrowRight, Brain } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Brain, Dumbbell } from "lucide-react";
 
 interface FormState {
   full_name: string;
@@ -22,6 +22,8 @@ interface FormState {
   height_cm: string;
   goal: string;
   training_level: string;
+  activity_type: string;
+  physical_activity_level: string;
   routine: string;
   meals_per_day: string;
   restrictions: string;
@@ -38,6 +40,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   full_name: "", age: "", sex: "", weight_kg: "", height_cm: "", goal: "", training_level: "",
+  activity_type: "musculacao", physical_activity_level: "sedentario",
   routine: "", meals_per_day: "", restrictions: "", comorbidities: "", medications: "", dislikes: "", budget: "",
   training_days: "", equipment: "", limitations: "", sleep: "", stress: "",
 };
@@ -120,18 +123,39 @@ export default function AiOnboarding() {
     const fullAnswers = {
       ...(data?.answers ?? {}), // preserva respostas existentes vindas do banco
       ...form, // mescla com o formulário atual
-      meals_per_day: form.meals_per_day,
-      restrictions: form.restrictions,
-      comorbidities: form.comorbidities,
-      medications: form.medications,
-      dislikes: form.dislikes,
-      budget: form.budget,
-      training_days: form.training_days,
-      equipment: form.equipment,
-      limitations: form.limitations,
-      sleep: form.sleep,
-      stress: form.stress,
     };
+
+    // Recalcular macros se os campos essenciais estiverem presentes
+    if (form.weight_kg && form.height_cm && form.age) {
+      try {
+        const { calculateMacros } = await import("@/lib/macro-calculator");
+        const result = calculateMacros({
+          gender: form.sex as any || "masculino",
+          age: Number(form.age),
+          weight: Number(form.weight_kg),
+          height: Number(form.height_cm),
+          objective: form.goal || "manter_peso",
+          physicalActivityLevel: form.physical_activity_level,
+          activityType: form.activity_type || "musculacao",
+          trainingDaysPerWeek: Number(form.training_days) || 3,
+          doesCardio: false,
+        });
+
+        fullAnswers.daily_calories = String(result.dailyCalories);
+        fullAnswers.protein_target = String(result.proteinG);
+        fullAnswers.carbs_target = String(result.carbsG);
+        fullAnswers.fat_target = String(result.fatG);
+        
+        // Também atualiza os campos de briefing para o cardápio
+        fullAnswers.diet_objective = form.goal || "manter_peso";
+        fullAnswers.diet_kcal = String(result.dailyCalories);
+        fullAnswers.diet_protein = String(result.proteinG);
+        fullAnswers.diet_carbs = String(result.carbsG);
+        fullAnswers.diet_fat = String(result.fatG);
+      } catch (err) {
+        console.error("Erro ao pré-calcular macros no onboarding:", err);
+      }
+    }
 
     setSaving(true);
     const { error } = await supabase.from("ai_app_profiles").upsert({
@@ -252,6 +276,46 @@ export default function AiOnboarding() {
             </>
           ) : (
             <>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Dumbbell className="h-4 w-4" />
+                  <span className="text-sm font-bold uppercase tracking-wider">Atividade Física</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Preencha sua rotina de treinos agora para que a IA entregue seus macros corretos desde o início.
+                </p>
+              </div>
+
+              <div id="f-activity_type" className="space-y-1.5 scroll-mt-24 p-1">
+                <Label>Qual atividade você pratica?</Label>
+                <Select value={form.activity_type} onValueChange={(v) => set("activity_type", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
+                    <SelectItem value="musculacao">Musculação</SelectItem>
+                    <SelectItem value="crossfit">Crossfit</SelectItem>
+                    <SelectItem value="corrida">Corrida / Ciclismo</SelectItem>
+                    <SelectItem value="lutas">Lutas</SelectItem>
+                    <SelectItem value="esportes_coletivos">Esportes coletivos</SelectItem>
+                    <SelectItem value="nenhuma">Nenhuma / Sedentário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div id="f-physical_activity_level" className="space-y-1.5 scroll-mt-24 p-1">
+                <Label>Nível de atividade diária (NEAT)</Label>
+                <Select value={form.physical_activity_level} onValueChange={(v) => set("physical_activity_level", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
+                    <SelectItem value="sedentario">Sedentário (trabalho sentado)</SelectItem>
+                    <SelectItem value="levemente_ativo">Levemente ativo (em pé/caminhadas)</SelectItem>
+                    <SelectItem value="moderadamente_ativo">Moderadamente ativo (esforço físico)</SelectItem>
+                    <SelectItem value="bastante_ativo">Bastante ativo (esforço intenso)</SelectItem>
+                    <SelectItem value="extremamente_ativo">Extremamente ativo (atleta/trabalho braçal)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">Isso define o seu gasto calórico fora dos treinos.</p>
+              </div>
+
               <div id="f-routine" className="space-y-1.5 scroll-mt-24 p-1">
                 <Label>Como é sua rotina no dia a dia?</Label>
                 <Textarea rows={2} value={form.routine} onChange={(e) => set("routine", e.target.value)} placeholder="Horários, trabalho, deslocamento..." />
