@@ -83,6 +83,17 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
   const [preferences, setPreferences] = useState("");
   const seeded = useRef<string | null>(null);
   const focusKey = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("campo") ?? "" : "";
+  const [activeOpen, setActiveOpen] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (focusKey) {
+      if (["diet_objective", "diet_kcal", "diet_meals", "diet_protein", "diet_carbs", "diet_fat"].includes(focusKey)) {
+        setActiveOpen("metas");
+      } else if (["diet_restrictions", "diet_preferences"].includes(focusKey)) {
+        setActiveOpen("restricoes");
+      }
+    }
+  }, [focusKey]);
 
   async function saveGroup() {
     if (!profile?.user_id) return;
@@ -359,6 +370,8 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             description="Objetivo, kcal, refeições e macronutrientes"
             pending={!objective || !meals ? 1 : 0}
             onSave={saveGroup}
+            open={activeOpen === "metas"}
+            onOpenChange={(isOpen) => setActiveOpen(isOpen ? "metas" : null)}
             defaultOpen={Boolean(focusKey) && ["diet_objective", "diet_kcal", "diet_meals", "diet_protein", "diet_carbs", "diet_fat"].includes(focusKey)}
           >
             <div className="space-y-1.5">
@@ -434,6 +447,8 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             description="O que evitar e o que você gosta de comer"
             pending={[restrictions, preferences].filter((v) => !v.trim()).length}
             onSave={saveGroup}
+            open={activeOpen === "restricoes"}
+            onOpenChange={(isOpen) => setActiveOpen(isOpen ? "restricoes" : null)}
             defaultOpen={Boolean(focusKey) && ["diet_restrictions", "diet_preferences"].includes(focusKey)}
           >
             <div className="space-y-1.5">

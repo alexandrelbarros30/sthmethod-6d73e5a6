@@ -12,6 +12,8 @@ interface Props {
   description?: string;
   /** Quantidade de campos ainda sem resposta neste grupo. */
   pending?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   defaultOpen?: boolean;
   onSave?: () => void | Promise<void>;
   saveLabel?: string;
@@ -24,12 +26,21 @@ export default function AiEditSection({
   title,
   description,
   pending = 0,
+  open: controlledOpen,
+  onOpenChange,
   defaultOpen = false,
   onSave,
   saveLabel = "Salvar este grupo",
   children,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  
+  const setOpen = (val: boolean) => {
+    if (onOpenChange) onOpenChange(val);
+    setInternalOpen(val);
+  };
+
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
