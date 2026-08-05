@@ -1,21 +1,25 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="512" height="512" rx="128" fill="black"/>
-  <!-- Master V1: Grid Layout -->
-  <!-- Dumbbell (Top Left) -->
-  <path d="M120 180L160 140M140 160L200 220" stroke="#CCFF00" stroke-width="24" stroke-linecap="round"/>
-  <circle cx="120" cy="180" r="30" stroke="#CCFF00" stroke-width="20"/>
-  <circle cx="200" cy="260" r="30" stroke="#CCFF00" stroke-width="20"/>
+  <!-- Master V1: Grid Layout (Musculação, Nutrição, Exames, IA) -->
   
-  <!-- Apple (Top Right) -->
-  <path d="M380 140C340 140 320 160 320 200C320 240 340 280 380 280C420 280 440 240 440 200C440 160 420 140 380 140Z" fill="#10B981"/>
-  <path d="M380 140C380 120 390 110 400 100" stroke="#10B981" stroke-width="12" stroke-linecap="round"/>
+  <!-- Musculação (Halter - Top Left) -->
+  <path d="M100 160L160 100M120 180L180 120" stroke="#CCFF00" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="100" cy="160" r="30" stroke="#CCFF00" stroke-width="20"/>
+  <circle cx="180" cy="120" r="30" stroke="#CCFF00" stroke-width="20"/>
   
-  <!-- Activity (Bottom Left) -->
+  <!-- Nutrição (Maçã - Top Right) -->
+  <path d="M380 120C340 120 320 140 320 180C320 220 340 260 380 260C420 260 440 220 440 180C440 140 420 120 380 120Z" fill="#10B981"/>
+  <path d="M380 120C380 100 390 90 400 80" stroke="#10B981" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Exames (Pulso/Activity - Bottom Left) -->
   <path d="M80 380H120L140 320L180 440L200 380H240" stroke="#3B82F6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
   
-  <!-- Network (Bottom Right) -->
-  <circle cx="340" cy="340" r="20" fill="white"/>
-  <circle cx="420" cy="340" r="20" fill="white"/>
-  <circle cx="380" cy="420" r="20" fill="white"/>
-  <path d="M340 340L380 420L420 340" stroke="white" stroke-width="8" stroke-dasharray="10 10"/>
+  <!-- IA/Network (Bottom Right) -->
+  <circle cx="360" cy="360" r="15" fill="white"/>
+  <circle cx="430" cy="360" r="15" fill="white"/>
+  <circle cx="395" cy="425" r="15" fill="white"/>
+  <path d="M360 360L395 425L430 360" stroke="white" stroke-width="6" stroke-dasharray="8 8"/>
+  <circle cx="395" cy="360" r="5" fill="#CCFF00" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite" />
+  </circle>
 </svg>
