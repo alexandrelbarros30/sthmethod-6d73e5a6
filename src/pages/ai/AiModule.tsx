@@ -76,9 +76,9 @@ export default function AiModule() {
     : current
       ? Math.max(0, maxRevisions - current.revisions)
       : maxRevisions;
-  const cycleLocked = !unlimited && Boolean(current) && daysLeft > 0;
+  const cycleLocked = !unlimited && Boolean(current) && daysLeft > 0 && !versionId;
   const isGuided = (kind === "workout" || kind === "diet") && Boolean(current);
-  const canRequest = unlimited || !cycleLocked || revisionsLeft > 0;
+  const canRequest = (unlimited || !cycleLocked || revisionsLeft > 0) && !versionId;
 
   const checklist = useMemo(() => buildChecklist(profile, kind), [profile, kind]);
   const checklistMissing = checklist.filter((i) => !i.ok);
