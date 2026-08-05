@@ -5,47 +5,28 @@ import { Network, Cpu, Share2, Layers, Zap, Infinity, Dumbbell, Apple, Activity,
 export default function AiIconOptions() {
   const options = [
     {
-      id: "sth-ai-core",
-      label: "Opção Master: Ecossistema Integrado",
-      description: "A união definitiva: O peso (Musculação), a maçã (Nutrição) e o pulso (Exames) conectados pela rede neural STH AI.",
+      id: "master-design-1",
+      label: "Master V1: Fusão Biomecânica",
+      description: "Design minimalista unindo Halter, Maçã e Pulso em uma malha neural integrada. Foco em equilíbrio.",
       icon: Network,
-      color: "from-[#00FF41] to-[#008F11]",
-      isHybrid: true
+      color: "from-primary to-emerald-500",
+      layout: "grid"
     },
     {
-      id: "performance-dna",
-      label: "Conceito 1: DNA Metabólico",
-      description: "Integração total entre bioquímica sanguínea e resposta hipertrófica monitorada por IA.",
-      icon: Activity,
-      color: "from-emerald-400 to-primary",
+      id: "master-design-2",
+      label: "Master V2: Núcleo Clínico",
+      description: "O sensor de exames (Activity) como centro, orbitado pela musculação e nutrição. Foco em saúde/performance.",
+      icon: Network,
+      color: "from-blue-500 to-primary",
+      layout: "orbit"
     },
     {
-      id: "smart-fuel",
-      label: "Conceito 2: Nutrição Sintética",
-      description: "IA aplicada à otimização de nutrientes para performance máxima e saúde celular.",
-      icon: Apple,
-      color: "from-lime-400 to-green-600",
-    },
-    {
-      id: "strength-logic",
-      label: "Conceito 3: Biomecânica Aumentada",
-      description: "O poder da musculação guiado por análise de dados em tempo real da STHia.",
-      icon: Dumbbell,
-      color: "from-zinc-400 to-primary",
-    },
-    {
-      id: "clinical-sync",
-      label: "Conceito 4: Inteligência Clínica",
-      description: "Transformando exames laboratoriais em protocolos de treino e dieta precisos.",
-      icon: Microchip,
-      color: "from-blue-400 to-emerald-500",
-    },
-    {
-      id: "unified-nodes",
-      label: "Conceito 5: Rede de Performance",
-      description: "Nós de dados conectando nutrição, treino e saúde em um único cérebro de IA.",
-      icon: Share2,
-      color: "from-primary to-white",
+      id: "master-design-3",
+      label: "Master V3: Escudo de Evolução",
+      description: "Elementos dispostos de forma heráldica, simbolizando a proteção e o suporte da STHia em todas as frentes.",
+      icon: Network,
+      color: "from-zinc-100 to-primary",
+      layout: "shield"
     }
   ];
 
@@ -55,23 +36,43 @@ export default function AiIconOptions() {
         <div key={opt.id} className="flex flex-col items-center text-center group">
           <div className={cn(
             "relative mb-4 flex h-32 w-32 items-center justify-center rounded-[32px] bg-black shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20 border border-white/10 overflow-hidden",
-            opt.isHybrid ? "bg-gradient-to-br from-zinc-900 to-black" : "bg-gradient-to-br from-zinc-900 to-black"
+            "bg-gradient-to-br from-zinc-900 to-black"
           )}>
             <div className={cn(
               "absolute inset-0 rounded-[32px] bg-gradient-to-br opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-40",
               opt.color
             )} />
             
-            {opt.isHybrid ? (
-              <div className="relative z-10 grid grid-cols-2 gap-2 p-4">
-                <Dumbbell className="h-6 w-6 text-primary" />
-                <Apple className="h-6 w-6 text-emerald-400" />
-                <Activity className="h-6 w-6 text-blue-400" />
-                <Network className="h-6 w-6 text-white animate-pulse" />
-              </div>
-            ) : (
-              <opt.icon className="relative z-10 h-16 w-16 text-primary animate-pulse-slow" strokeWidth={1.5} />
-            )}
+            <div className="relative z-10 w-full h-full flex items-center justify-center p-4">
+              {opt.layout === "grid" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Dumbbell className="h-6 w-6 text-primary" />
+                  <Apple className="h-6 w-6 text-emerald-400" />
+                  <Activity className="h-6 w-6 text-blue-400" />
+                  <Network className="h-6 w-6 text-white animate-pulse" />
+                </div>
+              )}
+              
+              {opt.layout === "orbit" && (
+                <div className="relative h-full w-full flex items-center justify-center">
+                  <Activity className="h-10 w-10 text-blue-400 animate-pulse" />
+                  <Dumbbell className="absolute top-2 left-2 h-5 w-5 text-primary opacity-60" />
+                  <Apple className="absolute bottom-2 right-2 h-5 w-5 text-emerald-400 opacity-60" />
+                  <Network className="absolute top-2 right-2 h-4 w-4 text-white opacity-40" />
+                </div>
+              )}
+              
+              {opt.layout === "shield" && (
+                <div className="flex flex-col items-center gap-1">
+                  <Network className="h-8 w-8 text-white mb-1" />
+                  <div className="flex gap-2">
+                    <Dumbbell className="h-5 w-5 text-primary" />
+                    <Activity className="h-5 w-5 text-blue-400" />
+                    <Apple className="h-5 w-5 text-emerald-400" />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <h3 className="text-sm font-bold tracking-tight text-white mb-1 uppercase">{opt.label}</h3>
           <p className="text-[11px] text-muted-foreground leading-relaxed px-4">{opt.description}</p>
