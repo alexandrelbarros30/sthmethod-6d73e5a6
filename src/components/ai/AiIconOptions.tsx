@@ -6,10 +6,10 @@ export default function AiIconOptions() {
   const options = [
     {
       id: "master-design-1",
-      label: "Master V1: Fusão Biomecânica",
-      description: "Design minimalista unindo Halter, Maçã e Pulso em uma malha neural integrada. Foco em equilíbrio.",
+      label: "ÍCONE ATUAL: Master V1",
+      description: "ESTE É O ÍCONE OFICIAL. Fusão biomecânica unindo Musculação, Nutrição e Análise Clínica em uma grade de alta performance.",
       icon: Network,
-      color: "from-primary to-emerald-500",
+      color: "from-primary via-emerald-500 to-blue-500",
       layout: "grid",
       selected: true
     },
