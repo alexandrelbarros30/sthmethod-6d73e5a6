@@ -331,21 +331,20 @@ export default function AiLanding() {
               <h2 className="text-4xl font-bold tracking-tight sm:text-6xl">Escolha seu plano.</h2>
               <p className="mt-6 text-xl text-white/50">Planos flexíveis para todos os objetivos.</p>
               
-              <motion.div 
+            <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
                 viewport={{ once: true }}
                 className="mt-12 inline-flex flex-col items-center gap-3 rounded-[32px] border border-primary/20 bg-primary/5 px-10 py-6 backdrop-blur-md"
               >
                 <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                  </span>
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20">
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  </div>
                   <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Oferta de Lançamento Ativa</span>
                 </div>
-                <div className="text-3xl font-black tracking-tighter text-white">STH10AI</div>
-                <p className="text-xs font-medium text-white/40 uppercase tracking-widest">10% OFF no Pix (Planos Semestral/Anual)</p>
+                <div className="text-4xl font-black tracking-tighter text-white">STH10AI</div>
+                <p className="text-xs font-medium text-white/50 uppercase tracking-widest text-center">10% OFF no Pix (Planos Semestral/Anual)</p>
               </motion.div>
             </div>
 
@@ -357,9 +356,9 @@ export default function AiLanding() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
-                  className={`relative flex flex-col justify-between overflow-hidden rounded-[40px] border p-10 transition-all hover:scale-[1.02] ${
+                  className={`relative flex flex-col justify-between overflow-hidden rounded-[40px] border p-10 transition-all hover:border-white/20 hover:bg-white/[0.04] ${
                     plan.id.includes('oferta') || plan.id.includes('fundador') 
-                    ? 'border-primary/30 bg-primary/[0.03] shadow-2xl shadow-primary/5' 
+                    ? 'border-primary/30 bg-primary/[0.04] shadow-2xl shadow-primary/5' 
                     : 'border-white/5 bg-white/2'
                   }`}
                 >
@@ -375,7 +374,7 @@ export default function AiLanding() {
                       <span className="text-5xl font-bold tracking-tighter">{plan.price}</span>
                       <span className="text-sm font-medium text-white/30">/{plan.id.includes('anual') ? 'ano' : plan.id.includes('trimestral') ? 'trim' : 'mês'}</span>
                     </div>
-                    <p className="mt-4 text-xs font-medium text-white/40 leading-relaxed uppercase tracking-widest">{plan.note}</p>
+                    <p className="mt-4 text-xs font-medium text-white/50 leading-relaxed uppercase tracking-widest">{plan.note}</p>
                     
                     <div className="mt-10 space-y-4">
                       {["Inteligência Biomecânica", "Nutrição de Precisão", "Central de Análise", "STH FOOD AI", "Suporte Wearables"].map((feat) => (
