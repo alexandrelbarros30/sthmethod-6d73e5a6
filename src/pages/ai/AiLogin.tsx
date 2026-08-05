@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export default function AiLogin() {
@@ -27,13 +26,19 @@ export default function AiLogin() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
-        try { sessionStorage.removeItem("sthai_oauth_next"); localStorage.removeItem("sthai_oauth_next"); } catch {}
+        try { 
+          sessionStorage.removeItem("sthai_oauth_next"); 
+          localStorage.removeItem("sthai_oauth_next"); 
+        } catch {}
         navigate(next, { replace: true });
       }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       if (session) {
-        try { sessionStorage.removeItem("sthai_oauth_next"); localStorage.removeItem("sthai_oauth_next"); } catch {}
+        try { 
+          sessionStorage.removeItem("sthai_oauth_next"); 
+          localStorage.removeItem("sthai_oauth_next"); 
+        } catch {}
         navigate(next, { replace: true });
       }
     });
@@ -68,7 +73,6 @@ export default function AiLogin() {
           },
         });
         if (error) throw error;
-        // Supabase devolve um usuário "fantasma" (sem identities) quando o e-mail já existe
         if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
           toast.error("Este e-mail já possui conta. Faça login para continuar.");
           setIsSignUp(false);
@@ -168,18 +172,8 @@ export default function AiLogin() {
           onClick={async () => {
             try {
               setLoading(true);
-              try { sessionStorage.setItem("sthai_oauth_next", next); } catch {}
-              const result = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: `${window.location.origin}/ai/login`,
-              });
-              });
-              if (result.error) {
-                toast.error("Não foi possível entrar com o Google");
-                setLoading(false);
-                return;
-              }
-              if (result.redirected) return;
-              navigate(next, { replace: true });
+              await signInWithGoogleNative(next);
+              // Supabase handles redirect
             } catch (err: any) {
               toast.error(err?.message || "Erro ao entrar com o Google");
               setLoading(false);
