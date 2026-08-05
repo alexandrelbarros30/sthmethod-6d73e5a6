@@ -108,7 +108,9 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
 
     const { error } = await supabase
       .from("ai_app_profiles")
-      .update({ answers: newAnswers })
+      .update({ 
+        answers: newAnswers
+      })
       .eq("user_id", profile.user_id);
 
     if (error) { 
