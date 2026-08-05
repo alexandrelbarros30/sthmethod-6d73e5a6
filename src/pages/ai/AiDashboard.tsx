@@ -32,8 +32,9 @@ import {
   Scale,
   BrainCircuit,
   Camera,
+  Dumbbell,
 } from "lucide-react";
-import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus, History } from "lucide-react";
+import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus, History, Dumbbell as DumbbellIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
