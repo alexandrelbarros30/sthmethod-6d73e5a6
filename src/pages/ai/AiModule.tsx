@@ -221,6 +221,16 @@ export default function AiModule() {
 
   return (
     <AiShell title={mod.title} subtitle={mod.short}>
+      {versionId && (
+        <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 border-ocean-teal/40 bg-ocean-teal/5 p-4">
+          <p className="text-xs text-muted-foreground">
+            Você está visualizando uma <strong>versão anterior</strong> do seu histórico.
+          </p>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/ai/app/${slug}`)}>
+            <History className="mr-2 h-4 w-4" /> Voltar para atual
+          </Button>
+        </Card>
+      )}
       {backTo && (
         <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 border-primary/40 bg-primary/5 p-4">
           <p className="text-xs text-muted-foreground">
