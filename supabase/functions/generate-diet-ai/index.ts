@@ -196,14 +196,21 @@ async function reconcileWithAnalyzer(parsed: any): Promise<void> {
 
 function extractCorrectionTargets(text: string): Partial<MacroTargets> {
   const targets: Partial<MacroTargets> = {};
-  const kcalMatch = text.match(/(\d+)\s*(kcal|calorias)/i);
-  if (kcalMatch) targets.energy_kcal = parseInt(kcalMatch[1]);
-  const pMatch = text.match(/(\d+)\s*g?\s*(proteina|ptn)/i);
-  if (pMatch) targets.protein_g = parseInt(pMatch[1]);
-  const cMatch = text.match(/(\d+)\s*g?\s*(carbo|carboidrato|cho)/i);
-  if (cMatch) targets.carbs_g = parseInt(cMatch[1]);
-  const fMatch = text.match(/(\d+)\s*g?\s*(gordura|lipidio|fat)/i);
-  if (fMatch) targets.fat_g = parseInt(fMatch[1]);
+  // Handle comma-separated decimals or direct numbers
+  const clean = (s: string) => parseInt(s.replace(",", "."));
+  
+  const kcalMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(kcal|calorias)/i);
+  if (kcalMatch) targets.energy_kcal = clean(kcalMatch[1]);
+  
+  const pMatch = text.match(/(\d+(?:[.,]\d+)?)\s*g?\s*(proteina|ptn|protein)/i);
+  if (pMatch) targets.protein_g = clean(pMatch[1]);
+  
+  const cMatch = text.match(/(\d+(?:[.,]\d+)?)\s*g?\s*(carbo|carboidrato|cho|carb)/i);
+  if (cMatch) targets.carbs_g = clean(cMatch[1]);
+  
+  const fMatch = text.match(/(\d+(?:[.,]\d+)?)\s*g?\s*(gordura|lipidio|fat)/i);
+  if (fMatch) targets.fat_g = clean(fMatch[1]);
+  
   return targets;
 }
 
@@ -340,7 +347,8 @@ REGRAS CRÍTICAS:
 3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas, distribuindo os macros de forma inteligente entre carboidratos e gorduras.
 4. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais. Não gere refeições mono-alimento (apenas frango ou apenas ovo).
 5. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
-5. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
+6. AFERIÇÃO DE PRECISÃO: O usuário reportou erros de cálculo em gerações anteriores (ex: dieta de ~2210 kcal sendo exibida com valores menores). Você DEVE ser extremamente rigoroso na contabilidade calórica. Se a meta for 2200, a soma das bases das refeições deve totalizar 2200 kcal +/- 50kcal.
+7. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
 6. NÃO retorne erros genéricos.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}

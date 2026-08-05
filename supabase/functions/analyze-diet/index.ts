@@ -331,7 +331,7 @@ Entrada: "Base: 3 ovos inteiros + 100g de claras + 50g de aveia + 100g de mamão
 TOTAL refeição: 494.5 kcal | 37.85 P | 46.8 C | 18.6 G
 
 Retorne APENAS o JSON via tool call, sem texto adicional.
-A DIETA NO STH METHOD deve ser calibrada para evitar macros elevados e erros de cálculo reportados pelo usuário. Use os valores da TACO rigorosamente.
+A DIETA NO STH METHOD deve ser calibrada para evitar macros elevados e erros de cálculo reportados pelo usuário. Use os valores da TACO rigorosamente. O usuário reportou erro no cálculo total (ex: dieta de ~2.210 kcal calculada incorretamente). A soma aritmética das refeições BASE deve ser precisa.
 No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing não pedir especificamente por isso.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
