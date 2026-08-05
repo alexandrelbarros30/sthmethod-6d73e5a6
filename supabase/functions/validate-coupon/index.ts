@@ -18,14 +18,14 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { coupon_id, plan_id } = await req.json();
-    if (!coupon_id) throw new Error("Missing coupon_id");
+    const { code, plan_id, payment_method } = await req.json();
+    if (!code) throw new Error("Missing code");
 
-    // Fetch coupon
+    // Fetch coupon by code (string) instead of ID for easier user input
     const { data: coupon, error } = await supabase
       .from("coupons")
       .select("*")
-      .eq("id", coupon_id)
+      .eq("code", code.toUpperCase())
       .eq("active", true)
       .single();
 
@@ -43,67 +43,32 @@ serve(async (req) => {
       return new Response(JSON.stringify({ valid: false, reason: "Cupom esgotado" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check plan (supports multi-plan via plan_ids; falls back to legacy plan_id)
+    // Rule: Pix à vista check (if specified in request)
+    if (payment_method && payment_method !== "pix") {
+      return new Response(JSON.stringify({ valid: false, reason: "Cupom válido apenas para pagamentos via Pix à vista" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Rule: Eligibility check (No duplication with already discounted plans)
     const allowedIds: string[] = Array.isArray(coupon.plan_ids) && coupon.plan_ids.length > 0
       ? coupon.plan_ids
       : (coupon.plan_id ? [coupon.plan_id] : []);
-    if (allowedIds.length > 0 && plan_id && !allowedIds.includes(plan_id)) {
-      return new Response(JSON.stringify({ valid: false, reason: "Cupom não válido para este plano" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    // Increment usage
-    await supabase
-      .from("coupons")
-      .update({ current_uses: coupon.current_uses + 1 })
-      .eq("id", coupon_id);
-
-    // Dispara e-mail "Cupom aplicado" (best-effort; não bloqueia validação)
-    try {
-      const token = authHeader.replace(/^Bearer\s+/i, "");
-      const userClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: `Bearer ${token}` } } },
-      );
-      const { data: { user } } = await userClient.auth.getUser();
-      if (user?.id) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("email, full_name")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        let planName = "";
-        if (plan_id) {
-          const { data: pl } = await supabase.from("plans").select("name").eq("id", plan_id).maybeSingle();
-          planName = pl?.name || "";
-        }
-        const discount = coupon.discount_type === "percentage"
-          ? `${coupon.discount_value}%`
-          : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(coupon.discount_value || 0));
-        if (prof?.email) {
-          await supabase.from("email_scheduled_sends").insert({
-            template_key: "coupon-applied",
-            recipient_user_id: user.id,
-            recipient_email: prof.email,
-            recipient_name: prof.full_name,
-            template_data: {
-              name: prof.full_name || "",
-              couponCode: coupon.code || "",
-              discount,
-              planName,
-            },
-            source: `coupon:${coupon.id}:${user.id}`,
-          });
-        }
+    
+    if (plan_id) {
+      // Regra de ouro: Se o plano já contém 'oferta' ou 'fundador', não permite cupom
+      if (plan_id.includes('oferta') || plan_id.includes('fundador')) {
+        return new Response(JSON.stringify({ valid: false, reason: "Este plano já possui desconto promocional ativo e não aceita cupons adicionais" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-    } catch (e) {
-      console.error("[coupon-applied email] failed", e);
+
+      if (allowedIds.length > 0 && !allowedIds.includes(plan_id)) {
+        return new Response(JSON.stringify({ valid: false, reason: "Cupom não válido para este plano" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     return new Response(JSON.stringify({
       valid: true,
       discount_type: coupon.discount_type,
       discount_value: coupon.discount_value,
+      code: coupon.code,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error: unknown) {
