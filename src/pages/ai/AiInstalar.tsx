@@ -58,8 +58,8 @@ export default function AiInstalar() {
               Versão 1.1.154 | Após a geração do build da STHia, baixe o arquivo APK atualizado abaixo.
             </p>
               <Button asChild variant="outline" size="sm" className="w-full sm:w-auto text-[11px] h-8 rounded-xl border-primary/20 hover:bg-primary/10">
-                <a href={APK_URL} rel="noopener noreferrer" target="_blank">
-                  <Download className="mr-1.5 h-3 w-3" /> Link Direto (Build Atualizado)
+                <a href={APK_URL} rel="noopener noreferrer">
+                  <Download className="mr-1.5 h-3 w-3" /> Link Direto (Build Local)
                 </a>
               </Button>
           </div>
