@@ -599,6 +599,26 @@ export default function AiDashboard() {
         </div>
       )}
 
+      {(!profile?.answers?.physical_activity_level || profile?.answers?.activity_type === "nenhuma") && (
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 ring-1 ring-amber-500/10">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-500">
+            <Dumbbell className="h-5 w-5" />
+          </div>
+          <div className="flex-1 space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Atenção aos macros</p>
+            <p className="text-sm font-medium leading-snug text-muted-foreground/90">
+              Para maior precisão dos macros é necessário cadastrar atividade física, assim evitar geração de cardápio equivocada.
+            </p>
+            <p className="text-[11px] font-semibold text-amber-600/80">
+              Dica: comece pela atividade física para melhor contagem de macros.
+            </p>
+            <Link to="/ai/app/treino" className="inline-flex items-center gap-1.5 text-xs font-bold text-ocean-teal hover:underline mt-2">
+              Cadastrar atividade física <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {!subscription && !offer && (
         <Card className="mb-4 flex flex-col gap-3 border-primary/30 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
