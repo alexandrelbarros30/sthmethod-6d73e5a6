@@ -357,7 +357,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             icon={<Target className="h-4 w-4" />}
             title="Metas e macros"
             description="Objetivo, kcal, refeições e macronutrientes"
-            pending={!objective ? 1 : 0}
+            pending={!objective || !meals ? 1 : 0}
             onSave={saveGroup}
             defaultOpen={Boolean(focusKey) && ["diet_objective", "diet_kcal", "diet_meals", "diet_protein", "diet_carbs", "diet_fat"].includes(focusKey)}
           >
