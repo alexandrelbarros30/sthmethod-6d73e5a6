@@ -90,12 +90,11 @@ export default function AiModule() {
       );
       return;
     }
-    if (kind === "workout") {
-      setRequestOpen(true);
+    // Para itens de briefing, garante que o formulário de solicitação esteja aberto
+    setRequestOpen(true);
+    setTimeout(() => {
       focusField(`brief-${item.key}`);
-      return;
-    }
-    navigate(`/ai/app/treino?solicitar=1&campo=${item.key}&next=${encodeURIComponent(currentHref)}`);
+    }, 100);
   }
 
   const requestForm = (

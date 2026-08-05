@@ -73,7 +73,8 @@ export default function AiProfile() {
     if (p) {
       const a = ((p.answers ?? {}) as Record<string, string>);
       setSavedAnswers(a);
-      setForm({
+      setForm((prev) => ({
+        ...prev,
         ...EMPTY,
         full_name: p.full_name ?? "", age: p.age?.toString() ?? "", sex: p.sex ?? "",
         weight_kg: p.weight_kg?.toString() ?? "", height_cm: p.height_cm?.toString() ?? "",
@@ -81,7 +82,7 @@ export default function AiProfile() {
         comorbidities: (p as any).comorbidities ?? "",
         medications: (p as any).medications ?? "",
         ...a,
-      });
+      }));
     }
     setSub((s as any) ?? null);
     setFiles(((f ?? []) as unknown) as AiFile[]);

@@ -65,7 +65,8 @@ export default function AiOnboarding() {
       const { data } = await supabase.from("ai_app_profiles").select("*").eq("user_id", user.id).maybeSingle();
       if (data) {
         const a = (data.answers ?? {}) as Record<string, string>;
-        setForm({
+        setForm((prev) => ({
+          ...prev,
           ...EMPTY,
           full_name: data.full_name ?? "",
           age: data.age?.toString() ?? "",
@@ -77,7 +78,7 @@ export default function AiOnboarding() {
           comorbidities: (data as any).comorbidities ?? "",
           medications: (data as any).medications ?? "",
           ...a,
-        });
+        }));
         setStep(data.phase1_complete ? 1 : 0);
       } else {
         const { data: authUser } = await supabase.auth.getUser();
