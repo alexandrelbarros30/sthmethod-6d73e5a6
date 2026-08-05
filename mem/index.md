@@ -9,6 +9,7 @@
 - **Vendas/Comercial**: Para NOVOS leads, IA Comercial ancora o **Plano 90D (Trimestral)** como recomendação ideal (12 semanas = ciclo biológico completo do método), com abordagem psicanalítica/consultiva — sem esconder demais planos. Não aplicar a aluno ativo.
 - **Dados/Ecossistema**: Banco único STH METHOD. Cadastro mestre = profiles.user_id. Módulos (STH AI, Coach, CAS) nunca duplicam cadastro nem histórico.
 - **Security/RLS**: Use RLS `TO authenticated` for PII. Use decoupled `.in()` queries to avoid 400 errors on joins.
+- **Privacidade/Canais**: PROIBIDO ABSOLUTO compartilhar o número do Nutri (21 99898-4153) com qualquer pessoa (Lead/Ativo/Inativo). Alunos ativos já são atendidos lá automaticamente. Leads/Inativos -> Comercial (21 99849-6289).
 - **Data Mutability**: Prefer UPSERT with explicit `user_id`. Use 500ms delay & 5 retries for Auth-Profile sync.
 - **Edge Functions**: Always use `SUPABASE_ANON_KEY` via `Deno.env.get`, NOT publishable keys.
 - **UI Architecture**: Render functions must be outside main components to prevent focus loss. Global logout redirects to `/`.
