@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 import { Network, Dumbbell, Apple, Activity } from "lucide-react";
-import logoMasterAsset from "@/assets/logo-master-v1.png.asset.json";
+import logoMasterAsset from "@/assets/ai-icon-master.png.asset.json";
 
 export default function AiIconOptions() {
   const options = [
