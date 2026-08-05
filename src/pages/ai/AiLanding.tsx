@@ -68,7 +68,6 @@ export default function AiLanding() {
 
           <div className="flex items-center gap-4 lg:gap-8">
             <div className="hidden md:flex items-center gap-6">
-              <Link to="/ai/sobre" className="text-sm font-medium text-white/60 hover:text-white transition-colors">Tecnologia</Link>
               <Link to="#planos" onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' });
@@ -76,9 +75,6 @@ export default function AiLanding() {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button asChild variant="ghost" size="sm" className="hidden sm:flex text-white/70 hover:text-white hover:bg-white/5 rounded-full">
-                <Link to="/ai/login">Entrar</Link>
-              </Button>
               <Button asChild size="sm" className="rounded-full bg-white text-black hover:bg-white/90 px-5 font-bold">
                 <Link to="/ai/onboarding">Começar</Link>
               </Button>
