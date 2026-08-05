@@ -678,31 +678,31 @@ const AdminDietAI = () => {
             <div className="space-y-6">
               <section>
                 <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2 uppercase tracking-wider">
-                  <Wand2 className="w-4 h-4" /> Inteligência de Dados (Macros & Fontes)
+                  <Wand2 className="w-4 h-4" /> Inteligência de Dados (Protocolo FatSecret Prioritário)
                 </h4>
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed space-y-4">
                   <div>
                     <p className="font-bold text-primary mb-1">1. Como é feita a contagem de Macros e Kcal?</p>
                     <p className="text-foreground/80">
-                      O processo ocorre em duas camadas de validação:
-                      <br />• <b>Camada 1 (Geração):</b> A STHia estima os macros baseada no seu treinamento e nas diretrizes do sistema (Atwater 4/4/9) ao gerar o JSON inicial.
-                      <br />• <b>Camada 2 (Auditoria/Análise):</b> Após a geração, o sistema utiliza a função <code>analyze-diet</code>. Ela extrai os alimentos reais do texto e recalcula os valores usando pesos padrão (ex: 1 ovo = 50g) e as tabelas oficiais (TACO/TBCA). Se houver divergência maior que 10%, o sistema força uma re-geração.
+                      O processo ocorre em duas camadas, agora com prioridade externa:
+                      <br />• <b>Camada 1 (Geração):</b> A STHia estima os macros baseada no seu treinamento ao gerar o JSON inicial.
+                      <br />• <b>Camada 2 (Auditoria Prioritária):</b> Após a geração, o sistema utiliza a <b>API FatSecret como fonte primária</b>. Ela extrai os alimentos e aplica os valores da FatSecret sobre as refeições. A auditoria TACO/TBCA atua como fallback de segurança.
                     </p>
                   </div>
                   <div>
                     <p className="font-bold text-primary mb-1">2. Apresentação de Alimentos e Substituições</p>
                     <p className="text-foreground/80">
-                      A STHia é instruída a retornar sempre a <b>Opção BASE</b> (que define os macros da refeição) seguida de substituições equivalentes. 
-                      <br />• <b>JSON Engine:</b> Gera exatamente 4 opções (1 Base + 3 Substituições).
-                      <br />• <b>Doutrina Original:</b> Prevê a Base + 5 substituições.
+                      A STHia retorna a <b>Opção BASE</b> seguida de substituições equivalentes. 
+                      <br />• <b>JSON Engine:</b> Gera exatamente 4 opções.
+                      <br />• <b>FatSecret Priority:</b> Os macros exibidos são recalibrados priorizando os dados da FatSecret para garantir precisão técnica.
                     </p>
                   </div>
                   <div>
-                    <p className="font-bold text-primary mb-1">3. Tabela TACO vs FatSecret (Possíveis Falhas)</p>
+                    <p className="font-bold text-primary mb-1">3. FatSecret vs Tabela TACO (Hierarquia de Consulta)</p>
                     <p className="text-foreground/80">
-                      • <b>Tabela TACO (Prioridade Máxima):</b> O sistema possui uma biblioteca interna com os valores exatos da TACO/TBCA para alimentos básicos brasileiros (arroz, feijão, frango, etc). Esta consulta é local e <b>não falha</b>.
-                      <br />• <b>FatSecret API:</b> Usada apenas para alimentos industriais ou marcas específicas. 
-                      <br />• <b>Diagnóstico de Falha:</b> Se a API FatSecret falhar (timeout ou erro de rede) ou se o alimento não for encontrado, o sistema recorre ao conhecimento geral da IA. A auditoria sinaliza se os valores não puderem ser ratificados pelas tabelas oficiais.
+                      • <b>FatSecret API (Prioridade):</b> Agora é a fonte principal de consulta. Todos os itens identificados são validados primeiro contra esta base.
+                      <br />• <b>Tabela TACO (Secundária/Fallback):</b> Utilizada para itens naturais brasileiros ou quando a FatSecret não retorna dados conclusivos.
+                      <br />• <b>Diagnóstico:</b> O sistema agora permite que a FatSecret sobrescreva estimativas da IA mesmo com divergências, priorizando a precisão da base de dados externa solicitada.
                     </p>
                   </div>
                 </div>
