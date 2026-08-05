@@ -123,7 +123,7 @@ export default function AiModule() {
       <Card className="space-y-3 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="w-full text-sm font-medium sm:w-auto sm:flex-1 sm:min-w-0">
-            Campo livre — conte os detalhes
+            {kind === "workout" ? "Detalhes do treino — campo livre" : "Campo livre — conte os detalhes"}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <AiVoiceInput onTranscribe={(t) => setInstruction((v) => appendTranscript(v, t))} />
