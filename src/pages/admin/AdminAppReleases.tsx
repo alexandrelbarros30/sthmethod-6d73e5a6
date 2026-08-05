@@ -22,9 +22,13 @@ type Release = {
   notes: string | null;
   is_current: boolean;
   released_at: string;
+  app: string;
 };
 
-const DOWNLOAD_URL = `${window.location.origin}/baixar-apk`;
+const APPS = [
+  { id: "sthmethod", label: "STH METHOD", path: "/baixar-apk" },
+  { id: "sthai", label: "STH AI", path: "/ai/instalar" },
+] as const;
 
 const humanSize = (b?: number | null) =>
   !b ? "—" : b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${(b / 1024).toFixed(0)} KB`;
@@ -32,11 +36,15 @@ const humanSize = (b?: number | null) =>
 export default function AdminAppReleases() {
   const isMobile = useIsMobile();
   const qc = useQueryClient();
+  const [app, setApp] = useState<string>("sthmethod");
   const [version, setVersion] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  const currentApp = APPS.find((a) => a.id === app) ?? APPS[0];
+  const DOWNLOAD_URL = `${window.location.origin}${currentApp.path}`;
 
   const { data: releases = [] } = useQuery({
     queryKey: ["app_releases"],
@@ -59,7 +67,7 @@ export default function AdminAppReleases() {
     setProgress(10);
     try {
       const safeVersion = version.trim().replace(/[^0-9a-zA-Z.\-_]/g, "");
-      const path = `sthmethod-${safeVersion}-${Date.now()}.apk`;
+      const path = `${app}-${safeVersion}-${Date.now()}.apk`;
       setProgress(30);
       const { error: upErr } = await supabase.storage
         .from("app-releases")
@@ -67,11 +75,12 @@ export default function AdminAppReleases() {
       if (upErr) throw upErr;
       setProgress(75);
 
-      await supabase.from("app_releases").update({ is_current: false }).eq("is_current", true);
+      await supabase.from("app_releases").update({ is_current: false }).eq("is_current", true).eq("app", app);
 
       const { data: userData } = await supabase.auth.getUser();
       const { error: insErr } = await supabase.from("app_releases").insert({
         version: safeVersion,
+        app,
         file_path: path,
         size_bytes: file.size,
         notes: notes.trim() || null,
@@ -95,7 +104,7 @@ export default function AdminAppReleases() {
   };
 
   const setCurrent = async (r: Release) => {
-    await supabase.from("app_releases").update({ is_current: false }).eq("is_current", true);
+    await supabase.from("app_releases").update({ is_current: false }).eq("is_current", true).eq("app", r.app);
     const { error } = await supabase.from("app_releases").update({ is_current: true }).eq("id", r.id);
     if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
     toast({ title: `v${r.version} agora é a versão atual` });
@@ -114,7 +123,7 @@ export default function AdminAppReleases() {
   const testDownload = async (r: Release) => {
     const { data, error } = await supabase.storage
       .from("app-releases")
-      .createSignedUrl(r.file_path, 300, { download: `sthmethod-${r.version}.apk` });
+      .createSignedUrl(r.file_path, 300, { download: `${r.app}-${r.version}.apk` });
     if (error || !data) return toast({ title: "Erro ao gerar link", variant: "destructive" });
     window.open(data.signedUrl, "_blank");
   };
@@ -133,9 +142,22 @@ export default function AdminAppReleases() {
             <Package className="w-6 h-6" /> Releases do App (APK)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Hospede o APK direto no servidor STH METHOD. A versão marcada como atual é a que
-            os alunos baixam em <code className="text-xs">/baixar-app</code>.
+            Hospede o APK direto no servidor STH METHOD. Cada app (STH METHOD e STH AI) tem sua
+            própria versão atual, que é a baixada na página pública correspondente.
           </p>
+        </div>
+
+        <div className="flex gap-2">
+          {APPS.map((a) => (
+            <Button
+              key={a.id}
+              variant={app === a.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setApp(a.id)}
+            >
+              {a.label}
+            </Button>
+          ))}
         </div>
 
         <Card>
@@ -155,7 +177,7 @@ export default function AdminAppReleases() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Upload className="w-4 h-4" /> Publicar novo APK
+              <Upload className="w-4 h-4" /> Publicar novo APK — {currentApp.label}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -197,10 +219,10 @@ export default function AdminAppReleases() {
             <CardTitle className="text-base">Histórico de versões</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {releases.length === 0 && (
+            {releases.filter((r) => (r.app || "sthmethod") === app).length === 0 && (
               <p className="text-sm text-muted-foreground">Nenhum APK publicado ainda.</p>
             )}
-            {releases.map((r) => (
+            {releases.filter((r) => (r.app || "sthmethod") === app).map((r) => (
               <div
                 key={r.id}
                 className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-card"

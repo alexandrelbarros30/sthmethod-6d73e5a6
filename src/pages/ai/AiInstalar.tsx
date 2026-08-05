@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
@@ -5,11 +6,20 @@ import { Button } from "@/components/ui/button";
 import AiLogoMark from "@/components/ai/AiLogoMark";
 import { Smartphone, Download, Share, PlusSquare, ShieldCheck, ArrowLeft } from "lucide-react";
 
-const APK_URL = "/ai/sthai.apk";
-const APK_SIZE_MB = 15; // Estimativa média para o app construído
+const APK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-apk?app=sthai`;
 
 export default function AiInstalar() {
   useSthAiTheme();
+  const [release, setRelease] = useState<{ version: string; size_bytes: number | null } | null>(null);
+
+  useEffect(() => {
+    fetch(`${APK_URL}&format=json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j?.version && setRelease({ version: j.version, size_bytes: j.size_bytes ?? null }))
+      .catch(() => {});
+  }, []);
+
+  const sizeMb = release?.size_bytes ? (release.size_bytes / 1024 / 1024).toFixed(0) : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -49,17 +59,19 @@ export default function AiInstalar() {
           </ol>
           <Button asChild className="mt-4 w-full sm:w-auto">
             <a href={APK_URL} rel="noopener noreferrer" download="sthai.apk">
-              <Download className="mr-2 h-4 w-4" /> Baixar APK do STH AI ({APK_SIZE_MB} MB)
+              <Download className="mr-2 h-4 w-4" /> Baixar APK do STH AI{sizeMb ? ` (${sizeMb} MB)` : ""}
             </a>
           </Button>
           <div className="mt-4 p-4 border border-dashed border-primary/30 rounded-2xl bg-primary/5">
-            <p className="text-xs text-primary font-medium mb-2">Instalação Direta (Experimental)</p>
+            <p className="text-xs text-primary font-medium mb-2">Instalação Direta</p>
             <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
-              Versão 1.1.154 | Após a geração do build da STHia, baixe o arquivo APK atualizado abaixo.
+              {release
+                ? `Versão ${release.version} publicada pela equipe STH METHOD.`
+                : "Nenhuma versão publicada no servidor ainda. Assim que o APK for enviado pela área admin, ele aparece aqui automaticamente."}
             </p>
               <Button asChild variant="outline" size="sm" className="w-full sm:w-auto text-[11px] h-8 rounded-xl border-primary/20 hover:bg-primary/10">
                 <a href={APK_URL} rel="noopener noreferrer">
-                  <Download className="mr-1.5 h-3 w-3" /> Link Direto (Build Local)
+                  <Download className="mr-1.5 h-3 w-3" /> Link Direto (última versão)
                 </a>
               </Button>
           </div>

@@ -16,10 +16,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const url = new URL(req.url);
+    const app = (url.searchParams.get("app") || "sthmethod").toLowerCase() === "sthai"
+      ? "sthai"
+      : "sthmethod";
+
     const { data: rel, error } = await supabase
       .from("app_releases")
-      .select("version, file_path")
+      .select("version, file_path, size_bytes, released_at")
       .eq("is_current", true)
+      .eq("app", app)
       .order("released_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -34,7 +40,7 @@ Deno.serve(async (req) => {
     const { data: signed, error: signErr } = await supabase.storage
       .from("app-releases")
       .createSignedUrl(rel.file_path, 60 * 10, {
-        download: `sthmethod-${rel.version}.apk`,
+        download: `${app}-${rel.version}.apk`,
       });
 
     if (signErr || !signed?.signedUrl) {
@@ -44,10 +50,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    const url = new URL(req.url);
     if (url.searchParams.get("format") === "json") {
       return new Response(
-        JSON.stringify({ url: signed.signedUrl, version: rel.version }),
+        JSON.stringify({
+          url: signed.signedUrl,
+          version: rel.version,
+          app,
+          size_bytes: rel.size_bytes,
+          released_at: rel.released_at,
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
