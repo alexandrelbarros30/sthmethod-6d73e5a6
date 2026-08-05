@@ -28,14 +28,14 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
     { key: "physical_activity_level", label: "Nível de atividade física (NEAT)", ok: filled(a.physical_activity_level), where: "briefing" },
     { key: "activity_type", label: "Atividade física praticada", ok: filled(a.activity_type), where: "briefing" },
     { key: "does_cardio", label: "Faz cardio?", ok: filled(a.does_cardio), where: "briefing" },
+    { key: "training_days_per_week", label: "Dias de treino por semana", ok: filled(a.training_days_per_week), where: "briefing" },
+    { key: "training_duration_minutes", label: "Duração do treino", ok: filled(a.training_duration_minutes), where: "briefing" },
+    { key: "training_intensity", label: "Intensidade do treino", ok: filled(a.training_intensity), where: "briefing" },
   ];
 
   if (kind === "workout") {
     base.push(
       { key: "training_level", label: "Nível de treino", ok: filled(p.training_level), where: "cadastro" },
-      { key: "training_days_per_week", label: "Dias de treino por semana", ok: filled(a.training_days_per_week), where: "briefing" },
-      { key: "training_duration_minutes", label: "Duração do treino", ok: filled(a.training_duration_minutes), where: "briefing" },
-      { key: "training_intensity", label: "Intensidade do treino", ok: filled(a.training_intensity), where: "briefing" },
       { key: "training_place", label: "Onde você treina", ok: filled(a.training_place), where: "briefing" },
       { key: "limitations", label: "Limitações físicas / lesões", ok: filled(p.limitations) || filled(a.limitations), where: "cadastro" },
     );
