@@ -48,7 +48,7 @@ export default function AiInstalar() {
             <li>3. Abra o app STH AI pelo ícone criado na tela inicial.</li>
           </ol>
           <Button asChild className="mt-4 w-full sm:w-auto">
-            <a href={APK_URL} rel="noopener noreferrer" target="_blank" download="sthai.apk">
+            <a href={APK_URL} rel="noopener noreferrer" download="sthai.apk">
               <Download className="mr-2 h-4 w-4" /> Baixar APK do STH AI ({APK_SIZE_MB} MB)
             </a>
           </Button>
