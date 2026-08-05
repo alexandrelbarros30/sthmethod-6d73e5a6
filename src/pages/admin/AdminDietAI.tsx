@@ -48,6 +48,22 @@ type ReviewResult = {
   _meta?: { usage?: any };
 };
 
+type DietOption = string;
+type DietMeal = {
+  meal_number: number;
+  meal_name: string;
+  options: DietOption[];
+  energy_kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+};
+type DietPlan = {
+  meals: DietMeal[];
+  total: { energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number };
+  diet_text: string;
+};
+
 type AdviceResult = {
   advice_html: string;
   key_points?: string[];

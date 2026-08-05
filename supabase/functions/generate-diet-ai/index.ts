@@ -271,7 +271,7 @@ serve(async (req) => {
                         options: { 
                           type: "array", 
                           items: { type: "string" },
-                          description: "Exatamente 4 opções (1 Base + 3 Alternativas). A primeira deve ser a BASE."
+                          description: "Exatamente 6 opções (1 Base + 5 Alternativas). A primeira deve ser a BASE."
                         },
                         energy_kcal: { type: "number" },
                         protein_g: { type: "number" },
