@@ -169,7 +169,8 @@ export default function AiLogin() {
               setLoading(true);
               try { sessionStorage.setItem("sthai_oauth_next", next); } catch {}
               const result = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: `${window.location.origin}/ai/login`,
+                redirectTo: `${window.location.origin}/ai/login`,
+                skipBrowserRedirect: true,
               });
               if (result.error) {
                 toast.error("Não foi possível entrar com o Google");
