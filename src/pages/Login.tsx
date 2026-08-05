@@ -197,12 +197,14 @@ const Login = () => {
     <div className="min-h-screen bg-background text-foreground antialiased">
       <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border/40">
         <div className="max-w-6xl mx-auto px-6 h-11 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/ai/home" className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Início</span>
           </Link>
           <span className="text-[12px] font-semibold tracking-tight">STH METHOD</span>
-          <span className="w-12" />
+          <Link to="/ai/login?next=/ai/app" className="text-[11px] font-bold text-primary hover:underline uppercase tracking-wider">
+            Ir para STH AI
+          </Link>
         </div>
       </header>
 

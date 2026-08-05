@@ -105,9 +105,14 @@ export default function Questionario() {
       <nav className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-[11px] font-medium tracking-[0.2em] uppercase text-foreground">STH</Link>
-          <Link to="/login">
-            <Button variant="outline" size="sm">Acessar Plataforma</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link to="/ai/login?next=/ai/app">
+              <Button variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/5">Acessar STH AI</Button>
+            </Link>
+            <Link to="/login">
+              <Button variant="ghost" size="sm">Plataforma STH</Button>
+            </Link>
+          </div>
         </div>
       </nav>
 
