@@ -117,8 +117,8 @@ const FIELDS: Field[] = [
     ],
   },
   {
-    key: "injury_area",
-    label: "Alguma região sensível?",
+    key: "limitations",
+    label: "Limitações físicas / lesões",
     options: [
       { value: "nenhuma", label: "Nenhuma" },
       { value: "joelho", label: "Joelho" },
@@ -126,6 +126,7 @@ const FIELDS: Field[] = [
       { value: "ombro", label: "Ombro" },
       { value: "punho_cotovelo", label: "Punho / cotovelo" },
       { value: "quadril", label: "Quadril" },
+      { value: "outra", label: "Outra (especificada no perfil)" },
     ],
   },
 ];
@@ -169,9 +170,9 @@ const GROUPS: { id: string; title: string; description: string; icon: JSX.Elemen
   {
     id: "contexto",
     title: "Local e limitações",
-    description: "Onde treina e regiões sensíveis",
+    description: "Onde treina e limitações físicas",
     icon: <MapPin className="h-4 w-4" />,
-    keys: ["training_place", "injury_area"],
+    keys: ["training_place", "limitations"],
   },
 ];
 
@@ -230,10 +231,14 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
     
     const currentAnswers = (profile.answers ?? {}) as Record<string, string>;
     const newAnswers = { ...currentAnswers, ...values };
-    
+
+    // Sincroniza campos que existem tanto no perfil (top-level) quanto no answers (JSON)
+    const updates: any = { answers: newAnswers };
+    if (values.limitations) updates.limitations = values.limitations;
+
     const { error } = await supabase
       .from("ai_app_profiles")
-      .update({ answers: newAnswers })
+      .update(updates)
       .eq("user_id", profile.user_id);
       
     setSavingRoutine(false);
