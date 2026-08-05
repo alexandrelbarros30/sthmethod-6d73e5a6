@@ -158,6 +158,8 @@ const GROUPS: { id: string; title: string; description: string; icon: JSX.Elemen
       "training_days_per_week",
       "training_duration_minutes",
       "training_intensity",
+      "training_place",
+      "limitations"
     ],
   },
   {
@@ -166,13 +168,6 @@ const GROUPS: { id: string; title: string; description: string; icon: JSX.Elemen
     description: "Frequência, duração e intensidade do cardio",
     icon: <HeartPulse className="h-4 w-4" />,
     keys: ["does_cardio", "cardio_days_per_week", "cardio_duration_minutes", "cardio_intensity"],
-  },
-  {
-    id: "contexto",
-    title: "Local e limitações",
-    description: "Onde treina e limitações físicas",
-    icon: <MapPin className="h-4 w-4" />,
-    keys: ["training_place", "limitations"],
   },
 ];
 
