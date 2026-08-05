@@ -312,31 +312,34 @@ serve(async (req) => {
 Sua missão é gerar cardápios precisos retornando um JSON estruturado.
 
 ESTILO E CULTURA:
-- Ofereça um cardápio tipicamente BRASILEIRO (Arroz, feijão, carnes grelhadas, frutas tropicais, cuscuz, tapioca, mandioca).
+- Ofereça um cardápio tipicamente BRASILEIRO e DIVERSIFICADO (Arroz, feijão, carnes, ovos, mas também pães, whey protein, iogurtes, frutas variadas, legumes e vegetais).
+- NÃO se limite a um único alimento por refeição. Use a inteligência nutricional para combinar grupos alimentares (ex: Proteína + Carboidrato + Vegetais + Gordura Boa).
 
 REGRAS DE CONTEÚDO PARA O JSON:
 1. Para cada refeição, você deve fornecer EXATAMENTE 4 opções de alimentos.
-2. A primeira opção (índice 0 no array 'options') será a BASE.
-3. Ovos e claras de ovos DEVEM estar em UNIDADES (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
-4. Mantenha a equivalência nutricional entre as 4 opções.
-5. O JSON deve ser focado em dados puros. O backend cuidará da formatação visual (aspas, parágrafos, emojis).
+2. A primeira opção (índice 0 no array 'options') será a BASE. Ela deve ser a mais completa e balanceada.
+3. Alimentos BASE: Se a refeição pedir "Frango com Batata", a opção BASE deve conter ambos, não apenas um deles. Distribua os macros entre os componentes da BASE.
+4. Ovos e claras de ovos DEVEM estar em UNIDADES (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
+5. Mantenha a equivalência nutricional entre as 4 opções. Se a BASE tem Frango+Batata, a Opção 2 pode ter Carne+Arroz, a Opção 3 Peixe+Mandioca, etc.
+6. O JSON deve ser focado em dados puros. O backend cuidará da formatação visual (aspas, parágrafos, emojis).
 
 ESTRUTURA JSON (refeições):
 - meal_number: número da refeição.
 - meal_name: nome da refeição (ex: "Desjejum Metabólico"). Sem markdown.
-- options: array com exatamente 4 strings (Opção BASE + 3 Alternativas).
-- energy_kcal, protein_g, carbs_g, fat_g: macros da ALIMENTAÇÃO BASE.
+- options: array com exatamente 4 strings (Opção BASE + 3 Alternativas). Cada string pode conter múltiplos alimentos combinados (ex: "200g de Frango + 150g de Arroz + Salada").
+- energy_kcal, protein_g, carbs_g, fat_g: macros TOTAIS da ALIMENTAÇÃO BASE (soma de todos os itens da primeira opção).
 
 IMPORTANTE: 
 - Retorne apenas o JSON via ferramenta 'return_diet'.
 - Garanta que as metas nutricionais sejam respeitadas rigorosamente.
-- Priorize alimentos brasileiros e preparações simples.
+- Diversifique os alimentos: use pães, aveia, frutas, laticínios e suplementos quando apropriado ao objetivo.
 
 REGRAS CRÍTICAS:
-1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
-2. O total calórico e macros no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.
-3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas.
-4. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
+1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional. Cada opção deve ser uma refeição COMPLETA e não apenas um item isolado.
+2. O total calórico e macros no JSON devem considerar a SOMA de todos os itens da ALIMENTAÇÃO BASE daquela refeição.
+3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas, distribuindo os macros de forma inteligente entre carboidratos e gorduras.
+4. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais. Não gere refeições mono-alimento (apenas frango ou apenas ovo).
+5. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
 5. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
 6. NÃO retorne erros genéricos.
 
