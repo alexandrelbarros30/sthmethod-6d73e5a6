@@ -269,22 +269,63 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
     toast.success("Rotina atualizada — a IA já usa esses dados na próxima geração.");
   }
 
-  function handleSelect(key: string, v: string) {
-    setValues((s) => ({ ...s, [key]: v }));
+  async function handleSelect(key: string, v: string) {
+    const newValues = { ...values, [key]: v };
+    setValues(newValues);
     
     // Atualiza os macros automaticamente se o campo alterado for um que impacta o cálculo
     const impactFields = ["objective", "physical_activity_level", "activity_type", "training_days_per_week", 
                          "training_duration_minutes", "training_intensity", "does_cardio", 
                          "cardio_days_per_week", "cardio_duration_minutes", "cardio_intensity"];
     
-    if (impactFields.includes(key)) {
-      // Pequeno atraso para garantir que a atualização do perfil no Supabase (que acontece no useEffect abaixo)
-      // seja processada e reflita no cálculo do GET na tela de cardápio quando o aluno trocar de aba.
-      // O briefing de cardápio já recalcula via useMemo, mas aqui forçamos a atualização no banco.
-      console.log(`[STHia] Campo de impacto ${key} alterado para ${v}. Recalculando macros...`);
+    if (impactFields.includes(key) && profile) {
+      const { calculateMacros } = await import("@/lib/macro-calculator");
+      const { 
+        objective, physical_activity_level, activity_type, training_days_per_week,
+        training_duration_minutes, training_intensity, does_cardio,
+        cardio_days_per_week, cardio_duration_minutes, cardio_intensity
+      } = newValues;
+
+      const result = calculateMacros({
+        gender: profile.sex as any || "masculino",
+        age: profile.age || 30,
+        weight: profile.weight_kg || 70,
+        height: profile.height_cm || 170,
+        objective: objective || profile.goal || "manter_peso",
+        physicalActivityLevel: physical_activity_level,
+        activityType: activity_type || "nenhuma",
+        trainingDaysPerWeek: Number(training_days_per_week),
+        trainingDurationMinutes: Number(training_duration_minutes),
+        trainingIntensity: training_intensity,
+        doesCardio: does_cardio === "sim",
+        cardioDaysPerWeek: Number(cardio_days_per_week),
+        cardioDurationMinutes: Number(cardio_duration_minutes),
+        cardioIntensity: cardio_intensity,
+      });
+
+      console.log(`[STHia] Recalculando macros após alterar ${key}:`, result);
+
+      // Persiste os novos macros no banco
+      const currentAnswers = (profile.answers ?? {}) as Record<string, string>;
+      const newAnswers = { 
+        ...currentAnswers, 
+        ...newValues,
+        daily_calories: String(result.dailyCalories),
+        protein_target: String(result.proteinG),
+        carbs_target: String(result.carbsG),
+        fat_target: String(result.fatG)
+      };
+
+      await supabase
+        .from("ai_app_profiles")
+        .update({ answers: newAnswers })
+        .eq("user_id", profile.user_id);
+      
+      profile.answers = newAnswers;
+      toast.success("Macros e calorias atualizados com base na nova rotina.");
     }
 
-    if ((key === "does_cardio" && v === "sim") || (key === "cardio_duration_minutes" && values.does_cardio === "sim")) {
+    if ((key === "does_cardio" && v === "sim") || (key === "cardio_duration_minutes" && newValues.does_cardio === "sim")) {
       setCardioDialog(true);
     }
   }
