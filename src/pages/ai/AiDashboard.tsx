@@ -450,6 +450,20 @@ export default function AiDashboard() {
 
   const nodes: Record<string, React.ReactNode> = {
     "next-meal": <AiNextMealCard diet={latestOf(generations, "diet")} />,
+    "/ai/historico": (
+      <Link to="/ai/historico" className={`${tile} col-span-2 flex items-center justify-between gap-3 sm:col-span-1 lg:col-span-2`}>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
+            <History className="h-4.5 w-4.5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate">Histórico STHIA</p>
+            <p className="text-xs text-muted-foreground truncate">{generations.length} gerações salvas</p>
+          </div>
+        </div>
+        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
+    ),
     workout: (
       <AiWorkoutReminderCard
           workout={latestOf(generations, "workout")}
