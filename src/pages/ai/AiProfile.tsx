@@ -54,6 +54,7 @@ export default function AiProfile() {
   const [files, setFiles] = useState<AiFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [data, setData] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [showFicha, setShowFicha] = useState(false);
   const [showRotina, setShowRotina] = useState(false);
@@ -71,11 +72,13 @@ export default function AiProfile() {
         .eq("user_id", user.id).eq("kind", "exam").order("created_at", { ascending: false }),
     ]);
     if (p) {
+      setData(p);
       const a = ((p.answers ?? {}) as Record<string, string>);
       setSavedAnswers(a);
       setForm((prev) => ({
         ...prev,
-        ...EMPTY,
+        // Auditoria: NO RESET. Mantém os dados locais do prev, limpa apenas se explicitamente vindo do banco.
+        ...prev,
         full_name: p.full_name ?? "", age: p.age?.toString() ?? "", sex: p.sex ?? "",
         weight_kg: p.weight_kg?.toString() ?? "", height_cm: p.height_cm?.toString() ?? "",
         goal: p.goal ?? "", training_level: p.training_level ?? "",
@@ -119,18 +122,13 @@ export default function AiProfile() {
     setSaving(true);
     const { error } = await supabase.from("ai_app_profiles").upsert({
       user_id: user.id,
-      full_name: form.full_name,
+      ...form, // Auditoria: Espalha campos do formulário (full_name, age, sex, weight, height, goal, training_level, comorbidities, medications)
       age: Number(form.age) || null,
-      sex: form.sex || null,
       weight_kg: Number(form.weight_kg) || null,
       height_cm: Number(form.height_cm) || null,
-      goal: form.goal || null,
-      training_level: form.training_level || null,
-      comorbidities: form.comorbidities || null,
-      medications: form.medications || null,
       answers: {
-        ...savedAnswers, // Auditoria: Preserva campos que não estão neste formulário
-        routine: form.routine,
+        ...(data?.answers ?? {}), // Auditoria: Preserva campos que não estão neste formulário
+        ...form,
         meals_per_day: form.meals_per_day,
         restrictions: form.restrictions,
         comorbidities: form.comorbidities,

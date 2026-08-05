@@ -329,9 +329,9 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
                 tip="Kcal-alvo ajustada ao seu objetivo: levemente abaixo do GET para perda de gordura, acima para ganho de massa ou igual para manutenção."
               />
               {[
-                { label: "Proteína", value: `${macros.proteinG} g` },
-                { label: "Carboidrato", value: `${macros.carbsG} g` },
-                { label: "Gordura", value: `${macros.fatG} g` },
+                { label: "Proteína", value: protein ? `${protein} g` : `${macros.proteinG} g` },
+                { label: "Carboidrato", value: carbs ? `${carbs} g` : `${macros.carbsG} g` },
+                { label: "Gordura", value: fat ? `${fat} g` : `${macros.fatG} g` },
               ].map((m) => (
                 <div key={m.label} className="rounded-lg border border-border/60 p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</p>
