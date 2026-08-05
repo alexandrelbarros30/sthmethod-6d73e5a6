@@ -82,6 +82,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
   const [restrictions, setRestrictions] = useState("");
   const [preferences, setPreferences] = useState("");
   const seeded = useRef<string | null>(null);
+  const focusKey = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("campo") ?? "" : "";
 
   async function saveGroup() {
     if (!profile?.user_id) return;
@@ -358,6 +359,7 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
             description="Objetivo, kcal, refeições e macronutrientes"
             pending={!objective ? 1 : 0}
             onSave={saveGroup}
+            defaultOpen={Boolean(focusKey) && ["diet_objective", "diet_kcal", "diet_meals", "diet_protein", "diet_carbs", "diet_fat"].includes(focusKey)}
           >
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">

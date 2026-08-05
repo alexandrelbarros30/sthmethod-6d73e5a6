@@ -52,6 +52,8 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
     base.push(
       { key: "diet_objective", label: "Objetivo do cardápio", ok: filled(a.diet_objective), where: "briefing" },
       { key: "diet_meals", label: "Refeições por dia", ok: filled(a.diet_meals), where: "briefing" },
+      { key: "diet_restrictions", label: "Restrições alimentares", ok: filled(a.diet_restrictions), where: "briefing" },
+      { key: "diet_preferences", label: "Preferências alimentares", ok: filled(a.diet_preferences), where: "briefing" },
     );
   }
 
