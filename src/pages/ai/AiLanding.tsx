@@ -9,17 +9,17 @@ const PILLARS = [
   {
     icon: Salad,
     title: "Cardápio Inteligente",
-    text: "Planejamento alimentar de 30 dias com macros, porções e substituições equivalentes.",
+    text: "Personalizado por objetivo, rotina e preferências. Inclui até 3 revisões por ciclo de 30 dias.",
   },
   {
     icon: Dumbbell,
-    title: "Treino Inteligente",
-    text: "Programa periodizado conforme seu nível, equipamentos e tempo disponível.",
+    title: "Treino Periodizado",
+    text: "Musculação estruturada por nível e equipamentos. Inclui até 3 revisões por ciclo de 30 dias.",
   },
   {
     icon: LineChart,
     title: "Central de Análise",
-    text: "Relatório de evolução a cada 60 dias lendo peso, medidas e aderência.",
+    text: "Histórico de exames, comparação de marcadores e análise inteligente de evolução.",
   },
 ];
 
@@ -136,17 +136,61 @@ export default function AiLanding() {
       </section>
 
       {/* Plans */}
-      <section className="relative z-10 mx-auto max-w-6xl px-6 pb-16 pt-8">
-        <h2 className="text-center text-2xl font-semibold tracking-tight">Planos</h2>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section id="planos" className="relative z-10 mx-auto max-w-6xl px-6 pb-16 pt-8">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-semibold tracking-tight">Escolha seu Plano</h2>
+          <p className="mt-2 text-muted-foreground">A nova era do acompanhamento inteligente</p>
+          
+          <div className="mt-6 inline-flex flex-col items-center gap-2 rounded-2xl bg-primary/10 border border-primary/20 px-6 py-4">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">Cupom de Lançamento</span>
+            <span className="text-2xl font-black tracking-tighter text-primary">STH10AI</span>
+            <span className="text-[10px] text-primary/80 font-medium">10% OFF no Pix à vista (Planos Oficiais)</span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {AI_PLANS.map((plan) => (
             <div
               key={plan.id}
-              className="rounded-3xl border border-border/40 bg-card/60 p-6 text-center backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:bg-card"
+              className={`relative overflow-hidden rounded-3xl border p-8 transition-all duration-300 hover:-translate-y-1 ${
+                plan.id.includes('oferta') || plan.id.includes('fundador') 
+                ? 'border-primary/40 bg-primary/5 shadow-lg shadow-primary/5' 
+                : 'border-border/40 bg-card/60'
+              }`}
             >
-              <p className="text-sm text-muted-foreground">{plan.label}</p>
-              <p className="mt-2 text-2xl font-semibold">{plan.price}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{plan.note}</p>
+              {plan.id.includes('fundador') && (
+                <div className="absolute -right-12 top-6 rotate-45 bg-primary px-12 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow-sm">
+                  Exclusivo
+                </div>
+              )}
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{plan.label}</p>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold tracking-tight">{plan.price}</span>
+                <span className="text-sm text-muted-foreground">/{plan.id.includes('anual') ? 'ano' : plan.id.includes('trimestral') ? 'trimestre' : 'mês'}</span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{plan.note}</p>
+              
+              <Button asChild className="mt-8 w-full rounded-2xl py-6 font-semibold" variant={plan.id.includes('fundador') ? "default" : "outline"}>
+                <Link to={`/ai/onboarding?plan=${plan.id}`}>Selecionar</Link>
+              </Button>
+
+              <ul className="mt-8 space-y-3 text-left">
+                <li className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ArrowRight className="h-3 w-3 text-primary" /> Cardápio Inteligente
+                </li>
+                <li className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ArrowRight className="h-3 w-3 text-primary" /> Treino Periodizado
+                </li>
+                <li className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ArrowRight className="h-3 w-3 text-primary" /> STH FOOD AI (Foto/Áudio/Texto)
+                </li>
+                <li className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ArrowRight className="h-3 w-3 text-primary" /> Central de Análise
+                </li>
+                <li className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ArrowRight className="h-3 w-3 text-primary" /> Suporte a Wearables
+                </li>
+              </ul>
             </div>
           ))}
         </div>
