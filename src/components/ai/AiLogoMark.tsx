@@ -16,7 +16,7 @@ export default function AiLogoMark({
       className={cn("grid shrink-0 place-items-center overflow-hidden rounded-2xl", className)}
     >
       <img
-        src="/pwa-ai-192.png?v=2"
+        src="/logo-master-v1.svg?v=1"
         alt="STH AI"
         className={cn("h-full w-full object-cover", iconClassName)}
         loading="eager"
