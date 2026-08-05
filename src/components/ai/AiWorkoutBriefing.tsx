@@ -271,6 +271,19 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
 
   function handleSelect(key: string, v: string) {
     setValues((s) => ({ ...s, [key]: v }));
+    
+    // Atualiza os macros automaticamente se o campo alterado for um que impacta o cálculo
+    const impactFields = ["objective", "physical_activity_level", "activity_type", "training_days_per_week", 
+                         "training_duration_minutes", "training_intensity", "does_cardio", 
+                         "cardio_days_per_week", "cardio_duration_minutes", "cardio_intensity"];
+    
+    if (impactFields.includes(key)) {
+      // Pequeno atraso para garantir que a atualização do perfil no Supabase (que acontece no useEffect abaixo)
+      // seja processada e reflita no cálculo do GET na tela de cardápio quando o aluno trocar de aba.
+      // O briefing de cardápio já recalcula via useMemo, mas aqui forçamos a atualização no banco.
+      console.log(`[STHia] Campo de impacto ${key} alterado para ${v}. Recalculando macros...`);
+    }
+
     if ((key === "does_cardio" && v === "sim") || (key === "cardio_duration_minutes" && values.does_cardio === "sim")) {
       setCardioDialog(true);
     }
