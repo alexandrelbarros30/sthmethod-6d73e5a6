@@ -542,10 +542,11 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
 
   console.log(`Subscription activated for user ${payment.user_id}, plan ${payment.plan_id}, ${durationDays} days`);
 
-  // Espelha vencimento no SuperCoach.
+  // Espelha vencimento e ativa o aluno no SuperCoach.
   triggerSupercoachSync({
     userId: payment.user_id,
     expiresDate: endDate.toISOString().split("T")[0],
+    status: 2, // Ativo
   }).catch(() => {});
 
   // Self-heal: mark onboarding_complete=true once the student has a paid

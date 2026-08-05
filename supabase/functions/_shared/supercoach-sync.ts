@@ -6,6 +6,7 @@ export async function triggerSupercoachSync(params: {
   email?: string | null;
   name?: string | null;
   expiresDate: string; // YYYY-MM-DD
+  status?: number; // 2 = Ativo, 3 = Bloqueado
 }): Promise<void> {
   try {
     const url = Deno.env.get('SUPABASE_URL');
@@ -53,7 +54,13 @@ export async function triggerSupercoachSync(params: {
         apikey: serviceKey,
         Authorization: `Bearer ${serviceKey}`,
       },
-      body: JSON.stringify({ action: 'update', email, name, expiresDate: params.expiresDate }),
+      body: JSON.stringify({ 
+        action: 'update', 
+        email, 
+        name, 
+        expiresDate: params.expiresDate,
+        status: params.status || 2 // Default to 2 (Active) when syncing
+      }),
     });
     const text = await res.text();
     console.log('[supercoach-sync] result', res.status, text.slice(0, 300));

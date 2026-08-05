@@ -272,6 +272,7 @@ REGRAS DE VERIFICAÇÃO:
           triggerSupercoachSync({
             userId,
             expiresDate: endDate.toISOString().split("T")[0],
+            status: 2, // Ativo
           }).catch(() => {});
         }
       } catch {

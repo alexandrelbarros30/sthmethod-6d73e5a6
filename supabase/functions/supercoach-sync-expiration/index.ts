@@ -74,13 +74,14 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}))
-    let { action, email, name, expiresDate, userId, password } = body as {
+    let { action, email, name, expiresDate, userId, password, status } = body as {
       action: 'search' | 'update' | 'create' | 'set_password'
       email?: string
       name?: string
       expiresDate?: string // YYYY-MM-DD
       userId?: string      // for action=create
       password?: string    // for action=create (fallback '123456')
+      status?: number      // for update/create (2=Active, 3=Blocked)
     }
 
     if (!action) throw new Error('action é obrigatório (search | update | create)')
@@ -199,7 +200,14 @@ Deno.serve(async (req) => {
 
       // POST expects a single object (server reads $data['email']).
       // PUT expects an array of existing customers (needs 'id').
-      let created = await fetch(ACCOUNT_URL, { method: 'POST', headers: auth, body: JSON.stringify(payloadObj) })
+      let created = await fetch(ACCOUNT_URL, { 
+        method: 'POST', 
+        headers: auth, 
+        body: JSON.stringify({
+          ...payloadObj,
+          status: status || 2 // 2=Active, 3=Blocked
+        }) 
+      })
       let createdText = await created.text()
       if (!created.ok) {
         // Fallback: some tenants accept an array on POST
@@ -281,7 +289,11 @@ Deno.serve(async (req) => {
     }
 
     const previous = found.match.premium_expires_date
-    const payload = [{ ...found.match, premium_expires_date: expiresDate }]
+    const payload = [{ 
+      ...found.match, 
+      premium_expires_date: expiresDate,
+      status: status || found.match.status // Update status if provided, else keep current
+    }]
     const upd = await fetch(ACCOUNT_URL, { method: 'PUT', headers: auth, body: JSON.stringify(payload) })
     const updText = await upd.text()
     if (!upd.ok) {

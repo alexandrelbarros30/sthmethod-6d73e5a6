@@ -1916,9 +1916,9 @@ const AdminStudents = () => {
               <Select value={subForm.status} onValueChange={(v) => setSubForm({ ...subForm, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="active">Ativo (ST Coach Liberado)</SelectItem>
                   <SelectItem value="expired">Vencido</SelectItem>
-                  <SelectItem value="suspended">Suspenso</SelectItem>
+                  <SelectItem value="suspended">Suspenso (ST Coach Bloqueado)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
