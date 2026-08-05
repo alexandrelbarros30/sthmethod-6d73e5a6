@@ -170,11 +170,11 @@ const Landing = () => {
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between">
-          <Link to="/ai/home" className="flex items-center gap-2 shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" style={{ height: `${logoSize}px` }} className="object-contain" />
             ) : (
-              <span className="text-[13px] font-semibold tracking-tight text-foreground">STH METHOD</span>
+              <span className="text-[13px] font-semibold tracking-tight text-foreground uppercase">STH METHOD</span>
             )}
           </Link>
 
@@ -221,9 +221,9 @@ const Landing = () => {
             >
               <div className="px-5 py-4 flex flex-col gap-1 text-sm max-h-[70vh] overflow-y-auto">
                 {[
-                  { href: "/ai/home", label: "Início" },
-                  { href: "/ai/login?next=/ai/app", label: "Entrar no App" },
-                  { href: "/ai/instalar", label: "Baixar App" },
+                  { href: "/", label: "Início" },
+                  { href: "/login", label: "Entrar no App" },
+                  { href: "/baixar-app", label: "Baixar App" },
                   { href: "/como-funciona", label: "Como Funciona" },
                   { href: "#resultados", label: "Resultados" },
                   { href: "#planos", label: "Planos" },
