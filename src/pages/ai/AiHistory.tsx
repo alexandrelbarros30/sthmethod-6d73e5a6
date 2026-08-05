@@ -94,6 +94,6 @@ export default function AiHistory() {
           })}
         </div>
       )}
-    </AiHistory>
+    </AiShell>
   );
 }
