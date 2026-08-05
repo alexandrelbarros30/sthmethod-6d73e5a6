@@ -136,7 +136,9 @@ export default function AiModule() {
           onChange={(e) => setInstruction(e.target.value)}
           placeholder={
             current
-              ? "O que deseja ajustar? Ex: trocar o jantar por opções mais rápidas."
+              ? kind === "workout"
+                ? "O que deseja ajustar no seu treino? Ex: priorizar ombros ou trocar exercícios."
+                : "O que deseja ajustar no cardápio? Ex: trocar o jantar por opções mais rápidas."
               : "Quer acrescentar alguma observação antes de gerar? (opcional)"
           }
         />
