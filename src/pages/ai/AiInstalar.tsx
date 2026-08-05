@@ -48,6 +48,11 @@ export default function AiInstalar() {
           O STH AI é um aplicativo próprio, separado do app STH METHOD: ícone, login e telas exclusivas.
         </p>
 
+        <div className="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs leading-relaxed">
+          <strong>Atenção APK (Android):</strong> Se o botão "Continuar com Google" não funcionar no seu celular, 
+          use a versão web diretamente pelo navegador em <Link to="/ai/app" className="underline font-bold">sthmethod.com/ai/app</Link>.
+        </div>
+
         <section className="mt-8 rounded-3xl border border-border/50 bg-card p-6 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Smartphone className="h-4 w-4 text-primary" /> Android
