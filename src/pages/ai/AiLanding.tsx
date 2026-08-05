@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, PlayCircle, ShieldCheck, Zap, Heart, Brain, Dumbbell } from "lucide-react";
+import { ChevronRight, PlayCircle, ShieldCheck, Zap, Heart, Brain, Dumbbell, Palette } from "lucide-react";
 import AiLogoMark from "@/components/ai/AiLogoMark";
+import AiIconOptions from "@/components/ai/AiIconOptions";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,7 @@ export default function AiLanding() {
           <div className="flex items-center gap-6">
             <Link to="/ai/instalar" className="text-[12px] text-white/80 hover:text-white transition-colors">App</Link>
             <Link to="/ai/assinatura" className="text-[12px] text-white/80 hover:text-white transition-colors">Planos</Link>
-            <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(!showIconOptions)} className="text-white hover:bg-white/10">
+            <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(!showIconOptions)} className="text-white hover:bg-white/10 h-8 w-8 p-0">
               <Palette className="h-4 w-4" />
             </Button>
             <Link to="/ai/login?next=/ai/app" className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-black transition-transform hover:scale-105 active:scale-95">Entrar</Link>
@@ -71,7 +72,7 @@ export default function AiLanding() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative flex min-h-[90vh] flex-col items-center justify-center pt-24 text-center">
+        <section id="visao-geral" className="relative flex min-h-[90vh] flex-col items-center justify-center pt-24 text-center">
           <div className="mx-auto max-w-4xl px-6">
             <span className="mb-4 inline-block animate-fade-in text-sm font-semibold tracking-[0.2em] text-primary uppercase opacity-0 [animation-fill-mode:forwards]">Lançamento 2026</span>
             <h1 className="animate-fade-in-up text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards]">
