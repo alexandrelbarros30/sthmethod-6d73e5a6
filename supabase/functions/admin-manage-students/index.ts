@@ -196,6 +196,32 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Trigger ST Coach sync if status is active or suspended
+      if (status === "active" || status === "suspended") {
+        try {
+          const expiresDate = String(end_date).slice(0, 10);
+          const stcoachStatus = status === "active" ? 2 : 3; // 2=Active, 3=Blocked
+          
+          const syncUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/supercoach-sync-expiration`;
+          await fetch(syncUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              "apikey": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+            },
+            body: JSON.stringify({ 
+              action: "update", 
+              userId: user_id, 
+              expiresDate, 
+              status: stcoachStatus 
+            }),
+          });
+        } catch (syncErr) {
+          console.error("ST Coach sync failed during subscription update:", syncErr);
+        }
+      }
+
       return new Response(JSON.stringify({ success: true, subscription: savedSubscription }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
