@@ -152,26 +152,28 @@ export default function AiLanding() {
           {AI_PLANS.map((plan) => (
             <div
               key={plan.id}
-              className={`relative overflow-hidden rounded-3xl border p-8 transition-all duration-300 hover:-translate-y-1 ${
+              className={`relative flex flex-col justify-between overflow-hidden rounded-3xl border p-8 transition-all duration-300 hover:-translate-y-1 ${
                 plan.id.includes('oferta') || plan.id.includes('fundador') 
                 ? 'border-primary/40 bg-primary/5 shadow-lg shadow-primary/5' 
                 : 'border-border/40 bg-card/60'
               }`}
             >
-              {plan.id.includes('fundador') && (
-                <div className="absolute -right-12 top-6 rotate-45 bg-primary px-12 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow-sm">
-                  Exclusivo
+              <div>
+                {plan.id.includes('fundador') && (
+                  <div className="absolute -right-12 top-6 rotate-45 bg-primary px-12 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow-sm">
+                    Exclusivo
+                  </div>
+                )}
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{plan.label}</p>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold tracking-tight">{plan.price}</span>
+                  <span className="text-sm text-muted-foreground">/{plan.id.includes('anual') ? 'ano' : plan.id.includes('trimestral') ? 'trimestre' : 'mês'}</span>
                 </div>
-              )}
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{plan.label}</p>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold tracking-tight">{plan.price}</span>
-                <span className="text-sm text-muted-foreground">/{plan.id.includes('anual') ? 'ano' : plan.id.includes('trimestral') ? 'trimestre' : 'mês'}</span>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{plan.note}</p>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{plan.note}</p>
               
-              <Button asChild className="mt-8 w-full rounded-2xl py-6 font-semibold" variant={plan.id.includes('fundador') ? "default" : "outline"}>
-                <Link to={`/ai/onboarding?plan=${plan.id}`}>Selecionar</Link>
+              <Button asChild className="mt-8 w-full rounded-2xl py-6 font-semibold shadow-apple-sm transition-all hover:shadow-apple-md" variant={plan.id.includes('fundador') || plan.id.includes('oferta') ? "default" : "outline"}>
+                <Link to={`/ai/assinatura?plan=${plan.id}`}>Selecionar</Link>
               </Button>
 
               <ul className="mt-8 space-y-3 text-left">
