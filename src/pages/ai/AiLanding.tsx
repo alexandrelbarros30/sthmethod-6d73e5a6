@@ -1,243 +1,251 @@
 import { Link } from "react-router-dom";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Button } from "@/components/ui/button";
-import { Salad, Dumbbell, LineChart, ShieldCheck, ArrowRight, Palette } from "lucide-react";
-import { AI_PLANS } from "@/hooks/useAiApp";
+import { ChevronRight, PlayCircle, ShieldCheck, Zap, Heart, Brain, Dumbbell, Palette } from "lucide-react";
 import AiLogoMark from "@/components/ai/AiLogoMark";
 import AiIconOptions from "@/components/ai/AiIconOptions";
-import { useState } from "react";
-
-const PILLARS = [
-  {
-    icon: Salad,
-    title: "Cardápio Inteligente",
-    text: "Personalizado por objetivo, rotina e preferências. Inclui até 3 revisões por ciclo de 30 dias.",
-  },
-  {
-    icon: Dumbbell,
-    title: "Treino Periodizado",
-    text: "Musculação estruturada por nível e equipamentos. Inclui até 3 revisões por ciclo de 30 dias.",
-  },
-  {
-    icon: LineChart,
-    title: "Central de Análise",
-    text: "Histórico de exames, comparação de marcadores e análise inteligente de evolução.",
-  },
-];
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export default function AiLanding() {
   useSthAiTheme();
+  const [isScrolled, setIsScrolled] = useState(false);
   const [showIconOptions, setShowIconOptions] = useState(false);
 
-  return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
-      {/* Background tech layer */}
-      <div className="ai-tech-grid pointer-events-none absolute inset-0 opacity-[0.05]" />
-      <div className="pointer-events-none absolute -right-[10%] -top-[10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[120px]" />
-      <div className="pointer-events-none absolute -bottom-[10%] -left-[10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[120px]" />
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-      {/* Header */}
-      <header className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2">
-          <AiLogoMark className="h-8 w-8 shadow-lg shadow-primary/25" />
-          <span className="text-sm font-semibold tracking-tight">STH METHOD AI</span>
+  return (
+    <div className="min-h-screen bg-black text-white selection:bg-primary selection:text-primary-foreground font-sans antialiased overflow-x-hidden">
+      {/* Global Navigation */}
+      <nav className={cn(
+        "fixed top-0 z-[100] w-full transition-all duration-300 border-b",
+        isScrolled ? "bg-black/80 backdrop-blur-md border-white/10" : "bg-transparent border-transparent"
+      )}>
+        <div className="mx-auto flex h-12 max-w-[1000px] items-center justify-between px-6">
+          <Link to="/ai" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+            <AiLogoMark className="h-6 w-6" />
+            <span className="text-sm font-semibold tracking-tight">STH AI</span>
+          </Link>
+          <div className="flex items-center gap-6">
+            <Link to="/ai/instalar" className="text-[12px] text-white/80 hover:text-white transition-colors">App</Link>
+            <Link to="/ai/assinatura" className="text-[12px] text-white/80 hover:text-white transition-colors">Planos</Link>
+            <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(!showIconOptions)} className="text-white hover:bg-white/10 h-8 w-8 p-0">
+              <Palette className="h-4 w-4" />
+            </Button>
+            <Link to="/ai/login?next=/ai/app" className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-black transition-transform hover:scale-105 active:scale-95">Entrar</Link>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/ai/instalar">Baixar app</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/ai/login?next=/ai/app">Entrar</Link>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(!showIconOptions)}>
-            <Palette className="h-4 w-4" />
-          </Button>
-        </div>
-      </header>
+      </nav>
 
       {showIconOptions && (
-        <div className="relative z-50 mx-auto max-w-4xl px-6 py-10 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-primary uppercase">Estudo de Identidade Visual</h2>
-              <p className="text-xs text-muted-foreground">Protótipos de Favicon e App Icon para o ecossistema STH AI</p>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-6 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-zinc-900 border border-white/10 p-10 shadow-2xl">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-primary uppercase">Estudo de Identidade Visual</h2>
+                <p className="text-xs text-muted-foreground">Protótipos de Favicon e App Icon para o ecossistema STH AI</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(false)} className="text-white">Fechar</Button>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(false)}>Fechar</Button>
+            <AiIconOptions />
           </div>
-          <AiIconOptions />
         </div>
       )}
 
-      {/* Hero */}
-      <section className="relative z-10 mx-auto max-w-6xl px-6 pb-10 pt-6 lg:pt-10">
-        <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
-          {/* Left: Visual core */}
-          <div className="relative lg:col-span-5">
-            <div className="relative mx-auto flex aspect-square w-full max-w-[420px] items-center justify-center">
-              {/* Orbital rings */}
-              <div className="absolute inset-0 rounded-full border border-primary/10 animate-spin-slow" />
-              <div className="absolute inset-8 rounded-full border border-primary/5 animate-spin-reverse" />
-
-              {/* Center core */}
-              <div className="relative rounded-[40px] bg-card p-10 shadow-apple-xl border border-border/40 group transition-all duration-500 hover:border-primary/30">
-                <div className="absolute -inset-1 rounded-[44px] bg-gradient-to-r from-primary/20 to-transparent opacity-0 blur-xl transition-opacity duration-700 group-hover:opacity-100" />
-                <div className="relative flex flex-col items-center">
-                  <AiLogoMark className="mb-5 h-24 w-24 rounded-[28px] shadow-lg shadow-primary/30 border border-white/10" />
-                  <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">System Active</span>
-                  <h2 className="text-3xl font-bold tracking-tight">STH AI</h2>
-                </div>
-              </div>
-
-              {/* Floating data points */}
-              <div className="absolute right-4 top-2 flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-1.5 shadow-apple-sm backdrop-blur-md animate-float">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">SYNC_98%</span>
-              </div>
-              <div className="absolute bottom-16 left-0 flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-1.5 shadow-apple-sm backdrop-blur-md animate-float [animation-delay:1s]">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">LATENCY_2MS</span>
-              </div>
-            </div>
+      {/* Sub-navigation (Product specific) */}
+      <div className="sticky top-12 z-[90] h-12 w-full border-b border-white/10 bg-black/60 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-[1000px] items-center justify-between px-6">
+          <h2 className="text-lg font-semibold tracking-tight">STH AI</h2>
+          <div className="flex items-center gap-4 text-[11px] font-medium text-white/70">
+            <a href="#visao-geral" className="hover:text-primary transition-colors">Visão Geral</a>
+            <a href="#recursos" className="hover:text-primary transition-colors">Recursos</a>
+            <Link to="/ai/onboarding" className="rounded-full bg-primary px-3 py-1 text-white transition-transform hover:scale-105">Começar</Link>
           </div>
+        </div>
+      </div>
 
-          {/* Right: Content */}
-          <div className="lg:col-span-7">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 mb-5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Inteligência da metodologia</span>
-            </div>
-            <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-              O futuro do <br />
-              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                STH METHOD
-              </span>{" "}
-              é IA.
+      <main>
+        {/* Hero Section */}
+        <section id="visao-geral" className="relative flex min-h-[90vh] flex-col items-center justify-center pt-24 text-center">
+          <div className="mx-auto max-w-4xl px-6">
+            <span className="mb-4 inline-block animate-fade-in text-sm font-semibold tracking-[0.2em] text-primary uppercase opacity-0 [animation-fill-mode:forwards]">Lançamento 2026</span>
+            <h1 className="animate-fade-in-up text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards]">
+              Inteligência para o <br />
+              <span className="bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent">seu corpo.</span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-muted-foreground leading-relaxed">
-              Seu plano de nutrição e treino construído pela inteligência do STH METHOD. Um app autônomo, com a mesma
-              lógica de periodização usada na consultoria: você responde, a inteligência constrói e acompanha sua
-              evolução em ciclos.
+            <p className="mx-auto mt-8 max-w-xl animate-fade-in-up text-lg text-white/60 opacity-0 [animation-delay:400ms] [animation-fill-mode:forwards] sm:text-xl">
+              A metodologia STH METHOD agora é autônoma. Treinos, dieta e análise laboratorial em um único ecossistema movido por IA.
             </p>
-
-            {/* Pillars */}
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {PILLARS.map((p) => (
-                <article
-                  key={p.title}
-                  className="rounded-3xl border border-border/40 bg-card/70 p-5 shadow-apple-sm backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:bg-card"
-                >
-                  <div className="mb-4 grid h-10 w-10 place-items-center rounded-xl bg-muted">
-                    <p.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="text-sm font-semibold">{p.title}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{p.text}</p>
-                </article>
-              ))}
-            </div>
-
-            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="rounded-full px-8 shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
-                <Link to="/ai/onboarding">
-                  Começar agora <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+            <div className="mt-10 flex flex-col items-center justify-center gap-6 animate-fade-in-up opacity-0 [animation-delay:600ms] [animation-fill-mode:forwards] sm:flex-row">
+              <Button asChild size="lg" className="h-14 rounded-full bg-primary px-10 text-lg font-semibold text-white hover:bg-primary/90">
+                <Link to="/ai/onboarding">Comprar</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full px-8">
-                <Link to="/ai/assinatura">Ver planos</Link>
-              </Button>
+              <div className="flex items-center gap-2 group cursor-pointer">
+                <Link to="/ai/instalar" className="text-lg font-medium text-primary group-hover:underline">Saiba mais sobre o App</Link>
+                <ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Plans */}
-      <section id="planos" className="relative z-10 mx-auto max-w-6xl px-6 pb-16 pt-8">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-semibold tracking-tight">Escolha seu Plano</h2>
-          <p className="mt-2 text-muted-foreground">A nova era do acompanhamento inteligente</p>
-          
-          <div className="mt-6 inline-flex flex-col items-center gap-2 rounded-2xl bg-primary/10 border border-primary/20 px-6 py-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">Cupom de Lançamento</span>
-            <span className="text-2xl font-black tracking-tighter text-primary">STH10AI</span>
-            <span className="text-[10px] text-primary/80 font-medium">10% OFF no Pix à vista (Planos Oficiais)</span>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {AI_PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative flex flex-col justify-between overflow-hidden rounded-3xl border p-8 transition-all duration-300 hover:-translate-y-1 ${
-                plan.id.includes('oferta') || plan.id.includes('fundador') 
-                ? 'border-primary/40 bg-primary/5 shadow-lg shadow-primary/5' 
-                : 'border-border/40 bg-card/60'
-              }`}
-            >
-              <div>
-                {plan.id.includes('fundador') && (
-                  <div className="absolute -right-12 top-6 rotate-45 bg-primary px-12 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow-sm">
-                    Exclusivo
-                  </div>
-                )}
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{plan.label}</p>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold tracking-tight">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">/{plan.id.includes('anual') ? 'ano' : plan.id.includes('trimestral') ? 'trimestre' : 'mês'}</span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{plan.note}</p>
+          {/* Visual Highlight */}
+          <div className="mt-20 w-full max-w-[1200px] px-6 animate-fade-in-up opacity-0 [animation-delay:800ms] [animation-fill-mode:forwards]">
+            <div className="relative aspect-[16/9] overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
+              {/* Fallback pattern if no video */}
+              <div className="ai-tech-grid absolute inset-0 opacity-20" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <AiLogoMark className="h-40 w-40 opacity-20 blur-sm grayscale" />
               </div>
               
-              <Button asChild className="mt-8 w-full rounded-2xl py-6 font-semibold shadow-apple-sm transition-all hover:shadow-apple-md" variant={plan.id.includes('fundador') || plan.id.includes('oferta') ? "default" : "outline"}>
-                <Link to={`/ai/assinatura?plan=${plan.id}`}>Selecionar</Link>
-              </Button>
+              {/* Content overlay */}
+              <div className="absolute bottom-12 left-12 z-20 max-w-md text-left">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-xl">
+                  <PlayCircle className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold">Assista ao futuro.</h3>
+                <p className="mt-2 text-white/50">Veja como a IA STHia processa seus dados em milissegundos para criar o protocolo perfeito.</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-              <ul className="mt-8 space-y-3 text-left">
-                <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ArrowRight className="h-3 w-3 text-primary" /> Cardápio Inteligente
-                </li>
-                <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ArrowRight className="h-3 w-3 text-primary" /> Treino Periodizado
-                </li>
-                <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ArrowRight className="h-3 w-3 text-primary" /> STH FOOD AI (Foto/Áudio/Texto)
-                </li>
-                <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ArrowRight className="h-3 w-3 text-primary" /> Central de Análise
-                </li>
-                <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ArrowRight className="h-3 w-3 text-primary" /> Suporte a Wearables
-                </li>
+        {/* Feature Grid: Apple-style Bento */}
+        <section id="recursos" className="py-32">
+          <div className="mx-auto max-w-[1200px] px-6">
+            <h2 className="text-center text-4xl font-bold tracking-tight sm:text-6xl mb-20">Conheça o STH AI.</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              {/* Large Bento Card */}
+              <div className="md:col-span-8 group relative overflow-hidden rounded-[32px] bg-zinc-900 border border-white/5 p-12 transition-all hover:border-white/20">
+                <div className="relative z-10">
+                  <Zap className="mb-6 h-10 w-10 text-primary" />
+                  <h3 className="text-3xl font-bold mb-4">Motor de Decisão 2.5</h3>
+                  <p className="max-w-md text-white/50 text-lg">A STHia agora utiliza modelos de 1.5 trilhão de parâmetros para recalibrar sua dieta baseada na sua atividade real diária.</p>
+                </div>
+                <div className="absolute -right-20 -bottom-20 h-80 w-80 bg-primary/20 blur-[100px] transition-all group-hover:bg-primary/30" />
+              </div>
+
+              {/* Square Bento Card */}
+              <div className="md:col-span-4 group relative overflow-hidden rounded-[32px] bg-zinc-900 border border-white/5 p-10 transition-all hover:border-white/20">
+                <Heart className="mb-6 h-10 w-10 text-red-500" />
+                <h3 className="text-2xl font-bold mb-2">Saúde 360°</h3>
+                <p className="text-white/50">Sincronização nativa com Apple Health e Samsung Health.</p>
+              </div>
+
+              {/* Square Bento Card */}
+              <div className="md:col-span-4 group relative overflow-hidden rounded-[32px] bg-zinc-900 border border-white/5 p-10 transition-all hover:border-white/20">
+                <Brain className="mb-6 h-10 w-10 text-blue-500" />
+                <h3 className="text-2xl font-bold mb-2">Análise Visual</h3>
+                <p className="text-white/50">Tire foto dos seus exames e receba uma interpretação laboratorial imediata.</p>
+              </div>
+
+              {/* Large Bento Card */}
+              <div className="md:col-span-8 group relative overflow-hidden rounded-[32px] bg-zinc-900 border border-white/5 p-12 transition-all hover:border-white/20">
+                <div className="relative z-10">
+                  <Dumbbell className="mb-6 h-10 w-10 text-orange-500" />
+                  <h3 className="text-3xl font-bold mb-4">Treino Adaptativo</h3>
+                  <p className="max-w-md text-white/50 text-lg">Seu treino muda conforme você evolui. O volume é ajustado automaticamente pelo seu feedback de RPE.</p>
+                </div>
+                <div className="absolute right-0 top-0 h-full w-1/2 opacity-20">
+                   <div className="ai-tech-grid h-full w-full" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing/Plans: Clean Apple Card Style */}
+        <section id="planos" className="bg-zinc-950 py-32">
+          <div className="mx-auto max-w-[1000px] px-6 text-center">
+            <h2 className="text-5xl font-bold tracking-tight mb-4">Simples assim.</h2>
+            <p className="text-xl text-white/50 mb-16">Escolha o plano que melhor se adapta à sua jornada.</p>
+
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { id: 'mensal', name: 'Mensal', price: 'R$ 59,90', period: 'por mês', features: ['IA STHia Full', 'Dieta & Treino', 'Suporte Wearables'] },
+                { id: 'anual_fundador', name: 'Fundador', price: 'R$ 399,90', period: 'por ano', popular: true, features: ['Preço Vitalício', 'IA STHia Full', 'Dieta & Treino', 'Suporte Prioritário'] },
+                { id: 'anual', name: 'Anual', price: 'R$ 499,90', period: 'por ano', features: ['Parcelamento 12x', 'IA STHia Full', 'Dieta & Treino', 'Acesso APK'] },
+              ].map((plan) => (
+                <div key={plan.id} className={cn(
+                  "relative flex flex-col rounded-[32px] bg-zinc-900/50 p-8 border transition-transform hover:scale-[1.02]",
+                  plan.popular ? "border-primary shadow-2xl shadow-primary/10" : "border-white/5"
+                )}>
+                  {plan.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-widest">Mais popular</span>}
+                  <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-white/40 text-sm ml-1">{plan.period}</span>
+                  </div>
+                  <ul className="mb-10 flex-1 space-y-4 text-left text-sm text-white/70">
+                    {plan.features.map(f => (
+                      <li key={f} className="flex items-center gap-2">
+                        <ChevronRight className="h-4 w-4 text-primary" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild className={cn("h-12 rounded-full font-bold", plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white text-black hover:bg-white/90")}>
+                    <Link to={`/ai/assinatura?plan=${plan.id}`}>Selecionar</Link>
+                  </Button>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-12 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3">
+              <span className="text-sm font-medium text-white/50 uppercase tracking-widest">Cupom de Lançamento:</span>
+              <span className="text-sm font-bold text-primary">STH10AI</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Closing CTA */}
+        <section className="py-32 text-center">
+          <div className="mx-auto max-w-4xl px-6">
+             <AiLogoMark className="mx-auto h-24 w-24 mb-10 shadow-2xl shadow-primary/20" />
+             <h2 className="text-4xl font-bold sm:text-6xl mb-8">Pronto para o próximo nível?</h2>
+             <Button asChild size="lg" className="h-16 rounded-full bg-white px-12 text-xl font-bold text-black hover:bg-white/90">
+               <Link to="/ai/onboarding">Experimentar agora</Link>
+             </Button>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 bg-zinc-950 py-20 text-white/40">
+        <div className="mx-auto max-w-[1000px] px-6">
+          <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <h4 className="mb-6 text-sm font-bold text-white uppercase tracking-widest">STH AI</h4>
+              <ul className="space-y-4 text-sm">
+                <li><Link to="/ai/sobre" className="hover:text-white transition-colors">Sobre o projeto</Link></li>
+                <li><Link to="/ai/legal" className="hover:text-white transition-colors">Documentação</Link></li>
+                <li><Link to="/ai/instalar" className="hover:text-white transition-colors">Downloads</Link></li>
               </ul>
             </div>
-          ))}
+            <div>
+              <h4 className="mb-6 text-sm font-bold text-white uppercase tracking-widest">Legal</h4>
+              <ul className="space-y-4 text-sm">
+                <li><Link to="/ai/legal/termos-de-uso" className="hover:text-white transition-colors">Termos de Uso</Link></li>
+                <li><Link to="/ai/legal/privacidade" className="hover:text-white transition-colors">Privacidade</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-20 border-t border-white/5 pt-10 text-xs flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p>© 2026 STH METHOD. Todos os direitos reservados.</p>
+            <div className="flex items-center gap-6">
+              <div className="flex gap-2 items-center">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Dados Criptografados</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
-
-      {/* Disclaimer */}
-      <section className="relative z-10 mx-auto max-w-3xl px-6 pb-20">
-        <div className="flex gap-3 rounded-3xl border border-border/40 bg-card/60 p-6 text-sm text-muted-foreground backdrop-blur-sm">
-          <ShieldCheck className="h-5 w-5 shrink-0 text-primary" />
-          <p>
-            O STH METHOD AI não trata de substâncias, doses ou protocolos terapêuticos. Esses temas pertencem
-            exclusivamente ao acompanhamento profissional da consultoria STH METHOD.
-          </p>
-        </div>
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Ao contratar, você concorda com os{" "}
-          <a href="/ai/legal/termos-de-uso" className="text-primary underline underline-offset-4">
-            Termos de Uso
-          </a>{" "}
-          ·{" "}
-          <a href="/ai/legal" className="text-primary underline underline-offset-4">
-            Documentos e Termos
-          </a>
-        </p>
-      </section>
+      </footer>
     </div>
   );
 }
