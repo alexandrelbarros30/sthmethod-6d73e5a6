@@ -1,9 +1,17 @@
 ---
-name: Regras críticas do canal Fale com o Nutri (reforço)
-description: Reforço de regras que a IA do canal Nutri violou em produção — nunca redirecionar aluno ativo, sempre disparar ausência fora do expediente, sempre fechar com "Conte Comigo" e usar "Bora pra cima", e NUNCA usar o próprio número do canal como redirecionamento
-type: feature
+name: Regras críticas do canal Fale com o Nutri (SILENCIADO)
+description: O canal Nutri está silenciado para interações/conversas da IA. Só dispara mensagens automáticas de sistema.
+type: constraint
 ---
-Falhas reais observadas no canal "Fale com o Nutri" (W-API 5521 99898-4153) que NÃO podem se repetir:
+### 🛑 CANAL SILENCIADO (ATUALIZAÇÃO AGO/2026)
+O canal "Fale com o Nutri" (21 99898-4153) deve ficar em **SILÊNCIO ABSOLUTO** para conversação da IA. 
+- Ele **SÓ DISPARARÁ** mensagens prontas de sistema (boas vindas, liberação de treino, cardápio, exames, análise, etc).
+- **NÃO FARÁ CONVERSA NEM TERÁ INTERAÇÃO** via IA (STHIA) até outra ordem.
+- Qualquer mensagem de texto livre do aluno no canal Nutri não deve ser respondida pela IA.
+
+---
+
+Falhas reais observadas no canal "Fale com o Nutri" que NÃO podem se repetir (histórico):
 
 1. **Aluno ativo no Nutri NUNCA é redirecionado** — ele já está no canal correto. Proibido enviar frases como "envie sua dúvida diretamente no canal Fale com o Nutri" ou compartilhar o próprio número (wa.me/5521998984153). Se o aluno ativo escreveu aqui, ATENDA aqui. Encaminhamento só para Sucesso do Aluno (administrativo/financeiro) ou Comercial (lead).
 

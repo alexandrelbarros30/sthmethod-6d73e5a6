@@ -2359,6 +2359,13 @@ Deno.serve(async (req) => {
       }
       autoReply = { sent: false, reason: 'human_typing' };
 
+    } else if (!shouldBootstrapCommercialFlow && !nutriHardBlock && conv.queue_type === 'nutri') {
+      // 🔇 STH METHOD: O canal Nutri deve ficar em silêncio para conversação.
+      // Ele só dispara mensagens prontas (boas vindas, liberação de treino/cardápio, etc),
+      // mas não fará conversa nem interação via IA até outra ordem.
+      console.log(`Canal Nutri silenciado para interação (conversa ${conv.id}).`);
+      autoReply = { sent: false, reason: 'nutri_silenced' };
+
     } else if (!shouldBootstrapCommercialFlow && !nutriHardBlock && aiMode === 'ai_only' && !todayNoticeActive) {
       // MODO AI GLOBAL: ignora fluxo e menus — a IA (STHIA) responde 24h,
       // dentro e fora do expediente. Pessoas escrevem em qualquer horário e
@@ -3097,8 +3104,14 @@ Gere a mensagem final agora.`;
     }
 
     if (!autoReply && (aiMode === 'auto' || aiMode === 'ai_only')) {
-      const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
-      if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
+      // Repete o bloqueio do canal Nutri aqui no fallback final
+      if (conv.queue_type === 'nutri') {
+        console.log(`Canal Nutri silenciado para interação no fallback (conversa ${conv.id}).`);
+        autoReply = { sent: false, reason: 'nutri_silenced' };
+      } else {
+        const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
+        if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
+      }
     }
 
     return await finish({ ok: true, autoReply });
