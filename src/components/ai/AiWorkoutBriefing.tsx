@@ -174,8 +174,16 @@ const GROUPS: { id: string; title: string; description: string; icon: JSX.Elemen
 export default function AiWorkoutBriefing({ profile, onChange, standalone, collapsible }: Props) {
   const answers = (profile?.answers ?? {}) as Record<string, string>;
   const focusKey = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("campo") ?? "" : "";
+  const [activeOpen, setActiveOpen] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (focusKey) {
+      const group = GROUPS.find((g) => g.keys.includes(focusKey));
+      if (group) setActiveOpen(group.id);
+    }
+  }, [focusKey]);
+
   const [values, setValues] = useState<Record<string, string>>({});
-  const hydrated = useRef(false);
 
   useEffect(() => {
     const initial: Record<string, string> = {};
@@ -188,6 +196,8 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
     hydrated.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.user_id]);
+
+  const hydrated = useRef(false);
 
   const visible = useMemo(() => FIELDS.filter((f) => !f.when || f.when(values)), [values]);
 
@@ -346,6 +356,8 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
                 description={g.description}
                 pending={pend}
                 onSave={saveRoutine}
+                open={activeOpen === g.id}
+                onOpenChange={(isOpen) => setActiveOpen(isOpen ? g.id : null)}
                 defaultOpen={Boolean(focusKey) && g.keys.includes(focusKey)}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
