@@ -20,7 +20,7 @@ const DEFAULT_HOURS: Hours = { tz: "America/Sao_Paulo", mon_fri: { start: "09:00
 type FlowTpl = { message: string; image_url?: string | null };
 
 const FLOW_KEYS = [
-  { key: "comercial_id_active",         label: "Saudação — Aluno Ativo",          hasImage: true,  defaultMsg: "Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você possui um *acompanhamento ativo* na STH METHOD.\n\nPara assuntos sobre *dieta, treino, protocolo, exames ou evolução*, utilize uma das opções abaixo:\n\n🟢 Digite *NUTRI*\nou\n🟢 Clique em *Fale com o Nutri*:\n👉 https://wa.me/5521998984153" },
+  { key: "comercial_id_active",         label: "Saudação — Aluno Ativo",          hasImage: true,  defaultMsg: "Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você possui um *acompanhamento ativo* na STH METHOD.\n\nPara assuntos sobre *dieta, treino, protocolo, exames ou evolução*, utilize uma das opções abaixo:\n\n🟢 Digite *NUTRI*\nou\n🟢 Clique em *Fale com o Nutri*:\n👉 https://wa.me/5521998496289" },
   { key: "comercial_id_expired",        label: "Saudação — Aluno Vencido (menu)", hasImage: true,  defaultMsg: "Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você já fez parte da STH METHOD.\n\nComo podemos ajudar?\n\n1️⃣ Conhecer os planos\n2️⃣ Formas de pagamento\n3️⃣ Falar com um consultor" },
   { key: "comercial_id_lead",           label: "Lead — Pedido de Nome",            hasImage: true,  defaultMsg: "Olá! 👋\n\nSeja bem-vindo(a) à *STH METHOD*.\n\nQual é o seu *nome*?" },
   { key: "comercial_lead_menu",         label: "Lead — Menu após nome",            hasImage: false, defaultMsg: "Prazer, {nome}.\n\nComo posso ajudar?\n\n1️⃣ Como funciona\n2️⃣ Conhecer os planos\n3️⃣ Falar com um consultor" },

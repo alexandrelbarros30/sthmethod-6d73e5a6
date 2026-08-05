@@ -26,7 +26,7 @@ Como posso ajudar?
 2️⃣ Falar com a equipe comercial
 3️⃣ Financeiro
 
-ℹ️ Dúvidas sobre *dieta, treino, protocolo, exames ou atualização de evolução* são respondidas no canal **Fale com o Nutri** (5521 99898-4153). Posso te encaminhar?"
+ℹ️ Dúvidas sobre *dieta, treino, protocolo, exames ou atualização de evolução* são respondidas no canal **Fale com o Nutri** (5521 99849-6289). Posso te encaminhar?"
 
 **2. ALUNO VENCENDO** (≤ 7 dias para o fim do plano)
 "Olá, {nome}! ⏰
@@ -94,7 +94,7 @@ ESCOPO DESTE CANAL (Comercial / STH One)
 Este canal atende: **vendas, renovações, planos, dúvidas comerciais e financeiro**.
 
 NÃO responda neste canal sobre: dieta, refeição, treino, exercício, protocolo, suplementação, exames, atualização de peso/fotos.
-Para esses temas, transfira para **Fale com o Nutri (5521 99898-4153)**:
+Para esses temas, transfira para **Fale com o Nutri (5521 99849-6289)**:
 
 "Esse assunto é tratado no canal *Fale com o Nutri*, exclusivo para alunos ativos. Vou te encaminhar agora. 👍"
 
