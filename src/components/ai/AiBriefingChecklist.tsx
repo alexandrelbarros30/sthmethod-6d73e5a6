@@ -15,6 +15,8 @@ const filled = (v: unknown) => String(v ?? "").trim().length > 0;
 export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workout" | "analysis"): ChecklistItem[] {
   const p = (profile ?? {}) as any;
   const a = (profile?.answers ?? {}) as Record<string, string>;
+  
+  // 1. Campos básicos de Cadastro (idênticos para ambos)
   const base: ChecklistItem[] = [
     { key: "full_name", label: "Nome completo", ok: filled(p.full_name), where: "cadastro" },
     { key: "age", label: "Idade", ok: Number(p.age) > 0, where: "cadastro" },
@@ -25,20 +27,23 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
     { key: "comorbidities", label: "Comorbidades (ou 'Nenhuma')", ok: filled(p.comorbidities), where: "cadastro" },
     { key: "medications", label: "Medicamentos em uso (ou 'Nenhum')", ok: filled(p.medications), where: "cadastro" },
     { key: "routine", label: "Rotina diária", ok: filled(a.routine), where: "cadastro" },
-    { key: "physical_activity_level", label: "Nível de atividade física (NEAT)", ok: filled(a.physical_activity_level), where: "briefing" },
-    { key: "activity_type", label: "Atividade física praticada", ok: filled(a.activity_type), where: "briefing" },
-    { key: "does_cardio", label: "Faz cardio?", ok: filled(a.does_cardio), where: "briefing" },
-    { key: "training_days_per_week", label: "Dias de treino por semana", ok: filled(a.training_days_per_week), where: "briefing" },
-    { key: "training_duration_minutes", label: "Duração do treino", ok: filled(a.training_duration_minutes), where: "briefing" },
-    { key: "training_intensity", label: "Intensidade do treino", ok: filled(a.training_intensity), where: "briefing" },
   ];
 
+  // 2. Campos de Briefing (Comportamento condicional)
   if (kind === "workout") {
+    // Para treino, exigimos os dados de atividade física e o nível de treino
     base.push(
       { key: "training_level", label: "Nível de treino", ok: filled(p.training_level), where: "cadastro" },
+      { key: "physical_activity_level", label: "Nível de atividade física (NEAT)", ok: filled(a.physical_activity_level), where: "briefing" },
+      { key: "activity_type", label: "Atividade física praticada", ok: filled(a.activity_type), where: "briefing" },
+      { key: "training_days_per_week", label: "Dias de treino por semana", ok: filled(a.training_days_per_week), where: "briefing" },
+      { key: "training_duration_minutes", label: "Duração do treino", ok: filled(a.training_duration_minutes), where: "briefing" },
+      { key: "training_intensity", label: "Intensidade do treino", ok: filled(a.training_intensity), where: "briefing" },
       { key: "training_place", label: "Onde você treina", ok: filled(a.training_place), where: "briefing" },
       { key: "limitations", label: "Limitações físicas / lesões", ok: filled(a.limitations), where: "briefing" },
+      { key: "does_cardio", label: "Faz cardio?", ok: filled(a.does_cardio), where: "briefing" },
     );
+
     if (a.does_cardio === "sim") {
       base.push(
         { key: "cardio_days_per_week", label: "Dias de cardio por semana", ok: filled(a.cardio_days_per_week), where: "briefing" },
@@ -49,6 +54,8 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
   }
 
   if (kind === "diet") {
+    // Para dieta, o objetivo do cardápio e refeições são obrigatórios.
+    // Os outros campos de atividade são interessantes mas não bloqueantes se não forem o foco.
     base.push(
       { key: "diet_objective", label: "Objetivo do cardápio", ok: filled(a.diet_objective), where: "briefing" },
       { key: "diet_meals", label: "Refeições por dia", ok: filled(a.diet_meals), where: "briefing" },
