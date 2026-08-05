@@ -48,26 +48,31 @@ export default function AiIconOptions() {
             
             <div className="relative z-10 w-full h-full flex items-center justify-center p-4">
               {opt.layout === "grid" && (
-                <div className="grid grid-cols-2 gap-2">
-                  <Dumbbell className="h-6 w-6 text-primary" />
-                  <Apple className="h-6 w-6 text-emerald-400" />
-                  <Activity className="h-6 w-6 text-blue-400" />
-                  <Network className="h-6 w-6 text-white animate-pulse" />
+                <div className="relative flex flex-col items-center justify-center w-full h-full">
+                  <Dumbbell className="absolute top-0 h-7 w-7 text-primary" />
+                  <div className="flex gap-10 mt-8">
+                    <Apple className="h-7 w-7 text-emerald-400" />
+                    <Activity className="h-7 w-7 text-blue-400" />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                  </div>
                 </div>
               )}
               
               {opt.layout === "orbit" && (
                 <div className="relative h-full w-full flex items-center justify-center">
+                  <div className="absolute inset-2 rounded-full border border-white/5 animate-spin-slow" />
                   <Activity className="h-10 w-10 text-blue-400 animate-pulse" />
-                  <Dumbbell className="absolute top-2 left-2 h-5 w-5 text-primary opacity-60" />
-                  <Apple className="absolute bottom-2 right-2 h-5 w-5 text-emerald-400 opacity-60" />
-                  <Network className="absolute top-2 right-2 h-4 w-4 text-white opacity-40" />
+                  <Dumbbell className="absolute -top-1 h-6 w-6 text-primary" />
+                  <Apple className="absolute -bottom-1 h-6 w-6 text-emerald-400" />
+                  <Network className="absolute right-0 h-4 w-4 text-white opacity-40" />
                 </div>
               )}
               
               {opt.layout === "shield" && (
-                <div className="flex flex-col items-center gap-1">
-                  <Network className="h-8 w-8 text-white mb-1" />
+                <div className="flex flex-col items-center gap-2">
+                  <ShieldCheck className="h-10 w-10 text-white/90" />
                   <div className="flex gap-2">
                     <Dumbbell className="h-5 w-5 text-primary" />
                     <Activity className="h-5 w-5 text-blue-400" />
