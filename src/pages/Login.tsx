@@ -266,16 +266,21 @@ const Login = () => {
           onClick={async () => {
             try {
               setLoading(true);
-              const result = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: window.location.origin + (redirectTo || "/dashboard"),
+              // Use direct Supabase OAuth for better native resilience
+              const target = window.location.origin + (redirectTo || "/dashboard");
+              const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  redirectTo: target,
+                  queryParams: {
+                    access_type: 'offline',
+                    prompt: 'select_account',
+                  },
+                },
               });
-              if (result.error) {
-                toast.error("Falha ao entrar com Google");
-                setLoading(false);
-                return;
-              }
-              if (result.redirected) return;
-              navigate(redirectTo || "/dashboard", { replace: true });
+              
+              if (error) throw error;
+              if (data?.url) window.location.assign(data.url);
             } catch (e: any) {
               toast.error(e?.message || "Erro ao entrar com Google");
               setLoading(false);

@@ -173,15 +173,8 @@ export default function AiLogin() {
           onClick={async () => {
             try {
               setLoading(true);
-              const result = await (lovable.auth as any).signInWithOAuth("google", {
-                redirect_uri: `${window.location.origin}/ai/login`,
-              });
-              if (result.error) throw result.error;
-              if (result.url) window.location.href = result.url;
-              else if (result.redirected) {
-                 // result.redirected handled by window.location change if it happened, 
-                 // but checking result.url is safer for our manual navigation
-              }
+              // Use direct Supabase OAuth to avoid custom wrapper issues in APK/WebView
+              await signInWithGoogleNative(next);
             } catch (err: any) {
               toast.error(err?.message || "Erro ao entrar com o Google");
               setLoading(false);
