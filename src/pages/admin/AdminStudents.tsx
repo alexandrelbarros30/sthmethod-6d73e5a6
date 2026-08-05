@@ -39,7 +39,6 @@ import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import EvolutionArtsGallery from "@/components/admin/EvolutionArtsGallery";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
-import { triggerSupercoachSync } from "@/functions/_shared/supercoach-sync";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
