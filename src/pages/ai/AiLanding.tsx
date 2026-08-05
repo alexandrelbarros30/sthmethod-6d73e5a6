@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 export default function AiLanding() {
   useSthAiTheme();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showIconOptions, setShowIconOptions] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,10 +34,28 @@ export default function AiLanding() {
           <div className="flex items-center gap-6">
             <Link to="/ai/instalar" className="text-[12px] text-white/80 hover:text-white transition-colors">App</Link>
             <Link to="/ai/assinatura" className="text-[12px] text-white/80 hover:text-white transition-colors">Planos</Link>
+            <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(!showIconOptions)} className="text-white hover:bg-white/10">
+              <Palette className="h-4 w-4" />
+            </Button>
             <Link to="/ai/login?next=/ai/app" className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-black transition-transform hover:scale-105 active:scale-95">Entrar</Link>
           </div>
         </div>
       </nav>
+
+      {showIconOptions && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-6 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-zinc-900 border border-white/10 p-10 shadow-2xl">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-primary uppercase">Estudo de Identidade Visual</h2>
+                <p className="text-xs text-muted-foreground">Protótipos de Favicon e App Icon para o ecossistema STH AI</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowIconOptions(false)} className="text-white">Fechar</Button>
+            </div>
+            <AiIconOptions />
+          </div>
+        </div>
+      )}
 
       {/* Sub-navigation (Product specific) */}
       <div className="sticky top-12 z-[90] h-12 w-full border-b border-white/10 bg-black/60 backdrop-blur-md">
