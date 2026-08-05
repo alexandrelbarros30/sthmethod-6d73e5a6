@@ -100,7 +100,7 @@ export default function LabInterpretationPanel({ html, className, title = "Inter
                 <p className="text-[13px] font-medium tracking-tight leading-snug">{m.name}</p>
                 <span className={cn("shrink-0 inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider", meta.tone)}>
                   <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
-                  {m.statusLabel || meta.label}
+                  {m.statusLabel?.replace(/[🟢🟡🔴]\s*/g, "") || meta.label}
                 </span>
               </div>
 

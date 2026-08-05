@@ -35,10 +35,16 @@ function parseReference(ref: string): { min: number | null; max: number | null }
 
 function classify(statusText: string, value: number | null, min: number | null, max: number | null): LabStatus {
   const s = statusText.toLowerCase();
+  
+  // Prioridade absoluta para as tags visuais enviadas pela STHIA (emojis no HTML)
+  if (s.includes("🔴") || /(alterado|alto|elevad|acima|aument|elevada|significativamente)/.test(s)) return "high";
+  if (s.includes("🟡") || /(atenç|aten[cç]ao|limítrofe|limitrofe|border|alerta|subótim|suboptim)/.test(s)) return "attention";
+  if (s.includes("🟢") || /(ótim|otim|normal|adequad|ideal|dentro|ok)/.test(s)) return "optimal";
+  
+  // Fallbacks semânticos baseados no texto
   if (/(baixo|abaixo|reduzid|deficien|insuficien)/.test(s)) return "low";
-  if (/(alto|elevad|acima|aument)/.test(s)) return "high";
-  if (/(atenç|aten[cç]ao|limítrofe|limitrofe|border|alerta|subótim|suboptim)/.test(s)) return "attention";
-  if (/(ótim|otim|normal|adequad|ideal|dentro)/.test(s)) return "optimal";
+
+  // Lógica matemática (se não houver indicação textual clara)
   if (value != null) {
     if (min != null && value < min) return "low";
     if (max != null && value > max) return "high";
@@ -49,13 +55,41 @@ function classify(statusText: string, value: number | null, min: number | null, 
 
 function positionOf(value: number | null, min: number | null, max: number | null): number | null {
   if (value == null) return null;
+  
+  // Caso de valor único (referência limite ex: < 10)
+  if (min == null && max != null) {
+    if (value <= max) return 0.5; // Centraliza no "verde" se estiver abaixo do limite
+    return 0.9; // Joga pra direita se estiver acima
+  }
+  if (max == null && min != null) {
+    if (value >= min) return 0.5;
+    return 0.1;
+  }
+
   if (min != null && max != null && max > min) {
     const span = max - min;
-    const padded = (value - (min - span * 0.25)) / (span * 1.5);
-    return Math.min(1, Math.max(0, padded));
+    const center = min + span / 2;
+    
+    // Se estiver exatamente no centro, retorna 0.5
+    // Se estiver no min, retorna 0.25 (início da área verde)
+    // Se estiver no max, retorna 0.75 (fim da área verde)
+    // A área verde ocupa de 0.25 a 0.75 (50% da régua)
+    
+    if (value >= min && value <= max) {
+      return 0.25 + ((value - min) / span) * 0.5;
+    }
+    
+    if (value < min) {
+      // Escala de 0 a 0.25 para valores abaixo do mínimo
+      const dist = min - value;
+      return Math.max(0.05, 0.25 - (dist / (span || 1)) * 0.25);
+    }
+    
+    // Escala de 0.75 a 0.95 para valores acima do máximo
+    const dist = value - max;
+    return Math.min(0.95, 0.75 + (dist / (span || 1)) * 0.25);
   }
-  if (max != null && max !== 0) return Math.min(1, Math.max(0, (value / (max * 1.5))));
-  if (min != null && min !== 0) return Math.min(1, Math.max(0, value / (min * 2)));
+
   return null;
 }
 
