@@ -142,9 +142,22 @@ export default function AdminAppReleases() {
             <Package className="w-6 h-6" /> Releases do App (APK)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Hospede o APK direto no servidor STH METHOD. A versão marcada como atual é a que
-            os alunos baixam em <code className="text-xs">/baixar-app</code>.
+            Hospede o APK direto no servidor STH METHOD. Cada app (STH METHOD e STH AI) tem sua
+            própria versão atual, que é a baixada na página pública correspondente.
           </p>
+        </div>
+
+        <div className="flex gap-2">
+          {APPS.map((a) => (
+            <Button
+              key={a.id}
+              variant={app === a.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setApp(a.id)}
+            >
+              {a.label}
+            </Button>
+          ))}
         </div>
 
         <Card>
@@ -164,7 +177,7 @@ export default function AdminAppReleases() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Upload className="w-4 h-4" /> Publicar novo APK
+              <Upload className="w-4 h-4" /> Publicar novo APK — {currentApp.label}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -206,10 +219,10 @@ export default function AdminAppReleases() {
             <CardTitle className="text-base">Histórico de versões</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {releases.length === 0 && (
+            {releases.filter((r) => (r.app || "sthmethod") === app).length === 0 && (
               <p className="text-sm text-muted-foreground">Nenhum APK publicado ainda.</p>
             )}
-            {releases.map((r) => (
+            {releases.filter((r) => (r.app || "sthmethod") === app).map((r) => (
               <div
                 key={r.id}
                 className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-card"
