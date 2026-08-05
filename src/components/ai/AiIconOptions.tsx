@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
-import { Network, Cpu, Share2, Layers, Zap, Infinity } from "lucide-react";
+import { Network, Cpu, Share2, Layers, Zap, Infinity, Dumbbell, Apple, Activity, Microchip } from "lucide-react";
 
 export default function AiIconOptions() {
   const options = [
@@ -21,17 +21,31 @@ export default function AiIconOptions() {
     },
     {
       id: "distributed-nodes",
-      label: "Opção 3: Rede de Nós Distribuídos",
-      description: "Representa a expansão da inteligência STHia por todo o ecossistema.",
-      icon: Share2,
-      color: "from-white to-primary",
+      label: "Opção 3 — Rede de Nós Distribuídos",
+      description: "Representa a expansão da inteligência STHia integrada à musculação e biomecânica.",
+      icon: Dumbbell,
+      color: "from-[#00FF41] to-[#008F11]",
     },
     {
       id: "layered-intelligence",
-      label: "Opção 4: Camadas de Inteligência",
-      description: "Representa a profundidade do método e o processamento multicamadas da IA.",
-      icon: Layers,
+      label: "Opção 4 — Camadas de Inteligência",
+      description: "Profundidade do método: Nutrição, Bioquímica e Exames integrados por IA.",
+      icon: Activity,
       color: "from-emerald-400 to-emerald-700",
+    },
+    {
+      id: "bio-nutrition",
+      label: "Opção 7: Inteligência Metabólica",
+      description: "O equilíbrio perfeito entre nutrição de alta performance e análise laboratorial.",
+      icon: Apple,
+      color: "from-lime-400 to-green-600",
+    },
+    {
+      id: "performance-dna",
+      label: "Opção 8: DNA de Performance",
+      description: "A digital técnica da STH AI mapeando cada detalhe da sua evolução física.",
+      icon: Microchip,
+      color: "from-primary to-emerald-500",
     },
     {
       id: "performance-spark",
