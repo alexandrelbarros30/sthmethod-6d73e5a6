@@ -1,7 +1,7 @@
 ---
-name: Regras críticas do canal Fale com o Nutri (reforço)
-description: Reforço de regras que a IA do canal Nutri violou em produção — nunca redirecionar aluno ativo, sempre disparar ausência fora do expediente, sempre fechar com "Conte Comigo" e usar "Bora pra cima", e NUNCA usar o próprio número do canal como redirecionamento
-type: feature
+name: Regras críticas do canal Fale com o Nutri (SILENCIADO)
+description: O canal Nutri está silenciado para interações/conversas da IA. Só dispara mensagens automáticas de sistema.
+type: constraint
 ---
 Falhas reais observadas no canal "Fale com o Nutri" (W-API 5521 99898-4153) que NÃO podem se repetir:
 
