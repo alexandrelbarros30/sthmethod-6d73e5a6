@@ -341,15 +341,15 @@ IMPORTANTE:
 - Garanta que as metas nutricionais sejam respeitadas rigorosamente.
 - Diversifique os alimentos: use pães, aveia, frutas, laticínios e suplementos quando apropriado ao objetivo.
 
-REGRAS CRÍTICAS:
+REGRAS CRÍTICAS DE PRECISÃO:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional. Cada opção deve ser uma refeição COMPLETA e não apenas um item isolado.
-2. O total calórico e macros no JSON devem considerar a SOMA de todos os itens da ALIMENTAÇÃO BASE daquela refeição.
-3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas, distribuindo os macros de forma inteligente entre carboidratos e gorduras.
-4. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais. Não gere refeições mono-alimento (apenas frango ou apenas ovo).
+2. RIGOR MATEMÁTICO: O total calórico e macros no JSON devem ser a soma aritmética EXATA de todos os itens da ALIMENTAÇÃO BASE. Se a meta é 1600 kcal, a soma deve ser ~1600 kcal. NÃO aceite desvios significativos.
+3. PRIORIDADE DE MACROS: Se o briefing pedir uma quantidade específica de proteína (ex: 200g), essa meta é ABSOLUTA. Fixe a proteína no valor solicitado e ajuste os carboidratos e gorduras para equalizar as calorias totais sugeridas.
+4. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais. Não gere refeições mono-alimento.
 5. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
-6. AFERIÇÃO DE PRECISÃO: O usuário reportou erros de cálculo em gerações anteriores (ex: dieta de ~2210 kcal sendo exibida com valores menores). Você DEVE ser extremamente rigoroso na contabilidade calórica. Se a meta for 2200, a soma das bases das refeições deve totalizar 2200 kcal +/- 50kcal.
+6. AFERIÇÃO DE PRECISÃO: O usuário reportou erros onde o valor gerado não condiz com o real (ex: emitir valor "falso" que será testado). Você será auditado. Se a meta for 1700 kcal, busque chegar o mais próximo possível usando dados REAIS da FatSecret.
 7. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
-6. NÃO retorne erros genéricos.
+8. NÃO retorne erros genéricos.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
