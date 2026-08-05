@@ -6,10 +6,10 @@ export default function AiIconOptions() {
   const options = [
     {
       id: "master-design-1",
-      label: "Master V1: Fusão Biomecânica",
-      description: "Design minimalista unindo Halter, Maçã e Pulso em uma malha neural integrada. Foco em equilíbrio.",
+      label: "ÍCONE ATUAL: Master V1",
+      description: "ESTE É O ÍCONE OFICIAL. Fusão biomecânica unindo Musculação, Nutrição e Análise Clínica em uma grade de alta performance.",
       icon: Network,
-      color: "from-primary to-emerald-500",
+      color: "from-primary via-emerald-500 to-blue-500",
       layout: "grid",
       selected: true
     },
@@ -33,6 +33,10 @@ export default function AiIconOptions() {
 
   return (
     <div className="grid gap-8 sm:grid-cols-3 p-6 bg-black rounded-[40px] border border-white/10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+      <div className="col-span-full mb-4 rounded-2xl bg-primary/10 border border-primary/20 p-4 text-center">
+        <p className="text-xs font-bold text-primary uppercase tracking-widest">Atenção Admin</p>
+        <p className="text-[11px] text-primary/80">ESSA SERA O ICONE ATUAL QUE SERA APRESNENTADO NA STH AI</p>
+      </div>
       {options.map((opt) => (
         <div key={opt.id} className="flex flex-col items-center text-center group">
           <div className={cn(
