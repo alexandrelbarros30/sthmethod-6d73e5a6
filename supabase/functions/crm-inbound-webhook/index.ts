@@ -3104,8 +3104,14 @@ Gere a mensagem final agora.`;
     }
 
     if (!autoReply && (aiMode === 'auto' || aiMode === 'ai_only')) {
-      const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
-      if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
+      // Repete o bloqueio do canal Nutri aqui no fallback final
+      if (conv.queue_type === 'nutri') {
+        console.log(`Canal Nutri silenciado para interação no fallback (conversa ${conv.id}).`);
+        autoReply = { sent: false, reason: 'nutri_silenced' };
+      } else {
+        const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
+        if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
+      }
     }
 
     return await finish({ ok: true, autoReply });
