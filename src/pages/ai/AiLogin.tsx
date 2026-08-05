@@ -173,11 +173,15 @@ export default function AiLogin() {
           onClick={async () => {
             try {
               setLoading(true);
-              const { error, url } = await lovable.auth.signInWithOAuth("google", {
+              const result = await (lovable.auth as any).signInWithOAuth("google", {
                 redirect_uri: `${window.location.origin}/ai/login`,
               });
-              if (error) throw error;
-              if (url) window.location.href = url;
+              if (result.error) throw result.error;
+              if (result.url) window.location.href = result.url;
+              else if (result.redirected) {
+                 // result.redirected handled by window.location change if it happened, 
+                 // but checking result.url is safer for our manual navigation
+              }
             } catch (err: any) {
               toast.error(err?.message || "Erro ao entrar com o Google");
               setLoading(false);
