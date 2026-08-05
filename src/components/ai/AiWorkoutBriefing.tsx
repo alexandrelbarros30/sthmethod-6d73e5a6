@@ -169,7 +169,6 @@ const GROUPS: { id: string; title: string; description: string; icon: JSX.Elemen
     icon: <HeartPulse className="h-4 w-4" />,
     keys: ["does_cardio", "cardio_days_per_week", "cardio_duration_minutes", "cardio_intensity"],
   },
-  },
 ];
 
 export default function AiWorkoutBriefing({ profile, onChange, standalone, collapsible }: Props) {
