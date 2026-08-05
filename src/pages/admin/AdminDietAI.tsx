@@ -678,54 +678,44 @@ const AdminDietAI = () => {
             <div className="space-y-6">
               <section>
                 <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2 uppercase tracking-wider">
-                  <Wand2 className="w-4 h-4" /> Prompt do Sistema
+                  <Wand2 className="w-4 h-4" /> Doutrina STH Method (Original)
                 </h4>
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm font-mono text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                  {`Você é a STHia, a inteligência nutricional do STH Method. 
-Sua missão é gerar cardápios precisos retornando um JSON estruturado.
+                  {`FORMATO OBRIGATÓRIO DO CARDÁPIO — HTML PURO (sem markdown, sem crases, sem tabelas):
 
-ESTILO E CULTURA:
-- Ofereça um cardápio tipicamente BRASILEIRO (Arroz, feijão, carnes grelhadas, frutas tropicais, cuscuz, tapioca, mandioca).
+<p><strong>Refeição 01: Desjejum (Ativação Metabólica) — 07:00 · 477 kcal · P 49g / C 44g / G 10g</strong></p>
+<p><strong>"⭐ BASE:</strong> Omelete de 1 ovo inteiro + 3 claras + 40g de farelo de aveia + 100g de mamão formosa.</p>
+<p><strong>Opção 2:</strong> Shake com 30g de whey + 40g de farelo de aveia + 100g de morangos.</p>
+<p><strong>Opção 3:</strong> 2 fatias de pão integral (50g) + 100g de frango desfiado + 30g de cottage zero.</p>
+<p><strong>Opção 4:</strong> 170g de iogurte grego zero + 25g de whey + 25g de granola integral.<strong>"</strong></p>
+<p><strong>Opção 5:</strong> 3 ovos mexidos + 1 fatia de pão integral (25g) + 100g de abacaxi.</p>
+<p><strong>Opção 6:</strong> 120g de tapioca pronta + 100g de patinho moído + 100g de melão.<strong>"</strong></p>
 
-REGRAS DE CONTEÚDO PARA O JSON:
-1. Para cada refeição, você deve fornecer EXATAMENTE 4 opções de alimentos.
-2. A primeira opção (índice 0 no array 'options') será a BASE.
-3. Ovos e claras de ovos DEVEM estar em UNIDADES (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
-4. Mantenha a equivalência nutricional entre as 4 opções.
-5. O JSON deve ser focado em dados puros. O backend cuidará da formatação visual (aspas, parágrafos, emojis).
-
-ESTRUTURA JSON (refeições):
-- meal_number: número da refeição.
-- meal_name: nome da refeição (ex: "Desjejum Metabólico"). Sem markdown.
-- options: array com exatamente 4 strings (Opção BASE + 3 Alternativas).
-- energy_kcal, protein_g, carbs_g, fat_g: macros da ALIMENTAÇÃO BASE.
-
-IMPORTANTE: 
-- Retorne apenas o JSON via ferramenta 'return_diet'.
-- Garanta que as metas nutricionais sejam respeitadas rigorosamente.
-- Priorize alimentos brasileiros e preparações simples.`}
+REGRAS DE FORMATAÇÃO (invioláveis):
+1. Cada refeição começa com Refeição NN: Nome (Subtítulo) — HH:MM · N kcal · P Ng / C Ng / G Ng.
+2. Cada refeição tem SEMPRE a refeição BASE + 5 opções de substituição (Total de 6 opções).
+3. Abre aspas dupla no BASE ("⭐ BASE:) e fecha no fim da Opção 6.
+4. Macros e kcal do cabeçalho são EXCLUSIVAMENTE sobre a refeição BASE.
+5. OVOS E CLARAS: sempre em UNIDADES (ex: "2 ovos inteiros", "3 claras de ovo").
+6. HIDRATAÇÃO (obrigatória): Meta diária: X,X L de água (~35 ml/kg).`}
                 </div>
               </section>
 
               <section>
-                <h4 className="text-sm font-semibold text-orange-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                  <ClipboardCheck className="w-4 h-4" /> Regras Críticas (Hard Constraints)
+                <h4 className="text-sm font-semibold text-blue-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
+                  <Brain className="w-4 h-4" /> Prompt STHia (JSON Engine)
                 </h4>
-                <div className="grid gap-3">
-                  {[
-                    "Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.",
-                    "O total calórico e macros no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.",
-                    "Priorize integralmente bater as metas de Calorias (Kcal) e Proteínas.",
-                    "Use APENAS a TABELA TACO (Arroz cozido: 128kcal, Frango cozido: 163kcal, Ovo inteiro: 143kcal/100g).",
-                    "Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.",
-                    "PROIBIDO: Retornar erros genéricos ou texto fora do JSON.",
-                    "FORMATO OBRIGATÓRIO: Títulos limpos, opções entre aspas, ovos em unidades."
-                  ].map((rule, idx) => (
-                    <div key={idx} className="flex gap-3 text-sm items-start p-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
-                      <span className="text-orange-500 font-bold shrink-0">{idx + 1}.</span>
-                      <span className="text-zinc-300">{rule}</span>
-                    </div>
-                  ))}
+                <div className="rounded-xl border border-blue-400/20 bg-blue-400/5 p-4 text-sm font-mono text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                  {`Você é a STHia, a inteligência nutricional do STH Method. 
+Missão: Gerar cardápios precisos em JSON estruturado.
+
+ESTILO E CULTURA: Brasileiro (Arroz, feijão, carnes, frutas tropicais).
+
+REGRAS JSON:
+1. EXATAMENTE 4 opções por refeição (BASE + 3 substituições).
+2. Ovos em UNIDADES (ex: "4 ovos inteiros").
+3. TABELA TACO: Padrão ouro para cálculos.
+4. Coerência Atwater: kcal = (P*4) + (C*4) + (G*9).`}
                 </div>
               </section>
             </div>
