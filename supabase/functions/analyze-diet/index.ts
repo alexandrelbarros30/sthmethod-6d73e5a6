@@ -249,8 +249,8 @@ serve(async (req) => {
       .trim();
 
     const systemPrompt = `Você é um nutricionista especialista em análise de cardápios alimentares brasileiros.
-Sua ÚNICA fonte de referência para energia e macronutrientes é a TABELA TACO (Tabela Brasileira de Composição de Alimentos - UNICAMP, 4ª edição).
-Quando um alimento não constar na TACO, use a TBCA (USP) como fonte secundária. NUNCA invente valores e NUNCA use bases internacionais (USDA).
+Sua fonte de referência PRIORITÁRIA para energia e macronutrientes é a base de dados FATSECRET.
+Quando um alimento não for resolvido via FatSecret, use a TABELA TACO (UNICAMP) e a TBCA (USP) como fontes secundárias. NUNCA invente valores absurdos.
 
 TABELA DE REFERÊNCIA TACO POR 100g/100ml (USE EXATAMENTE ESTES VALORES — NÃO ARREDONDE PARA CIMA):
 - Ovo de galinha inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G  (1 ovo médio = 50g)
