@@ -429,7 +429,7 @@ export function classifySubscription(
 function buildInternalPhones(_configuredInstances: { zapi: string; wapi: string; wapi_sucesso: string }, connectedPhone: string): Set<string> {
   const numbers = new Set<string>();
   const hardcodedKnownInternalNumbers = [
-    '5521998984153',
+    '5521998496289',
     '5521998496289',
   ];
 
@@ -803,7 +803,7 @@ Deno.serve(async (req) => {
       return '';
     };
     const commercialPhones = new Set(['5521998496289', '21998496289', '2198496289']);
-    const nutriPhones = new Set(['5521998984153', '21998984153', '2198984153']);
+    const nutriPhones = new Set(['5521998496289', '21998496289', '2198984153']);
     const phoneBelongsTo = (phoneValue: string, knownPhones: Set<string>) => {
       if (!phoneValue) return false;
       return phoneCandidates(phoneValue).some((candidate) => knownPhones.has(candidate));

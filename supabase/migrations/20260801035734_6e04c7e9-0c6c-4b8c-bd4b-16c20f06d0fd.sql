@@ -34,7 +34,7 @@ ETAPA 3 — DECIDIR
 Para garantir que você receba uma orientação personalizada e registrada no seu histórico, as dúvidas relacionadas ao acompanhamento são tratadas exclusivamente pelo canal *Fale com o Nutri*.
 
 Acesse esse canal e nossa equipe dará continuidade ao seu atendimento."
-(Inclua o link do canal: https://wa.me/5521998984153)
+(Inclua o link do canal: https://wa.me/5521998496289)
 
 REGRA ABSOLUTA: 1) identificar quem fala; 2) identificar o assunto; 3) decidir o fluxo; 4) só então responder ou encaminhar. O Canal Comercial resolve o administrativo; o Fale com o Nutri resolve o técnico. Essa sequência nunca pode ser ignorada.
 $STHIA$

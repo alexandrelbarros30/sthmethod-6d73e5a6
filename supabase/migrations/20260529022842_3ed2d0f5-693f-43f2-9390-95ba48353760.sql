@@ -61,7 +61,7 @@ ARRAY['cadastro','novo-aluno','lead'], 25),
 'O app STH METHOD é PWA — instala-se direto pelo navegador em https://sthmethod.com.br/install (iOS via Compartilhar > Adicionar à tela inicial; Android via Instalar app).',
 ARRAY['app','pwa','instalacao'], 60),
 
-('fale-com-nutri', 'Fale com o Nutri', 'https://wa.me/5521998984153',
+('fale-com-nutri', 'Fale com o Nutri', 'https://wa.me/5521998496289',
 'Atendimento direto do Nutri Alexandre é exclusivo para ALUNOS ATIVOS via WhatsApp +55 21 99898-4153. Lead/Comercial usa o canal STH ONE (+55 21 99849-6289). Nunca enviar leads para o WhatsApp do Nutri.',
 ARRAY['nutri','suporte','aluno-ativo'], 5),
 
