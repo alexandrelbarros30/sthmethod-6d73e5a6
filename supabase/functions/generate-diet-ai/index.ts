@@ -347,7 +347,8 @@ REGRAS CRÍTICAS:
 3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas, distribuindo os macros de forma inteligente entre carboidratos e gorduras.
 4. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais. Não gere refeições mono-alimento (apenas frango ou apenas ovo).
 5. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
-5. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
+6. AFERIÇÃO DE PRECISÃO: O usuário reportou erros de cálculo em gerações anteriores (ex: dieta de ~2210 kcal sendo exibida com valores menores). Você DEVE ser extremamente rigoroso na contabilidade calórica. Se a meta for 2200, a soma das bases das refeições deve totalizar 2200 kcal +/- 50kcal.
+7. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
 6. NÃO retorne erros genéricos.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
