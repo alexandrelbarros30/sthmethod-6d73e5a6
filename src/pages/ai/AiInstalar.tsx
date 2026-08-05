@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import AiLogoMark from "@/components/ai/AiLogoMark";
 import { Smartphone, Download, Share, PlusSquare, ShieldCheck, ArrowLeft } from "lucide-react";
 
-import apkAsset from "@/assets/sthai.apk.asset.json";
-
-const APK_URL = apkAsset.url;
-const APK_SIZE_MB = Math.round(apkAsset.size / 1024 / 1024);
+const APK_URL = "/ai/sthai.apk";
+const APK_SIZE_MB = 15; // Estimativa média para o app construído
 
 export default function AiInstalar() {
   useSthAiTheme();
