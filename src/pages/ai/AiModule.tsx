@@ -90,8 +90,17 @@ export default function AiModule() {
       );
       return;
     }
+    
     // Para itens de briefing, garante que o formulário de solicitação esteja aberto
     setRequestOpen(true);
+    
+    // Se o item for de "briefing" mas o kind for diferente (ex: dieta pedindo campo de treino),
+    // redireciona para o módulo correto com a flag de solicitar
+    if (kind === "diet" && (item.key.includes("training") || item.key.includes("activity") || item.key.includes("cardio"))) {
+      navigate(`/ai/app/treino?solicitar=1&campo=${item.key}&next=${encodeURIComponent(currentHref)}`);
+      return;
+    }
+    
     setTimeout(() => {
       focusField(`brief-${item.key}`);
     }, 100);
