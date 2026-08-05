@@ -118,7 +118,10 @@ export default function AiBriefingChecklist({ items, editHref, title, hideEdit, 
 
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {items.map((i) => {
+          const isBriefing = i.where === "briefing";
+          const isCadastro = i.where === "cadastro";
           const clickable = !i.ok && Boolean(onSelect);
+          
           const Inner = (
             <>
               <span className="flex items-center gap-2 text-left">
@@ -139,9 +142,12 @@ export default function AiBriefingChecklist({ items, editHref, title, hideEdit, 
               )}
             </>
           );
-          return (
-            <li key={i.key}>
-              {clickable ? (
+
+          // Se for briefing e não estiver ok, forçamos o botão ser clicável
+          // para abrir a aba colapsável.
+          if (isBriefing && !i.ok) {
+            return (
+              <li key={i.key}>
                 <button
                   type="button"
                   onClick={() => onSelect?.(i)}
@@ -149,15 +155,36 @@ export default function AiBriefingChecklist({ items, editHref, title, hideEdit, 
                 >
                   {Inner}
                 </button>
-              ) : (
-                <div
-                  className={`flex items-center justify-between gap-2 rounded-lg border p-2.5 text-sm ${
-                    i.ok ? "border-border/60" : "border-destructive/40 bg-destructive/5"
-                  }`}
+              </li>
+            );
+          }
+
+          // Se for cadastro e não estiver ok, enviamos para a tela de onboarding
+          if (isCadastro && !i.ok) {
+            const currentPath = window.location.pathname + window.location.search;
+            const onboardingUrl = `/ai/onboarding?next=${encodeURIComponent(currentPath)}`;
+            
+            return (
+              <li key={i.key}>
+                <Link
+                  to={onboardingUrl}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 text-sm transition-colors hover:bg-destructive/10"
                 >
                   {Inner}
-                </div>
-              )}
+                </Link>
+              </li>
+            );
+          }
+
+          return (
+            <li key={i.key}>
+              <div
+                className={`flex items-center justify-between gap-2 rounded-lg border p-2.5 text-sm ${
+                  i.ok ? "border-border/60" : "border-destructive/40 bg-destructive/5"
+                }`}
+              >
+                {Inner}
+              </div>
             </li>
           );
         })}
