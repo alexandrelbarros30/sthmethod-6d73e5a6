@@ -20,7 +20,7 @@ import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingC
 import AiFieldTipsDialog from "@/components/ai/AiFieldTipsDialog";
 import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
-import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft } from "lucide-react";
+import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft, History } from "lucide-react";
 import { focusField } from "@/lib/field-focus";
 import type { ChecklistItem } from "@/components/ai/AiBriefingChecklist";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -35,6 +35,7 @@ export default function AiModule() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const versionId = searchParams.get("version");
   const kind = SLUG_TO_KIND[slug ?? ""] ?? "diet";
   const mod = AI_MODULES[kind];
   const { generations, subscription, profile, loading, refresh, unlimited } = useAiApp();
@@ -61,7 +62,12 @@ export default function AiModule() {
     focusField(`brief-${campoParam}`);
   }, [campoParam, loading]);
 
-  const current = useMemo(() => latestOf(generations, kind), [generations, kind]);
+  const current = useMemo(() => {
+    if (versionId) {
+      return generations.find((g) => g.id === versionId) ?? null;
+    }
+    return latestOf(generations, kind);
+  }, [generations, kind, versionId]);
   const currentFeedback = useMemo(() => feedbackForGeneration(feedbacks, current?.id), [feedbacks, current?.id]);
   const daysLeft = daysLeftInCycle(current, mod.cycleDays);
   const maxRevisions = kind === "analysis" ? 1 : 3;
@@ -70,9 +76,9 @@ export default function AiModule() {
     : current
       ? Math.max(0, maxRevisions - current.revisions)
       : maxRevisions;
-  const cycleLocked = !unlimited && Boolean(current) && daysLeft > 0;
+  const cycleLocked = !unlimited && Boolean(current) && daysLeft > 0 && !versionId;
   const isGuided = (kind === "workout" || kind === "diet") && Boolean(current);
-  const canRequest = unlimited || !cycleLocked || revisionsLeft > 0;
+  const canRequest = (unlimited || !cycleLocked || revisionsLeft > 0) && !versionId;
 
   const checklist = useMemo(() => buildChecklist(profile, kind), [profile, kind]);
   const checklistMissing = checklist.filter((i) => !i.ok);
@@ -215,6 +221,16 @@ export default function AiModule() {
 
   return (
     <AiShell title={mod.title} subtitle={mod.short}>
+      {versionId && (
+        <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 border-ocean-teal/40 bg-ocean-teal/5 p-4">
+          <p className="text-xs text-muted-foreground">
+            Você está visualizando uma <strong>versão anterior</strong> do seu histórico.
+          </p>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/ai/app/${slug}`)}>
+            <History className="mr-2 h-4 w-4" /> Voltar para atual
+          </Button>
+        </Card>
+      )}
       {backTo && (
         <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 border-primary/40 bg-primary/5 p-4">
           <p className="text-xs text-muted-foreground">

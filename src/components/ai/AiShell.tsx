@@ -7,7 +7,7 @@ import { useAiThemeMode } from "@/hooks/useAiThemeMode";
 import { useAiHomeStyle, AI_HOME_STYLES } from "@/hooks/useAiHomeStyle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ProfileAvatar from "@/components/shared/ProfileAvatar";
-import { LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf, Moon, Check } from "lucide-react";
+import { LayoutGrid, Salad, Dumbbell, LineChart, Flame, LogOut, HeartPulse, UserRound, UtensilsCrossed, Camera, CreditCard, Waves, Leaf, Moon, Check, History } from "lucide-react";
 import AiLogoMark from "@/components/ai/AiLogoMark";
 
 const THEME_UI = {
@@ -30,6 +30,7 @@ const SECONDARY_NAV = [
   { to: "/ai/app/imagens", label: "Imagens", icon: Camera },
   { to: "/ai/app/saude", label: "Saúde", icon: HeartPulse },
   { to: "/ai/app/coaches", label: "Coaches", icon: UserRound },
+  { to: "/ai/historico", label: "Histórico", icon: History },
   { to: "/ai/assinatura", label: "Assinatura", icon: CreditCard },
 ];
 

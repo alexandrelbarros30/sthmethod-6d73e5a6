@@ -33,7 +33,7 @@ import {
   BrainCircuit,
   Camera,
 } from "lucide-react";
-import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus } from "lucide-react";
+import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus, History } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,6 +69,7 @@ const WIDGET_META: WidgetMeta[] = [
   { id: "mod-workout", label: "Treino" },
   { id: "mod-analysis", label: "Análise" },
   { id: "images", label: "Imagens corporais" },
+  { id: "/ai/historico", label: "Histórico STHIA" },
   { id: "/ai/app/diario", label: "Diário alimentar" },
   { id: "/ai/app/saude", label: "Saúde e wearables" },
   { id: "/ai/app/coaches", label: "Coaches humanos" },
@@ -90,6 +91,7 @@ const WIDGET_GROUP: Record<string, string> = {
   weight: "Progresso",
   images: "Progresso",
   insight: "Inteligência",
+  "/ai/historico": "Inteligência",
   "mod-analysis": "Inteligência",
   "/ai/app/coaches": "Inteligência",
   "/ai/app/saude": "Saúde e wearables",
@@ -271,7 +273,9 @@ export default function AiDashboard() {
   // mesmo que o layout salvo no aparelho seja anterior aos cards de saúde.
   const hiddenIds = useMemo(() => {
     const vis = new Set(visibleIds);
-    return WIDGET_META.map((w) => w.id).filter((id) => !vis.has(id));
+    // Garante que o histórico não fique preso como oculto se for novo
+    const metaIds = WIDGET_META.map((w) => w.id);
+    return metaIds.filter((id) => !vis.has(id));
   }, [visibleIds]);
 
   useEffect(() => {
@@ -448,6 +452,20 @@ export default function AiDashboard() {
 
   const nodes: Record<string, React.ReactNode> = {
     "next-meal": <AiNextMealCard diet={latestOf(generations, "diet")} />,
+    "/ai/historico": (
+      <Link to="/ai/historico" className={`${tile} col-span-2 flex items-center justify-between gap-3 sm:col-span-1 lg:col-span-2`}>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-ocean-mint/15 text-ocean-teal">
+            <History className="h-4.5 w-4.5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate">Histórico STHIA</p>
+            <p className="text-xs text-muted-foreground truncate">{generations.length} gerações salvas</p>
+          </div>
+        </div>
+        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
+    ),
     workout: (
       <AiWorkoutReminderCard
           workout={latestOf(generations, "workout")}

@@ -217,6 +217,7 @@ const AiSobre = lazyWithRetry(() => import("./pages/ai/AiSobre"));
 const AiLegal = lazyWithRetry(() => import("./pages/ai/AiLegal"));
 const AiInstalar = lazyWithRetry(() => import("./pages/ai/AiInstalar"));
 const AiLegalDoc = lazyWithRetry(() => import("./pages/ai/AiLegalDoc"));
+const AiHistory = lazyWithRetry(() => import("./pages/ai/AiHistory"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
@@ -286,6 +287,7 @@ const App = () => {
             <Route path="/ai/sobre" element={<Suspense fallback={<LazyFallback />}><AiSobre /></Suspense>} />
             <Route path="/ai/legal" element={<Suspense fallback={<LazyFallback />}><AiLegal /></Suspense>} />
             <Route path="/ai/instalar" element={<Suspense fallback={<LazyFallback />}><AiInstalar /></Suspense>} />
+            <Route path="/ai/historico" element={<Suspense fallback={<LazyFallback />}><AiHistory /></Suspense>} />
             <Route path="/ai/baixar" element={<Suspense fallback={<LazyFallback />}><AiInstalar /></Suspense>} />
             <Route path="/ai/legal/:slug" element={<Suspense fallback={<LazyFallback />}><AiLegalDoc /></Suspense>} />
             <Route path="/ai/leitura/:id" element={<Suspense fallback={<LazyFallback />}><AiLeituraVisual /></Suspense>} />
