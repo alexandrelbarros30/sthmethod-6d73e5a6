@@ -1,0 +1,2 @@
+ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS app text NOT NULL DEFAULT 'sthmethod';
+CREATE INDEX IF NOT EXISTS app_releases_app_current_idx ON public.app_releases (app, is_current, released_at DESC);

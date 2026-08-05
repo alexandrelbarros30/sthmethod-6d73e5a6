@@ -811,6 +811,7 @@ export type Database = {
       }
       app_releases: {
         Row: {
+          app: string
           created_by: string | null
           file_path: string
           id: string
@@ -821,6 +822,7 @@ export type Database = {
           version: string
         }
         Insert: {
+          app?: string
           created_by?: string | null
           file_path: string
           id?: string
@@ -831,6 +833,7 @@ export type Database = {
           version: string
         }
         Update: {
+          app?: string
           created_by?: string | null
           file_path?: string
           id?: string
