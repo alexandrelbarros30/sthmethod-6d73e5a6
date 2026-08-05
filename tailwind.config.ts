@@ -171,10 +171,6 @@ export default {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        "fade-in-up": {
-          "0%": { opacity: "0", transform: "translateY(20px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
         "scale-in": {
           "0%": { opacity: "0", transform: "scale(0.97)" },
           "100%": { opacity: "1", transform: "scale(1)" },
@@ -193,7 +189,6 @@ export default {
         "spin-reverse": "spin-reverse 15s linear infinite",
         "grid-move": "grid-move 20s linear infinite",
         "fade-in": "fade-in 0.35s ease-out both",
-        "fade-in-up": "fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both",
         "scale-in": "scale-in 0.25s ease-out both",
         "slide-up": "slide-up 0.4s ease-out both",
       },
