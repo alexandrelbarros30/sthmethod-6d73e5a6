@@ -674,6 +674,7 @@ export type Database = {
           full_name: string | null
           goal: string | null
           height_cm: number | null
+          limitations: string | null
           medications: string | null
           phase1_complete: boolean
           phase2_complete: boolean
@@ -692,6 +693,7 @@ export type Database = {
           full_name?: string | null
           goal?: string | null
           height_cm?: number | null
+          limitations?: string | null
           medications?: string | null
           phase1_complete?: boolean
           phase2_complete?: boolean
@@ -710,6 +712,7 @@ export type Database = {
           full_name?: string | null
           goal?: string | null
           height_cm?: number | null
+          limitations?: string | null
           medications?: string | null
           phase1_complete?: boolean
           phase2_complete?: boolean

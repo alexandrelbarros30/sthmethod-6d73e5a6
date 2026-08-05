@@ -183,6 +183,7 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
       const raw = String(answers[f.key] ?? "").trim();
       if (raw && f.options.some((o) => o.value === raw)) initial[f.key] = raw;
     }
+    // Garante que o estado local comece com o que está no JSON answers
     setValues(initial);
     hydrated.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,7 +230,12 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
 
     // Sincroniza campos que existem tanto no perfil (top-level) quanto no answers (JSON)
     const updates: any = { answers: newAnswers };
-    if (values.limitations) updates.limitations = values.limitations;
+    
+    // IMPORTANTE: Removemos a tentativa de salvar 'limitations' fora do answers 
+    // se a migração ainda não estiver refletida no cache do cliente ou tipos.
+    // Como unificamos no answers, deixamos a coluna limitations para compatibilidade futura,
+    // mas a lógica principal deve ser baseada no answers JSON.
+    // updates.limitations = values.limitations; 
 
     const { error } = await supabase
       .from("ai_app_profiles")

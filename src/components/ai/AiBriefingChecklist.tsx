@@ -37,7 +37,7 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
     base.push(
       { key: "training_level", label: "Nível de treino", ok: filled(p.training_level), where: "cadastro" },
       { key: "training_place", label: "Onde você treina", ok: filled(a.training_place), where: "briefing" },
-      { key: "limitations", label: "Limitações físicas / lesões", ok: filled(p.limitations) || filled(a.limitations), where: "cadastro" },
+      { key: "limitations", label: "Limitações físicas / lesões", ok: filled(a.limitations), where: "briefing" },
     );
     if (a.does_cardio === "sim") {
       base.push(
@@ -50,10 +50,8 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
 
   if (kind === "diet") {
     base.push(
-      { key: "meals_per_day", label: "Refeições por dia", ok: filled(a.meals_per_day), where: "cadastro" },
-      { key: "restrictions", label: "Restrições alimentares (ou 'Nenhuma')", ok: filled(a.restrictions), where: "cadastro" },
-      { key: "dislikes", label: "Alimentos que não gosta (ou 'Nenhum')", ok: filled(a.dislikes), where: "cadastro" },
-      { key: "budget", label: "Orçamento / padrão de compra", ok: filled(a.budget), where: "cadastro" },
+      { key: "diet_objective", label: "Objetivo do cardápio", ok: filled(a.diet_objective), where: "briefing" },
+      { key: "diet_meals", label: "Refeições por dia", ok: filled(a.diet_meals), where: "briefing" },
     );
   }
 
