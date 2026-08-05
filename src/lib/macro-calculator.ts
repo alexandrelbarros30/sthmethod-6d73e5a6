@@ -120,10 +120,14 @@ export function calculateMacros(input: MacroInput): MacroResult {
 
   // Adjust calories based on objective
   let dailyCalories: number;
-  if (input.objective === "perder_gordura") {
+  if (input.objective === "cutting") {
+    dailyCalories = tdee - 800; // déficit de 800 kcal
+  } else if (input.objective === "perder_gordura") {
     dailyCalories = tdee - 500; // déficit de 500 kcal
   } else if (input.objective === "hipertrofia") {
     dailyCalories = tdee + 350; // superávit de 350 kcal
+  } else if (input.objective === "bulking") {
+    dailyCalories = tdee + 700; // superávit de 700 kcal
   } else {
     dailyCalories = tdee; // manutenção
   }

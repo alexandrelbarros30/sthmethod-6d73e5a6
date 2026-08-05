@@ -13,9 +13,11 @@ export const physicalActivityLevelLabels: Record<string, string> = Object.fromEn
 );
 
 export const objectiveLabels: Record<string, string> = {
+  cutting: "Cutting (Perda extrema)",
   perder_gordura: "Perder gordura",
-  hipertrofia: "Hipertrofia",
   manter_peso: "Manter peso",
+  hipertrofia: "Hipertrofia",
+  bulking: "Bulking (Ganho extremo)",
 };
 
 export const activityLabels: Record<string, string> = {
