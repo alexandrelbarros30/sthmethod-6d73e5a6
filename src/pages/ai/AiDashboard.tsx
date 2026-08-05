@@ -242,6 +242,7 @@ function SortableTile({
 
 export default function AiDashboard() {
   const { profile, subscription, generations, loading, user } = useAiApp();
+  const answers = (profile?.answers ?? {}) as Record<string, string>;
   const { streak, today, last7, measurements, saveCheckin, setWorkoutDone } = useAiProgress();
   const { offer, dismiss } = useAiOffer();
   const { insight } = useAiInsight();
@@ -599,7 +600,7 @@ export default function AiDashboard() {
         </div>
       )}
 
-      {(!profile?.answers?.physical_activity_level || profile?.answers?.activity_type === "nenhuma") && (
+      {(!answers.physical_activity_level || answers.activity_type === "nenhuma") && (
         <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 ring-1 ring-amber-500/10">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-500">
             <Dumbbell className="h-5 w-5" />
