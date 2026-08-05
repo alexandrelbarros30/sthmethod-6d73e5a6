@@ -138,7 +138,7 @@ export default function AiLanding() {
               <div className="relative group">
                 <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-tr from-primary/30 to-blue-500/30 blur-2xl opacity-50 transition-all duration-700 group-hover:opacity-80" />
                 <div className="relative flex flex-col items-center rounded-[32px] border border-white/10 bg-black/40 p-8 backdrop-blur-xl transition-all duration-500 group-hover:border-primary/30">
-                  <img src="/logo-master-v1.svg" className="h-24 w-24 mb-4" alt="STH AI Logo" />
+                  <img src="/logo-master-v1.png" className="h-24 w-24 mb-4 rounded-3xl" alt="STH AI Logo" />
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Neural Active</span>
