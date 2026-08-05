@@ -333,10 +333,11 @@ IMPORTANTE:
 - Priorize alimentos brasileiros e preparações simples.
 
 REGRAS CRÍTICAS:
-1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
-2. O total calórico e macros no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.
-3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas.
-4. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
+1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional. Cada opção deve ser uma refeição COMPLETA e não apenas um item isolado.
+2. O total calórico e macros no JSON devem considerar a SOMA de todos os itens da ALIMENTAÇÃO BASE daquela refeição.
+3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas, distribuindo os macros de forma inteligente entre carboidratos e gorduras.
+4. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais. Não gere refeições mono-alimento (apenas frango ou apenas ovo).
+5. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
 5. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
 6. NÃO retorne erros genéricos.
 
