@@ -678,6 +678,38 @@ const AdminDietAI = () => {
             <div className="space-y-6">
               <section>
                 <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2 uppercase tracking-wider">
+                  <Wand2 className="w-4 h-4" /> Inteligência de Dados (Macros & Fontes)
+                </h4>
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed space-y-4">
+                  <div>
+                    <p className="font-bold text-primary mb-1">1. Como é feita a contagem de Macros e Kcal?</p>
+                    <p className="text-foreground/80">
+                      O processo ocorre em duas camadas de validação:
+                      <br />• <b>Camada 1 (Geração):</b> A STHia estima os macros baseada no seu treinamento e nas diretrizes do sistema (Atwater 4/4/9) ao gerar o JSON inicial.
+                      <br />• <b>Camada 2 (Auditoria/Análise):</b> Após a geração, o sistema utiliza a função <code>analyze-diet</code>. Ela extrai os alimentos reais do texto e recalcula os valores usando pesos padrão (ex: 1 ovo = 50g) e as tabelas oficiais (TACO/TBCA). Se houver divergência maior que 10%, o sistema força uma re-geração.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-primary mb-1">2. Apresentação de Alimentos e Substituições</p>
+                    <p className="text-foreground/80">
+                      A STHia é instruída a retornar sempre a <b>Opção BASE</b> (que define os macros da refeição) seguida de substituições equivalentes. 
+                      <br />• <b>JSON Engine:</b> Gera exatamente 4 opções (1 Base + 3 Substituições).
+                      <br />• <b>Doutrina Original:</b> Prevê a Base + 5 substituições.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-primary mb-1">3. Tabela TACO vs FatSecret (Possíveis Falhas)</p>
+                    <p className="text-foreground/80">
+                      • <b>Tabela TACO (Prioridade Máxima):</b> O sistema possui uma biblioteca interna com os valores exatos da TACO/TBCA para alimentos básicos brasileiros (arroz, feijão, frango, etc). Esta consulta é local e <b>não falha</b>.
+                      <br />• <b>FatSecret API:</b> Usada apenas para alimentos industriais ou marcas específicas. 
+                      <br />• <b>Diagnóstico de Falha:</b> Se a API FatSecret falhar (timeout ou erro de rede) ou se o alimento não for encontrado, o sistema recorre ao conhecimento geral da IA. A auditoria sinaliza se os valores não puderem ser ratificados pelas tabelas oficiais.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <h4 className="text-sm font-semibold text-orange-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
                   <Wand2 className="w-4 h-4" /> Doutrina STH Method (Original)
                 </h4>
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm font-mono text-foreground/90 leading-relaxed whitespace-pre-wrap">
