@@ -39,6 +39,7 @@ import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import EvolutionArtsGallery from "@/components/admin/EvolutionArtsGallery";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
+import { triggerSupercoachSync } from "@/functions/_shared/supercoach-sync";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
@@ -1916,9 +1917,9 @@ const AdminStudents = () => {
               <Select value={subForm.status} onValueChange={(v) => setSubForm({ ...subForm, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="active">Ativo (ST Coach Liberado)</SelectItem>
                   <SelectItem value="expired">Vencido</SelectItem>
-                  <SelectItem value="suspended">Suspenso</SelectItem>
+                  <SelectItem value="suspended">Suspenso (ST Coach Bloqueado)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

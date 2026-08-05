@@ -200,7 +200,14 @@ Deno.serve(async (req) => {
 
       // POST expects a single object (server reads $data['email']).
       // PUT expects an array of existing customers (needs 'id').
-      let created = await fetch(ACCOUNT_URL, { method: 'POST', headers: auth, body: JSON.stringify(payloadObj) })
+      let created = await fetch(ACCOUNT_URL, { 
+        method: 'POST', 
+        headers: auth, 
+        body: JSON.stringify({
+          ...payloadObj,
+          status: status || 2 // 2=Active, 3=Blocked
+        }) 
+      })
       let createdText = await created.text()
       if (!created.ok) {
         // Fallback: some tenants accept an array on POST
