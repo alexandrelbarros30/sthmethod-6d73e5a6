@@ -44,10 +44,12 @@ export interface AiGeneration {
 }
 
 export const AI_PLANS = [
-  { id: "mensal", label: "Mensal", price: "R$ 39,90", note: "cobrado todo mês" },
-  { id: "trimestral", label: "Trimestral", price: "R$ 99,90", note: "ciclo biológico completo" },
-  { id: "semestral", label: "Semestral", price: "R$ 179,90", note: "6 meses de evolução" },
-  { id: "anual", label: "Anual", price: "R$ 299,90", note: "melhor custo por mês" },
+  { id: "mensal_oferta", label: "🔥 Mensal (Lançamento)", price: "R$ 39,90", note: "pix ou cartão à vista" },
+  { id: "anual_fundador", label: "⭐ Anual Fundador", price: "R$ 399,90", note: "preço garantido vitalício" },
+  { id: "mensal", label: "Mensal Oficial", price: "R$ 59,90", note: "pix ou cartão à vista" },
+  { id: "trimestral", label: "Trimestral", price: "R$ 159,90", note: "em até 3x sem juros" },
+  { id: "semestral", label: "Semestral", price: "R$ 299,90", note: "em até 6x sem juros" },
+  { id: "anual", label: "Anual", price: "R$ 499,90", note: "em até 12x sem juros" },
 ] as const;
 
 export const AI_MODULES: Record<AiKind, { title: string; short: string; cycleDays: number; icon: string }> = {
