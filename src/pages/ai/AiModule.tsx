@@ -20,7 +20,7 @@ import AiBriefingChecklist, { buildChecklist } from "@/components/ai/AiBriefingC
 import AiFieldTipsDialog from "@/components/ai/AiFieldTipsDialog";
 import AiVoiceInput, { appendTranscript } from "@/components/ai/AiVoiceInput";
 import { feedbackForGeneration, useAiFeedback } from "@/hooks/useAiFeedback";
-import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft } from "lucide-react";
+import { Loader2, Sparkles, RefreshCw, Lock, ArrowLeft, History } from "lucide-react";
 import { focusField } from "@/lib/field-focus";
 import type { ChecklistItem } from "@/components/ai/AiBriefingChecklist";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
