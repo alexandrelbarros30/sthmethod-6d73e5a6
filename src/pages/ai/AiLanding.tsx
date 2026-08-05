@@ -82,41 +82,11 @@ export default function AiLanding() {
               <Button asChild size="sm" className="rounded-full bg-white text-black hover:bg-white/90 px-5 font-bold">
                 <Link to="/ai/onboarding">Começar</Link>
               </Button>
-              <Button variant="ghost" size="icon" className="text-white/40 hover:text-primary transition-colors h-8 w-8" onClick={() => setShowIconOptions(!showIconOptions)}>
-                <Palette className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Identity Study Modal Overlay */}
-      <AnimatePresence>
-        {showIconOptions && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-6 backdrop-blur-sm"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] border border-white/10 bg-[#0a0a0a] p-8 shadow-2xl"
-            >
-              <div className="mb-8 flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-primary">Identidade Visual Master</h2>
-                  <p className="text-sm text-white/40">Conceito: Musculação, Nutrição e Análise integrados por IA</p>
-                </div>
-                <Button variant="ghost" size="sm" className="rounded-full hover:bg-white/5" onClick={() => setShowIconOptions(false)}>Fechar</Button>
-              </div>
-              <AiIconOptions />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <main>
         {/* Hero Section */}
