@@ -3,29 +3,29 @@
   <rect x="0.5" y="0.5" width="191" height="191" rx="39.5" stroke="#374151" stroke-opacity="0.5"/>
   
   <!-- Grid layout matching the requested Option Master V1 -->
-  <!-- Top Left: Dumbbell (Muscle) -->
+  <!-- Top Left: Dumbbell (Muscle) - Laranja -->
   <g transform="translate(48, 48)">
-    <path d="M12 6L6 12M15 9L9 15M21 3L17 7M7 17L3 21M18 6L14 10M10 14L6 18" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="19.5" cy="4.5" r="2.5" stroke="#3B82F6" stroke-width="2"/>
-    <circle cx="4.5" cy="19.5" r="2.5" stroke="#3B82F6" stroke-width="2"/>
+    <path d="M12 6L6 12M15 9L9 15M21 3L17 7M7 17L3 21M18 6L14 10M10 14L6 18" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="19.5" cy="4.5" r="2.5" stroke="#F97316" stroke-width="2"/>
+    <circle cx="4.5" cy="19.5" r="2.5" stroke="#F97316" stroke-width="2"/>
   </g>
 
-  <!-- Top Right: Apple (Nutrition) -->
+  <!-- Top Right: Apple (Nutrition) - Vermelho -->
   <g transform="translate(108, 48)">
-    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M12 6V2M15 4L12 2" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 6V2M15 4L12 2" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
-  <!-- Bottom Left: Activity/Pulse (Health/Exam) -->
+  <!-- Bottom Left: Activity/Pulse (Health/Exam) - Verde -->
   <g transform="translate(48, 108)">
-    <path d="M22 12H18L15 21L9 3L6 12H2" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M22 12H18L15 21L9 3L6 12H2" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
-  <!-- Bottom Right: Network (AI/Nodes) -->
+  <!-- Bottom Right: Network (AI/Nodes) - Azul -->
   <g transform="translate(108, 108)">
-    <rect x="9" y="2" width="6" height="6" rx="1" stroke="#FFFFFF" stroke-width="2"/>
-    <rect x="2" y="14" width="6" height="6" rx="1" stroke="#FFFFFF" stroke-width="2"/>
-    <rect x="16" y="14" width="6" height="6" rx="1" stroke="#FFFFFF" stroke-width="2"/>
-    <path d="M12 8V11M12 11H5V14M12 11H19V14" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="9" y="2" width="6" height="6" rx="1" stroke="#3B82F6" stroke-width="2"/>
+    <rect x="2" y="14" width="6" height="6" rx="1" stroke="#3B82F6" stroke-width="2"/>
+    <rect x="16" y="14" width="6" height="6" rx="1" stroke="#3B82F6" stroke-width="2"/>
+    <path d="M12 8V11M12 11H5V14M12 11H19V14" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

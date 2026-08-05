@@ -53,10 +53,10 @@ export default function AiIconOptions() {
             <div className="relative z-10 w-full h-full flex items-center justify-center p-4">
               {opt.layout === "grid" && (
                 <div className="grid grid-cols-2 gap-2">
-                  <Dumbbell className="h-6 w-6 text-primary" />
-                  <Apple className="h-6 w-6 text-emerald-400" />
-                  <Activity className="h-6 w-6 text-blue-400" />
-                  <Network className="h-6 w-6 text-white animate-pulse" />
+                  <Dumbbell className="h-6 w-6 text-orange-500" />
+                  <Apple className="h-6 w-6 text-red-500" />
+                  <Activity className="h-6 w-6 text-emerald-500" />
+                  <Network className="h-6 w-6 text-blue-500 animate-pulse" />
                 </div>
               )}
               
