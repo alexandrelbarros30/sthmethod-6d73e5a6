@@ -237,6 +237,9 @@ export default function AiWorkoutBriefing({ profile, onChange, standalone, colla
     
     const currentAnswers = (profile.answers ?? {}) as Record<string, string>;
     const newAnswers = { ...currentAnswers, ...values };
+    
+    // Forçamos o fechamento da aba se houver um campo focado nela
+    setActiveOpen(null);
 
     // Sincroniza campos que existem tanto no perfil (top-level) quanto no answers (JSON)
     const updates: any = { answers: newAnswers };

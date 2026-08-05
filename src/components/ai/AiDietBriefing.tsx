@@ -118,6 +118,9 @@ export default function AiDietBriefing({ profile, onChange, compact = false, col
       diet_preferences: preferences,
     };
 
+    // Forçamos o fechamento da aba se houver um campo focado nela
+    setActiveOpen(null);
+
     const { error } = await supabase
       .from("ai_app_profiles")
       .update({ 
