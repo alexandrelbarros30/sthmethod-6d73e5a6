@@ -102,6 +102,7 @@
 - [Âncora Plano 90D Comercial](mem://features/estrategia-vendas-90d) — IA Comercial ancora novos leads no Plano 90D (Trimestral) como ideal
 - [STHIA Comercial](mem://features/sthia-comercial-prompt) — Roteiro oficial do canal Comercial: identificação primeiro, posicionamento de acompanhamento, proteção de conteúdo, conversão
 - [Núcleo Cognitivo Superagente](mem://features/nucleo-cognitivo-superagente) — Diretiva interna de raciocínio para TODOS os canais IA
+- [Campanha Lançamento STH AI](mem://features/campanha-lancamento-sth-ai) — Planos fundador, oficiais e regras do cupom STH10AI
 - [Macro Questionnaire Funnel](mem://marketing/conversao-questionario-macros) — State transfer straight to registration
 - [Free Leads Funnel](mem://marketing/funil-leads-free) — Numbers-only login, 1.5s delayed WA follow-up
 - [WhatsApp Communication (STH ONE: 21 99849-6289) - NUTRI (21 99898-4153) IS PRIVATE
