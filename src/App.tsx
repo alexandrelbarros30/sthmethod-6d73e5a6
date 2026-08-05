@@ -272,6 +272,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/ai" element={<Suspense fallback={<LazyFallback />}><AiLanding /></Suspense>} />
+            <Route path="/ai/home" element={<Suspense fallback={<LazyFallback />}><AiLanding /></Suspense>} />
             <Route path="/ai/login" element={<Suspense fallback={<LazyFallback />}><AiLogin /></Suspense>} />
             <Route path="/ai/onboarding" element={<Suspense fallback={<LazyFallback />}><AiOnboarding /></Suspense>} />
             <Route path="/ai/esqueci-senha" element={<Suspense fallback={<LazyFallback />}><AiForgotPassword /></Suspense>} />

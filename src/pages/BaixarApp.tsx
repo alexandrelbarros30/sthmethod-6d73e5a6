@@ -38,12 +38,20 @@ export default function BaixarApp() {
               <p className="text-sm text-white/50">Instalação direta — sempre a versão mais recente</p>
             </div>
           </div>
-          <Button asChild size="lg" className="w-full">
-            <a href={APK_URL} rel="noopener" target="_blank">
-              <Download className="w-4 h-4 mr-2" />
-              Baixar APK
-            </a>
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button asChild size="lg" className="w-full">
+              <a href={APK_URL} rel="noopener" target="_blank">
+                <Download className="w-4 h-4 mr-2" />
+                STH METHOD (APK)
+              </a>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="w-full border-primary/20 bg-primary/5 text-primary hover:bg-primary/10">
+              <Link to="/ai/instalar">
+                <Download className="w-4 h-4 mr-2" />
+                STH AI (APK)
+              </Link>
+            </Button>
+          </div>
           <ol className="text-sm text-white/60 space-y-1 list-decimal list-inside">
             <li>Toque em "Baixar APK" acima.</li>
             <li>Abra o arquivo baixado.</li>
