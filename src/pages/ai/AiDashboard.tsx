@@ -69,6 +69,7 @@ const WIDGET_META: WidgetMeta[] = [
   { id: "mod-workout", label: "Treino" },
   { id: "mod-analysis", label: "Análise" },
   { id: "images", label: "Imagens corporais" },
+  { id: "/ai/historico", label: "Histórico STHIA" },
   { id: "/ai/app/diario", label: "Diário alimentar" },
   { id: "/ai/app/saude", label: "Saúde e wearables" },
   { id: "/ai/app/coaches", label: "Coaches humanos" },
