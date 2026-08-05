@@ -237,7 +237,7 @@ export default function AiLanding() {
                       <div className="absolute inset-8 rounded-full border border-blue-500/10 animate-spin-reverse" />
                       <div className="absolute inset-16 rounded-full border border-white/5 animate-spin-slow" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <img src="/logo-master-v1.svg" className="h-20 w-20 shadow-2xl shadow-primary/40" alt="STH AI Logo" />
+                        <img src="/logo-master-v1.png" className="h-20 w-20 shadow-2xl shadow-primary/40 rounded-2xl" alt="STH AI Logo" />
                       </div>
                    </div>
                    
