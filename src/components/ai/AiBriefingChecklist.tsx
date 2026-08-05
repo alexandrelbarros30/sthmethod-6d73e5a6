@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -73,6 +73,8 @@ interface Props {
 }
 
 export default function AiBriefingChecklist({ items, editHref, title, hideEdit, onSelect }: Props) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { done, total, missing } = useMemo(() => {
     const done = items.filter((i) => i.ok).length;
     return { done, total: items.length, missing: items.filter((i) => !i.ok) };
