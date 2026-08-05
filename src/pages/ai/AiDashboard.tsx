@@ -33,7 +33,7 @@ import {
   BrainCircuit,
   Camera,
 } from "lucide-react";
-import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus } from "lucide-react";
+import { LayoutGrid, RotateCcw, Check, Repeat, GripVertical, Minus, Plus, History } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
