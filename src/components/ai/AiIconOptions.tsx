@@ -10,7 +10,8 @@ export default function AiIconOptions() {
       description: "Design minimalista unindo Halter, Maçã e Pulso em uma malha neural integrada. Foco em equilíbrio.",
       icon: Network,
       color: "from-primary to-emerald-500",
-      layout: "grid"
+      layout: "grid",
+      selected: true
     },
     {
       id: "master-design-2",
@@ -35,11 +36,13 @@ export default function AiIconOptions() {
       {options.map((opt) => (
         <div key={opt.id} className="flex flex-col items-center text-center group">
           <div className={cn(
-            "relative mb-4 flex h-32 w-32 items-center justify-center rounded-[32px] bg-black shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20 border border-white/10 overflow-hidden",
+            "relative mb-4 flex h-32 w-32 items-center justify-center rounded-[32px] bg-black shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20 border overflow-hidden",
+            opt.selected ? "border-primary ring-2 ring-primary/20 shadow-primary/30" : "border-white/10",
             "bg-gradient-to-br from-zinc-900 to-black"
           )}>
             <div className={cn(
-              "absolute inset-0 rounded-[32px] bg-gradient-to-br opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-40",
+              "absolute inset-0 rounded-[32px] bg-gradient-to-br blur-xl transition-opacity duration-500",
+              opt.selected ? "opacity-30" : "opacity-0 group-hover:opacity-40",
               opt.color
             )} />
             
