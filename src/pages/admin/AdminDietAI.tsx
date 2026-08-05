@@ -728,7 +728,7 @@ Missão: Gerar cardápios precisos em JSON estruturado.
 ESTILO E CULTURA: Brasileiro (Arroz, feijão, carnes, frutas tropicais).
 
 REGRAS JSON:
-1. EXATAMENTE 4 opções por refeição (BASE + 3 substituições).
+1. EXATAMENTE 6 opções por refeição (BASE + 5 substituições).
 2. Ovos em UNIDADES (ex: "4 ovos inteiros").
 3. TABELA TACO: Padrão ouro para cálculos.
 4. Coerência Atwater: kcal = (P*4) + (C*4) + (G*9).`}
