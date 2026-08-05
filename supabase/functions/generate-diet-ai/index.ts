@@ -196,14 +196,21 @@ async function reconcileWithAnalyzer(parsed: any): Promise<void> {
 
 function extractCorrectionTargets(text: string): Partial<MacroTargets> {
   const targets: Partial<MacroTargets> = {};
-  const kcalMatch = text.match(/(\d+)\s*(kcal|calorias)/i);
-  if (kcalMatch) targets.energy_kcal = parseInt(kcalMatch[1]);
-  const pMatch = text.match(/(\d+)\s*g?\s*(proteina|ptn)/i);
-  if (pMatch) targets.protein_g = parseInt(pMatch[1]);
-  const cMatch = text.match(/(\d+)\s*g?\s*(carbo|carboidrato|cho)/i);
-  if (cMatch) targets.carbs_g = parseInt(cMatch[1]);
-  const fMatch = text.match(/(\d+)\s*g?\s*(gordura|lipidio|fat)/i);
-  if (fMatch) targets.fat_g = parseInt(fMatch[1]);
+  // Handle comma-separated decimals or direct numbers
+  const clean = (s: string) => parseInt(s.replace(",", "."));
+  
+  const kcalMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(kcal|calorias)/i);
+  if (kcalMatch) targets.energy_kcal = clean(kcalMatch[1]);
+  
+  const pMatch = text.match(/(\d+(?:[.,]\d+)?)\s*g?\s*(proteina|ptn|protein)/i);
+  if (pMatch) targets.protein_g = clean(pMatch[1]);
+  
+  const cMatch = text.match(/(\d+(?:[.,]\d+)?)\s*g?\s*(carbo|carboidrato|cho|carb)/i);
+  if (cMatch) targets.carbs_g = clean(cMatch[1]);
+  
+  const fMatch = text.match(/(\d+(?:[.,]\d+)?)\s*g?\s*(gordura|lipidio|fat)/i);
+  if (fMatch) targets.fat_g = clean(fMatch[1]);
+  
   return targets;
 }
 
