@@ -30,6 +30,7 @@ const SECONDARY_NAV = [
   { to: "/ai/app/imagens", label: "Imagens", icon: Camera },
   { to: "/ai/app/saude", label: "Saúde", icon: HeartPulse },
   { to: "/ai/app/coaches", label: "Coaches", icon: UserRound },
+  { to: "/ai/historico", label: "Histórico", icon: History },
   { to: "/ai/assinatura", label: "Assinatura", icon: CreditCard },
 ];
 
