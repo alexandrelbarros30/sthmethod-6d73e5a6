@@ -249,8 +249,8 @@ serve(async (req) => {
       .trim();
 
     const systemPrompt = `Você é um nutricionista especialista em análise de cardápios alimentares brasileiros.
-Sua ÚNICA fonte de referência para energia e macronutrientes é a TABELA TACO (Tabela Brasileira de Composição de Alimentos - UNICAMP, 4ª edição).
-Quando um alimento não constar na TACO, use a TBCA (USP) como fonte secundária. NUNCA invente valores e NUNCA use bases internacionais (USDA).
+Sua fonte de referência PRIORITÁRIA para energia e macronutrientes é a base de dados FATSECRET.
+Quando um alimento não for resolvido via FatSecret, use a TABELA TACO (UNICAMP) e a TBCA (USP) como fontes secundárias. NUNCA invente valores absurdos.
 
 TABELA DE REFERÊNCIA TACO POR 100g/100ml (USE EXATAMENTE ESTES VALORES — NÃO ARREDONDE PARA CIMA):
 - Ovo de galinha inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G  (1 ovo médio = 50g)
@@ -427,9 +427,9 @@ No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing n
     const analysis = JSON.parse(toolCall.function.arguments);
     const usage = data?.usage || null;
 
-    // ============= FatSecret reconciliation pass =============
+    // ============= FatSecret reconciliation pass (PRIORITY) =============
+    // O usuário solicitou que FatSecret seja prioritária na consulta aos alimentos.
     // Extrai itens estruturados e recalcula por refeição via FatSecret.
-    // Só sobrescreve uma refeição se TODOS os itens forem resolvidos com sucesso.
     let fsMeta: any = { enabled: false };
     try {
       if (FS_CLIENT_ID && FS_CLIENT_SECRET) {
@@ -437,20 +437,14 @@ No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing n
         if (items && items.length > 0) {
           const fsMeals = await reconcileWithFatSecret(items);
           const overrides: Record<number, typeof fsMeals[number]> = {};
-          // Sanity gate: only trust FatSecret when kcal is within ±10% of the TACO estimate.
-          // Reduzimos de 30% para 10% para evitar macros elevados e erros de cálculo.
-          // Prevents bad generic matches (e.g. raw vs cooked oats) from skewing totals.
+          
           const skipped: Array<{ meal_number: number; reason: string; fs_kcal: number; taco_kcal: number }> = [];
           for (const fm of fsMeals) {
-            if (!fm.resolved) continue;
-            const taco = (analysis.meals || []).find((mm: any) => mm.meal_number === fm.meal_number);
-            const tacoKcal = taco?.energy_kcal ?? 0;
-            if (tacoKcal > 0) {
-              const diff = Math.abs(fm.energy_kcal - tacoKcal) / tacoKcal;
-              if (diff > 0.15) {
-                skipped.push({ meal_number: fm.meal_number, reason: "kcal_out_of_tolerance", fs_kcal: fm.energy_kcal, taco_kcal: tacoKcal });
-                continue;
-              }
+            // Sendo prioritária, aplicamos sempre que resolvido, ignorando a tolerância contra TACO
+            // a menos que o valor seja absurdo (zero ou nulo).
+            if (!fm.resolved || fm.energy_kcal <= 0) {
+              skipped.push({ meal_number: fm.meal_number, reason: "not_resolved_or_zero", fs_kcal: fm.energy_kcal, taco_kcal: 0 });
+              continue;
             }
             overrides[fm.meal_number] = fm;
           }

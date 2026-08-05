@@ -336,7 +336,7 @@ REGRAS CRÍTICAS:
 1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional.
 2. O total calórico e macros no JSON devem considerar APENAS a ALIMENTAÇÃO BASE.
 3. Priorize Integralmente bater as metas de Calorias (Kcal) e Proteínas.
-4. Use APENAS a TABELA TACO (Arroz cozido: 128kcal, Frango cozido: 163kcal, Ovo inteiro: 143kcal/100g).
+4. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
 5. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
 6. NÃO retorne erros genéricos.
 
