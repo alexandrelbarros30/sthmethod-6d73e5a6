@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSthAiTheme } from "@/hooks/useSthAiTheme";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { signInWithGoogleNative } from "@/utils/ai/auth-utils";
+import { lovable } from "@/integrations/lovable";
 import { Brain, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,8 +173,11 @@ export default function AiLogin() {
           onClick={async () => {
             try {
               setLoading(true);
-              await signInWithGoogleNative(next);
-              // Supabase handles redirect
+              const { error, url } = await lovable.auth.signInWithOAuth("google", {
+                redirect_uri: `${window.location.origin}/ai/login`,
+              });
+              if (error) throw error;
+              if (url) window.location.href = url;
             } catch (err: any) {
               toast.error(err?.message || "Erro ao entrar com o Google");
               setLoading(false);
