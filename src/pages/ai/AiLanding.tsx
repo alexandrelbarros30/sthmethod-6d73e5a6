@@ -58,7 +58,7 @@ export default function AiLanding() {
           <Link to="/ai" className="group flex items-center gap-3">
             <div className="relative">
               <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-              <img src="/logo-master-v1.svg" className="relative h-9 w-9" alt="STH AI Logo" />
+              <img src="/logo-master-v1.png" className="relative h-9 w-9 rounded-lg" alt="STH AI Logo" />
             </div>
             <div className="flex flex-col -space-y-1">
               <span className="text-lg font-bold tracking-tight">STH AI</span>
