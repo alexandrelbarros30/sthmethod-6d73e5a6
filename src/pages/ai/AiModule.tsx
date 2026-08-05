@@ -35,6 +35,7 @@ export default function AiModule() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const versionId = searchParams.get("version");
   const kind = SLUG_TO_KIND[slug ?? ""] ?? "diet";
   const mod = AI_MODULES[kind];
   const { generations, subscription, profile, loading, refresh, unlimited } = useAiApp();
