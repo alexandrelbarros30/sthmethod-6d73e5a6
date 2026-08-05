@@ -2359,6 +2359,13 @@ Deno.serve(async (req) => {
       }
       autoReply = { sent: false, reason: 'human_typing' };
 
+    } else if (!shouldBootstrapCommercialFlow && !nutriHardBlock && conv.queue_type === 'nutri') {
+      // 🔇 STH METHOD: O canal Nutri deve ficar em silêncio para conversação.
+      // Ele só dispara mensagens prontas (boas vindas, liberação de treino/cardápio, etc),
+      // mas não fará conversa nem interação via IA até outra ordem.
+      console.log(`Canal Nutri silenciado para interação (conversa ${conv.id}).`);
+      autoReply = { sent: false, reason: 'nutri_silenced' };
+
     } else if (!shouldBootstrapCommercialFlow && !nutriHardBlock && aiMode === 'ai_only' && !todayNoticeActive) {
       // MODO AI GLOBAL: ignora fluxo e menus — a IA (STHIA) responde 24h,
       // dentro e fora do expediente. Pessoas escrevem em qualquer horário e
