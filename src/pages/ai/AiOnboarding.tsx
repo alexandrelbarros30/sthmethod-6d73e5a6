@@ -22,6 +22,8 @@ interface FormState {
   height_cm: string;
   goal: string;
   training_level: string;
+  activity_type: string;
+  physical_activity_level: string;
   routine: string;
   meals_per_day: string;
   restrictions: string;
@@ -38,6 +40,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   full_name: "", age: "", sex: "", weight_kg: "", height_cm: "", goal: "", training_level: "",
+  activity_type: "musculacao", physical_activity_level: "sedentario",
   routine: "", meals_per_day: "", restrictions: "", comorbidities: "", medications: "", dislikes: "", budget: "",
   training_days: "", equipment: "", limitations: "", sleep: "", stress: "",
 };
@@ -264,7 +267,7 @@ export default function AiOnboarding() {
 
               <div id="f-activity_type" className="space-y-1.5 scroll-mt-24 p-1">
                 <Label>Qual atividade você pratica?</Label>
-                <Select value={form.routine} onValueChange={(v) => set("routine", v)}>
+                <Select value={form.activity_type} onValueChange={(v) => set("activity_type", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                     <SelectItem value="musculacao">Musculação</SelectItem>
@@ -275,6 +278,21 @@ export default function AiOnboarding() {
                     <SelectItem value="nenhuma">Nenhuma / Sedentário</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div id="f-physical_activity_level" className="space-y-1.5 scroll-mt-24 p-1">
+                <Label>Nível de atividade diária (NEAT)</Label>
+                <Select value={form.physical_activity_level} onValueChange={(v) => set("physical_activity_level", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
+                    <SelectItem value="sedentario">Sedentário (trabalho sentado)</SelectItem>
+                    <SelectItem value="levemente_ativo">Levemente ativo (em pé/caminhadas)</SelectItem>
+                    <SelectItem value="moderadamente_ativo">Moderadamente ativo (esforço físico)</SelectItem>
+                    <SelectItem value="bastante_ativo">Bastante ativo (esforço intenso)</SelectItem>
+                    <SelectItem value="extremamente_ativo">Extremamente ativo (atleta/trabalho braçal)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">Isso define o seu gasto calórico fora dos treinos.</p>
               </div>
 
               <div id="f-routine" className="space-y-1.5 scroll-mt-24 p-1">
