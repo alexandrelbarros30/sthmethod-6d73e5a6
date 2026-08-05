@@ -460,7 +460,7 @@ export default function AiDashboard() {
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">Histórico STHIA</p>
-            <p className="text-xs text-muted-foreground truncate">{generations.length} gerações salvas</p>
+            <p className="text-xs text-muted-foreground truncate">Jornada, evolução e fotos</p>
           </div>
         </div>
         <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
