@@ -153,6 +153,7 @@ import AdminFoodAIDashboard from "./pages/admin/AdminFoodAIDashboard";
 import AdminAiMetrics from "./pages/admin/AdminAiMetrics";
 import AdminAiAccess from "./pages/admin/AdminAiAccess";
 import AdminSthia from "./pages/admin/AdminSthia";
+import AdminSthAiSettings from "./pages/admin/AdminSthAiSettings";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminCrm from "./pages/admin/AdminCrm";
 import AdminChatChannel from "./pages/admin/AdminChatChannel";
