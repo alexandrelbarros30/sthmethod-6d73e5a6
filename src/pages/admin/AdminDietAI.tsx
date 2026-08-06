@@ -645,7 +645,7 @@ const AdminDietAI = () => {
                 {adviceMut.isPending ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Consultando...</>
                 ) : (
-                  <><Stethoscope className="w-4 h-4 mr-2" /> Gerar orientação — consulta STHIA</>
+                  <><Stethoscope className="w-4 h-4 mr-2" /> Gerar orientação — consulta {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}</>
                 )}
               </Button>
               <Button
