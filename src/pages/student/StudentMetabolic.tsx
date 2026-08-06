@@ -60,7 +60,7 @@ const StudentMetabolic = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_clinical_analyses")
-        .select("id, title, scope, summary, report_html, red_flags, recommendations, created_at, released_at")
+        .select("id, title, scope, summary, report_html, red_flags, recommendations, created_at, released_at, visibility_settings")
         .eq("user_id", user!.id)
         .eq("released_to_student", true)
         .order("created_at", { ascending: false });
