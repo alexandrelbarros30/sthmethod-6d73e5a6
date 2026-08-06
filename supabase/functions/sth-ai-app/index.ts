@@ -5,6 +5,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { STHIA_TRAINING_DOCTRINE } from '../_shared/sthia-training-doctrine.ts';
 import { STHIA_DIET_FORMAT } from '../_shared/sthia-diet-format.ts';
+import { STHIA_NUTRITIONAL_2_0 } from '../_shared/sthia-nutritional-2-0.ts';
 import { recalcDietMacros } from '../_shared/diet-macros.ts';
 
 const GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
