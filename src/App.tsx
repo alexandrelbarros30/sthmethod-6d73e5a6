@@ -422,7 +422,8 @@ const App = () => {
             <Route path="/admin/nutrition" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutrition /></ProtectedRoute>} />
             <Route path="/admin/dieta-ia" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminDietAI /></Suspense></ProtectedRoute>} />
             <Route path="/admin/protocolo-ia" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminProtocolAI /></Suspense></ProtectedRoute>} />
-            <Route path="/admin/analise-aluno" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminStudentAnalysis /></Suspense></ProtectedRoute>} />
+             <Route path="/admin/analise-aluno" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminStudentAnalysis /></Suspense></ProtectedRoute>} />
+             <Route path="/admin/analise-historico" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminAnalysisHistory /></Suspense></ProtectedRoute>} />
             <Route path="/admin/dieta-auditoria" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminDietAudit /></Suspense></ProtectedRoute>} />
             <Route path="/admin/diet-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDietLibrary /></ProtectedRoute>} />
             <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminProtocol /></Suspense></ProtectedRoute>} />
