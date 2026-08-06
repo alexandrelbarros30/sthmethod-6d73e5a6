@@ -619,7 +619,7 @@ const AdminDietAI = () => {
 
               <Button
                 variant="secondary"
-                onClick={() => adviceMut.mutate()}
+                onClick={() => handleGenerateWithMotor("advice")}
                 disabled={adviceMut.isPending}
                 className="w-full"
               >
