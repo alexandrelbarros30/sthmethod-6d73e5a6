@@ -900,6 +900,55 @@ export default function AdminStudentAnalysis() {
                 </div>
 
                 <LabInterpretationPanel html={current.report_html} />
+
+                {/* Painel de Visibilidade STHIA */}
+                <Card className="border-primary/20 bg-primary/[0.02]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs flex items-center gap-2">
+                      <Eye className="w-3.5 h-3.5" /> Visibilidade dos Tópicos (Aluno)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        { id: "lab_interpretation", label: "Interpretação Laboratorial" },
+                        { id: "general_summary", label: "Parecer Geral Resumido" },
+                        { id: "visual_composition", label: "Composição Visual" },
+                        { id: "body_composition", label: "Composição Corporal" },
+                        { id: "red_flags", label: "Red Flag" },
+                        { id: "prioritized_recommendations", label: "Recomendações Priorizadas" },
+                      ].map((topic) => {
+                        const settings = current.visibility_settings || {
+                          lab_interpretation: true,
+                          general_summary: true,
+                          visual_composition: true,
+                          body_composition: true,
+                          red_flags: true,
+                          prioritized_recommendations: true
+                        };
+                        const isChecked = (settings as any)[topic.id] !== false;
+                        
+                        return (
+                          <div key={topic.id} className="flex items-center gap-2">
+                            <Switch
+                              id={`vis-${topic.id}`}
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                updateVisibility.mutate({
+                                  id: current.id,
+                                  settings: { ...settings, [topic.id]: checked }
+                                });
+                              }}
+                            />
+                            <Label htmlFor={`vis-${topic.id}`} className="text-[11px] cursor-pointer">
+                              {topic.label}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               <Card>
