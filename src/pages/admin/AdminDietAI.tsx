@@ -1181,7 +1181,9 @@ REGRAS JSON:
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsMotorSelectionOpen(false)}>Cancelar</Button>
-            <Button onClick={confirmMotorAndExecute}>Continuar</Button>
+            <Button onClick={confirmMotorAndExecute} className="bg-primary text-black hover:bg-primary/90">
+              Confirmar Seleção
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
