@@ -467,7 +467,12 @@ export default function AdminStudentAnalysis() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[500px] overflow-y-auto">
-                  {history.length === 0 ? (
+                  {isLoadingHistory ? (
+                    <div className="p-8 text-center">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary/40" />
+                      <p className="text-[10px] text-muted-foreground mt-2">Carregando histórico...</p>
+                    </div>
+                  ) : history.length === 0 ? (
                     <div className="p-8 text-center space-y-2">
                       <History className="w-8 h-8 text-muted-foreground/30 mx-auto" />
                       <p className="text-xs text-muted-foreground italic">Nenhuma análise registrada no histórico para este aluno.</p>
