@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { STHIA_NUTRITIONAL_2_0 } from "../_shared/sthia-nutritional-2-0.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
