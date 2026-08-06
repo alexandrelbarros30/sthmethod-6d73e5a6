@@ -73,8 +73,7 @@ export default function AdminStudentAnalysis() {
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, full_name, email")
-        .order("full_name", { ascending: true })
-        .limit(1000);
+        .order("full_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Student[];
     },
