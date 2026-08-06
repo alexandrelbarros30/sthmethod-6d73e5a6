@@ -1027,9 +1027,9 @@ REGRAS JSON:
                       disabled={generateMut.isPending || !counterNote.trim()}
                     >
                       {generateMut.isPending ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Corrigindo cardápio...</>
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Corrigindo cardápio com {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}...</>
                       ) : (
-                        <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio corrigido</>
+                        <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio corrigido com {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}</>
                       )}
                     </Button>
                     {counterNote.trim() && (
