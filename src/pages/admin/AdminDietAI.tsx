@@ -1140,7 +1140,7 @@ REGRAS JSON:
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Brain className="w-5 h-5 text-primary" />
-              Motor de Inteligência Nutricional
+              Selecione a Inteligência Nutricional
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Escolha qual cérebro será responsável por esta operação.
