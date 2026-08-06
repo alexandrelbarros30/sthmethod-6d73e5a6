@@ -26,7 +26,6 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
     { key: "goal", label: "Objetivo", ok: filled(p.goal), where: "cadastro" },
     { key: "comorbidities", label: "Comorbidades (ou 'Nenhuma')", ok: filled(p.comorbidities), where: "cadastro" },
     { key: "medications", label: "Medicamentos em uso (ou 'Nenhum')", ok: filled(p.medications), where: "cadastro" },
-    { key: "routine", label: "Rotina diária", ok: filled(a.routine), where: "cadastro" },
   ];
 
   // 2. Campos de Briefing (Comportamento condicional)
