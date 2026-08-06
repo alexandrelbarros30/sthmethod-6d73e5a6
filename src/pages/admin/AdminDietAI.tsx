@@ -605,17 +605,38 @@ const AdminDietAI = () => {
                   <Label className="text-xs">Nº refeições</Label>
                   <Input type="number" value={numMeals} onChange={(e) => setNumMeals(e.target.value)} placeholder="5" />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label className="text-xs">Proteína (g)</Label>
-                  <Input type="number" value={proteinTarget} onChange={(e) => setProteinTarget(e.target.value)} placeholder="180" />
+                  <div className="flex items-center gap-2">
+                    <Input type="number" value={proteinTarget} onChange={(e) => setProteinTarget(e.target.value)} placeholder="180" />
+                    {proteinTarget && (
+                      <span className="text-[10px] text-primary whitespace-nowrap font-medium">
+                        = {Math.round(Number(proteinTarget) * 4)} kcal
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label className="text-xs">Carbo (g)</Label>
-                  <Input type="number" value={carbsTarget} onChange={(e) => setCarbsTarget(e.target.value)} placeholder="300" />
+                  <div className="flex items-center gap-2">
+                    <Input type="number" value={carbsTarget} onChange={(e) => setCarbsTarget(e.target.value)} placeholder="300" />
+                    {carbsTarget && (
+                      <span className="text-[10px] text-primary whitespace-nowrap font-medium">
+                        = {Math.round(Number(carbsTarget) * 4)} kcal
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label className="text-xs">Lipídio (g)</Label>
-                  <Input type="number" value={fatTarget} onChange={(e) => setFatTarget(e.target.value)} placeholder="70" />
+                  <div className="flex items-center gap-2">
+                    <Input type="number" value={fatTarget} onChange={(e) => setFatTarget(e.target.value)} placeholder="70" />
+                    {fatTarget && (
+                      <span className="text-[10px] text-primary whitespace-nowrap font-medium">
+                        = {Math.round(Number(fatTarget) * 9)} kcal
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
