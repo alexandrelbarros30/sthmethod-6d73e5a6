@@ -1234,7 +1234,10 @@ REGRAS JSON:
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <DialogTitle className="flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-primary" /> Pré-visualização do Cardápio
+                  <Eye className="w-5 h-5 text-primary" /> 
+                  {result?.total?.energy_kcal 
+                    ? `Dieta (${Math.round(result.total.energy_kcal)} kcal) - ${new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' })}` 
+                    : "Pré-visualização do Cardápio"}
                 </DialogTitle>
                 <DialogDescription>
                   Confira a formatação final antes de salvar no rascunho do aluno.
