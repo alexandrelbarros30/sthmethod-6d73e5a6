@@ -24,7 +24,6 @@ interface FormState {
   training_level: string;
   activity_type: string;
   physical_activity_level: string;
-  routine: string;
   meals_per_day: string;
   restrictions: string;
   comorbidities: string;
@@ -41,7 +40,7 @@ interface FormState {
 const EMPTY: FormState = {
   full_name: "", age: "", sex: "", weight_kg: "", height_cm: "", goal: "", training_level: "",
   activity_type: "musculacao", physical_activity_level: "sedentario",
-  routine: "", meals_per_day: "", restrictions: "", comorbidities: "", medications: "", dislikes: "", budget: "",
+  meals_per_day: "", restrictions: "", comorbidities: "", medications: "", dislikes: "", budget: "",
   training_days: "", equipment: "", limitations: "", sleep: "", stress: "",
 };
 
