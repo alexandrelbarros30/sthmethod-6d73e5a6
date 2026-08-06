@@ -656,19 +656,45 @@ export default function AiFoodAnalyzer({ onSaved }: { onSaved: () => void }) {
           </div>
 
           {Array.isArray(result.foods) && (
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2.5 text-sm">
               {result.foods.map((f: any, i: number) => (
-                <li key={i} className="rounded-xl bg-muted/40 px-3 py-2">
-                  <div className="flex justify-between gap-3">
-                    <span className="font-medium">{f.name}</span>
-                    <span className="text-muted-foreground">
-                      {Math.round(num(f.estimated_weight_g))}{f.unit === "ml" ? "ml" : "g"} · {Math.round(num(f.calories))} kcal
+                <li key={i} className="rounded-2xl bg-muted/30 px-4 py-3 border border-border/50">
+                  <div className="flex justify-between items-start gap-3 mb-2">
+                    <span className="font-semibold text-base leading-tight">{f.name}</span>
+                    <span className="text-primary font-bold text-lg leading-tight">
+                      {Math.round(num(f.calories))} <span className="text-[10px] font-medium uppercase tracking-tighter opacity-70">kcal</span>
                     </span>
                   </div>
-                  <div className="mt-0.5 text-[11px] text-muted-foreground">
-                    P {num(f.protein_g).toFixed(1)}g · C {num(f.carbs_g).toFixed(1)}g · G {num(f.fat_g).toFixed(1)}g
-                    {num(f.fiber_g) > 0 && ` · Fibra ${num(f.fiber_g).toFixed(1)}g`}
-                    {num(f.sodium_mg) > 0 && ` · Sódio ${Math.round(num(f.sodium_mg))}mg`}
+                  
+                  <div className="grid grid-cols-2 gap-y-1.5 text-[12px]">
+                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                      <div className="w-1.5 h-1.5 rounded-full bg-border" />
+                      <span>Quantidade: <span className="font-medium text-foreground">{Math.round(num(f.estimated_weight_g))}{f.unit === "ml" ? "ml" : "g"}</span></span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500/50" />
+                      <span>Proteína: <span className="font-medium text-foreground">{num(f.protein_g).toFixed(1)}g</span></span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500/50" />
+                      <span>Carboidrato: <span className="font-medium text-foreground">{num(f.carbs_g).toFixed(1)}g</span></span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500/50" />
+                      <span>Gordura: <span className="font-medium text-foreground">{num(f.fat_g).toFixed(1)}g</span></span>
+                    </div>
+                    {num(f.fiber_g) > 0 && (
+                      <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
+                        <span>Fibra: <span className="font-medium text-foreground">{num(f.fiber_g).toFixed(1)}g</span></span>
+                      </div>
+                    )}
+                    {num(f.sodium_mg) > 0 && (
+                      <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-500/50" />
+                        <span>Sódio: <span className="font-medium text-foreground">{Math.round(num(f.sodium_mg))}mg</span></span>
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
