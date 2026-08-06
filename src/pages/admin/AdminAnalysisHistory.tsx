@@ -90,7 +90,7 @@ export default function AdminAnalysisHistory() {
     queryKey: ["all-clinical-analyses"],
     queryFn: async () => {
       console.log("Fetching all history for today");
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("student_clinical_analyses")
         .select(`
           id, 
@@ -110,11 +110,18 @@ export default function AdminAnalysisHistory() {
           visual_share_expires_at, 
           visibility_settings,
           profiles:user_id (full_name)
-        `)
+        `, { count: "exact" })
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching all analyses:", error);
+        throw error;
+      }
+      
+      console.log(`Fetched all history count: ${data?.length || 0} of ${count || 0}`);
       return (data ?? []) as any[];
     },
+    staleTime: 0,
   });
 
   const { data: history = [], refetch: refetchHistory, isLoading: isLoadingHistory } = useQuery({
@@ -122,16 +129,21 @@ export default function AdminAnalysisHistory() {
     enabled: !!studentId,
     queryFn: async () => {
       console.log("Fetching history for studentId:", studentId);
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("student_clinical_analyses")
-        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings")
+        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings", { count: "exact" })
         .eq("user_id", studentId!)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      console.log("Fetched history count:", data?.length || 0);
+        .order("created_at", { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching student history:", error);
+        throw error;
+      }
+      
+      console.log(`Fetched student history count: ${data?.length || 0} of ${count || 0}`);
       return (data ?? []) as any as Analysis[];
     },
+    staleTime: 0,
   });
 
   const { data: bodyImages = [] } = useQuery({
