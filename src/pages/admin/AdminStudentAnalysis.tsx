@@ -35,6 +35,14 @@ type Analysis = {
   created_at: string;
   released_to_student?: boolean;
   released_at?: string | null;
+  visibility_settings?: {
+    lab_interpretation?: boolean;
+    general_summary?: boolean;
+    visual_composition?: boolean;
+    body_composition?: boolean;
+    red_flags?: boolean;
+    prioritized_recommendations?: boolean;
+  };
 };
 
 export default function AdminStudentAnalysis() {
@@ -86,12 +94,12 @@ export default function AdminStudentAnalysis() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_clinical_analyses")
-        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at")
+        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings")
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false })
         .limit(30);
       if (error) throw error;
-      return (data ?? []) as Analysis[];
+      return (data ?? []) as any as Analysis[];
     },
   });
 
@@ -383,6 +391,23 @@ export default function AdminStudentAnalysis() {
       if (current) setCurrent({ ...(current as any), visual_share_enabled: enabled, visual_share_expires_at: expires } as any);
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao atualizar liberação da leitura visual"),
+  });
+
+  const updateVisibility = useMutation({
+    mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
+      const { error } = await supabase
+        .from("student_clinical_analyses" as any)
+        .update({ visibility_settings: settings } as any)
+        .eq("id", id);
+      if (error) throw error;
+      return settings;
+    },
+    onSuccess: (settings) => {
+      toast.success("Configurações de visibilidade atualizadas");
+      refetchHistory();
+      if (current) setCurrent({ ...current, visibility_settings: settings });
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar visibilidade"),
   });
 
   const selectedStudent = students.find((s) => s.user_id === studentId);
@@ -875,6 +900,55 @@ export default function AdminStudentAnalysis() {
                 </div>
 
                 <LabInterpretationPanel html={current.report_html} />
+
+                {/* Painel de Visibilidade STHIA */}
+                <Card className="border-primary/20 bg-primary/[0.02]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs flex items-center gap-2">
+                      <Eye className="w-3.5 h-3.5" /> Visibilidade dos Tópicos (Aluno)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        { id: "lab_interpretation", label: "Interpretação Laboratorial" },
+                        { id: "general_summary", label: "Parecer Geral Resumido" },
+                        { id: "visual_composition", label: "Composição Visual" },
+                        { id: "body_composition", label: "Composição Corporal" },
+                        { id: "red_flags", label: "Red Flag" },
+                        { id: "prioritized_recommendations", label: "Recomendações Priorizadas" },
+                      ].map((topic) => {
+                        const settings = current.visibility_settings || {
+                          lab_interpretation: true,
+                          general_summary: true,
+                          visual_composition: true,
+                          body_composition: true,
+                          red_flags: true,
+                          prioritized_recommendations: true
+                        };
+                        const isChecked = (settings as any)[topic.id] !== false;
+                        
+                        return (
+                          <div key={topic.id} className="flex items-center gap-2">
+                            <Switch
+                              id={`vis-${topic.id}`}
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                updateVisibility.mutate({
+                                  id: current.id,
+                                  settings: { ...settings, [topic.id]: checked }
+                                });
+                              }}
+                            />
+                            <Label htmlFor={`vis-${topic.id}`} className="text-[11px] cursor-pointer">
+                              {topic.label}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               <Card>
