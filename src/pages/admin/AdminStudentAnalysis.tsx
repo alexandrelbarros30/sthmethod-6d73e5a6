@@ -73,8 +73,7 @@ export default function AdminStudentAnalysis() {
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, full_name, email")
-        .order("full_name", { ascending: true })
-        .limit(1000);
+        .order("full_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Student[];
     },
@@ -82,23 +81,25 @@ export default function AdminStudentAnalysis() {
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(search);
-    if (!q) return students.slice(0, 40);
+    if (!q) return students.slice(0, 100);
     return students
       .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q))
-      .slice(0, 40);
+      .slice(0, 100);
   }, [students, search]);
 
-  const { data: history = [], refetch: refetchHistory } = useQuery({
+  const { data: history = [], refetch: refetchHistory, isLoading: isLoadingHistory } = useQuery({
     queryKey: ["clinical-analyses", studentId],
     enabled: !!studentId,
     queryFn: async () => {
+      console.log("Fetching history for studentId:", studentId);
       const { data, error } = await supabase
         .from("student_clinical_analyses")
         .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings")
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(50);
       if (error) throw error;
+      console.log("Fetched history count:", data?.length || 0);
       return (data ?? []) as any as Analysis[];
     },
   });
@@ -466,7 +467,12 @@ export default function AdminStudentAnalysis() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[500px] overflow-y-auto">
-                  {history.length === 0 ? (
+                  {isLoadingHistory ? (
+                    <div className="p-8 text-center">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary/40" />
+                      <p className="text-[10px] text-muted-foreground mt-2">Carregando histórico...</p>
+                    </div>
+                  ) : history.length === 0 ? (
                     <div className="p-8 text-center space-y-2">
                       <History className="w-8 h-8 text-muted-foreground/30 mx-auto" />
                       <p className="text-xs text-muted-foreground italic">Nenhuma análise registrada no histórico para este aluno.</p>
