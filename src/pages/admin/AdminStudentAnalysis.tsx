@@ -521,9 +521,9 @@ export default function AdminStudentAnalysis() {
                           </div>
                         </div>
                       ))}
-                      {history.length >= 30 && (
+                      {history.length >= 50 && (
                         <p className="text-[10px] text-center text-muted-foreground p-3 border-t border-border/50">
-                          Exibindo as últimas 30 análises.
+                          Exibindo histórico completo ({history.length} registros).
                         </p>
                       )}
                     </div>
