@@ -81,7 +81,7 @@ export default function AdminStudentAnalysis() {
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(search);
-    if (!q) return students.slice(0, 50);
+    if (!q) return students; // Remover o slice(0, 50) para permitir busca em todos os alunos carregados
     return students
       .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q));
   }, [students, search]);
