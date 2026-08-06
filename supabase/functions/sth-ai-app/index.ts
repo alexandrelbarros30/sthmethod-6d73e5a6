@@ -26,7 +26,7 @@ Regras invioláveis:
 - PRECISÃO NUTRICIONAL: Você deve ser rigoroso no cálculo de kcal e macros (P=4, C=4, G=9). Use a tabela TACO/FatSecret como referência real. O usuário confia na sua exatidão matemática.`;
 
 const PROMPTS: Record<Kind, string> = {
-  diet: `${BASE_RULES}
+  diet: `${STHIA_NUTRITIONAL_2_0}
 
 ATENÇÃO — SOBREPOSIÇÃO DE FORMATO: para o CARDÁPIO, a regra de "markdown" acima NÃO se aplica. A saída deve ser 100% HTML puro. É PROIBIDO usar "#", "##", "###", "**", "-" de lista ou qualquer marcação markdown. Qualquer resposta em markdown é considerada inválida.
 

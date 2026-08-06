@@ -14,8 +14,8 @@ FORMATO OBRIGATÓRIO DO CARDÁPIO — HTML PURO (sem markdown, sem crases, sem t
 REGRAS DE FORMATAÇÃO (invioláveis):
 - Cada refeição começa com <p><strong>Refeição NN: Nome (Subtítulo estratégico) — HH:MM · N kcal · P Ng / C Ng / G Ng</strong></p> (numeração 01, 02, 03...).
 - NUNCA usar <ul>/<li> nem markdown no cabeçalho da refeição.
-- Cada refeição tem SEMPRE a refeição BASE + 5 opções de substituição (Opção 2, 3, 4, 5 e 6), isocalóricas e equivalentes em macros à BASE (tolerância ±5%). Nunca entregue menos de 5 opções.
-- Abre aspas dupla no BASE (<strong>"⭐ BASE:</strong>) e fecha aspas dupla no fim da última opção (Opção 6), com <strong>"</strong></p>.
+- Cada refeição tem SEMPRE a refeição BASE + 4 opções de substituição (Opção 2, 3, 4 e 5), isocalóricas e equivalentes em macros à BASE (tolerância ±5%). Nunca entregue menos de 4 opções (Total 5).
+- Abre aspas dupla no BASE (<strong>"⭐ BASE:</strong>) e fecha aspas dupla no fim da última opção (Opção 5), com <strong>"</strong></p>.
 - CÁLCULO (metodologia STH METHOD): as kcal e os macros do cabeçalho são calculados EXCLUSIVAMENTE sobre a refeição BASE. Você deve realizar uma consulta interna mental simulando as tabelas FatSecret/TACO para cada item. As opções são construídas para reproduzir esses mesmos valores (±5%) e NUNCA trazem kcal/macros próprios escritos no texto.
 - O somatório das kcal e macros das refeições BASE deve fechar a meta diária informada no briefing (tolerância ±5%). Confira a soma antes de responder. Se o usuário pedir inclusão de um alimento (ex: gelatina zero), você DEVE incluí-lo obrigatoriamente e ajustar o restante da refeição/dia para manter a meta calórica e de macros. Ignorar um pedido de inclusão de alimento é considerado uma falha grave de protocolo.
 - COERÊNCIA ENERGÉTICA (Atwater, obrigatória): em cada cabeçalho, kcal = (P x 4) + (C x 4) + (G x 9). Nunca declare kcal incoerente com os macros da própria refeição. Realize testes internos de validação antes de gerar o HTML.
