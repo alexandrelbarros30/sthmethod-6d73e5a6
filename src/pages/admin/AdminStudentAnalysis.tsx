@@ -395,17 +395,24 @@ export default function AdminStudentAnalysis() {
 
   const updateVisibility = useMutation({
     mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
+      // Garantimos que estamos enviando um objeto JSON válido para a coluna JSONB
       const { error } = await supabase
         .from("student_clinical_analyses")
-        .update({ visibility_settings: settings } as any)
+        .update({ visibility_settings: settings })
         .eq("id", id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw error;
+      }
       return settings;
     },
     onSuccess: (settings) => {
       toast.success("Configurações de visibilidade atualizadas");
-      refetchHistory();
-      if (current) setCurrent({ ...current, visibility_settings: settings });
+      qc.invalidateQueries({ queryKey: ["clinical-analyses", studentId] });
+      if (current) {
+        setCurrent(prev => prev ? { ...prev, visibility_settings: settings } : null);
+      }
     },
     onError: (e: any) => {
       console.error("Erro ao atualizar visibilidade:", e);
