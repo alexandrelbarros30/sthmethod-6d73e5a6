@@ -139,6 +139,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
         { to: "/admin/sthia", icon: Brain, label: "STHIA (IA)" },
         { to: "/admin/ai-acessos", icon: Sparkles, label: "Acessos STH AI" },
+        { to: "/admin/sth-ai-config", icon: Settings, label: "Configurações STH AI" },
       ],
     },
     {
