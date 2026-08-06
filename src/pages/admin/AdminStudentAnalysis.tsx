@@ -81,10 +81,9 @@ export default function AdminStudentAnalysis() {
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(search);
-    if (!q) return students.slice(0, 100);
+    if (!q) return students.slice(0, 50);
     return students
-      .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q))
-      .slice(0, 100);
+      .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q));
   }, [students, search]);
 
   const { data: history = [], refetch: refetchHistory, isLoading: isLoadingHistory } = useQuery({
