@@ -396,7 +396,7 @@ export default function AdminStudentAnalysis() {
   const updateVisibility = useMutation({
     mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
       const { error } = await supabase
-        .from("student_clinical_analyses" as any)
+        .from("student_clinical_analyses")
         .update({ visibility_settings: settings } as any)
         .eq("id", id);
       if (error) throw error;
@@ -407,7 +407,10 @@ export default function AdminStudentAnalysis() {
       refetchHistory();
       if (current) setCurrent({ ...current, visibility_settings: settings });
     },
-    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar visibilidade"),
+    onError: (e: any) => {
+      console.error("Erro ao atualizar visibilidade:", e);
+      toast.error(e?.message || "Falha ao atualizar visibilidade");
+    },
   });
 
   const selectedStudent = students.find((s) => s.user_id === studentId);
@@ -939,6 +942,7 @@ export default function AdminStudentAnalysis() {
                                   settings: { ...settings, [topic.id]: checked }
                                 });
                               }}
+                              disabled={updateVisibility.isPending}
                             />
                             <Label htmlFor={`vis-${topic.id}`} className="text-[11px] cursor-pointer">
                               {topic.label}
