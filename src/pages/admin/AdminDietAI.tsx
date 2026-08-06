@@ -610,9 +610,18 @@ const AdminDietAI = () => {
                   <div className="flex items-center gap-2">
                     <Input type="number" value={proteinTarget} onChange={(e) => setProteinTarget(e.target.value)} placeholder="180" />
                     {proteinTarget && (
-                      <span className="text-[10px] text-primary whitespace-nowrap font-medium">
-                        = {Math.round(Number(proteinTarget) * 4)} kcal
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-primary whitespace-nowrap font-medium">
+                          = {Math.round(Number(proteinTarget) * 4)} kcal
+                        </span>
+                        {selectedStudent?.weight && (
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                            {Number(selectedStudent.weight) > 0 
+                              ? (Number(proteinTarget) / Number(selectedStudent.weight)).toFixed(2) 
+                              : "0"}g/kg
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -621,9 +630,18 @@ const AdminDietAI = () => {
                   <div className="flex items-center gap-2">
                     <Input type="number" value={carbsTarget} onChange={(e) => setCarbsTarget(e.target.value)} placeholder="300" />
                     {carbsTarget && (
-                      <span className="text-[10px] text-primary whitespace-nowrap font-medium">
-                        = {Math.round(Number(carbsTarget) * 4)} kcal
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-primary whitespace-nowrap font-medium">
+                          = {Math.round(Number(carbsTarget) * 4)} kcal
+                        </span>
+                        {selectedStudent?.weight && (
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                            {Number(selectedStudent.weight) > 0 
+                              ? (Number(carbsTarget) / Number(selectedStudent.weight)).toFixed(2) 
+                              : "0"}g/kg
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -632,9 +650,18 @@ const AdminDietAI = () => {
                   <div className="flex items-center gap-2">
                     <Input type="number" value={fatTarget} onChange={(e) => setFatTarget(e.target.value)} placeholder="70" />
                     {fatTarget && (
-                      <span className="text-[10px] text-primary whitespace-nowrap font-medium">
-                        = {Math.round(Number(fatTarget) * 9)} kcal
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-primary whitespace-nowrap font-medium">
+                          = {Math.round(Number(fatTarget) * 9)} kcal
+                        </span>
+                        {selectedStudent?.weight && (
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                            {Number(selectedStudent.weight) > 0 
+                              ? (Number(fatTarget) / Number(selectedStudent.weight)).toFixed(2) 
+                              : "0"}g/kg
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
