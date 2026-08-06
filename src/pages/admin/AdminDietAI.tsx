@@ -30,6 +30,7 @@ type Meal = {
     carbs_g: number;
     fat_g: number;
     fiber_g?: number;
+    validation?: { source: string; status: string; deviation_pct?: number };
   }[];
   energy_kcal: number;
   protein_g: number;
