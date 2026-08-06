@@ -405,6 +405,25 @@ const AdminDietAI = () => {
     toast.success("Cardápio revisado aplicado");
   };
 
+  const handleGenerateWithMotor = (type: "generate" | "advice", opts?: any) => {
+    if (!selectedStudent) {
+      toast.error("Selecione um aluno primeiro.");
+      return;
+    }
+    setPendingAction({ type, opts });
+    setIsMotorSelectionOpen(true);
+  };
+
+  const confirmMotorAndExecute = () => {
+    if (!pendingAction) return;
+    setIsMotorSelectionOpen(false);
+    if (pendingAction.type === "generate") {
+      generateMut.mutate({ ...pendingAction.opts, motor: selectedAiMotor });
+    } else {
+      adviceMut.mutate({ motor: selectedAiMotor });
+    }
+  };
+
   const saveToStudent = async () => {
     const finalContent = editableDietText || (result?.diet_text || "");
     if (!finalContent) {
