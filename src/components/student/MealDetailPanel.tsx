@@ -168,7 +168,7 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
 
             if (rawHtmlMatch) {
               const isHtml = /<[a-z!\/][^>]*>/i.test(rawHtmlMatch);
-              const rendered = isHtml ? twemojify(rawHtmlMatch) : rawHtmlMatch;
+              const rendered = isHtml ? twemojify(rawHtmlMatch.replace(/<p[^>]*>\s*(?:<[^>]+>\s*)*Macros\s+da\s+Refei[cç][aã]o[\s\S]*?<\/p>\s*/gi, "")) : rawHtmlMatch;
               return (
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Cardápio</p>

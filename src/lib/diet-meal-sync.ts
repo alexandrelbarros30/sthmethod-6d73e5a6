@@ -83,7 +83,11 @@ const splitFoodsByPlus = (text: string): string[] => {
 
 const stripLeadingLabel = (text: string): string => {
   // Removes leading labels like "Alimentos:", "Substituições:", "Opção 1:" etc.
-  return text.replace(/^\s*(alimentos|substitui[cç][õo]es|op[cç][aã]o\s*\d*|sugest[ãa]o)\s*[:\-–]\s*/i, "").trim();
+  // CRITICAL: We also remove quotes that might be wrapping the option line from the AI output
+  return text
+    .replace(/^\s*["']?\s*(alimentos|substitui[cç][õo]es|op[cç][aã]o\s*\d*|sugest[ãa]o)\s*[:\-–]\s*/i, "")
+    .replace(/["']\s*$/i, "")
+    .trim();
 };
 
 /**
@@ -119,7 +123,7 @@ const htmlToTokens = (content: string): DietToken[] => {
     const before = normalized;
     normalized = normalized.replace(
       /<li\b[^>]*>((?:(?!<li\b|<\/li>)[\s\S])*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>(?:(?!<li\b|<\/li>)[\s\S])*?)<\/li>/gi,
-      "$1"
+      "<p>$1</p>"
     );
     if (normalized === before) break;
   }
@@ -156,6 +160,7 @@ const htmlToTokens = (content: string): DietToken[] => {
       // p / div → split by <br> (already inside inner HTML)
       const parts = inner
         .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>/gi, "\n")
         .replace(/<[^>]+>/g, " ");
       decodeHtml(parts)
         .split("\n")
@@ -323,13 +328,13 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
       headingLine = innerText;
     } else {
       // Split the block by <br> and look for a heading on the FIRST non-empty line.
-      const segments = inner.split(/<br\s*\/?\s*>/gi);
+      const segments = inner.split(/<br\s*\/?\s*>|<\/p>/gi);
       const firstSegText = stripTags(segments[0] || "");
       if (HEADING_KEYWORDS_RE.test(firstSegText)) {
         headingLine = firstSegText;
-        // Anything after the first <br> in the same block belongs to this meal.
+        // Anything after the first segment in the same block belongs to this meal.
         if (segments.length > 1) {
-          remainderHtml = segments.slice(1).join("<br>").trim();
+          remainderHtml = segments.slice(1).join("").trim();
         }
       }
     }
