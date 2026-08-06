@@ -331,6 +331,7 @@ const AdminDietAI = () => {
       const { data, error } = await supabase.functions.invoke("generate-diet-ai", {
         body: {
           mode: "advice",
+          motor,
           brief,
           freeText,
           studentId: selectedStudent?.user_id || null,
