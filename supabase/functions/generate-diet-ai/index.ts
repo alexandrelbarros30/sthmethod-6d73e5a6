@@ -362,6 +362,7 @@ IMPORTANTE:
 - Retorne apenas o JSON via ferramenta 'return_diet'.
 - Garanta que as metas nutricionais fiquem dentro de ±5% (não precisa ser exato) seguindo os cálculos da API FatSecret.
 - Preencha SEMPRE 'base_items' com a tabela de valores de cada alimento da opção BASE e audite a soma antes de responder.
+- AUDITORIA EXTERNA: cada item de 'base_items' será confrontado automaticamente com a tabela oficial TACO/TBCA e com a FatSecret. Valores divergentes acima de 8% serão SOBRESCRITOS pelos oficiais. Declare quantidades em gramas/ml (ou unidades para ovos/claras/pães) e use valores nutricionais reais.
 - Mantenha a formatação exata dentro do campo 'options' do JSON conforme as regras de FORMATAÇÃO OBRIGATÓRIA (sem markdown, sem HTML).`
       : `Você é a STHia, a inteligência nutricional do STH Method. 
 Sua missão é gerar cardápios precisos retornando um JSON estruturado.
