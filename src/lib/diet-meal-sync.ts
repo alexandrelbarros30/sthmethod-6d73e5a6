@@ -156,6 +156,7 @@ const htmlToTokens = (content: string): DietToken[] => {
       // p / div → split by <br> (already inside inner HTML)
       const parts = inner
         .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>/gi, "\n")
         .replace(/<[^>]+>/g, " ");
       decodeHtml(parts)
         .split("\n")
@@ -323,11 +324,11 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
       headingLine = innerText;
     } else {
       // Split the block by <br> and look for a heading on the FIRST non-empty line.
-      const segments = inner.split(/<br\s*\/?\s*>/gi);
+      const segments = inner.split(/<br\s*\/?\s*>|<\/p>/gi);
       const firstSegText = stripTags(segments[0] || "");
       if (HEADING_KEYWORDS_RE.test(firstSegText)) {
         headingLine = firstSegText;
-        // Anything after the first <br> in the same block belongs to this meal.
+        // Anything after the first segment in the same block belongs to this meal.
         if (segments.length > 1) {
           remainderHtml = segments.slice(1).join("<br>").trim();
         }
