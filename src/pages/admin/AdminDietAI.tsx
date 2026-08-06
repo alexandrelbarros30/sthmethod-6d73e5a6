@@ -248,8 +248,9 @@ const AdminDietAI = () => {
   };
 
   const generateMut = useMutation({
-    mutationFn: async (opts?: { correction?: string }) => {
+    mutationFn: async (opts?: { correction?: string, motor?: "sthia" | "sthia_2" }) => {
       const correction = (opts?.correction || "").trim();
+      const motor = opts?.motor || selectedAiMotor;
       const brief = {
         aluno: selectedStudent?.full_name || null,
         peso_kg: selectedStudent?.weight || null,
