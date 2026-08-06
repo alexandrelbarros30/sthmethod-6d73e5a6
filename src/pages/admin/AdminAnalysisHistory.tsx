@@ -116,7 +116,7 @@ export default function AdminAnalysisHistory() {
       console.log("Fetching history for studentId:", studentId);
       const { data, error, count } = await supabase
         .from("student_clinical_analyses")
-        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings", { count: "exact" })
+        .select("*", { count: "exact" })
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false });
         
