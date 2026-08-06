@@ -143,20 +143,15 @@ Utilizar exatamente este padrão (não use HTML, não use markdown, use texto pu
 
 Refeição 01: Nome da Refeição
 
-"⭐ BASE:
-(alimentos)
+"⭐ BASE: (alimentos)
 
-Opção 2:
-(alimentos)
+Opção 2: (alimentos)
 
-Opção 3:
-(alimentos)
+Opção 3: (alimentos)
 
-Opção 4:
-(alimentos)
+Opção 4: (alimentos)
 
-Opção 5:
-(alimentos)"
+Opção 5: (alimentos)"
 
 Repetir para todas as refeições. Respeitar aspas envolvendo o bloco de opções, o ⭐ BASE e as linhas em branco entre opções.
 `;
