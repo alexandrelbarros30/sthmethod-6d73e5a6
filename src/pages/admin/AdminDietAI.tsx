@@ -649,7 +649,7 @@ const AdminDietAI = () => {
                 )}
               </Button>
               <Button
-                onClick={() => generateMut.mutate({})}
+                onClick={() => handleGenerateWithMotor("generate", {})}
                 disabled={generateMut.isPending}
                 className="w-full"
               >
