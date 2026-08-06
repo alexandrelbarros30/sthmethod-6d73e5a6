@@ -395,10 +395,10 @@ export default function AdminStudentAnalysis() {
 
   const updateVisibility = useMutation({
     mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
-      // Garantimos que estamos enviando um objeto JSON válido para a coluna JSONB
+      // Usamos 'as any' para contornar o erro de tipagem temporário enquanto o schema cache do Supabase não atualiza
       const { error } = await supabase
         .from("student_clinical_analyses")
-        .update({ visibility_settings: settings })
+        .update({ visibility_settings: settings } as any)
         .eq("id", id);
       
       if (error) {
