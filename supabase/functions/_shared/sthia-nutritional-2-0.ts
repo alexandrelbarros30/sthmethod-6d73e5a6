@@ -153,5 +153,9 @@ Opção 4: (alimentos)
 
 Opção 5: (alimentos)"
 
+IMPORTANTE: No array 'options' do JSON (tool_call), você deve enviar apenas a lista de alimentos SEM o rótulo "⭐ BASE:" ou "Opção X:", pois o sistema já os adiciona automaticamente. Exemplo: "150g de Ovos Mexidos, 50g de Queijo".
+
+
+
 Repetir para todas as refeições. Respeitar aspas envolvendo o bloco de opções, o ⭐ BASE e as linhas em branco entre opções.
 `;
