@@ -318,16 +318,35 @@ export default function AiOnboarding() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div id="f-meals_per_day" className="space-y-1.5 scroll-mt-24 p-1">
                   <Label>Refeições por dia</Label>
-                  <Input inputMode="numeric" value={form.meals_per_day} onChange={(e) => set("meals_per_day", e.target.value)} />
+                  <Select value={form.meals_per_day} onValueChange={(v) => set("meals_per_day", v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                        <SelectItem key={n} value={String(n)}>{n} {n === 1 ? "refeição" : "refeições"}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div id="f-training_days" className="space-y-1.5 scroll-mt-24 p-1">
                   <Label>Dias de treino por semana</Label>
-                  <Input inputMode="numeric" value={form.training_days} onChange={(e) => set("training_days", e.target.value)} />
+                  <Select value={form.training_days} onValueChange={(v) => set("training_days", v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent position="popper" sideOffset={5} className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
+                      {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                        <SelectItem key={n} value={String(n)}>{n} {n === 1 ? "dia" : "dias"}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div id="f-restrictions" className="space-y-1.5 scroll-mt-24 p-1">
                 <Label>Restrições alimentares / alergias</Label>
-                <Input value={form.restrictions} onChange={(e) => set("restrictions", e.target.value)} />
+                <Input 
+                  value={form.restrictions} 
+                  onChange={(e) => set("restrictions", e.target.value)} 
+                  placeholder="Ex.: glúten, lactose, amendoim... Se não houver, deixe em branco."
+                />
+                <p className="text-[10px] text-muted-foreground">Informe qualquer alergia ou intolerância importante.</p>
               </div>
               <div id="f-comorbidities" className="space-y-1.5 scroll-mt-24 p-1">
                 <Label>Comorbidades (doenças/condições de saúde)</Label>
