@@ -128,8 +128,19 @@ const StudentMetabolic = () => {
               return next;
             });
           };
+
+          const settings = a.visibility_settings || {
+            lab_interpretation: true,
+            general_summary: true,
+            visual_composition: true,
+            body_composition: true,
+            red_flags: true,
+            prioritized_recommendations: true
+          };
+
           const redFlags: string[] = Array.isArray(a.red_flags) ? a.red_flags : [];
           const recs: string[] = Array.isArray(a.recommendations) ? a.recommendations : [];
+          
           return (
             <div key={a.id} className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] backdrop-blur-xl p-5 animate-fade-in">
               <div className="flex items-start justify-between mb-4 gap-3">
@@ -158,12 +169,12 @@ const StudentMetabolic = () => {
               </div>
               {!isClosed && (
                 <div className="space-y-4">
-                  {a.summary && (
+                  {settings.general_summary !== false && a.summary && (
                     <div className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3">
                       <p className="text-[13px] text-foreground/80 leading-relaxed">{a.summary}</p>
                     </div>
                   )}
-                  {redFlags.length > 0 && (
+                  {settings.red_flags !== false && redFlags.length > 0 && (
                     <div className="rounded-xl border border-red-500/25 bg-red-500/[0.05] px-3.5 py-3">
                       <div className="flex items-center gap-1.5 mb-2">
                         <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
@@ -174,7 +185,7 @@ const StudentMetabolic = () => {
                       </ul>
                     </div>
                   )}
-                  {recs.length > 0 && (
+                  {settings.prioritized_recommendations !== false && recs.length > 0 && (
                     <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] px-3.5 py-3">
                       <div className="flex items-center gap-1.5 mb-2">
                         <ClipboardList className="w-3.5 h-3.5 text-emerald-400" />
@@ -185,10 +196,12 @@ const StudentMetabolic = () => {
                       </ol>
                     </div>
                   )}
-                  <ClinicalReport
-                    html={a.report_html}
-                    className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 sm:px-4 sm:py-3.5 max-w-none"
-                  />
+                  {settings.lab_interpretation !== false && (
+                    <ClinicalReport
+                      html={a.report_html}
+                      className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 sm:px-4 sm:py-3.5 max-w-none"
+                    />
+                  )}
                 </div>
               )}
             </div>
