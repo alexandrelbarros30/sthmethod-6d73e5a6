@@ -395,9 +395,10 @@ export default function AdminStudentAnalysis() {
 
   const updateVisibility = useMutation({
     mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
+      // Usamos a tabela explicitamente para evitar erros de tipagem do Supabase client auto-gerado
       const { error } = await supabase
-        .from("student_clinical_analyses" as any)
-        .update({ visibility_settings: settings } as any)
+        .from("student_clinical_analyses")
+        .update({ visibility_settings: settings })
         .eq("id", id);
       if (error) throw error;
       return settings;
@@ -407,7 +408,10 @@ export default function AdminStudentAnalysis() {
       refetchHistory();
       if (current) setCurrent({ ...current, visibility_settings: settings });
     },
-    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar visibilidade"),
+    onError: (e: any) => {
+      console.error("Erro ao atualizar visibilidade:", e);
+      toast.error(e?.message || "Falha ao atualizar visibilidade");
+    },
   });
 
   const selectedStudent = students.find((s) => s.user_id === studentId);
