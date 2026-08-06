@@ -52,29 +52,17 @@ const formatDietText = (parsed: any): string => {
   
   return parsed.meals.map((m: any) => {
     const mealNumStr = String(m.meal_number).padStart(2, "0");
-    // Remove markdown/parentheses from meal name
     const cleanName = (m.meal_name || "").replace(/[*()]/g, "").trim();
     const title = `Refeição ${mealNumStr}: ${cleanName}`;
     
-    // Format options with double newlines
+    // Format options with newlines after labels as requested by STHIA 2.0
     const formattedOptions = (m.options || []).map((opt: string, idx: number) => {
       let text = opt.trim();
       if (idx === 0) {
-        // Ensure first option is marked as BASE and starts with ⭐
-        if (!text.includes("BASE:")) {
-          text = `BASE: ${text}`;
-        }
-        if (!text.startsWith("⭐")) {
-          text = `⭐ ${text}`;
-        }
+        return `⭐ BASE:\n${text}`;
       } else {
-        // Ensure other options are numbered correctly
-        const prefix = `Opção ${idx + 1}:`;
-        if (!text.startsWith("Opção")) {
-          text = `${prefix} ${text}`;
-        }
+        return `Opção ${idx + 1}:\n${text}`;
       }
-      return text;
     }).join("\n\n");
 
     return `${title}\n\n"${formattedOptions}"`;
