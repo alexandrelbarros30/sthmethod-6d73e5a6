@@ -447,7 +447,9 @@ const AdminDietAI = () => {
       toast.error("Selecione um aluno para salvar o rascunho na ficha.");
       return;
     }
-    const defaultName = `Dieta IA — ${new Date().toLocaleDateString("pt-BR")}`;
+    const dietKcal = result?.total?.energy_kcal ? Math.round(result.total.energy_kcal) : (kcalTarget ? Math.round(Number(kcalTarget)) : 0);
+    const dateStr = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' });
+    const defaultName = `Dieta (${dietKcal} kcal) - ${dateStr}`;
     const name = window.prompt("Nome do rascunho da dieta:", defaultName);
     if (name === null) return; // cancelado
     const title = name.trim() || defaultName;
