@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { STHIA_NUTRITIONAL_2_0 } from "../_shared/sthia-nutritional-2-0.ts";
+import { STHIA_DIET_FORMAT } from "../_shared/sthia-diet-format.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -207,7 +208,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
-    const { mode = "generate", brief = {}, freeText = "", dietContent = "", studentId = null, includePhotos = true, protocolText = "", adviceText = "", previousDiet = "", correction = "" } = body;
+    const { mode = "generate", brief = {}, freeText = "", dietContent = "", studentId = null, includePhotos = true, protocolText = "", adviceText = "", previousDiet = "", correction = "", motor } = body;
+    const isSthia2 = motor === "sthia_2";
 
     if (mode === "generate" && !brief && !freeText && !correction) {
       return new Response(JSON.stringify({ error: "Parâmetros insuficientes para geração." }), {
@@ -304,12 +306,34 @@ serve(async (req) => {
       profileData = data;
     }
 
-    const systemPrompt = `${STHIA_NUTRITIONAL_2_0}
+    const systemPrompt = isSthia2 
+      ? `${STHIA_NUTRITIONAL_2_0}
 
 IMPORTANTE: 
 - Retorne apenas o JSON via ferramenta 'return_diet'.
 - Garanta que as metas nutricionais sejam respeitadas rigorosamente seguindo os cálculos da API FatSecret.
-- Mantenha a formatação exata dentro do campo 'options' do JSON conforme as regras de FORMATAÇÃO OBRIGATÓRIA (sem markdown, sem HTML).
+- Mantenha a formatação exata dentro do campo 'options' do JSON conforme as regras de FORMATAÇÃO OBRIGATÓRIA (sem markdown, sem HTML).`
+      : `Você é a STHia, a inteligência nutricional do STH Method. 
+Sua missão é gerar cardápios precisos retornando um JSON estruturado.
+
+ESTILO E CULTURA:
+- Ofereça um cardápio tipicamente BRASILEIRO e DIVERSIFICADO (Arroz, feijão, carnes, ovos, mas também pães, whey protein, iogurtes, frutas variadas, legumes e vegetais).
+
+REGRAS DE CONTEÚDO PARA O JSON:
+1. Para cada refeição, você deve fornecer EXATAMENTE 4 opções de alimentos.
+2. A primeira opção (índice 0 no array 'options') será a BASE. Ela deve ser a mais completa e balanceada.
+3. Ovos e claras de ovos DEVEM estar em UNIDADES (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
+4. Mantenha a equivalência nutricional entre as 4 opções. 
+5. O JSON deve ser focado em dados puros.
+
+${STHIA_DIET_FORMAT}
+
+IMPORTANTE: 
+- Retorne apenas o JSON via ferramenta 'return_diet'.
+- Garanta que as metas nutricionais sejam respeitadas rigorosamente.
+- Diversifique os alimentos.`;
+
+    const fullPrompt = `${systemPrompt}
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
@@ -320,7 +344,7 @@ PERFIL: ${profileData ? JSON.stringify({
       genero: profileData.gender
     }) : "Desconhecido"}`;
 
-    const messages = [{ role: "system", content: systemPrompt }];
+    const messages = [{ role: "system", content: fullPrompt }];
     if (previousDiet) messages.push({ role: "assistant", content: `Dieta anterior: ${previousDiet}` });
     messages.push({ role: "user", content: mode === "review" ? `Revise esta dieta: ${dietContent}. Correção: ${correction}` : `Gere uma nova dieta. Briefing: ${JSON.stringify(brief)}. Texto livre: ${freeText}` });
 

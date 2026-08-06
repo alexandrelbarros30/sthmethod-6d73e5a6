@@ -117,6 +117,9 @@ const AdminDietAI = () => {
   const [counterNote, setCounterNote] = useState("");
   const [counterHistory, setCounterHistory] = useState<string[]>([]);
   const [showSthiaPrompt, setShowSthiaPrompt] = useState(false);
+  const [selectedAiMotor, setSelectedAiMotor] = useState<"sthia" | "sthia_2">("sthia");
+  const [isMotorSelectionOpen, setIsMotorSelectionOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: "generate" | "advice", opts?: any } | null>(null);
 
   // Histórico de orientações (restrito a admin/consultor)
   const { data: consultHistory = [], refetch: refetchHistory } = useQuery({
@@ -245,8 +248,9 @@ const AdminDietAI = () => {
   };
 
   const generateMut = useMutation({
-    mutationFn: async (opts?: { correction?: string }) => {
+    mutationFn: async (opts?: { correction?: string, motor?: "sthia" | "sthia_2" }) => {
       const correction = (opts?.correction || "").trim();
+      const motor = opts?.motor || selectedAiMotor;
       const brief = {
         aluno: selectedStudent?.full_name || null,
         peso_kg: selectedStudent?.weight || null,
@@ -266,6 +270,7 @@ const AdminDietAI = () => {
           mode: "generate",
           brief,
           freeText: [freeText, adviceExtra.trim() ? `Ajustes adicionais do admin após a consulta:\n${adviceExtra.trim()}` : ""].filter(Boolean).join("\n\n"),
+          motor,
           studentId: selectedStudent?.user_id || null,
           includePhotos: usePhotos,
           protocolText: useProtocol ? protocolText : "",
@@ -308,7 +313,8 @@ const AdminDietAI = () => {
   });
 
   const adviceMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { motor?: "sthia" | "sthia_2" }) => {
+      const motor = opts?.motor || selectedAiMotor;
       const brief = {
         aluno: selectedStudent?.full_name || null,
         peso_kg: selectedStudent?.weight || null,
@@ -325,6 +331,7 @@ const AdminDietAI = () => {
       const { data, error } = await supabase.functions.invoke("generate-diet-ai", {
         body: {
           mode: "advice",
+          motor,
           brief,
           freeText,
           studentId: selectedStudent?.user_id || null,
@@ -396,6 +403,25 @@ const AdminDietAI = () => {
     setResult({ ...result, diet_text: cleanText });
     setEditableDietText(cleanText);
     toast.success("Cardápio revisado aplicado");
+  };
+
+  const handleGenerateWithMotor = (type: "generate" | "advice", opts?: any) => {
+    if (!selectedStudent) {
+      toast.error("Selecione um aluno primeiro.");
+      return;
+    }
+    setPendingAction({ type, opts });
+    setIsMotorSelectionOpen(true);
+  };
+
+  const confirmMotorAndExecute = () => {
+    if (!pendingAction) return;
+    setIsMotorSelectionOpen(false);
+    if (pendingAction.type === "generate") {
+      generateMut.mutate({ ...pendingAction.opts, motor: selectedAiMotor });
+    } else {
+      adviceMut.mutate({ motor: selectedAiMotor });
+    }
   };
 
   const saveToStudent = async () => {
@@ -612,7 +638,7 @@ const AdminDietAI = () => {
 
               <Button
                 variant="secondary"
-                onClick={() => adviceMut.mutate()}
+                onClick={() => handleGenerateWithMotor("advice")}
                 disabled={adviceMut.isPending}
                 className="w-full"
               >
@@ -623,7 +649,7 @@ const AdminDietAI = () => {
                 )}
               </Button>
               <Button
-                onClick={() => generateMut.mutate({})}
+                onClick={() => handleGenerateWithMotor("generate", {})}
                 disabled={generateMut.isPending}
                 className="w-full"
               >
@@ -833,7 +859,7 @@ REGRAS JSON:
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Usar como base</span>
                     <Switch checked={useAdvice} onCheckedChange={setUseAdvice} />
-                    <Button size="sm" variant="outline" onClick={() => adviceMut.mutate()} disabled={adviceMut.isPending}>
+                    <Button size="sm" variant="outline" onClick={() => handleGenerateWithMotor("advice")} disabled={adviceMut.isPending}>
                       <RefreshCw className="w-4 h-4 mr-1" /> Reconsultar
                     </Button>
                   </div>
@@ -871,7 +897,7 @@ REGRAS JSON:
                   />
                   <Button
                     className="w-full"
-                    onClick={() => generateMut.mutate({})}
+                    onClick={() => handleGenerateWithMotor("generate", {})}
                     disabled={generateMut.isPending}
                   >
                     {generateMut.isPending ? (
@@ -1082,6 +1108,7 @@ REGRAS JSON:
                 {isEditingInline ? (
                   <Textarea
                     className="min-h-[400px] font-mono text-sm leading-relaxed whitespace-pre-wrap p-4 bg-[#000000] text-white border-primary/20"
+                    id="diet-text-area"
                     value={editableDietText}
                     onChange={(e) => setEditableDietText(e.target.value)}
                     placeholder="Edite o conteúdo do cardápio aqui..."
@@ -1104,6 +1131,56 @@ REGRAS JSON:
               <Save className="w-4 h-4 mr-2" />
               Confirmar e Salvar no Rascunho
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isMotorSelectionOpen} onOpenChange={setIsMotorSelectionOpen}>
+        <DialogContent className="max-w-md bg-[#0a0a0a] border-border/40">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Brain className="w-5 h-5 text-primary" />
+              Motor de Inteligência Nutricional
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Escolha qual cérebro será responsável por esta operação.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div 
+              className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedAiMotor === "sthia" ? "bg-primary/10 border-primary" : "bg-card border-border/40 hover:border-primary/50"}`}
+              onClick={() => setSelectedAiMotor("sthia")}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedAiMotor === "sthia" ? "border-primary" : "border-muted-foreground"}`}>
+                  {selectedAiMotor === "sthia" && <div className="w-2 h-2 rounded-full bg-primary" />}
+                </div>
+                <span className="font-bold">STHIA</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                IA geral do ecossistema STH Method, capaz de elaborar, revisar e ajustar planos alimentares utilizando toda a metodologia STH Method.
+              </p>
+            </div>
+
+            <div 
+              className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedAiMotor === "sthia_2" ? "bg-primary/10 border-primary" : "bg-card border-border/40 hover:border-primary/50"}`}
+              onClick={() => setSelectedAiMotor("sthia_2")}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedAiMotor === "sthia_2" ? "border-primary" : "border-muted-foreground"}`}>
+                  {selectedAiMotor === "sthia_2" && <div className="w-2 h-2 rounded-full bg-primary" />}
+                </div>
+                <span className="font-bold text-primary">STHIA 2.0 Nutricional</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                IA especialista exclusivamente em Nutrição, desenvolvimento de cardápios, cálculos de calorias e macronutrientes de alta precisão, utilizando prioritariamente a API FatSecret e técnicas avançadas de equivalência nutricional.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsMotorSelectionOpen(false)}>Cancelar</Button>
+            <Button onClick={confirmMotorAndExecute}>Continuar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
