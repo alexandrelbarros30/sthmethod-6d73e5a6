@@ -567,16 +567,17 @@ const AdminDietAI = () => {
                 <Sparkles className="w-4 h-4 text-primary" /> Briefing
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowSthiaPrompt(true)} className="h-8 gap-1.5 text-xs">
-                  <Brain className="w-3.5 h-3.5 text-primary" /> Prompt STHia
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={pullProtocol}
-                  disabled={!selectedStudent}
-                  className="h-8 gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0"
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsMotorSelectionOpen(true)} 
+                  className="h-8 gap-1.5 text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
                 >
-                  <Stethoscope className="w-3.5 h-3.5" /> Puxar Protocolo
+                  <Brain className="w-3.5 h-3.5" /> 
+                  IA: {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowSthiaPrompt(true)} className="h-8 gap-1.5 text-xs">
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Doutrina
                 </Button>
               </div>
             </CardHeader>
@@ -645,7 +646,7 @@ const AdminDietAI = () => {
                 {adviceMut.isPending ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Consultando...</>
                 ) : (
-                  <><Stethoscope className="w-4 h-4 mr-2" /> Gerar orientação — consulta STHIA</>
+                  <><Stethoscope className="w-4 h-4 mr-2" /> Gerar orientação — consulta {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}</>
                 )}
               </Button>
               <Button
@@ -668,7 +669,7 @@ const AdminDietAI = () => {
                     </div>
                   </div>
                 ) : (
-                  <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio com STHIA</>
+                  <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio com {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}</>
                 )}
               </Button>
               {selectedStudent && (
@@ -1139,7 +1140,7 @@ REGRAS JSON:
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Brain className="w-5 h-5 text-primary" />
-              Motor de Inteligência Nutricional
+              Selecione a Inteligência Nutricional
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Escolha qual cérebro será responsável por esta operação.
@@ -1180,7 +1181,9 @@ REGRAS JSON:
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsMotorSelectionOpen(false)}>Cancelar</Button>
-            <Button onClick={confirmMotorAndExecute}>Continuar</Button>
+            <Button onClick={confirmMotorAndExecute} className="bg-primary text-black hover:bg-primary/90">
+              Confirmar Seleção
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
