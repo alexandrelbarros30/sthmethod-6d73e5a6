@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,15 @@ type Meal = {
   meal_number: number;
   meal_name: string;
   items: string[];
+  base_items?: {
+    food: string;
+    quantity: string;
+    energy_kcal: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+    fiber_g?: number;
+  }[];
   energy_kcal: number;
   protein_g: number;
   carbs_g: number;
@@ -1053,6 +1062,66 @@ REGRAS JSON:
                       </div>
                     ))}
                   </div>
+
+                  {result.meals.some((m) => (m.base_items?.length ?? 0) > 0) && (
+                    <div className="mt-5">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">
+                        Tabela de valores por alimento (base do cálculo)
+                      </h4>
+                      <div className="rounded border border-border overflow-x-auto">
+                        <table className="w-full text-[11px]">
+                          <thead className="bg-muted/50 text-muted-foreground">
+                            <tr>
+                              <th className="text-left p-2">Alimento</th>
+                              <th className="text-left p-2">Qtd</th>
+                              <th className="text-right p-2">Kcal</th>
+                              <th className="text-right p-2">P</th>
+                              <th className="text-right p-2">C</th>
+                              <th className="text-right p-2">G</th>
+                              <th className="text-right p-2">Fibra</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {result.meals.map((m) => {
+                              const items = m.base_items ?? [];
+                              if (!items.length) return null;
+                              return (
+                                <React.Fragment key={m.meal_number}>
+                                  <tr className="bg-muted/30">
+                                    <td colSpan={7} className="p-2 font-medium">
+                                      Refeição {m.meal_number} — {m.meal_name}
+                                    </td>
+                                  </tr>
+                                  {items.map((it, i) => (
+                                    <tr key={i} className="border-t border-border">
+                                      <td className="p-2">{it.food}</td>
+                                      <td className="p-2 text-muted-foreground">{it.quantity}</td>
+                                      <td className="p-2 text-right font-semibold">{Math.round(it.energy_kcal)}</td>
+                                      <td className="p-2 text-right">{Math.round(it.protein_g)}g</td>
+                                      <td className="p-2 text-right">{Math.round(it.carbs_g)}g</td>
+                                      <td className="p-2 text-right">{Math.round(it.fat_g)}g</td>
+                                      <td className="p-2 text-right text-muted-foreground">{Math.round(it.fiber_g ?? 0)}g</td>
+                                    </tr>
+                                  ))}
+                                  <tr className="border-t border-border bg-muted/20">
+                                    <td className="p-2 font-medium" colSpan={2}>Subtotal</td>
+                                    <td className="p-2 text-right font-semibold">{Math.round(m.energy_kcal)}</td>
+                                    <td className="p-2 text-right">{Math.round(m.protein_g)}g</td>
+                                    <td className="p-2 text-right">{Math.round(m.carbs_g)}g</td>
+                                    <td className="p-2 text-right">{Math.round(m.fat_g)}g</td>
+                                    <td className="p-2" />
+                                  </tr>
+                                </React.Fragment>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="mt-2 text-[10px] text-muted-foreground">
+                        Valores conferidos pela reanálise da STHIA 2.0 (FatSecret/TACO). Tolerância aceita frente à meta: ±5%.
+                      </p>
+                    </div>
+                  )}
 
                   {result.notes && (
                     <p className="mt-3 text-xs text-muted-foreground italic">{result.notes}</p>

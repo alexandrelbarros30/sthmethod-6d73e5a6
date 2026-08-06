@@ -9,9 +9,9 @@ const corsHeaders = {
 };
 
 const MODEL_ID = "google/gemini-2.5-flash";
-const TARGET_TOLERANCE_PCT = 10.0;
+const TARGET_TOLERANCE_PCT = 5.0;
 const MAX_TARGET_RETRIES = 5;
-const HARD_BLOCK_TOLERANCE_PCT = 20;
+const HARD_BLOCK_TOLERANCE_PCT = 5;
 const RECONCILE_TIMEOUT_MS = 110000;
 
 type MacroTotal = {
@@ -79,14 +79,41 @@ const normalizeGeneratedMacros = (parsed: any) => {
     parsed.meals = parsed.meals
       .slice()
       .sort((a: any, b: any) => (Number(a?.meal_number) || 0) - (Number(b?.meal_number) || 0))
-      .map((m: any, idx: number) => ({
-        ...m,
-        meal_number: roundInt(m?.meal_number) || idx + 1,
-        energy_kcal: roundInt(m?.energy_kcal),
-        protein_g: roundInt(m?.protein_g),
-        carbs_g: roundInt(m?.carbs_g),
-        fat_g: roundInt(m?.fat_g),
-      }));
+      .map((m: any, idx: number) => {
+        const items = Array.isArray(m?.base_items)
+          ? m.base_items.map((it: any) => ({
+              food: String(it?.food ?? "").trim(),
+              quantity: String(it?.quantity ?? "").trim(),
+              energy_kcal: roundInt(it?.energy_kcal),
+              protein_g: roundInt(it?.protein_g),
+              carbs_g: roundInt(it?.carbs_g),
+              fat_g: roundInt(it?.fat_g),
+              fiber_g: roundInt(it?.fiber_g),
+            }))
+          : [];
+        const itemsTotal = items.reduce(
+          (acc: any, it: any) => ({
+            energy_kcal: acc.energy_kcal + it.energy_kcal,
+            protein_g: acc.protein_g + it.protein_g,
+            carbs_g: acc.carbs_g + it.carbs_g,
+            fat_g: acc.fat_g + it.fat_g,
+            fiber_g: acc.fiber_g + it.fiber_g,
+          }),
+          { energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0 },
+        );
+        // Auditoria interna: os macros da refeição devem ser a soma real dos alimentos da BASE.
+        const useItems = items.length > 0 && itemsTotal.energy_kcal > 0;
+        return {
+          ...m,
+          meal_number: roundInt(m?.meal_number) || idx + 1,
+          base_items: items,
+          base_items_total: useItems ? itemsTotal : undefined,
+          energy_kcal: useItems ? itemsTotal.energy_kcal : roundInt(m?.energy_kcal),
+          protein_g: useItems ? itemsTotal.protein_g : roundInt(m?.protein_g),
+          carbs_g: useItems ? itemsTotal.carbs_g : roundInt(m?.carbs_g),
+          fat_g: useItems ? itemsTotal.fat_g : roundInt(m?.fat_g),
+        };
+      });
     parsed.total = sumMealTotals(parsed.meals);
   } else if (parsed?.total) {
     parsed.total.energy_kcal = roundInt(parsed.total.energy_kcal);
@@ -270,6 +297,23 @@ serve(async (req) => {
                       properties: {
                         meal_number: { type: "number" },
                         meal_name: { type: "string" },
+                        base_items: {
+                          type: "array",
+                          description: "Detalhamento alimento a alimento da opção BASE (tabela de valores). Cada item com quantidade e valores nutricionais reais da base FatSecret/TACO.",
+                          items: {
+                            type: "object",
+                            properties: {
+                              food: { type: "string", description: "Nome do alimento" },
+                              quantity: { type: "string", description: "Quantidade (ex: 120g, 2 unidades)" },
+                              energy_kcal: { type: "number" },
+                              protein_g: { type: "number" },
+                              carbs_g: { type: "number" },
+                              fat_g: { type: "number" },
+                              fiber_g: { type: "number" },
+                            },
+                            required: ["food", "quantity", "energy_kcal", "protein_g", "carbs_g", "fat_g"],
+                          },
+                        },
                         options: { 
                           type: "array", 
                           items: { type: "string" },
@@ -280,7 +324,7 @@ serve(async (req) => {
                         carbs_g: { type: "number" },
                         fat_g: { type: "number" },
                       },
-                      required: ["meal_number", "meal_name", "options", "energy_kcal", "protein_g", "carbs_g", "fat_g"]
+                        required: ["meal_number", "meal_name", "options", "base_items", "energy_kcal", "protein_g", "carbs_g", "fat_g"]
                     }
                   },
                   total: {
@@ -315,7 +359,8 @@ serve(async (req) => {
 
 IMPORTANTE: 
 - Retorne apenas o JSON via ferramenta 'return_diet'.
-- Garanta que as metas nutricionais sejam respeitadas rigorosamente seguindo os cálculos da API FatSecret.
+- Garanta que as metas nutricionais fiquem dentro de ±5% (não precisa ser exato) seguindo os cálculos da API FatSecret.
+- Preencha SEMPRE 'base_items' com a tabela de valores de cada alimento da opção BASE e audite a soma antes de responder.
 - Mantenha a formatação exata dentro do campo 'options' do JSON conforme as regras de FORMATAÇÃO OBRIGATÓRIA (sem markdown, sem HTML).`
       : `Você é a STHia, a inteligência nutricional do STH Method. 
 Sua missão é gerar cardápios precisos retornando um JSON estruturado.
@@ -334,7 +379,8 @@ ${STHIA_DIET_FORMAT}
 
 IMPORTANTE: 
 - Retorne apenas o JSON via ferramenta 'return_diet'.
-- Garanta que as metas nutricionais sejam respeitadas rigorosamente.
+- Garanta que as metas nutricionais fiquem dentro de ±5% do alvo (não precisa ser exato).
+- Preencha SEMPRE 'base_items' com o detalhamento de cada alimento da opção BASE (nome, quantidade, kcal, P, C, G, fibra) usando valores reais TACO/FatSecret, e confira que a soma dos alimentos é igual aos macros da refeição.
 - Diversifique os alimentos.`;
 
     const fullPrompt = `${systemPrompt}
