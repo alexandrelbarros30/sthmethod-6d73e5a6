@@ -270,6 +270,7 @@ const AdminDietAI = () => {
           mode: "generate",
           brief,
           freeText: [freeText, adviceExtra.trim() ? `Ajustes adicionais do admin após a consulta:\n${adviceExtra.trim()}` : ""].filter(Boolean).join("\n\n"),
+          motor,
           studentId: selectedStudent?.user_id || null,
           includePhotos: usePhotos,
           protocolText: useProtocol ? protocolText : "",
