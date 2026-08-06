@@ -582,10 +582,10 @@ export default function AdminAnalysisHistory() {
               </div>
 
               <div className="grid gap-4">
-                <ClinicalReport analysis={current} />
+                <ClinicalReport html={current.report_html} />
                 
                 {current.markers && current.markers.length > 0 && (
-                  <LabInterpretationPanel markers={current.markers} />
+                  <LabInterpretationPanel html={current.report_html} />
                 )}
               </div>
             </div>
@@ -608,8 +608,11 @@ export default function AdminAnalysisHistory() {
       <ClinicalExportDialog
         open={exportOpen}
         onOpenChange={setExportOpen}
-        analysis={current}
+        reportHtml={current?.report_html || ""}
+        title={current?.title || ""}
         studentName={selectedStudent?.full_name || ""}
+        analysisId={current?.id}
+        createdAt={current?.created_at}
       />
     </DashboardLayout>
   );
