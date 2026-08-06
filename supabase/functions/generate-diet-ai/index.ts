@@ -56,13 +56,14 @@ const formatDietText = (parsed: any): string => {
     const cleanName = (m.meal_name || "").replace(/[*()]/g, "").trim();
     const title = `Refeição ${mealNumStr}: ${cleanName}`;
     
-    // Format options with newlines after labels as requested by STHIA 2.0
+    // Format options exactly as STHIA 2.0 master prompt: "⭐ BASE:\n(alimentos)"
+    // and Option 2..N: "(alimentos)" with double quotes surrounding the whole options block.
     const formattedOptions = (m.options || []).map((opt: string, idx: number) => {
-      let text = opt.trim();
+      const text = opt.trim();
       if (idx === 0) {
-        return `⭐ BASE:\n${text}`;
+        return `⭐ BASE: ${text}`;
       } else {
-        return `Opção ${idx + 1}:\n${text}`;
+        return `Opção ${idx + 1}: ${text}`;
       }
     }).join("\n\n");
 
@@ -269,7 +270,7 @@ serve(async (req) => {
                         options: { 
                           type: "array", 
                           items: { type: "string" },
-                          description: "Exatamente 5 opções (1 Base + 4 Alternativas). A primeira deve ser a BASE."
+                          description: "Exatamente 5 opções para STHIA 2.0 (1 Base + 4 Alternativas) ou 4 opções para STHIA 1.0. A primeira deve ser a BASE."
                         },
                         energy_kcal: { type: "number" },
                         protein_g: { type: "number" },
