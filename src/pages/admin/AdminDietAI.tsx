@@ -44,6 +44,7 @@ type GenResult = {
   total: { energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number };
   hydration_l?: number;
   notes?: string;
+  validation_report?: { checked: number; corrected: number; unverified: number };
   targets?: { energy_kcal: number | null; protein_g: number | null; carbs_g: number | null; fat_g: number | null };
   deviation_pct?: { energy_kcal?: number; protein_g?: number; carbs_g?: number; fat_g?: number };
   _meta?: { usage?: any; photos_used?: number };
