@@ -117,6 +117,9 @@ const AdminDietAI = () => {
   const [counterNote, setCounterNote] = useState("");
   const [counterHistory, setCounterHistory] = useState<string[]>([]);
   const [showSthiaPrompt, setShowSthiaPrompt] = useState(false);
+  const [selectedAiMotor, setSelectedAiMotor] = useState<"sthia" | "sthia_2">("sthia");
+  const [isMotorSelectionOpen, setIsMotorSelectionOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: "generate" | "advice", opts?: any } | null>(null);
 
   // Histórico de orientações (restrito a admin/consultor)
   const { data: consultHistory = [], refetch: refetchHistory } = useQuery({
