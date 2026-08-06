@@ -14,52 +14,52 @@ const filled = (v: unknown) => String(v ?? "").trim().length > 0;
 /** Campos obrigatórios do briefing/cadastro antes de gerar ou revisar. */
 export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workout" | "analysis"): ChecklistItem[] {
   const p = (profile ?? {}) as any;
-  const a = (profile?.answers ?? {}) as Record<string, string>;
+  const a = (profile?.answers ?? {}) as Record<string, any>;
   
+  // Normalização: Tenta pegar o valor de 'p' (nível superior) ou 'a' (answers)
+  const get = (key: string) => p[key] ?? a[key];
+
   // 1. Campos básicos de Cadastro (idênticos para ambos)
   const base: ChecklistItem[] = [
-    { key: "full_name", label: "Nome completo", ok: filled(p.full_name), where: "cadastro" },
-    { key: "age", label: "Idade", ok: Number(p.age) > 0, where: "cadastro" },
-    { key: "sex", label: "Sexo biológico", ok: filled(p.sex), where: "cadastro" },
-    { key: "weight_kg", label: "Peso atual", ok: Number(p.weight_kg) > 0, where: "cadastro" },
-    { key: "height_cm", label: "Altura", ok: Number(p.height_cm) > 0, where: "cadastro" },
-    { key: "goal", label: "Objetivo", ok: filled(p.goal), where: "cadastro" },
-    { key: "comorbidities", label: "Comorbidades (ou 'Nenhuma')", ok: filled(p.comorbidities), where: "cadastro" },
-    { key: "medications", label: "Medicamentos em uso (ou 'Nenhum')", ok: filled(p.medications), where: "cadastro" },
+    { key: "full_name", label: "Nome completo", ok: filled(get("full_name")), where: "cadastro" },
+    { key: "age", label: "Idade", ok: Number(get("age")) > 0, where: "cadastro" },
+    { key: "sex", label: "Sexo biológico", ok: filled(get("sex")), where: "cadastro" },
+    { key: "weight_kg", label: "Peso atual", ok: Number(get("weight_kg")) > 0, where: "cadastro" },
+    { key: "height_cm", label: "Altura", ok: Number(get("height_cm")) > 0, where: "cadastro" },
+    { key: "goal", label: "Objetivo", ok: filled(get("goal")), where: "cadastro" },
+    { key: "comorbidities", label: "Comorbidades (ou 'Nenhuma')", ok: filled(get("comorbidities")), where: "cadastro" },
+    { key: "medications", label: "Medicamentos em uso (ou 'Nenhum')", ok: filled(get("medications")), where: "cadastro" },
   ];
 
   // 2. Campos de Briefing (Comportamento condicional)
   if (kind === "workout") {
-    // Para treino, exigimos os dados de atividade física e o nível de treino
     base.push(
-      { key: "training_level", label: "Nível de treino", ok: filled(p.training_level), where: "cadastro" },
-      { key: "physical_activity_level", label: "Nível de atividade física (NEAT)", ok: filled(a.physical_activity_level), where: "briefing" },
-      { key: "activity_type", label: "Atividade física praticada", ok: filled(a.activity_type), where: "briefing" },
-      { key: "training_days", label: "Dias de treino por semana", ok: filled(a.training_days), where: "briefing" },
-      { key: "training_duration_minutes", label: "Duração do treino", ok: filled(a.training_duration_minutes), where: "briefing" },
-      { key: "training_intensity", label: "Intensidade do treino", ok: filled(a.training_intensity), where: "briefing" },
-      { key: "training_place", label: "Onde você treina", ok: filled(a.training_place), where: "briefing" },
-      { key: "limitations", label: "Limitações físicas / lesões", ok: filled(a.limitations), where: "briefing" },
-      { key: "does_cardio", label: "Faz cardio?", ok: filled(a.does_cardio), where: "briefing" },
+      { key: "training_level", label: "Nível de treino", ok: filled(get("training_level")), where: "cadastro" },
+      { key: "physical_activity_level", label: "Nível de atividade física (NEAT)", ok: filled(get("physical_activity_level")), where: "cadastro" },
+      { key: "activity_type", label: "Atividade física praticada", ok: filled(get("activity_type")), where: "cadastro" },
+      { key: "training_days", label: "Dias de treino por semana", ok: filled(get("training_days")), where: "cadastro" },
+      { key: "training_duration_minutes", label: "Duração do treino", ok: filled(get("training_duration_minutes")), where: "briefing" },
+      { key: "training_intensity", label: "Intensidade do treino", ok: filled(get("training_intensity")), where: "briefing" },
+      { key: "training_place", label: "Onde você treina", ok: filled(get("training_place")), where: "briefing" },
+      { key: "limitations", label: "Limitações físicas / lesões", ok: filled(get("limitations")), where: "briefing" },
+      { key: "does_cardio", label: "Faz cardio?", ok: filled(get("does_cardio")), where: "briefing" },
     );
 
-    if (a.does_cardio === "sim") {
+    if (get("does_cardio") === "sim") {
       base.push(
-        { key: "cardio_days_per_week", label: "Dias de cardio por semana", ok: filled(a.cardio_days_per_week), where: "briefing" },
-        { key: "cardio_duration_minutes", label: "Duração do cardio", ok: filled(a.cardio_duration_minutes), where: "briefing" },
-        { key: "cardio_intensity", label: "Intensidade do cardio", ok: filled(a.cardio_intensity), where: "briefing" },
+        { key: "cardio_days_per_week", label: "Dias de cardio por semana", ok: filled(get("cardio_days_per_week")), where: "briefing" },
+        { key: "cardio_duration_minutes", label: "Duração do cardio", ok: filled(get("cardio_duration_minutes")), where: "briefing" },
+        { key: "cardio_intensity", label: "Intensidade do cardio", ok: filled(get("cardio_intensity")), where: "briefing" },
       );
     }
   }
 
   if (kind === "diet") {
-    // Para dieta, o objetivo do cardápio e refeições são obrigatórios.
-    // Os outros campos de atividade são interessantes mas não bloqueantes se não forem o foco.
     base.push(
-      { key: "diet_objective", label: "Objetivo do cardápio", ok: filled(a.diet_objective), where: "briefing" },
-      { key: "meals_per_day", label: "Refeições por dia", ok: filled(a.meals_per_day), where: "briefing" },
-      { key: "restrictions", label: "Restrições alimentares", ok: filled(a.restrictions), where: "briefing" },
-      { key: "diet_preferences", label: "Preferências alimentares", ok: filled(a.diet_preferences), where: "briefing" },
+      { key: "diet_objective", label: "Objetivo do cardápio", ok: filled(get("diet_objective") || get("goal")), where: "briefing" },
+      { key: "meals_per_day", label: "Refeições por dia", ok: filled(get("meals_per_day")), where: "cadastro" },
+      { key: "restrictions", label: "Restrições alimentares", ok: filled(get("restrictions")), where: "cadastro" },
+      { key: "diet_preferences", label: "Preferências alimentares", ok: filled(get("diet_preferences")), where: "briefing" },
     );
   }
 
@@ -101,11 +101,18 @@ export default function AiBriefingChecklist({ items, editHref, title, hideEdit, 
           </span>
           <div>
             <h2 className="text-base font-semibold">{title ?? "Checklist do briefing"}</h2>
-            <p className="text-xs text-muted-foreground">
-              {complete
-                ? "Tudo preenchido — você já pode gerar ou revisar."
-                : `${missing.length} campo(s) faltando. Toque no item em vermelho para corrigir.`}
-            </p>
+            <div className="flex flex-col">
+              <p className="text-xs text-muted-foreground">
+                {complete
+                  ? "Tudo preenchido — você já pode gerar ou revisar."
+                  : `${missing.length} campo(s) faltando. Toque no item em vermelho para corrigir.`}
+              </p>
+              {!complete && items.some(i => i.ok && i.where === "cadastro") && (
+                <p className="mt-0.5 text-[10px] font-medium text-primary/80">
+                  Campos de cadastro já confirmados estão sincronizados.
+                </p>
+              )}
+            </div>
           </div>
         </div>
         {!hideEdit && (

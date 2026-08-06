@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, ArrowRight, Brain, Dumbbell } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface FormState {
   full_name: string;
@@ -403,6 +404,26 @@ export default function AiOnboarding() {
             </>
           )}
         </Card>
+
+        {/* Revisão final do cadastro mostrando dados já confirmados */}
+        {ready && Object.values(form).some(v => v !== "") && (
+          <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Dados Confirmados</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Object.entries(form).map(([key, val]) => {
+                if (!val || val === "nenhuma" || val === "nenhum") return null;
+                return (
+                  <Badge key={key} variant="secondary" className="bg-primary/10 text-[10px] text-primary">
+                    {key.replace(/_/g, " ")}: OK
+                  </Badge>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-[10px] text-muted-foreground italic">
+              * O sistema sincronizou automaticamente as informações que você já forneceu.
+            </p>
+          </div>
+        )}
 
         <div className="mt-5 flex items-center justify-between gap-3">
           {step === 1 ? (
