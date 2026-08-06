@@ -348,8 +348,19 @@ PERFIL: ${profileData ? JSON.stringify({
     }) : "Desconhecido"}`;
 
     const messages = [{ role: "system", content: fullPrompt }];
-    if (previousDiet) messages.push({ role: "assistant", content: `Dieta anterior: ${previousDiet}` });
-    messages.push({ role: "user", content: mode === "review" ? `Revise esta dieta: ${dietContent}. Correção: ${correction}` : `Gere uma nova dieta. Briefing: ${JSON.stringify(brief)}. Texto livre: ${freeText}` });
+    if (previousDiet) {
+      messages.push({ role: "assistant", content: `VERSÃO ANTERIOR A SER CORRIGIDA:\n${previousDiet}` });
+    }
+
+    const userMessage = mode === "review" 
+      ? `Revise esta dieta: ${dietContent}. Correção: ${correction}` 
+      : mode === "advice"
+        ? `Gere orientações. Briefing: ${JSON.stringify(brief)}. Texto livre: ${freeText}`
+        : correction
+          ? `CONTRA-RESPOSTA CRÍTICA DO USUÁRIO: "${correction}". \n\nINSTRUÇÃO: O usuário não aceitou a versão anterior. Você DEVE refazer o plano incorporando OBRIGATORIAMENTE o que foi pedido acima. Se o usuário pediu para incluir ou remover algo, obedeça cegamente a essa instrução de ajuste, mantendo a precisão nutricional total.`
+          : `Gere uma nova dieta. Briefing: ${JSON.stringify(brief)}. Observações/Prompt Livre: ${freeText}`;
+
+    messages.push({ role: "user", content: userMessage });
 
     let parsed = null;
     let retries = 0;
