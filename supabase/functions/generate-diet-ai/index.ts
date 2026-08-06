@@ -208,7 +208,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
-    const { mode = "generate", brief = {}, freeText = "", dietContent = "", studentId = null, includePhotos = true, protocolText = "", adviceText = "", previousDiet = "", correction = "" } = body;
+    const { mode = "generate", brief = {}, freeText = "", dietContent = "", studentId = null, includePhotos = true, protocolText = "", adviceText = "", previousDiet = "", correction = "", motor } = body;
+    const isSthia2 = motor === "sthia_2";
 
     if (mode === "generate" && !brief && !freeText && !correction) {
       return new Response(JSON.stringify({ error: "Parâmetros insuficientes para geração." }), {
