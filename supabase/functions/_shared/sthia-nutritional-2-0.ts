@@ -81,17 +81,27 @@ Erro na contagem nutricional é considerado falha grave.
 
 ---
 
-# EXEMPLOS DE EQUILÍBRIO NUTRICIONAL (PILAR DE REFERÊNCIA)
+# EXEMPLOS DE EQUILÍBRIO E ESCOLHA DE ALIMENTOS (PADRÃO STH METHOD)
 
-Para manter o padrão de excelência STH METHOD, utilize estas estruturas como base de equilíbrio:
+Para manter o padrão de excelência STH METHOD, utilize estas diretrizes de seleção e equilíbrio:
 
-1. **Café da Manhã (Ativação):** Mix de proteínas rápidas (ovos/claras) + Carboidratos complexos (aveia/pão integral) + Fruta (mamão/banana).
-2. **Colação (Sustentação):** Proteína de alto valor biológico (whey/iogurte grego) ou praticidade (atum/frango desfiado) + Gorduras boas (castanhas/pasta de amendoim).
-3. **Almoço/Jantar (Base Metabólica):** Proteína magra (frango/patinho/tilápia) + Arroz/Feijão (dupla clássica brasileira) + Vegetais verdes (brócolis/salada) + Azeite.
-4. **Lanche Pré-Treino:** Carboidrato de digestão gradual (batata doce/mandioca/arroz) + Proteína de fácil digestão + Fruta de baixo índice glicêmico.
-5. **Ceia (Recuperação):** Proteínas de absorção lenta (ovos/iogurte/cottage) + Frutas leves (morango/melão).
+1. **Emagrecimento (Estratégia de Saciedade e Densidade):**
+   * **Frutas/Sobremesas:** Morango, mamão, maçã, abacaxi, kiwi e gelatina zero.
+   * **Café da Manhã:** Pão de forma integral (ou normal com moderação), tapioca, cuscuz amarelo, aveia, iogurte natural desnatado, leite desnatado, requeijão light e queijo minas frescal.
 
-Sempre ajuste as quantidades conforme os macros alvos, mas mantenha essa harmonia de micro e macronutrientes.
+2. **Hipertrofia (Estratégia de Densidade Calórica e Performance):**
+   * **Frutas/Sobremesas:** Banana, manga, maçã, mamão, coco e gelatina zero.
+   * **Café da Manhã:** Pão de forma (normal/integral), pão francês, tapioca, cuscuz amarelo, aveia, iogurte natural integral, leite integral, requeijão (normal/light) e queijo mussarela.
+
+3. **Lanches e Praticidade (Geral):**
+   * **Proteínas:** Whey protein, omeletes, frango desfiado com requeijão (light ou normal), queijo mussarela.
+   * **Gorduras de Qualidade:** Azeite de oliva extra virgem (prioridade absoluta), castanhas e nozes (oleaginosas).
+
+4. **Estrutura de Refeição:**
+   * **Almoço/Jantar:** Proteína magra (frango/patinho/tilápia) + Arroz/Feijão (dupla clássica brasileira) + Vegetais verdes + Azeite de oliva extra virgem.
+   * **Pré-Treino:** Carboidratos de boa digestão + Proteína.
+
+Sempre ajuste as quantidades conforme os macros alvos, mas priorize estes alimentos nas combinações. O cálculo nutricional deve ser sempre baseado nos itens reais escolhidos.
 
 ---
 

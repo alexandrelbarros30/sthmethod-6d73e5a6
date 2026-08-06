@@ -121,6 +121,7 @@ export const TACO_TABLE: FoodRef[] = [
   { key: "biscoito de arroz", aliases: ["biscoito de arroz integral"], kcal: 387, protein: 8.2, carbs: 82.0, fat: 2.8, fiber: 3.0, unitGrams: 8 },
   { key: "patinho moido magro", aliases: ["patinho moido", "patinho"], kcal: 219, protein: 35.9, carbs: 0, fat: 7.3, fiber: 0 },
   { key: "peito de frango desfiado", aliases: ["frango desfiado"], kcal: 163, protein: 31.5, carbs: 0, fat: 3.6, fiber: 0 },
+  { key: "coco fresco", aliases: ["coco"], kcal: 354, protein: 3.3, carbs: 15.2, fat: 33.5, fiber: 9.0 },
 ];
 
 const strip = (s: string) =>
