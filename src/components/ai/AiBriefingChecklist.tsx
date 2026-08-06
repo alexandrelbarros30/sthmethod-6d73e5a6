@@ -26,7 +26,6 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
     { key: "goal", label: "Objetivo", ok: filled(p.goal), where: "cadastro" },
     { key: "comorbidities", label: "Comorbidades (ou 'Nenhuma')", ok: filled(p.comorbidities), where: "cadastro" },
     { key: "medications", label: "Medicamentos em uso (ou 'Nenhum')", ok: filled(p.medications), where: "cadastro" },
-    { key: "routine", label: "Rotina diária", ok: filled(a.routine), where: "cadastro" },
   ];
 
   // 2. Campos de Briefing (Comportamento condicional)
@@ -36,7 +35,7 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
       { key: "training_level", label: "Nível de treino", ok: filled(p.training_level), where: "cadastro" },
       { key: "physical_activity_level", label: "Nível de atividade física (NEAT)", ok: filled(a.physical_activity_level), where: "briefing" },
       { key: "activity_type", label: "Atividade física praticada", ok: filled(a.activity_type), where: "briefing" },
-      { key: "training_days_per_week", label: "Dias de treino por semana", ok: filled(a.training_days_per_week), where: "briefing" },
+      { key: "training_days", label: "Dias de treino por semana", ok: filled(a.training_days), where: "briefing" },
       { key: "training_duration_minutes", label: "Duração do treino", ok: filled(a.training_duration_minutes), where: "briefing" },
       { key: "training_intensity", label: "Intensidade do treino", ok: filled(a.training_intensity), where: "briefing" },
       { key: "training_place", label: "Onde você treina", ok: filled(a.training_place), where: "briefing" },
@@ -58,8 +57,8 @@ export function buildChecklist(profile: AiProfile | null, kind: "diet" | "workou
     // Os outros campos de atividade são interessantes mas não bloqueantes se não forem o foco.
     base.push(
       { key: "diet_objective", label: "Objetivo do cardápio", ok: filled(a.diet_objective), where: "briefing" },
-      { key: "diet_meals", label: "Refeições por dia", ok: filled(a.diet_meals), where: "briefing" },
-      { key: "diet_restrictions", label: "Restrições alimentares", ok: filled(a.diet_restrictions), where: "briefing" },
+      { key: "meals_per_day", label: "Refeições por dia", ok: filled(a.meals_per_day), where: "briefing" },
+      { key: "restrictions", label: "Restrições alimentares", ok: filled(a.restrictions), where: "briefing" },
       { key: "diet_preferences", label: "Preferências alimentares", ok: filled(a.diet_preferences), where: "briefing" },
     );
   }
