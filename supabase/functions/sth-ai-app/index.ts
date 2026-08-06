@@ -297,7 +297,7 @@ Deno.serve(async (req) => {
     }
 
     const userPrompt = mode === 'revise'
-      ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}\nVersão atual:\n${last!.content}\n\nAjuste pedido: ${instruction}\n\nPreserve a estrutura principal e altere apenas o necessário. Adicione ao final a seção "## O que mudou nesta revisão".`
+      ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}\nVERSÃO ANTERIOR (a ser corrigida):\n${last!.content}\n\nAJUSTE PEDIDO (CONTRA-RESPOSTA): ${instruction}\n\nINSTRUÇÃO CRÍTICA: O usuário não gostou da versão anterior e está enviando uma contra-resposta. Analise os detalhes acima e REFAÇA o plano incorporando EXATAMENTE as mudanças pedidas, mas mantendo a estrutura e o que não foi criticado. Não repita o erro da versão anterior. Adicione ao final a seção "## O que mudou nesta revisão".`
       : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
 
     // ===== Anexos de exame laboratorial (somente Central de Análise) =====
