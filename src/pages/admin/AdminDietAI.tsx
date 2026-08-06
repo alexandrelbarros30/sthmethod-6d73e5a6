@@ -897,7 +897,7 @@ REGRAS JSON:
                   />
                   <Button
                     className="w-full"
-                    onClick={() => generateMut.mutate({})}
+                    onClick={() => handleGenerateWithMotor("generate", {})}
                     disabled={generateMut.isPending}
                   >
                     {generateMut.isPending ? (
