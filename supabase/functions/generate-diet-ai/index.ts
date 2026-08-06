@@ -304,42 +304,12 @@ serve(async (req) => {
       profileData = data;
     }
 
-    const systemPrompt = `Você é a STHia, a inteligência nutricional do STH Method. 
-Sua missão é gerar cardápios precisos retornando um JSON estruturado.
-
-ESTILO E CULTURA:
-- Ofereça um cardápio tipicamente BRASILEIRO e DIVERSIFICADO (Arroz, feijão, carnes, ovos, mas também pães, whey protein, iogurtes, frutas variadas, legumes e vegetais).
-- NÃO se limite a um único alimento por refeição. Use a inteligência nutricional para combinar grupos alimentares (ex: Proteína + Carboidrato + Vegetais + Gordura Boa).
-
-REGRAS DE CONTEÚDO PARA O JSON:
-1. Para cada refeição, você deve fornecer EXATAMENTE 4 opções de alimentos.
-2. A primeira opção (índice 0 no array 'options') será a BASE. Ela deve ser a mais completa e balanceada.
-3. Alimentos BASE: Se a refeição pedir "Frango com Batata", a opção BASE deve conter ambos, não apenas um deles. Distribua os macros entre os componentes da BASE.
-4. Ovos e claras de ovos DEVEM estar em UNIDADES (ex: "4 ovos inteiros", "3 claras de ovo"), NUNCA em gramas.
-5. Mantenha a equivalência nutricional entre as 4 opções. Se a BASE tem Frango+Batata, a Opção 2 pode ter Carne+Arroz, a Opção 3 Peixe+Mandioca, etc.
-6. O JSON deve ser focado em dados puros. O backend cuidará da formatação visual (aspas, parágrafos, emojis).
-
-ESTRUTURA JSON (refeições):
-- meal_number: número da refeição.
-- meal_name: nome da refeição (ex: "Desjejum Metabólico"). Sem markdown.
-- options: array com exatamente 4 strings (Opção BASE + 3 Alternativas). Cada string pode conter múltiplos alimentos combinados (ex: "200g de Frango + 150g de Arroz + Salada").
-- energy_kcal, protein_g, carbs_g, fat_g: macros TOTAIS da ALIMENTAÇÃO BASE (soma de todos os itens da primeira opção).
+    const systemPrompt = `${STHIA_NUTRITIONAL_2_0}
 
 IMPORTANTE: 
 - Retorne apenas o JSON via ferramenta 'return_diet'.
-- Garanta que as metas nutricionais sejam respeitadas rigorosamente.
-- Diversifique os alimentos: use pães, aveia, frutas, laticínios e suplementos quando apropriado ao objetivo.
-
-REGRAS CRÍTICAS DE PRECISÃO E AUDITORIA:
-1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional. Cada opção deve ser uma refeição COMPLETA.
-2. RIGOR MATEMÁTICO ABSOLUTO: O usuário audita manualmente grama por grama no app FatSecret. Se você gerar "100g de Frango", use o valor exato que o app FatSecret entrega para esse item no Brasil.
-3. CONCORDÂNCIA COM O APP FATSECRET: Não use tabelas genéricas se elas divergirem do que o usuário vê no app. A soma das bases das refeições deve ser EXATA. 1700 kcal no briefing = 1700 kcal na soma real dos alimentos.
-4. PRIORIDADE DE PROTEÍNA: Se o admin fixar 200g de proteína, esse valor é a âncora do cálculo. Ajuste o restante para bater as calorias.
-5. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais.
-6. Sua fonte ÚNICA e PRIORITÁRIA de verdade é a base FATSECRET BRASIL.
-7. Se houver desvio entre o que você calcula e o que a análise FatSecret retorna, você deve refazer o cálculo até que a divergência seja zero.
-8. NÃO emita valores falsos; o usuário está testando cada alimento individualmente.
-9. DINAMISMO DO BRIEFING: Os valores de kcal/macros no briefing são ALVOS (objetivos). O cardápio gerado deve refletir o CÁLCULO REAL dos alimentos escolhidos. Se você escolher alimentos que somam 1650kcal para um alvo de 1700kcal, o JSON 'total' deve apresentar 1650kcal (o valor real), permitindo que o administrador identifique a necessidade de ajuste. NUNCA force o 'total' a ser igual ao briefing se a soma dos alimentos for diferente. O valor real permite a análise e solicitação de correção pelo consultor.
+- Garanta que as metas nutricionais sejam respeitadas rigorosamente seguindo os cálculos da API FatSecret.
+- Mantenha a formatação exata dentro do campo 'options' do JSON conforme as regras de FORMATAÇÃO OBRIGATÓRIA (sem markdown, sem HTML).
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
