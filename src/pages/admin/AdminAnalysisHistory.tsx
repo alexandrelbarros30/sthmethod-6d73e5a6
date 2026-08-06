@@ -86,6 +86,37 @@ export default function AdminAnalysisHistory() {
       .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q));
   }, [students, search]);
 
+  const { data: allAnalyses = [], isLoading: isLoadingAll } = useQuery({
+    queryKey: ["all-clinical-analyses"],
+    queryFn: async () => {
+      console.log("Fetching all history for today");
+      const { data, error } = await supabase
+        .from("student_clinical_analyses")
+        .select(`
+          id, 
+          user_id, 
+          title, 
+          scope, 
+          summary, 
+          report_html, 
+          red_flags, 
+          recommendations, 
+          markers, 
+          visual_composition, 
+          created_at, 
+          released_to_student, 
+          released_at, 
+          visual_share_enabled, 
+          visual_share_expires_at, 
+          visibility_settings,
+          profiles:user_id (full_name)
+        `)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const { data: history = [], refetch: refetchHistory, isLoading: isLoadingHistory } = useQuery({
     queryKey: ["clinical-analyses", studentId],
     enabled: !!studentId,
