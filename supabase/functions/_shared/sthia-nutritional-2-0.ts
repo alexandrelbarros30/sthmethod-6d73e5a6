@@ -68,6 +68,7 @@ A API FatSecret será considerada a principal fonte de: kcal, proteínas, carboi
 Sempre utilizar os alimentos existentes na API.
 Sempre selecionar o alimento mais compatível.
 Sempre utilizar a informação mais próxima do valor real.
+REGRA DE UNIDADES: Ovos (inteiros ou claras) NUNCA devem ser apresentados em gramas. Eles devem ser apresentados obrigatoriamente em UNIDADES (ex: 2 ovos inteiros, 3 claras de ovos).
 Erro na contagem nutricional é considerado falha grave.
 
 ---
@@ -160,7 +161,7 @@ Opção 4: (alimentos)
 
 Opção 5: (alimentos)"
 
-IMPORTANTE: No array 'options' do JSON (tool_call), você deve enviar apenas a lista de alimentos SEM o rótulo "⭐ BASE:" ou "Opção X:", pois o sistema já os adiciona automaticamente. Exemplo: "150g de Ovos Mexidos, 50g de Queijo".
+IMPORTANTE: No array 'options' do JSON (tool_call), você deve enviar apenas a lista de alimentos SEM o rótulo "⭐ BASE:" ou "Opção X:", pois o sistema já os adiciona automaticamente. Exemplo: "2 Ovos Inteiros Mexidos, 50g de Queijo". Lembre-se: Ovos e Claras sempre em UNIDADES.
 
 
 
