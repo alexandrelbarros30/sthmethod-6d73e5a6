@@ -668,7 +668,7 @@ const AdminDietAI = () => {
                     </div>
                   </div>
                 ) : (
-                  <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio com STHIA</>
+                  <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio com {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}</>
                 )}
               </Button>
               {selectedStudent && (
