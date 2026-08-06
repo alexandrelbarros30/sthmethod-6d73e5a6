@@ -1080,6 +1080,7 @@ REGRAS JSON:
                               <th className="text-right p-2">C</th>
                               <th className="text-right p-2">G</th>
                               <th className="text-right p-2">Fibra</th>
+                              <th className="text-left p-2">Conferência</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1089,7 +1090,7 @@ REGRAS JSON:
                               return (
                                 <React.Fragment key={m.meal_number}>
                                   <tr className="bg-muted/30">
-                                    <td colSpan={7} className="p-2 font-medium">
+                                    <td colSpan={8} className="p-2 font-medium">
                                       Refeição {m.meal_number} — {m.meal_name}
                                     </td>
                                   </tr>
@@ -1102,6 +1103,15 @@ REGRAS JSON:
                                       <td className="p-2 text-right">{Math.round(it.carbs_g)}g</td>
                                       <td className="p-2 text-right">{Math.round(it.fat_g)}g</td>
                                       <td className="p-2 text-right text-muted-foreground">{Math.round(it.fiber_g ?? 0)}g</td>
+                                      <td className="p-2 whitespace-nowrap">
+                                        {it.validation?.status === "corrigido" ? (
+                                          <span className="text-amber-500">✔ corrigido · {it.validation.source}</span>
+                                        ) : it.validation?.status === "ok" ? (
+                                          <span className="text-emerald-500">✔ {it.validation.source}</span>
+                                        ) : (
+                                          <span className="text-muted-foreground">— não verificado</span>
+                                        )}
+                                      </td>
                                     </tr>
                                   ))}
                                   <tr className="border-t border-border bg-muted/20">
@@ -1110,7 +1120,7 @@ REGRAS JSON:
                                     <td className="p-2 text-right">{Math.round(m.protein_g)}g</td>
                                     <td className="p-2 text-right">{Math.round(m.carbs_g)}g</td>
                                     <td className="p-2 text-right">{Math.round(m.fat_g)}g</td>
-                                    <td className="p-2" />
+                                    <td className="p-2" colSpan={2} />
                                   </tr>
                                 </React.Fragment>
                               );
