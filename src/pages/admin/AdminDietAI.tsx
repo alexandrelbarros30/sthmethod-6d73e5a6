@@ -567,16 +567,17 @@ const AdminDietAI = () => {
                 <Sparkles className="w-4 h-4 text-primary" /> Briefing
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowSthiaPrompt(true)} className="h-8 gap-1.5 text-xs">
-                  <Brain className="w-3.5 h-3.5 text-primary" /> Prompt STHia
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={pullProtocol}
-                  disabled={!selectedStudent}
-                  className="h-8 gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0"
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsMotorSelectionOpen(true)} 
+                  className="h-8 gap-1.5 text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
                 >
-                  <Stethoscope className="w-3.5 h-3.5" /> Puxar Protocolo
+                  <Brain className="w-3.5 h-3.5" /> 
+                  IA: {selectedAiMotor === "sthia_2" ? "STHIA 2.0" : "STHIA"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowSthiaPrompt(true)} className="h-8 gap-1.5 text-xs">
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Doutrina
                 </Button>
               </div>
             </CardHeader>
