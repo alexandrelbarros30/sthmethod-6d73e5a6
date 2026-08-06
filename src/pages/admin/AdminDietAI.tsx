@@ -461,7 +461,15 @@ const AdminDietAI = () => {
     const title = name.trim() || defaultName;
     setSaving(true);
     try {
-      const cleanContent = finalContent; // Mantém a formatação fiel (aspas, BASE, etc) ao salvar
+      // Garantir que o conteúdo salvo tenha tags HTML básicas para o RichTextEditor do admin não agrupar tudo em uma linha
+      let cleanContent = finalContent;
+      if (!/<[a-z][\s\S]*>/i.test(cleanContent)) {
+        cleanContent = cleanContent
+          .split(/\r?\n/)
+          .filter(line => line.trim())
+          .map(line => `<p>${line.trim()}</p>`)
+          .join("");
+      }
 
       // Validate context before saving to ensure we have macro distribution
       const { data: dietRow, error } = await supabase.from("student_diets").insert({
