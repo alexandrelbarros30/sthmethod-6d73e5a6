@@ -599,7 +599,20 @@ const AdminDietAI = () => {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">Kcal alvo</Label>
-                  <Input type="number" value={kcalTarget} onChange={(e) => setKcalTarget(e.target.value)} placeholder="2500" />
+                  <div className="flex items-center gap-2">
+                    <Input type="number" value={kcalTarget} onChange={(e) => setKcalTarget(e.target.value)} placeholder="2500" />
+                    {(proteinTarget || carbsTarget || fatTarget) && (
+                      <div className="flex flex-col">
+                        <span className={`text-[10px] whitespace-nowrap font-bold ${
+                          Math.abs((Number(proteinTarget) * 4 + Number(carbsTarget) * 4 + Number(fatTarget) * 9) - Number(kcalTarget)) < 10
+                            ? "text-green-500"
+                            : "text-orange-500"
+                        }`}>
+                          Soma: {Math.round(Number(proteinTarget) * 4 + Number(carbsTarget) * 4 + Number(fatTarget) * 9)} kcal
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-xs">Nº refeições</Label>
