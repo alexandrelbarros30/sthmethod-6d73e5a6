@@ -81,7 +81,7 @@ export default function AdminAnalysisHistory() {
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(search);
-    if (!q) return students.slice(0, 50);
+    if (!q) return students;
     return students
       .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q));
   }, [students, search]);

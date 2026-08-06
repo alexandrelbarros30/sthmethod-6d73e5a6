@@ -81,7 +81,7 @@ export default function AdminStudentAnalysis() {
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(search);
-    if (!q) return students.slice(0, 50);
+    if (!q) return students; // Remover o slice(0, 50) para permitir busca em todos os alunos carregados
     return students
       .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q));
   }, [students, search]);
@@ -95,8 +95,7 @@ export default function AdminStudentAnalysis() {
         .from("student_clinical_analyses")
         .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings")
         .eq("user_id", studentId!)
-        .order("created_at", { ascending: false })
-        .limit(50);
+        .order("created_at", { ascending: false }); // Removido o limite para garantir que todo o histórico seja visível
       if (error) throw error;
       console.log("Fetched history count:", data?.length || 0);
       return (data ?? []) as any as Analysis[];
@@ -522,9 +521,9 @@ export default function AdminStudentAnalysis() {
                           </div>
                         </div>
                       ))}
-                      {history.length >= 30 && (
+                      {history.length >= 50 && (
                         <p className="text-[10px] text-center text-muted-foreground p-3 border-t border-border/50">
-                          Exibindo as últimas 30 análises.
+                          Exibindo histórico completo ({history.length} registros).
                         </p>
                       )}
                     </div>
