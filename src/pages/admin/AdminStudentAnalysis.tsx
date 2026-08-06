@@ -396,8 +396,8 @@ export default function AdminStudentAnalysis() {
   const updateVisibility = useMutation({
     mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
       const { error } = await supabase
-        .from("student_clinical_analyses")
-        .update({ visibility_settings: settings })
+        .from("student_clinical_analyses" as any)
+        .update({ visibility_settings: settings } as any)
         .eq("id", id);
       if (error) throw error;
       return settings;
