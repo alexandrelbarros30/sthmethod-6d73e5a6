@@ -87,17 +87,19 @@ export default function AdminStudentAnalysis() {
       .slice(0, 100);
   }, [students, search]);
 
-  const { data: history = [], refetch: refetchHistory } = useQuery({
+  const { data: history = [], refetch: refetchHistory, isLoading: isLoadingHistory } = useQuery({
     queryKey: ["clinical-analyses", studentId],
     enabled: !!studentId,
     queryFn: async () => {
+      console.log("Fetching history for studentId:", studentId);
       const { data, error } = await supabase
         .from("student_clinical_analyses")
         .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings")
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(50);
       if (error) throw error;
+      console.log("Fetched history count:", data?.length || 0);
       return (data ?? []) as any as Analysis[];
     },
   });
