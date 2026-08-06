@@ -196,6 +196,7 @@ const AdminDietAudit = lazyWithRetry(() => import("./pages/admin/AdminDietAudit"
 const AdminProtocol = lazyWithRetry(() => import("./pages/admin/AdminProtocol"));
 const AdminProtocolAI = lazyWithRetry(() => import("./pages/admin/AdminProtocolAI"));
 const AdminStudentAnalysis = lazyWithRetry(() => import("./pages/admin/AdminStudentAnalysis"));
+const AdminAnalysisHistory = lazyWithRetry(() => import("./pages/admin/AdminAnalysisHistory"));
 const LeituraLaboratorial = lazyWithRetry(() => import("./pages/LeituraLaboratorial"));
 const AdminAIHistory = lazyWithRetry(() => import("./pages/admin/AdminAIHistory"));
 const AiLanding = lazyWithRetry(() => import("./pages/ai/AiLanding"));

@@ -45,7 +45,7 @@ type Analysis = {
   };
 };
 
-export default function AdminStudentAnalysis() {
+export default function AdminAnalysisHistory() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [studentId, setStudentId] = useState<string | null>(null);
@@ -427,8 +427,8 @@ export default function AdminStudentAnalysis() {
   return (
     <DashboardLayout
       role="admin"
-      title="Central de Análise · STHIA"
-      subtitle="Leitura e interpretação de exames, composição visual, parecer clínico e recomendações personalizadas."
+      title="Histórico de Análise Clínica · STHIA"
+      subtitle="Visualize e gerencie o histórico completo de pareceres clínicos e interpretações de exames de todos os alunos."
     >
       <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] w-full min-w-0">
         {/* Seleção de aluno + histórico */}
@@ -535,547 +535,82 @@ export default function AdminStudentAnalysis() {
           )}
         </div>
 
-        {/* Área principal */}
+        {/* Área principal - Histórico Detalhado */}
         <div className="space-y-4 min-w-0">
           {!studentId && (
-            <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Selecione um aluno para começar a análise.</CardContent></Card>
-          )}
-
-          {studentId && (
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" /> Gerar novo parecer STHIA
-                </CardTitle>
-                {selectedStudent && (
-                  <p className="text-xs text-muted-foreground">
-                    Aluno: <strong>{selectedStudent.full_name}</strong> · {selectedStudent.email}
-                  </p>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-1 md:max-w-[260px]">
-                  <Label className="text-xs">Foco da análise</Label>
-                  <Select value={focus} onValueChange={setFocus}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="full">Análise completa</SelectItem>
-                      <SelectItem value="labs">Só exames laboratoriais</SelectItem>
-                      <SelectItem value="visual">Só composição visual</SelectItem>
-                      <SelectItem value="protocol_review">Revisão do protocolo atual</SelectItem>
-                      <SelectItem value="diet_review">Revisão da dieta atual</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Observações do consultor (opcional)</Label>
-                  <Textarea
-                    rows={7}
-                    placeholder="Ex: aluno relatou queda de libido, dor lombar leve, sono ruim, queixas recentes, contexto clínico, histórico relevante…"
-                    value={consultantNotes}
-                    onChange={(e) => setConsultantNotes(e.target.value)}
-                    className="min-h-[150px] text-sm leading-relaxed"
-                  />
-                  <p className="text-[10px] text-muted-foreground">{consultantNotes.length} caracteres</p>
-                </div>
-
-                {/* Protocolo atual: puxar do sistema ou descrever livremente (aluno externo) */}
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <ClipboardList className="w-3.5 h-3.5" /> Protocolo atual (opcional)
-                    </Label>
-                    <div className="flex items-center gap-1.5">
-                      <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={pullingProtocol || !studentId} onClick={pullProtocol}>
-                        {pullingProtocol ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                        Puxar do sistema
-                      </Button>
-                      {(protocolText || protocolTitle) && (
-                        <Button size="sm" variant="ghost" className="h-7 gap-1.5" onClick={() => { setProtocolText(""); setProtocolTitle(""); }}>
-                          <X className="w-3.5 h-3.5" /> Limpar
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  <Input
-                    placeholder="Título do protocolo (ex: Protocolo atual / Ciclo externo relatado)"
-                    value={protocolTitle}
-                    onChange={(e) => setProtocolTitle(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                  <Textarea
-                    rows={8}
-                    placeholder={`Puxe do sistema ou descreva livremente (aluno externo). Ex.:\nTestosterona cipionato 250mg/sem (seg/qui)\nOxandrolona 20mg/dia\nHCG 500UI 2x/sem\nTirzepatida 5mg/sem\nSuplementos: creatina 5g, ômega 3, vit D 5000UI`}
-                    value={protocolText}
-                    onChange={(e) => setProtocolText(e.target.value)}
-                    className="min-h-[170px] font-mono text-xs leading-relaxed"
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    Quando preenchido, a STHIA usa este protocolo como referência principal — inclusive para alunos externos sem protocolo cadastrado.
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Exames (cole o texto/valores) — opcional</Label>
-                  <Textarea
-                    rows={6}
-                    placeholder={`Cole aqui os resultados dos exames. Ex.:\nTestosterona total: 850 ng/dL (ref 264–916)\nEstradiol: 42 pg/mL\nHematócrito: 51%\nALT: 68 U/L · AST: 55 U/L\nHDL: 32 · LDL: 145 · Triglicerídeos: 210…`}
-                    value={examText}
-                    onChange={(e) => setExamText(e.target.value)}
-                    className="font-mono text-xs"
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    A STHIA cruza este texto com o dossiê (bioimpedância, fotos, peso, protocolo/dieta atuais).
-                  </p>
-                </div>
-
-                {/* Upload de exames laboratoriais (PDF/JPG/PNG) */}
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5" /> Exames laboratoriais (PDF/JPG/PNG)
-                    </Label>
-                    <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={uploading} onClick={() => examInputRef.current?.click()}>
-                      <Upload className="w-3.5 h-3.5" /> Anexar
-                    </Button>
-                    <input
-                      ref={examInputRef}
-                      type="file"
-                      accept="application/pdf,image/jpeg,image/png,image/webp"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => uploadExamFiles(e.target.files)}
-                    />
-                  </div>
-                  {(existingExams as any[]).length > 0 && (
-                    <div className="rounded-md bg-primary/5 border border-primary/20 p-2 space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] font-medium flex items-center gap-1.5">
-                          <FileText className="w-3 h-3 text-primary" />
-                          Aluno já possui {(existingExams as any[]).length} exame(s) no sistema
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Switch
-                            id="use-existing-exams"
-                            checked={includeExistingExams}
-                            onCheckedChange={setIncludeExistingExams}
-                          />
-                          <Label htmlFor="use-existing-exams" className="text-[10px] cursor-pointer">
-                            {includeExistingExams ? "Incluir na análise" : "Ignorar"}
-                          </Label>
-                        </div>
-                      </div>
-                      {includeExistingExams && (existingExams as any[]).length > 1 && (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] text-muted-foreground">
-                            {selectedExamIds.length} de {(existingExams as any[]).length} selecionado(s)
-                          </span>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 text-[10px] px-2"
-                              onClick={() => setSelectedExamIds((existingExams as any[]).map((d) => d.id))}
-                            >
-                              Todos
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 text-[10px] px-2"
-                              onClick={() => setSelectedExamIds([])}
-                            >
-                              Nenhum
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                      <ul className="space-y-0.5 max-h-40 overflow-y-auto pr-1">
-                        {(existingExams as any[]).map((d) => (
-                          <li key={d.id} className="text-[10px] text-muted-foreground flex items-center gap-2">
-                            {includeExistingExams && (
-                              <Checkbox
-                                checked={selectedExamIds.includes(d.id)}
-                                onCheckedChange={() => toggleExam(d.id)}
-                                className="h-3.5 w-3.5 shrink-0"
-                                aria-label="Usar este exame na análise"
-                              />
-                            )}
-                            <span className="truncate flex-1">
-                              {d.storage_path?.split("/").pop() || "exame.pdf"}
-                            </span>
-                            <span className="opacity-70 shrink-0">
-                              {new Date(d.uploaded_at).toLocaleDateString("pt-BR")}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-[9px] text-muted-foreground">
-                        {!includeExistingExams
-                          ? "Estes exames não serão considerados nesta análise."
-                          : selectedExamIds.length === 0
-                          ? "Nenhum exame marcado — a STHIA usará apenas o texto e anexos novos."
-                          : "STHIA fará OCR apenas dos exames marcados."}
-                      </p>
-                    </div>
-                  )}
-                  {extraExamPaths.length === 0 ? (
-                    <p className="text-[10px] text-muted-foreground">Envie laudos/PDFs — a STHIA fará OCR e integrará todos os marcadores encontrados.</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {extraExamPaths.map((f, i) => (
-                        <li key={f.path} className="flex items-center justify-between gap-2 text-xs bg-muted/50 rounded px-2 py-1">
-                          <span className="truncate flex items-center gap-1.5"><FileText className="w-3 h-3" />{f.name}</span>
-                          <button onClick={() => setExtraExamPaths((p) => p.filter((_, idx) => idx !== i))} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                {/* Seleção de fotos antes/depois do dossiê */}
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <Label className="text-xs flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5" /> Fotos do aluno para análise visual (antes/depois)
-                  </Label>
-                  {bodyImages.length === 0 ? (
-                    <p className="text-[10px] text-muted-foreground">Aluno não possui fotos cadastradas. Anexe imagens abaixo se quiser análise visual.</p>
-                  ) : (
-                    <>
-                      <p className="text-[10px] text-muted-foreground">
-                        {selectedBodyIds.length === 0
-                          ? "Nenhuma selecionada → STHIA usa automaticamente as fotos mais recentes (front/back/profile)."
-                          : `${selectedBodyIds.length} foto(s) selecionada(s) manualmente.`}
-                      </p>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-[240px] overflow-y-auto">
-                        {(bodyImages as any[]).map((b) => {
-                          const url = (bodyImagePreviews as Record<string, string>)[b.id];
-                          const active = selectedBodyIds.includes(b.id);
-                          return (
-                            <button
-                              key={b.id}
-                              type="button"
-                              onClick={() => toggleBody(b.id)}
-                              className={`relative rounded-md overflow-hidden border-2 transition ${active ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"}`}
-                            >
-                              {url ? (
-                                <img src={url} alt={b.type} className="w-full h-24 object-cover" />
-                              ) : (
-                                <div className="w-full h-24 bg-muted animate-pulse" />
-                              )}
-                              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] px-1 py-0.5 flex justify-between">
-                                <span className="uppercase">{b.type}</span>
-                                <span>{new Date(b.uploaded_at).toLocaleDateString("pt-BR")}</span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {selectedBodyIds.length > 0 && (
-                        <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setSelectedBodyIds([])}>
-                          Limpar seleção
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* Upload de imagens adicionais para análise visual */}
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <ImagePlus className="w-3.5 h-3.5" /> Imagens adicionais para análise visual (JPG/PNG)
-                    </Label>
-                    <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={uploading} onClick={() => imageInputRef.current?.click()}>
-                      <Upload className="w-3.5 h-3.5" /> Anexar
-                    </Button>
-                    <input
-                      ref={imageInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => uploadRefImages(e.target.files)}
-                    />
-                  </div>
-                  {extraImagePaths.length === 0 ? (
-                    <p className="text-[10px] text-muted-foreground">Envie fotos avulsas (referência, pose, close muscular) que não estão no dossiê oficial.</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {extraImagePaths.map((f, i) => (
-                        <li key={f.path} className="flex items-center justify-between gap-2 text-xs bg-muted/50 rounded px-2 py-1">
-                          <span className="truncate flex items-center gap-1.5"><ImagePlus className="w-3 h-3" />{f.name}</span>
-                          <button onClick={() => setExtraImagePaths((p) => p.filter((_, idx) => idx !== i))} className="opacity-60 hover:opacity-100"><X className="w-3 h-3" /></button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                <Button onClick={() => generate.mutate()} disabled={generate.isPending} className="gap-2">
-                  {generate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  Gerar parecer STHIA
-                </Button>
+              <CardContent className="py-24 text-center">
+                <History className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground">Histórico de Análises</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
+                  Selecione um aluno na barra lateral para visualizar todo o histórico de análises clínicas geradas pela STHIA.
+                </p>
               </CardContent>
             </Card>
           )}
 
-          {current && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <CardTitle className="text-base">{current.title}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px] uppercase">{current.scope}</Badge>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] ${current.released_to_student ? "border-emerald-500/40 text-emerald-500" : "border-muted-foreground/30 text-muted-foreground"}`}
-                      >
-                        {current.released_to_student ? "Liberado" : "Não liberado"}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1.5"
-                        onClick={() => toggleRelease.mutate(current)}
-                        disabled={toggleRelease.isPending}
-                      >
-                        {current.released_to_student ? <><EyeOff className="w-3.5 h-3.5" /> Ocultar do aluno</> : <><Eye className="w-3.5 h-3.5" /> Liberar para o aluno</>}
-                      </Button>
-                      <span className="text-xs text-muted-foreground">{new Date(current.created_at).toLocaleString("pt-BR")}</span>
-                    </div>
-                  </div>
-                  {current.summary && <p className="text-sm text-muted-foreground mt-1">{current.summary}</p>}
-                </CardHeader>
-              </Card>
-
-              {(current.red_flags?.length ?? 0) > 0 && (
-                <Card className="border-destructive/40 bg-destructive/5">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 text-destructive">
-                      <AlertTriangle className="w-4 h-4" /> Red flags
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      {current.red_flags.map((r, i) => <li key={i}>{r}</li>)}
-                    </ul>
-                  </CardContent>
-                </Card>
-              )}
-
-              {(current.recommendations?.length ?? 0) > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <ClipboardList className="w-4 h-4" /> Recomendações priorizadas
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ol className="list-decimal list-inside space-y-1 text-sm">
-                      {current.recommendations.map((r, i) => <li key={i}>{r}</li>)}
-                    </ol>
-                  </CardContent>
-                </Card>
-              )}
-
-              <div className="space-y-2 no-print">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    size="sm"
+          {studentId && current && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight">{current.title}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Gerada em {new Date(current.created_at).toLocaleDateString("pt-BR")} às {new Date(current.created_at).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                   <Button
                     variant="outline"
-                    className="h-7 gap-1.5"
-                    onClick={() => window.open(`/leitura-laboratorial/${current.id}`, "_blank", "noopener")}
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => toggleRelease.mutate(current)}
+                    disabled={toggleRelease.isPending}
                   >
-                    🌐 Abrir no navegador (imprimir)
+                    {current.released_to_student ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {current.released_to_student ? "Ocultar do Aluno" : "Liberar para Aluno"}
                   </Button>
                   <Button
+                    variant="outline"
                     size="sm"
-                    variant="ghost"
-                    className="h-7 gap-1.5"
-                    onClick={() => {
-                      const url = `${window.location.origin}/leitura-laboratorial/${current.id}`;
-                      navigator.clipboard.writeText(url);
-                      toast.success("Link da leitura visual copiado");
-                    }}
+                    className="gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                    onClick={() => setExportOpen(true)}
                   >
-                    🔗 Copiar link para o aluno
+                    <Upload className="w-4 h-4" />
+                    Exportar / Imprimir
                   </Button>
                 </div>
-
-                <div className="rounded-xl border border-border bg-card/50 p-3 flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mr-1">
-                    Liberação do link
-                  </span>
-                  <Select value={shareDays} onValueChange={setShareDays}>
-                    <SelectTrigger className="h-8 w-[190px]">
-                      <SelectValue placeholder="Período" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Visível por 24 horas</SelectItem>
-                      <SelectItem value="3">Visível por 3 dias</SelectItem>
-                      <SelectItem value="7">Visível por 7 dias</SelectItem>
-                      <SelectItem value="15">Visível por 15 dias</SelectItem>
-                      <SelectItem value="30">Visível por 30 dias</SelectItem>
-                      <SelectItem value="0">Sem prazo (até revogar)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    className="h-8 gap-1.5"
-                    disabled={setVisualShare.isPending}
-                    onClick={() => setVisualShare.mutate({ a: current, enabled: true, days: shareDays })}
-                  >
-                    <Eye className="w-3.5 h-3.5" /> Liberar leitura visual
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 gap-1.5"
-                    disabled={setVisualShare.isPending}
-                    onClick={() => setVisualShare.mutate({ a: current, enabled: false, days: "0" })}
-                  >
-                    <EyeOff className="w-3.5 h-3.5" /> Bloquear
-                  </Button>
-                  <span className="text-[11px] text-muted-foreground">
-                    {(current as any).visual_share_enabled
-                      ? (current as any).visual_share_expires_at
-                        ? `Liberada até ${new Date((current as any).visual_share_expires_at).toLocaleString("pt-BR")}`
-                        : "Liberada sem prazo"
-                      : current.released_to_student
-                        ? "Acessível pelo parecer liberado ao aluno"
-                        : "Bloqueada — o aluno não consegue abrir o link"}
-                  </span>
-                </div>
-
-                <LabInterpretationPanel html={current.report_html} />
-
-                {/* Painel de Visibilidade STHIA */}
-                <Card className="border-primary/20 bg-primary/[0.02]">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs flex items-center gap-2">
-                      <Eye className="w-3.5 h-3.5" /> Visibilidade dos Tópicos (Aluno)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                      {[
-                        { id: "lab_interpretation", label: "Interpretação Laboratorial" },
-                        { id: "general_summary", label: "Parecer Geral Resumido" },
-                        { id: "visual_composition", label: "Composição Visual" },
-                        { id: "body_composition", label: "Composição Corporal" },
-                        { id: "red_flags", label: "Red Flag" },
-                        { id: "prioritized_recommendations", label: "Recomendações Priorizadas" },
-                      ].map((topic) => {
-                        const settings = current.visibility_settings || {
-                          lab_interpretation: true,
-                          general_summary: true,
-                          visual_composition: true,
-                          body_composition: true,
-                          red_flags: true,
-                          prioritized_recommendations: true
-                        };
-                        const isChecked = (settings as any)[topic.id] !== false;
-                        
-                        return (
-                          <div key={topic.id} className="flex items-center gap-2">
-                            <Switch
-                              id={`vis-${topic.id}`}
-                              checked={isChecked}
-                              onCheckedChange={(checked) => {
-                                updateVisibility.mutate({
-                                  id: current.id,
-                                  settings: { ...settings, [topic.id]: checked }
-                                });
-                              }}
-                              disabled={updateVisibility.isPending}
-                            />
-                            <Label htmlFor={`vis-${topic.id}`} className="text-[11px] cursor-pointer">
-                              {topic.label}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-sm">Parecer completo</CardTitle>
-                    <div className="flex items-center gap-2 no-print">
-                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => window.print()}>
-                        🖨️ Imprimir
-                      </Button>
-                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setExportOpen(true)}>
-                        <Save className="w-3.5 h-3.5" /> Salvar / Exportar
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="overflow-x-auto clinical-report-print">
-                  <div className="mb-4 pb-3 border-b border-border no-print-hide">
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">STHIA · Parecer Clínico</p>
-                    <h1 className="text-lg font-semibold mt-1">{current.title}</h1>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {selectedStudent?.full_name ? `Paciente: ${selectedStudent.full_name} · ` : ""}
-                      Emitido em {new Date(current.created_at).toLocaleString("pt-BR")}
-                    </p>
-                  </div>
-                  <ClinicalReport html={current.report_html} />
-                </CardContent>
-              </Card>
-
-              <Card className="no-print border-primary/30">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" /> Revalidar / Reanalisar parecer
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-xs text-muted-foreground">
-                    A STHIA relê o parecer acima e gera uma nova versão, mantendo o que está correto, corrigindo o que estiver equivocado e destacando "O que mudou nesta revalidação".
-                  </p>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Critérios, sugestões ou pedidos livres</Label>
-                    <Textarea
-                      rows={5}
-                      placeholder={"Ex.: revise a interpretação de TSH e ferritina; considere que o aluno está em cutting agressivo; sugira ajustes de dose fracionada; seja mais objetivo nas recomendações..."}
-                      value={revalCriteria}
-                      onChange={(e) => setRevalCriteria(e.target.value)}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button onClick={() => revalidate.mutate()} disabled={revalidate.isPending} className="gap-2">
-                      {revalidate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                      Gerar nova análise em cima desta
-                    </Button>
-                    <span className="text-[11px] text-muted-foreground">
-                      O parecer atual permanece salvo no histórico.
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                <ClinicalReport analysis={current} />
+                
+                {current.markers && current.markers.length > 0 && (
+                  <LabInterpretationPanel markers={current.markers} />
+                )}
+              </div>
             </div>
           )}
 
-          {current && (
-            <ClinicalExportDialog
-              open={exportOpen}
-              onOpenChange={setExportOpen}
-              reportHtml={current.report_html}
-              title={current.title}
-              studentName={selectedStudent?.full_name || ""}
-              analysisId={current.id}
-              createdAt={current.created_at}
-              onSaved={() => refetchHistory()}
-            />
+          {studentId && !current && history.length > 0 && (
+            <Card>
+              <CardContent className="py-24 text-center">
+                <ClipboardList className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground">Análise Selecionada</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
+                  Clique em uma das análises no histórico lateral para visualizar o conteúdo completo aqui.
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
+
+      <ClinicalExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        analysis={current}
+        studentName={selectedStudent?.full_name || ""}
+      />
     </DashboardLayout>
   );
 }
