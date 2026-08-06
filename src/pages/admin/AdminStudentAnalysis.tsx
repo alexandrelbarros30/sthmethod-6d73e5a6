@@ -942,6 +942,7 @@ export default function AdminStudentAnalysis() {
                                   settings: { ...settings, [topic.id]: checked }
                                 });
                               }}
+                              disabled={updateVisibility.isPending}
                             />
                             <Label htmlFor={`vis-${topic.id}`} className="text-[11px] cursor-pointer">
                               {topic.label}
