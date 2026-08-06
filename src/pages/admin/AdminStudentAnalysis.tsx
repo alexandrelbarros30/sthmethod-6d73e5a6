@@ -465,48 +465,19 @@ export default function AdminStudentAnalysis() {
                 <CardTitle className="text-sm flex items-center gap-2"><History className="w-4 h-4" /> Histórico</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="max-h-[400px] overflow-y-auto">
+                <div className="max-h-[500px] overflow-y-auto">
                   {history.length === 0 ? (
-                    <p className="text-xs text-muted-foreground p-4 text-center italic">Nenhuma análise registrada no histórico.</p>
+                    <div className="p-8 text-center space-y-2">
+                      <History className="w-8 h-8 text-muted-foreground/30 mx-auto" />
+                      <p className="text-xs text-muted-foreground italic">Nenhuma análise registrada no histórico para este aluno.</p>
+                    </div>
                   ) : (
                     <div className="divide-y divide-border">
-                      {history.map((h) => (
-                        <div key={h.id} className={`flex items-center gap-1 group transition-colors ${current?.id === h.id ? "bg-primary/5" : "hover:bg-muted/50"}`}>
-                          <button className="flex-1 text-left px-4 py-3 min-w-0" onClick={() => setCurrent(h)}>
-                            <div className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{h.title}</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[10px] text-muted-foreground font-medium">
-                                {new Date(h.created_at).toLocaleDateString("pt-BR")} · {new Date(h.created_at).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className={`text-[9px] px-1.5 py-0 h-4 border-none ${h.released_to_student ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}
-                              >
-                                {h.released_to_student ? "Liberado" : "Oculto"}
-                              </Badge>
-                            </div>
-                          </button>
-                          <div className="flex items-center gap-0.5 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="w-8 h-8 rounded-full"
-                              onClick={() => toggleRelease.mutate(h)}
-                              title={h.released_to_student ? "Ocultar do aluno" : "Liberar para o aluno"}
-                            >
-                              {h.released_to_student ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-emerald-500" />}
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="w-8 h-8 rounded-full hover:text-destructive"
-                              onClick={() => { if(confirm("Excluir análise permanentemente?")) removeAnalysis.mutate(h.id); }}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                      {history.length >= 30 && (
+                        <p className="text-[10px] text-center text-muted-foreground p-3 border-t border-border/50">
+                          Exibindo as últimas 30 análises.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
