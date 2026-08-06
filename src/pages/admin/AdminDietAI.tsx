@@ -1130,7 +1130,9 @@ REGRAS JSON:
                         </table>
                       </div>
                       <p className="mt-2 text-[10px] text-muted-foreground">
-                        Valores conferidos pela reanálise da STHIA 2.0 (FatSecret/TACO). Tolerância aceita frente à meta: ±5%.
+                        {result.validation_report
+                          ? `Gabarito STHIA 2.0: ${result.validation_report.checked} alimento(s) confrontados com TACO/TBCA + FatSecret · ${result.validation_report.corrected} corrigido(s) · ${result.validation_report.unverified} sem referência. Tolerância frente à meta: ±5%.`
+                          : "Valores conferidos pela reanálise da STHIA 2.0 (FatSecret/TACO). Tolerância aceita frente à meta: ±5%."}
                       </p>
                     </div>
                   )}
