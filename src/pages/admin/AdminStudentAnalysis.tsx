@@ -99,7 +99,7 @@ export default function AdminStudentAnalysis() {
         .order("created_at", { ascending: false })
         .limit(30);
       if (error) throw error;
-      return (data ?? []) as Analysis[];
+      return (data ?? []) as any as Analysis[];
     },
   });
 
