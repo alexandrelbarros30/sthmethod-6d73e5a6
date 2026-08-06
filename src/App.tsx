@@ -458,6 +458,7 @@ const App = () => {
             <Route path="/consultor/ai-acessos" element={<ProtectedRoute allowedRoles={["admin", "consultor"]}><AdminAiAccess /></ProtectedRoute>} />
             <Route path="/admin/sthia" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSthia /></ProtectedRoute>} />
             <Route path="/admin/emails" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEmails /></ProtectedRoute>} />
+            <Route path="/admin/sth-ai-config" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSthAiSettings /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrm /></ProtectedRoute>} />
             <Route path="/admin/crm/instalar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatInstall /></ProtectedRoute>} />
             <Route path="/chat/:canal" element={<ProtectedRoute allowedRoles={["admin","consultor","assistente","financeiro"]}><AdminChatChannel /></ProtectedRoute>} />
