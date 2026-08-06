@@ -35,6 +35,14 @@ type Analysis = {
   created_at: string;
   released_to_student?: boolean;
   released_at?: string | null;
+  visibility_settings?: {
+    lab_interpretation?: boolean;
+    general_summary?: boolean;
+    visual_composition?: boolean;
+    body_composition?: boolean;
+    red_flags?: boolean;
+    prioritized_recommendations?: boolean;
+  };
 };
 
 export default function AdminStudentAnalysis() {
