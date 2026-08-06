@@ -9,9 +9,9 @@ const corsHeaders = {
 };
 
 const MODEL_ID = "google/gemini-2.5-flash";
-const TARGET_TOLERANCE_PCT = 10.0;
+const TARGET_TOLERANCE_PCT = 5.0;
 const MAX_TARGET_RETRIES = 5;
-const HARD_BLOCK_TOLERANCE_PCT = 20;
+const HARD_BLOCK_TOLERANCE_PCT = 5;
 const RECONCILE_TIMEOUT_MS = 110000;
 
 type MacroTotal = {
@@ -270,6 +270,23 @@ serve(async (req) => {
                       properties: {
                         meal_number: { type: "number" },
                         meal_name: { type: "string" },
+                        base_items: {
+                          type: "array",
+                          description: "Detalhamento alimento a alimento da opção BASE (tabela de valores). Cada item com quantidade e valores nutricionais reais da base FatSecret/TACO.",
+                          items: {
+                            type: "object",
+                            properties: {
+                              food: { type: "string", description: "Nome do alimento" },
+                              quantity: { type: "string", description: "Quantidade (ex: 120g, 2 unidades)" },
+                              energy_kcal: { type: "number" },
+                              protein_g: { type: "number" },
+                              carbs_g: { type: "number" },
+                              fat_g: { type: "number" },
+                              fiber_g: { type: "number" },
+                            },
+                            required: ["food", "quantity", "energy_kcal", "protein_g", "carbs_g", "fat_g"],
+                          },
+                        },
                         options: { 
                           type: "array", 
                           items: { type: "string" },
@@ -280,7 +297,7 @@ serve(async (req) => {
                         carbs_g: { type: "number" },
                         fat_g: { type: "number" },
                       },
-                      required: ["meal_number", "meal_name", "options", "energy_kcal", "protein_g", "carbs_g", "fat_g"]
+                        required: ["meal_number", "meal_name", "options", "base_items", "energy_kcal", "protein_g", "carbs_g", "fat_g"]
                     }
                   },
                   total: {
