@@ -86,6 +86,37 @@ export default function AdminAnalysisHistory() {
       .filter((s) => normalizeSearch(`${s.full_name ?? ""} ${s.email ?? ""}`).includes(q));
   }, [students, search]);
 
+  const { data: allAnalyses = [], isLoading: isLoadingAll } = useQuery({
+    queryKey: ["all-clinical-analyses"],
+    queryFn: async () => {
+      console.log("Fetching all history for today");
+      const { data, error } = await supabase
+        .from("student_clinical_analyses")
+        .select(`
+          id, 
+          user_id, 
+          title, 
+          scope, 
+          summary, 
+          report_html, 
+          red_flags, 
+          recommendations, 
+          markers, 
+          visual_composition, 
+          created_at, 
+          released_to_student, 
+          released_at, 
+          visual_share_enabled, 
+          visual_share_expires_at, 
+          visibility_settings,
+          profiles:user_id (full_name)
+        `)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const { data: history = [], refetch: refetchHistory, isLoading: isLoadingHistory } = useQuery({
     queryKey: ["clinical-analyses", studentId],
     enabled: !!studentId,
@@ -538,15 +569,72 @@ export default function AdminAnalysisHistory() {
         {/* Área principal - Histórico Detalhado */}
         <div className="space-y-4 min-w-0">
           {!studentId && (
-            <Card>
-              <CardContent className="py-24 text-center">
-                <History className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground">Histórico de Análises</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
-                  Selecione um aluno na barra lateral para visualizar todo o histórico de análises clínicas geradas pela STHIA.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <ClipboardList className="w-5 h-5 text-primary" />
+                  Todas as Análises Geradas
+                </h3>
+                <Badge variant="outline" className="text-[10px] font-normal">
+                  Atualizado em: {new Date().toLocaleString("pt-BR")}
+                </Badge>
+              </div>
+
+              {isLoadingAll ? (
+                <div className="py-24 text-center">
+                  <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary/20 mb-4" />
+                  <p className="text-muted-foreground">Carregando lista completa...</p>
+                </div>
+              ) : allAnalyses.length === 0 ? (
+                <Card>
+                  <CardContent className="py-24 text-center">
+                    <History className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground">Sem registros</h3>
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
+                      Nenhuma análise clínica foi gerada até o momento.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {allAnalyses.map((a) => (
+                    <Card key={a.id} className="hover:border-primary/40 transition-all cursor-pointer group" onClick={() => {
+                      setStudentId(a.user_id);
+                      setCurrent(a);
+                    }}>
+                      <CardHeader className="p-4 pb-2">
+                        <div className="flex justify-between items-start gap-2">
+                          <Badge variant="secondary" className="text-[9px] h-4 font-normal lowercase">
+                            {a.scope}
+                          </Badge>
+                          <span className="text-[9px] text-muted-foreground">
+                            {new Date(a.created_at).toLocaleDateString("pt-BR")}
+                          </span>
+                        </div>
+                        <CardTitle className="text-sm line-clamp-1 group-hover:text-primary transition-colors mt-1">
+                          {a.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-[11px] font-medium text-foreground/80 truncate">
+                          Aluno: {a.profiles?.full_name || "Sem nome"}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-[9px] text-muted-foreground">
+                            {new Date(a.created_at).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {a.released_to_student && (
+                            <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-none text-[8px] h-3 px-1 uppercase font-bold">
+                              Liberado
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {studentId && current && (
