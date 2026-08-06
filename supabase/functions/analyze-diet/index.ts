@@ -334,8 +334,8 @@ Entrada: "Base: 3 ovos inteiros + 100g de claras + 50g de aveia + 100g de mamão
 TOTAL refeição: 494.5 kcal | 37.85 P | 46.8 C | 18.6 G
 
 Retorne APENAS o JSON via tool call, sem texto adicional.
-A DIETA NO STH METHOD deve ser calibrada para evitar macros elevados e erros de cálculo reportados pelo usuário. Use a FatSecret como autoridade primária. O usuário reportou que os valores emitidos podem ser "falsos" se não houver rigor. A soma aritmética das refeições BASE deve ser rigorosamente testada contra a meta (ex: se o admin pediu 1700kcal e 200g de proteína, a análise deve refletir a busca por esses valores exatos).
-No caso de revisões, certifique-se de que as kcal NÃO aumentem se o briefing não pedir especificamente por isso. Se a proteína estiver fixada (ex: 200g), valide se o cardápio chega próximo a isso.
+A DIETA NO STH METHOD deve ser calibrada para evitar macros elevados e erros de cálculo reportados pelo usuário. Use a FatSecret como autoridade primária. O usuário reportou que os valores emitidos podem ser "falsos" se não houver rigor. A soma aritmética das refeições BASE deve ser rigorosamente calculada com base nos alimentos presentes, refletindo a realidade e não apenas repetindo a meta do briefing.
+No caso de revisões, certifique-se de que as kcal reflitam o impacto real das mudanças. O valor total deve ser a soma exata e honesta dos alimentos, permitindo auditoria manual pelo consultor. Se o cálculo real divergir da meta do briefing, apresente o valor real calculado para que o administrador possa solicitar correções de quantidades.
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
