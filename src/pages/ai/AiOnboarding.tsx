@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, ArrowRight, Brain, Dumbbell } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface FormState {
   full_name: string;
