@@ -334,7 +334,7 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
         headingLine = firstSegText;
         // Anything after the first segment in the same block belongs to this meal.
         if (segments.length > 1) {
-          remainderHtml = segments.slice(1).join("<br>").trim();
+          remainderHtml = segments.slice(1).join("").trim();
         }
       }
     }
