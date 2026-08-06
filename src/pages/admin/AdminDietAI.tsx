@@ -30,6 +30,7 @@ type Meal = {
     carbs_g: number;
     fat_g: number;
     fiber_g?: number;
+    validation?: { source: string; status: string; deviation_pct?: number };
   }[];
   energy_kcal: number;
   protein_g: number;
@@ -43,6 +44,7 @@ type GenResult = {
   total: { energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number };
   hydration_l?: number;
   notes?: string;
+  validation_report?: { checked: number; corrected: number; unverified: number };
   targets?: { energy_kcal: number | null; protein_g: number | null; carbs_g: number | null; fat_g: number | null };
   deviation_pct?: { energy_kcal?: number; protein_g?: number; carbs_g?: number; fat_g?: number };
   _meta?: { usage?: any; photos_used?: number };
@@ -1079,6 +1081,7 @@ REGRAS JSON:
                               <th className="text-right p-2">C</th>
                               <th className="text-right p-2">G</th>
                               <th className="text-right p-2">Fibra</th>
+                              <th className="text-left p-2">Conferência</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1088,7 +1091,7 @@ REGRAS JSON:
                               return (
                                 <React.Fragment key={m.meal_number}>
                                   <tr className="bg-muted/30">
-                                    <td colSpan={7} className="p-2 font-medium">
+                                    <td colSpan={8} className="p-2 font-medium">
                                       Refeição {m.meal_number} — {m.meal_name}
                                     </td>
                                   </tr>
@@ -1101,6 +1104,15 @@ REGRAS JSON:
                                       <td className="p-2 text-right">{Math.round(it.carbs_g)}g</td>
                                       <td className="p-2 text-right">{Math.round(it.fat_g)}g</td>
                                       <td className="p-2 text-right text-muted-foreground">{Math.round(it.fiber_g ?? 0)}g</td>
+                                      <td className="p-2 whitespace-nowrap">
+                                        {it.validation?.status === "corrigido" ? (
+                                          <span className="text-amber-500">✔ corrigido · {it.validation.source}</span>
+                                        ) : it.validation?.status === "ok" ? (
+                                          <span className="text-emerald-500">✔ {it.validation.source}</span>
+                                        ) : (
+                                          <span className="text-muted-foreground">— não verificado</span>
+                                        )}
+                                      </td>
                                     </tr>
                                   ))}
                                   <tr className="border-t border-border bg-muted/20">
@@ -1109,7 +1121,7 @@ REGRAS JSON:
                                     <td className="p-2 text-right">{Math.round(m.protein_g)}g</td>
                                     <td className="p-2 text-right">{Math.round(m.carbs_g)}g</td>
                                     <td className="p-2 text-right">{Math.round(m.fat_g)}g</td>
-                                    <td className="p-2" />
+                                    <td className="p-2" colSpan={2} />
                                   </tr>
                                 </React.Fragment>
                               );
@@ -1118,7 +1130,9 @@ REGRAS JSON:
                         </table>
                       </div>
                       <p className="mt-2 text-[10px] text-muted-foreground">
-                        Valores conferidos pela reanálise da STHIA 2.0 (FatSecret/TACO). Tolerância aceita frente à meta: ±5%.
+                        {result.validation_report
+                          ? `Gabarito STHIA 2.0: ${result.validation_report.checked} alimento(s) confrontados com TACO/TBCA + FatSecret · ${result.validation_report.corrected} corrigido(s) · ${result.validation_report.unverified} sem referência. Tolerância frente à meta: ±5%.`
+                          : "Valores conferidos pela reanálise da STHIA 2.0 (FatSecret/TACO). Tolerância aceita frente à meta: ±5%."}
                       </p>
                     </div>
                   )}

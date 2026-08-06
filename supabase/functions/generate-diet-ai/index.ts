@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { STHIA_NUTRITIONAL_2_0 } from "../_shared/sthia-nutritional-2-0.ts";
 import { STHIA_DIET_FORMAT } from "../_shared/sthia-diet-format.ts";
+import { validateMealsAgainstTables } from "../_shared/nutrition-validator.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -361,6 +362,7 @@ IMPORTANTE:
 - Retorne apenas o JSON via ferramenta 'return_diet'.
 - Garanta que as metas nutricionais fiquem dentro de ±5% (não precisa ser exato) seguindo os cálculos da API FatSecret.
 - Preencha SEMPRE 'base_items' com a tabela de valores de cada alimento da opção BASE e audite a soma antes de responder.
+- AUDITORIA EXTERNA: cada item de 'base_items' será confrontado automaticamente com a tabela oficial TACO/TBCA e com a FatSecret. Valores divergentes acima de 8% serão SOBRESCRITOS pelos oficiais. Declare quantidades em gramas/ml (ou unidades para ovos/claras/pães) e use valores nutricionais reais.
 - Mantenha a formatação exata dentro do campo 'options' do JSON conforme as regras de FORMATAÇÃO OBRIGATÓRIA (sem markdown, sem HTML).`
       : `Você é a STHia, a inteligência nutricional do STH Method. 
 Sua missão é gerar cardápios precisos retornando um JSON estruturado.
@@ -411,6 +413,7 @@ PERFIL: ${profileData ? JSON.stringify({
 
     let parsed = null;
     let retries = 0;
+    let validation: any = null;
     while (retries < MAX_TARGET_RETRIES) {
       const result = await callModel(messages);
       const tc = result.choices?.[0]?.message?.tool_calls?.[0];
@@ -418,12 +421,29 @@ PERFIL: ${profileData ? JSON.stringify({
       parsed = JSON.parse(tc.function.arguments);
 
       if (!isReview && !isAdvice && targetsForRetry) {
-        await reconcileWithAnalyzer(parsed);
+        // GABARITO: confronta cada alimento com TACO/TBCA + FatSecret antes de liberar.
+        try {
+          validation = await validateMealsAgainstTables(parsed?.meals);
+        } catch (e) {
+          console.warn("nutrition validation failed", e);
+          validation = null;
+        }
+        if (!validation || validation.checked === 0) {
+          await reconcileWithAnalyzer(parsed);
+        }
         const gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
         if (gate.valid || gate.worst_deviation_pct <= HARD_BLOCK_TOLERANCE_PCT) break;
         
         messages.push({ role: "assistant", content: tc.function.arguments });
-        messages.push({ role: "user", content: `ERRO DE CALIBRAGEM: A dieta gerada tem ${gate.worst_deviation_pct}% de desvio. Falhas: ${gate.violations.join("; ")}. Tente novamente respeitando RIGOROSAMENTE a meta de ${targetsForRetry.energy_kcal} kcal.` });
+        const corrections = (validation?.entries || [])
+          .filter((e: any) => e.status === "corrigido")
+          .slice(0, 12)
+          .map((e: any) => `${e.food} (${e.quantity}): você declarou ${e.before?.energy_kcal}kcal, a base ${e.source} indica ${e.after?.energy_kcal}kcal / P${e.after?.protein_g} C${e.after?.carbs_g} G${e.after?.fat_g}`)
+          .join("; ");
+        messages.push({
+          role: "user",
+          content: `ERRO DE CALIBRAGEM: A dieta gerada tem ${gate.worst_deviation_pct}% de desvio após a conferência contra TACO/TBCA + FatSecret. Falhas: ${gate.violations.join("; ")}.${corrections ? `\n\nDIVERGÊNCIAS CORRIGIDAS PELA BASE OFICIAL: ${corrections}. Use EXATAMENTE esses valores oficiais e reajuste as quantidades para bater a meta.` : ""}\n\nRefaça respeitando a meta de ${targetsForRetry.energy_kcal} kcal (tolerância ±5%).`,
+        });
         retries++;
       } else {
         break;
@@ -431,9 +451,19 @@ PERFIL: ${profileData ? JSON.stringify({
     }
 
     if (!isReview && !isAdvice) {
-      await reconcileWithAnalyzer(parsed);
+      if (!validation || validation.checked === 0) {
+        await reconcileWithAnalyzer(parsed);
+      }
     }
     normalizeGeneratedMacros(parsed);
+    if (validation) {
+      (parsed as any).validation_report = {
+        checked: validation.checked,
+        corrected: validation.corrected,
+        unverified: validation.unverified,
+        entries: validation.entries,
+      };
+    }
 
     return new Response(JSON.stringify(parsed), {
       status: 200,
