@@ -56,14 +56,16 @@ const formatDietText = (parsed: any): string => {
     const cleanName = (m.meal_name || "").replace(/[*()]/g, "").trim();
     const title = `Refeição ${mealNumStr}: ${cleanName}`;
     
-    // Format options exactly as STHIA 2.0 master prompt: "⭐ BASE:\n(alimentos)"
-    // and Option 2..N: "(alimentos)" with double quotes surrounding the whole options block.
+    // Format options exactly as STHIA 2.0 master prompt.
+    // The options coming from the model already have "⭐ BASE:" prepended when it follows the prompt.
+    // We check if it already has the prefix to avoid duplication.
     const formattedOptions = (m.options || []).map((opt: string, idx: number) => {
       const text = opt.trim();
       if (idx === 0) {
-        return `⭐ BASE: ${text}`;
+        return text.startsWith("⭐ BASE:") ? text : `⭐ BASE: ${text}`;
       } else {
-        return `Opção ${idx + 1}: ${text}`;
+        const label = `Opção ${idx + 1}:`;
+        return text.startsWith(label) ? text : `${label} ${text}`;
       }
     }).join("\n\n");
 
