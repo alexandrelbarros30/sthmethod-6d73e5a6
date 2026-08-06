@@ -117,6 +117,10 @@ export const TACO_TABLE: FoodRef[] = [
   { key: "mel", aliases: ["mel"], kcal: 309, protein: 0, carbs: 84.0, fat: 0, fiber: 0 },
   { key: "acucar refinado", aliases: ["acucar"], kcal: 387, protein: 0, carbs: 99.5, fat: 0, fiber: 0 },
   { key: "chocolate 70%", aliases: ["chocolate amargo", "chocolate 70"], kcal: 579, protein: 7.8, carbs: 45.9, fat: 41.1, fiber: 10.9 },
+  // Adições baseadas em referências de cardápios reais do método
+  { key: "biscoito de arroz", aliases: ["biscoito de arroz integral"], kcal: 387, protein: 8.2, carbs: 82.0, fat: 2.8, fiber: 3.0, unitGrams: 8 },
+  { key: "patinho moido magro", aliases: ["patinho moido", "patinho"], kcal: 219, protein: 35.9, carbs: 0, fat: 7.3, fiber: 0 },
+  { key: "peito de frango desfiado", aliases: ["frango desfiado"], kcal: 163, protein: 31.5, carbs: 0, fat: 3.6, fiber: 0 },
 ];
 
 const strip = (s: string) =>
