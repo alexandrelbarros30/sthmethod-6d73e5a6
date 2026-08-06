@@ -196,6 +196,7 @@ const AdminDietAudit = lazyWithRetry(() => import("./pages/admin/AdminDietAudit"
 const AdminProtocol = lazyWithRetry(() => import("./pages/admin/AdminProtocol"));
 const AdminProtocolAI = lazyWithRetry(() => import("./pages/admin/AdminProtocolAI"));
 const AdminStudentAnalysis = lazyWithRetry(() => import("./pages/admin/AdminStudentAnalysis"));
+const AdminAnalysisHistory = lazyWithRetry(() => import("./pages/admin/AdminAnalysisHistory"));
 const LeituraLaboratorial = lazyWithRetry(() => import("./pages/LeituraLaboratorial"));
 const AdminAIHistory = lazyWithRetry(() => import("./pages/admin/AdminAIHistory"));
 const AiLanding = lazyWithRetry(() => import("./pages/ai/AiLanding"));
@@ -421,7 +422,8 @@ const App = () => {
             <Route path="/admin/nutrition" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutrition /></ProtectedRoute>} />
             <Route path="/admin/dieta-ia" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminDietAI /></Suspense></ProtectedRoute>} />
             <Route path="/admin/protocolo-ia" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminProtocolAI /></Suspense></ProtectedRoute>} />
-            <Route path="/admin/analise-aluno" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminStudentAnalysis /></Suspense></ProtectedRoute>} />
+             <Route path="/admin/analise-aluno" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminStudentAnalysis /></Suspense></ProtectedRoute>} />
+             <Route path="/admin/analise-historico" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminAnalysisHistory /></Suspense></ProtectedRoute>} />
             <Route path="/admin/dieta-auditoria" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><Suspense fallback={<LazyFallback />}><AdminDietAudit /></Suspense></ProtectedRoute>} />
             <Route path="/admin/diet-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDietLibrary /></ProtectedRoute>} />
             <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminProtocol /></Suspense></ProtectedRoute>} />
