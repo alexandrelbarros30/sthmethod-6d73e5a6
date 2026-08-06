@@ -316,11 +316,6 @@ export default function AiOnboarding() {
                 <p className="text-[10px] text-muted-foreground">Isso define o seu gasto calórico fora dos treinos.</p>
               </div>
 
-              <div id="f-routine" className="space-y-1.5 scroll-mt-24 p-1">
-                <Label>Como é sua rotina no dia a dia?</Label>
-                <Textarea rows={2} value={form.routine} onChange={(e) => set("routine", e.target.value)} placeholder="Horários, trabalho, deslocamento..." />
-                <AiVoiceInput onTranscribe={(t) => set("routine", appendTranscript(form.routine, t))} />
-              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div id="f-meals_per_day" className="space-y-1.5 scroll-mt-24 p-1">
                   <Label>Refeições por dia</Label>
