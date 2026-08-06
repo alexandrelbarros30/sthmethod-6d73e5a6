@@ -473,6 +473,50 @@ export default function AdminStudentAnalysis() {
                     </div>
                   ) : (
                     <div className="divide-y divide-border">
+                      {history.map((a) => (
+                        <div key={a.id} className="p-3 hover:bg-muted/50 transition-colors group">
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <button
+                              onClick={() => setCurrent(a)}
+                              className="text-[13px] font-semibold text-foreground hover:text-primary transition-colors text-left flex-1 truncate"
+                            >
+                              {a.title}
+                            </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {a.released_to_student ? (
+                                <Badge variant="outline" className="h-4 px-1 text-[9px] uppercase border-emerald-500/40 text-emerald-500 bg-emerald-500/5">
+                                  Liberada
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="h-4 px-1 text-[9px] uppercase border-muted-foreground/20 text-muted-foreground">
+                                  Privada
+                                </Badge>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (confirm("Deseja excluir permanentemente este registro?")) {
+                                    removeAnalysis.mutate(a.id);
+                                  }
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 hover:text-destructive rounded transition-all"
+                                title="Excluir histórico"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <History className="w-3 h-3" />
+                              {new Date(a.created_at).toLocaleDateString("pt-BR")} às {new Date(a.created_at).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <Badge variant="secondary" className="h-4 px-1 text-[9px] font-normal lowercase opacity-80">
+                              {a.scope}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
                       {history.length >= 30 && (
                         <p className="text-[10px] text-center text-muted-foreground p-3 border-t border-border/50">
                           Exibindo as últimas 30 análises.
