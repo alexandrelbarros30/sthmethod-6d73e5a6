@@ -859,7 +859,7 @@ REGRAS JSON:
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Usar como base</span>
                     <Switch checked={useAdvice} onCheckedChange={setUseAdvice} />
-                    <Button size="sm" variant="outline" onClick={() => adviceMut.mutate()} disabled={adviceMut.isPending}>
+                    <Button size="sm" variant="outline" onClick={() => handleGenerateWithMotor("advice")} disabled={adviceMut.isPending}>
                       <RefreshCw className="w-4 h-4 mr-1" /> Reconsultar
                     </Button>
                   </div>
