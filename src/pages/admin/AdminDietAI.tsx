@@ -1133,6 +1133,56 @@ REGRAS JSON:
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={isMotorSelectionOpen} onOpenChange={setIsMotorSelectionOpen}>
+        <DialogContent className="max-w-md bg-[#0a0a0a] border-border/40">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Brain className="w-5 h-5 text-primary" />
+              Motor de Inteligência Nutricional
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Escolha qual cérebro será responsável por esta operação.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div 
+              className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedAiMotor === "sthia" ? "bg-primary/10 border-primary" : "bg-card border-border/40 hover:border-primary/50"}`}
+              onClick={() => setSelectedAiMotor("sthia")}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedAiMotor === "sthia" ? "border-primary" : "border-muted-foreground"}`}>
+                  {selectedAiMotor === "sthia" && <div className="w-2 h-2 rounded-full bg-primary" />}
+                </div>
+                <span className="font-bold">STHIA</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                IA geral do ecossistema STH Method, capaz de elaborar, revisar e ajustar planos alimentares utilizando toda a metodologia STH Method.
+              </p>
+            </div>
+
+            <div 
+              className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedAiMotor === "sthia_2" ? "bg-primary/10 border-primary" : "bg-card border-border/40 hover:border-primary/50"}`}
+              onClick={() => setSelectedAiMotor("sthia_2")}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedAiMotor === "sthia_2" ? "border-primary" : "border-muted-foreground"}`}>
+                  {selectedAiMotor === "sthia_2" && <div className="w-2 h-2 rounded-full bg-primary" />}
+                </div>
+                <span className="font-bold text-primary">STHIA 2.0 Nutricional</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                IA especialista exclusivamente em Nutrição, desenvolvimento de cardápios, cálculos de calorias e macronutrientes de alta precisão, utilizando prioritariamente a API FatSecret e técnicas avançadas de equivalência nutricional.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsMotorSelectionOpen(false)}>Cancelar</Button>
+            <Button onClick={confirmMotorAndExecute}>Continuar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
