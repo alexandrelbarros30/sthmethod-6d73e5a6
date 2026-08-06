@@ -6259,6 +6259,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          visibility_settings: Json | null
           visual_composition: Json
           visual_share_enabled: boolean
           visual_share_expires_at: string | null
@@ -6281,6 +6282,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id: string
+          visibility_settings?: Json | null
           visual_composition?: Json
           visual_share_enabled?: boolean
           visual_share_expires_at?: string | null
@@ -6303,6 +6305,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          visibility_settings?: Json | null
           visual_composition?: Json
           visual_share_enabled?: boolean
           visual_share_expires_at?: string | null

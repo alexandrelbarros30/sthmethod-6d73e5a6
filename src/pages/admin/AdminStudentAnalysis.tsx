@@ -91,10 +91,9 @@ export default function AdminStudentAnalysis() {
     enabled: !!studentId,
     queryFn: async () => {
       console.log("Fetching history for studentId:", studentId);
-      // Primeiro buscamos todos os IDs para garantir que temos a lista completa
       const { data, error, count } = await supabase
         .from("student_clinical_analyses")
-        .select("id, user_id, title, scope, summary, report_html, red_flags, recommendations, markers, visual_composition, created_at, released_to_student, released_at, visual_share_enabled, visual_share_expires_at, visibility_settings", { count: "exact" })
+        .select("*", { count: "exact" })
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false });
         
@@ -106,7 +105,7 @@ export default function AdminStudentAnalysis() {
       console.log(`Fetched history count: ${data?.length || 0} of ${count || 0}`);
       return (data ?? []) as any as Analysis[];
     },
-    staleTime: 0, // Garantir que sempre busque dados novos ao selecionar aluno
+    staleTime: 0,
   });
 
   const { data: bodyImages = [] } = useQuery({
