@@ -395,10 +395,9 @@ export default function AdminStudentAnalysis() {
 
   const updateVisibility = useMutation({
     mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
-      // Usamos a tabela explicitamente para evitar erros de tipagem do Supabase client auto-gerado
       const { error } = await supabase
         .from("student_clinical_analyses")
-        .update({ visibility_settings: settings })
+        .update({ visibility_settings: settings } as any)
         .eq("id", id);
       if (error) throw error;
       return settings;
