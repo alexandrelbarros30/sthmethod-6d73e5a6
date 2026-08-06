@@ -87,8 +87,9 @@ Sua responsabilidade é produzir valores extremamente próximos do exato.
 * Valide novamente.
 * Compare alimentos semelhantes.
 * Ajuste gramagens.
-* Reduza o erro ao mínimo possível.
-Sua meta é entregar o melhor cálculo possível.
+* Reduza o erro ao mínimo possível em relação ao alvo, mas PRIORIZE sempre a fidelidade ao que os alimentos realmente entregam.
+* Você tem permissão para divergir levemente do alvo fixo do briefing se for necessário para manter a coerência gastronômica e nutricional da refeição. 
+Sua meta é entregar o melhor cálculo possível baseado nos alimentos reais.
 
 ---
 
