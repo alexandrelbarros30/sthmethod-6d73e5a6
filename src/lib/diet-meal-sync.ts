@@ -83,7 +83,11 @@ const splitFoodsByPlus = (text: string): string[] => {
 
 const stripLeadingLabel = (text: string): string => {
   // Removes leading labels like "Alimentos:", "Substituições:", "Opção 1:" etc.
-  return text.replace(/^\s*(alimentos|substitui[cç][õo]es|op[cç][aã]o\s*\d*|sugest[ãa]o)\s*[:\-–]\s*/i, "").trim();
+  // CRITICAL: We also remove quotes that might be wrapping the option line from the AI output
+  return text
+    .replace(/^\s*["']?\s*(alimentos|substitui[cç][õo]es|op[cç][aã]o\s*\d*|sugest[ãa]o)\s*[:\-–]\s*/i, "")
+    .replace(/["']\s*$/i, "")
+    .trim();
 };
 
 /**
@@ -119,7 +123,7 @@ const htmlToTokens = (content: string): DietToken[] => {
     const before = normalized;
     normalized = normalized.replace(
       /<li\b[^>]*>((?:(?!<li\b|<\/li>)[\s\S])*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>(?:(?!<li\b|<\/li>)[\s\S])*?)<\/li>/gi,
-      "$1"
+      "<p>$1</p>"
     );
     if (normalized === before) break;
   }
