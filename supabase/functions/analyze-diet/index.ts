@@ -95,8 +95,11 @@ async function fsLookup(name: string) {
     const rawFoods = json.foods?.food
       ? Array.isArray(json.foods.food) ? json.foods.food : [json.foods.food]
       : [];
-    // Prefer generic (no brand) or items with "taco" or "unicamp" in name first
-    const generic = rawFoods.find((f: any) => !f.brand_name || f.food_name.toLowerCase().includes("taco") || f.food_name.toLowerCase().includes("unicamp")) || rawFoods[0];
+    // Prioridade absoluta: buscar alimentos com "taco" ou "unicamp" no nome, ou marcas BR conhecidas
+    const generic = rawFoods.find((f: any) => {
+      const name = f.food_name.toLowerCase();
+      return name.includes("taco") || name.includes("unicamp") || name.includes("tbca");
+    }) || rawFoods[0];
     if (!generic) {
       fsMemCache.set(key, null);
       return null;

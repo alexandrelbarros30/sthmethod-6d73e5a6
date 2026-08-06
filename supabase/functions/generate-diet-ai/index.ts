@@ -341,15 +341,15 @@ IMPORTANTE:
 - Garanta que as metas nutricionais sejam respeitadas rigorosamente.
 - Diversifique os alimentos: use pães, aveia, frutas, laticínios e suplementos quando apropriado ao objetivo.
 
-REGRAS CRÍTICAS DE PRECISÃO:
-1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional. Cada opção deve ser uma refeição COMPLETA e não apenas um item isolado.
-2. RIGOR MATEMÁTICO: O total calórico e macros no JSON devem ser a soma aritmética EXATA de todos os itens da ALIMENTAÇÃO BASE. Se a meta é 1600 kcal, a soma deve ser ~1600 kcal. NÃO aceite desvios significativos.
-3. PRIORIDADE DE MACROS: Se o briefing pedir uma quantidade específica de proteína (ex: 200g), essa meta é ABSOLUTA. Fixe a proteína no valor solicitado e ajuste os carboidratos e gorduras para equalizar as calorias totais sugeridas.
-4. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais. Não gere refeições mono-alimento.
-5. Sua fonte PRIORITÁRIA de referência é a base FATSECRET. Use a TABELA TACO (UNICAMP) apenas como fonte secundária.
-6. AFERIÇÃO DE PRECISÃO: O usuário reportou erros onde o valor gerado não condiz com o real (ex: emitir valor "falso" que será testado). Você será auditado. Se a meta for 1700 kcal, busque chegar o mais próximo possível usando dados REAIS da FatSecret.
-7. Se houver conflito entre carboidratos e calorias, ajuste os carboidratos para bater a meta de Kcal.
-8. NÃO retorne erros genéricos.
+REGRAS CRÍTICAS DE PRECISÃO E AUDITORIA:
+1. Para CADA refeição, forneça 4 opções (1 Base + 3 Alternativas) com equivalência nutricional. Cada opção deve ser uma refeição COMPLETA.
+2. RIGOR MATEMÁTICO ABSOLUTO: O usuário audita manualmente grama por grama no app FatSecret. Se você gerar "100g de Frango", use o valor exato que o app FatSecret entrega para esse item no Brasil.
+3. CONCORDÂNCIA COM O APP FATSECRET: Não use tabelas genéricas se elas divergirem do que o usuário vê no app. A soma das bases das refeições deve ser EXATA. 1700 kcal no briefing = 1700 kcal na soma real dos alimentos.
+4. PRIORIDADE DE PROTEÍNA: Se o admin fixar 200g de proteína, esse valor é a âncora do cálculo. Ajuste o restante para bater as calorias.
+5. Diversidade Alimentar: Inclua pães, whey protein, iogurtes, frutas, legumes e vegetais.
+6. Sua fonte ÚNICA e PRIORITÁRIA de verdade é a base FATSECRET BRASIL.
+7. Se houver desvio entre o que você calcula e o que a análise FatSecret retorna, você deve refazer o cálculo até que a divergência seja zero.
+8. NÃO emita valores falsos; o usuário está testando cada alimento individualmente.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
