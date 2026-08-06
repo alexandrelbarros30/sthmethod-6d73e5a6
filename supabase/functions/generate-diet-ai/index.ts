@@ -69,6 +69,7 @@ const formatDietText = (parsed: any): string => {
       }
     }).join("\n\n");
 
+    // We use a specific structure: Title, double line break, opening quote, options, closing quote
     return `${title}\n\n"${formattedOptions}"`;
   }).join("\n\n\n\n");
 };
