@@ -15,13 +15,14 @@ type Kind = 'diet' | 'workout' | 'analysis';
 const CYCLE_DAYS: Record<Kind, number> = { diet: 30, workout: 30, analysis: 60 };
 const MAX_REVISIONS: Record<Kind, number> = { diet: 3, workout: 3, analysis: 1 };
 
-const BASE_RULES = `Você é a inteligência oficial do STH METHOD AI.
+const BASE_RULES = `Você é a inteligência oficial do STH METHOD AI (STHIA).
 Regras invioláveis:
 - Português do Brasil, tom técnico, elegante, direto e acolhedor. Markdown escaneável.
 - NUNCA prescreva, sugira, cite dose ou estratégia de medicamentos, hormônios, peptídeos, anabolizantes, emagrecedores injetáveis ou qualquer substância terapêutica. Se perguntarem, responda que esse tema pertence exclusivamente ao acompanhamento profissional da STH METHOD.
 - Nunca use as palavras "médico", "médica", "medicina" ou "medical". A STH METHOD oferece orientação plena e suporte para o alcance do objetivo.
 - Nunca prometa resultados milagrosos nem prazos irreais.
-- Justifique decisões pela metodologia (fisiologia, aderência, progressão), nunca por argumento comercial.`;
+- Justifique decisões pela metodologia (fisiologia, aderência, progressão), nunca por argumento comercial.
+- PRECISÃO NUTRICIONAL: Você deve ser rigoroso no cálculo de kcal e macros (P=4, C=4, G=9). Use a tabela TACO/FatSecret como referência real. O usuário confia na sua exatidão matemática.`;
 
 const PROMPTS: Record<Kind, string> = {
   diet: `${BASE_RULES}
@@ -297,7 +298,7 @@ Deno.serve(async (req) => {
     }
 
     const userPrompt = mode === 'revise'
-      ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}\nVERSÃO ANTERIOR (a ser corrigida):\n${last!.content}\n\nAJUSTE PEDIDO (CONTRA-RESPOSTA): ${instruction}\n\nINSTRUÇÃO CRÍTICA: O usuário não gostou da versão anterior e está enviando uma contra-resposta. Analise os detalhes acima e REFAÇA o plano incorporando EXATAMENTE as mudanças pedidas, mas mantendo a estrutura e o que não foi criticado. Não repita o erro da versão anterior. Adicione ao final a seção "## O que mudou nesta revisão".`
+      ? `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}\nVERSÃO ANTERIOR (a ser corrigida):\n${last!.content}\n\nAJUSTE PEDIDO (CONTRA-RESPOSTA): ${instruction}\n\nINSTRUÇÃO CRÍTICA (RIGOR TOTAL): O usuário não gostou da versão anterior e está enviando uma contra-resposta específica. Analise os detalhes acima e REFAÇA o plano incorporando EXATAMENTE as mudanças pedidas (ex: inclusão de gelatina zero, substituição de alimentos específicos, correção de kcal). O cumprimento das solicitações de ajuste e inclusão de novos alimentos é MANDATÓRIO e prioritário sobre a versão anterior. Mantenha a estrutura e o que não foi criticado. Não repita o erro da versão anterior. Realize cálculos internos precisos (padrão FatSecret/TACO) para garantir que os macros e kcal reflitam a realidade dos alimentos solicitados. Adicione ao final a seção "## O que mudou nesta revisão".`
       : `Perfil do usuário:\n${context}\n${fbContext ? `\n${fbContext}\n` : ''}${libraryBlock ? `\n${libraryBlock}\n` : ''}${instruction ? `\nObservações do usuário: ${instruction}` : ''}${exceptionReason ? `\nExceção registrada: ${exceptionReason}` : ''}`;
 
     // ===== Anexos de exame laboratorial (somente Central de Análise) =====
