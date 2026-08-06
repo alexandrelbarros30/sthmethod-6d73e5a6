@@ -408,13 +408,32 @@ export default function AiOnboarding() {
         {/* Revisão final do cadastro mostrando dados já confirmados */}
         {ready && Object.values(form).some(v => v !== "") && (
           <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Dados Confirmados</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Dados Confirmados</h3>
+              <Badge variant="outline" className="text-[10px] uppercase border-primary/30 text-primary">
+                Fonte de Verdade
+              </Badge>
+            </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {Object.entries(form).map(([key, val]) => {
+                const isEssential = STEP0_FIELDS.includes(key);
                 if (!val || val === "nenhuma" || val === "nenhum") return null;
                 return (
-                  <Badge key={key} variant="secondary" className="bg-primary/10 text-[10px] text-primary">
+                  <Badge 
+                    key={key} 
+                    variant="secondary" 
+                    className="group relative bg-primary/10 text-[10px] text-primary pr-6"
+                  >
                     {key.replace(/_/g, " ")}: OK
+                    <button 
+                      onClick={() => {
+                        setStep(isEssential ? 0 : 1);
+                        setTimeout(() => focusField(`f-${key}`), 100);
+                      }}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0.5 hover:bg-primary/20"
+                    >
+                      <Pencil className="h-2.5 w-2.5" />
+                    </button>
                   </Badge>
                 );
               })}
@@ -431,7 +450,19 @@ export default function AiOnboarding() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
             </Button>
           ) : <span />}
-          <Button onClick={() => save(step === 0 ? 1 : 2)} disabled={saving}>
+          <Button 
+            onClick={() => {
+              // Validação rigorosa baseada na Fonte de Verdade antes de avançar/concluir
+              const missingEssential = STEP0_FIELDS.filter(k => !form[k as keyof FormState]);
+              if (missingEssential.length > 0) {
+                toast.error(`Campos obrigatórios ausentes: ${missingEssential.join(", ").replace(/_/g, " ")}`);
+                setStep(0);
+                return;
+              }
+              save(step === 0 ? 1 : 2);
+            }} 
+            disabled={saving}
+          >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {step === 0 ? "Continuar" : "Concluir"}
             {!saving && <ArrowRight className="ml-2 h-4 w-4" />}
