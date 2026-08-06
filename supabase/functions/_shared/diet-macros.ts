@@ -192,14 +192,19 @@ export function computeBaseMacros(baseText: string): { macro: Macro; coverage: n
 const MEAL_BLOCK_RE =
   /(<p><strong>Refei[çc][ãa]o\s*\d+[^<]*?<\/strong><\/p>\s*<p><strong>)(\d[\d.]*)\s*kcal\s*·\s*P\s*(\d+)\s*g\s*\/\s*C\s*(\d+)\s*g\s*\/\s*G\s*(\d+)\s*g(<\/strong><\/p>\s*<p><strong>"?\s*⭐?\s*(?:ALIMENTA[ÇC][ÃA]O\s*)?BASE:<\/strong>\s*)([^<]+)/gi;
 
+const PLAIN_MEAL_BLOCK_RE = 
+  /(Refei[çc][ãa]o\s*\d+[^:]*:[^—\n]*—\s*[^·\n]*·\s*)(\d[\d.]*)\s*kcal\s*·\s*P\s*(\d+)\s*g\s*\/\s*C\s*(\d+)\s*g\s*\/\s*G\s*(\d+)\s*g([\s\n]*"?\s*⭐?\s*(?:BASE|ALIMENTA[ÇC][ÃA]O\s*BASE):[\s\n]*)([^"\n]+)/gi;
+
 /**
- * Recalcula, no HTML gerado pela IA, as kcal e macros de cada refeição a partir
- * da refeição BASE. Mantém o texto intacto quando não há cobertura suficiente.
+ * Recalcula, no conteúdo gerado pela IA (HTML ou Texto), as kcal e macros de cada refeição 
+ * a partir da refeição BASE. Mantém o texto intacto quando não há cobertura suficiente.
  */
-export function recalcDietMacros(html: string): { html: string; totals: Macro; recalculated: number } {
+export function recalcDietMacros(content: string): { html: string; totals: Macro; recalculated: number } {
   const totals: Macro = { kcal: 0, p: 0, c: 0, f: 0 };
   let recalculated = 0;
-  const out = html.replace(MEAL_BLOCK_RE, (full, head, kcal, p, c, f, mid, baseText) => {
+
+  // Tenta processar formato HTML
+  let out = content.replace(MEAL_BLOCK_RE, (full, head, kcal, p, c, f, mid, baseText) => {
     const { macro, coverage } = computeBaseMacros(String(baseText));
     if (coverage < 0.7 || macro.kcal <= 0) {
       totals.kcal += Number(String(kcal).replace(/\./g, ""));
@@ -221,5 +226,31 @@ export function recalcDietMacros(html: string): { html: string; totals: Macro; r
     totals.f += r.f;
     return `${head}${r.kcal} kcal · P ${r.p}g / C ${r.c}g / G ${r.f}g${mid}${baseText}`;
   });
+
+  // Tenta processar formato Plain Text (STHIA 2.0)
+  out = out.replace(PLAIN_MEAL_BLOCK_RE, (full, head, kcal, p, c, f, mid, baseText) => {
+    const { macro, coverage } = computeBaseMacros(String(baseText));
+    if (coverage < 0.7 || macro.kcal <= 0) {
+      // Já somado no loop anterior se fosse o mesmo conteúdo, mas aqui são regex exclusivas
+      totals.kcal += Number(String(kcal).replace(/\./g, ""));
+      totals.p += Number(p);
+      totals.c += Number(c);
+      totals.f += Number(f);
+      return full;
+    }
+    recalculated++;
+    const r = {
+      kcal: Math.round(macro.kcal),
+      p: Math.round(macro.p),
+      c: Math.round(macro.c),
+      f: Math.round(macro.f),
+    };
+    totals.kcal += r.kcal;
+    totals.p += r.p;
+    totals.c += r.c;
+    totals.f += r.f;
+    return `${head}${r.kcal} kcal · P ${r.p}g / C ${r.c}g / G ${r.f}g${mid}${baseText}`;
+  });
+
   return { html: out, totals, recalculated };
 }
