@@ -350,6 +350,7 @@ REGRAS CRÍTICAS DE PRECISÃO E AUDITORIA:
 6. Sua fonte ÚNICA e PRIORITÁRIA de verdade é a base FATSECRET BRASIL.
 7. Se houver desvio entre o que você calcula e o que a análise FatSecret retorna, você deve refazer o cálculo até que a divergência seja zero.
 8. NÃO emita valores falsos; o usuário está testando cada alimento individualmente.
+9. DINAMISMO DO BRIEFING: Os valores de kcal/macros no briefing são ALVOS (objetivos). O cardápio gerado deve refletir o CÁLCULO REAL dos alimentos escolhidos. Se você escolher alimentos que somam 1650kcal para um alvo de 1700kcal, o JSON 'total' deve apresentar 1650kcal (o valor real), permitindo que o administrador identifique a necessidade de ajuste. NUNCA force o 'total' a ser igual ao briefing se a soma dos alimentos for diferente. O valor real permite a análise e solicitação de correção pelo consultor.
 
 META ATUAL: ${targetsForRetry?.energy_kcal ? targetsForRetry.energy_kcal + " kcal" : "Não definida"}
 PERFIL: ${profileData ? JSON.stringify({
