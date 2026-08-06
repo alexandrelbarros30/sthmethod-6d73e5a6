@@ -393,6 +393,23 @@ export default function AdminStudentAnalysis() {
     onError: (e: any) => toast.error(e?.message || "Falha ao atualizar liberação da leitura visual"),
   });
 
+  const updateVisibility = useMutation({
+    mutationFn: async ({ id, settings }: { id: string, settings: any }) => {
+      const { error } = await supabase
+        .from("student_clinical_analyses")
+        .update({ visibility_settings: settings })
+        .eq("id", id);
+      if (error) throw error;
+      return settings;
+    },
+    onSuccess: (settings) => {
+      toast.success("Configurações de visibilidade atualizadas");
+      refetchHistory();
+      if (current) setCurrent({ ...current, visibility_settings: settings });
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar visibilidade"),
+  });
+
   const selectedStudent = students.find((s) => s.user_id === studentId);
 
   return (
