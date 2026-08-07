@@ -235,7 +235,13 @@ serve(async (req) => {
           continue;
         }
 
-        const b64 = btoa(new Uint8Array(await blob.arrayBuffer()).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+        let b64 = "";
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        const CHUNK_SIZE = 0x8000;
+        for (let i = 0; i < buf.length; i += CHUNK_SIZE) {
+          b64 += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + CHUNK_SIZE)));
+        }
+        b64 = btoa(b64);
         
         if (mime.startsWith("image/")) {
           examParts.push({ type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } });
