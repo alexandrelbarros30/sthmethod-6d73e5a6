@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.5-flash";
+const MODEL_ID = "google/gemini-2.0-flash-exp"; // Using a stable or experimental model with high reliability
 
 const STHIA_IDENTITY = `Você é o STHIA ELITE MEDICAL PERFORMANCE ENGINE — cérebro clínico-científico da STH METHOD.
 Integra médicos do esporte, endocrinologistas, nutrólogos, farmacologistas, bioquímicos,
@@ -215,21 +215,34 @@ serve(async (req) => {
     // Lab exam files (PDF or image) uploaded ad hoc — documents bucket
     const examParts: any[] = [];
     const examMeta: string[] = [];
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit for base64 encoding
     for (const p of Array.isArray(extraExamPaths) ? extraExamPaths : []) {
       if (typeof p !== "string" || !p) continue;
       try {
         const { data: blob, error: dErr } = await admin.storage.from("documents").download(p);
         if (dErr || !blob) continue;
+        
         const name = p.split("/").pop() || "exame";
         const ext = name.split(".").pop()?.toLowerCase() || "";
         const mime = ext === "pdf" ? "application/pdf"
           : ext === "png" ? "image/png"
           : ext === "webp" ? "image/webp"
           : "image/jpeg";
+          
+        if (blob.size > MAX_FILE_SIZE) {
+          console.warn(`File ${name} too large for inline processing (${(blob.size / 1024 / 1024).toFixed(2)}MB). Skipping.`);
+          examMeta.push(`${name} (pular - arquivo muito grande)`);
+          continue;
+        }
+
+        let b64 = "";
         const buf = new Uint8Array(await blob.arrayBuffer());
-        let bin = "";
-        for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
-        const b64 = btoa(bin);
+        const CHUNK_SIZE = 0x8000;
+        for (let i = 0; i < buf.length; i += CHUNK_SIZE) {
+          b64 += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + CHUNK_SIZE)));
+        }
+        b64 = btoa(b64);
+        
         if (mime.startsWith("image/")) {
           examParts.push({ type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } });
         } else {
@@ -237,7 +250,7 @@ serve(async (req) => {
         }
         examMeta.push(`${name} (${mime})`);
       } catch (e) {
-        console.warn("exam file load failed", p, e);
+        console.error("exam file processing failed", p, e);
       }
     }
     if (examMeta.length) (dossier as any).uploaded_exam_files = examMeta;
