@@ -789,10 +789,36 @@ const AdminTrainingPrograms = () => {
             <span className="hidden sm:inline text-[11px] text-muted-foreground uppercase tracking-wide mr-1">
               {filteredPrograms.length} programa(s)
             </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={creatingMaxProgram}
+              onClick={async () => {
+                setCreatingMaxProgram(true);
+                try {
+                  const { createHipertrofiaMaxProgram } = await import("@/lib/create-hipertrofia-max");
+                  const res = await createHipertrofiaMaxProgram(user!.id);
+                  if (res.success) {
+                    toast.success("Programa Hipertrofia Max 1.0 criado com sucesso!");
+                    queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                  } else {
+                    throw res.error;
+                  }
+                } catch (e: any) {
+                  toast.error("Erro ao criar programa: " + (e.message || e));
+                } finally {
+                  setCreatingMaxProgram(false);
+                }
+              }}
+              className="h-9 border-primary/40 text-primary hover:bg-primary/10"
+            >
+              {creatingMaxProgram ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
+              Hipertrofia Max 1.0
+            </Button>
             <AiWorkoutCoachDialog triggerLabel="STHIA · Elite Coach" variant="secondary" />
             <ImportFromSuperCoachDialog
               libraryExercises={[]}
-              buttonLabel="Importar do ST Coach"
+              buttonLabel="Importar ST Coach"
               buttonVariant="outline"
               onImported={() => {
                 queryClient.invalidateQueries({ queryKey: ["training-programs"] });
