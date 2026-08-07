@@ -48,14 +48,14 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     // I will scaffold the structure based on the images provided.
 
     // Treino A: Peitorais e Deltóides
-    const workoutA = await createWorkout("Semana 1 - Treino A", "Peitorais e Deltóides", 0);
+    const workoutA = await createWorkout("Treino A", "Peitorais e Deltóides", 0);
     await supabase.from("workout_template_exercises").insert([
       { template_id: workoutA, custom_name: "Supino 45º com Halteres", sets: "4", reps: "12/10/8/6 + drop-set", sort_order: 0 },
       { template_id: workoutA, custom_name: "Supino 45º Hammer", sets: "4", reps: "12/10/8/6 + drop-set", sort_order: 1 },
       { template_id: workoutA, custom_name: "Supino Reto Máquina", sets: "3", reps: "10", sort_order: 2 },
       { template_id: workoutA, custom_name: "Supino Declinado Máquina", sets: "3", reps: "8-12", sort_order: 3 },
-      { template_id: workoutA, custom_name: "Crossover - Peak Contraction", sets: "5", reps: "15/15/12/12/10", sort_order: 4 },
-      { template_id: workoutA, custom_name: "Elevação Frontal Corda", sets: "3", reps: "8-12 + drop-set", sort_order: 5 },
+      { template_id: workoutA, custom_name: "Crossover", sets: "5", reps: "15/15/12/12/10", sort_order: 4 },
+      { template_id: workoutA, custom_name: "Elevação Frontal", sets: "3", reps: "8-12 + drop-set", sort_order: 5 },
       { template_id: workoutA, custom_name: "Elevação Lateral Sentado", sets: "3", reps: "8-12 + drop-set", sort_order: 6 }
     ]);
 
