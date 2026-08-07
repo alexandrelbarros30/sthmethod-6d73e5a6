@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL_ID = "google/gemini-2.5-flash";
+const MODEL_ID = "google/gemini-2.0-flash-exp"; // Using a stable or experimental model with high reliability
 
 const STHIA_IDENTITY = `Você é o STHIA ELITE MEDICAL PERFORMANCE ENGINE — cérebro clínico-científico da STH METHOD.
 Integra médicos do esporte, endocrinologistas, nutrólogos, farmacologistas, bioquímicos,
