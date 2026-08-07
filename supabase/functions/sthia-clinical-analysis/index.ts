@@ -235,9 +235,7 @@ serve(async (req) => {
           continue;
         }
 
-        const buf = new Uint8Array(await blob.arrayBuffer());
-        // Use a more memory-efficient way to convert to base64 if possible
-        const b64 = btoa(Array.from(buf).map(b => String.fromCharCode(b)).join(""));
+        const b64 = btoa(new Uint8Array(await blob.arrayBuffer()).reduce((data, byte) => data + String.fromCharCode(byte), ''));
         
         if (mime.startsWith("image/")) {
           examParts.push({ type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } });
