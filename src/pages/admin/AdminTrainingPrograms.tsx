@@ -85,7 +85,6 @@ const AdminTrainingPrograms = () => {
   const [creatingMaxProgram, setCreatingMaxProgram] = useState(false);
   const [repairingProgram, setRepairingProgram] = useState(false);
   const [syncingVideos, setSyncingVideos] = useState(false);
-  const [syncingVideos, setSyncingVideos] = useState(false);
 
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
