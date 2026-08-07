@@ -111,8 +111,13 @@ export async function createHipertrofiaMaxProgram(userId: string) {
       { template_id: workoutE, custom_name: "Remada Máquina Aberta", sets: "4", reps: "8-12", sort_order: 8 }
     ]);
 
-    // Finally, trigger ST Coach sync for the program
-    await invokeSuperCoachEdge("supercoach-sync-program", { programId });
+    // Finally, trigger ST Coach sync for each workout to link videos
+    const { data: templates } = await supabase.from("workout_templates").select("id").eq("program_id", programId);
+    if (templates) {
+      for (const t of templates) {
+        await invokeSuperCoachEdge("supercoach-push-template", { templateId: t.id });
+      }
+    }
 
     return { success: true, programId };
   } catch (error) {
