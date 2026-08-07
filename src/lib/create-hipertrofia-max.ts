@@ -84,15 +84,15 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     ]);
 
     // Treino D: Panturrilhas e Isquiotibiais
-    const workoutD = await createWorkout("Semana 1 - Treino D", "Panturrilhas e Isquiotibiais", 3);
+    const workoutD = await createWorkout("Treino D", "Panturrilhas e Isquiotibiais", 3);
     await supabase.from("workout_template_exercises").insert([
       { template_id: workoutD, custom_name: "Panturrilhas Sentado", sets: "5", reps: "to failure + 2\" Peak Cont.", sort_order: 0 },
-      { template_id: workoutD, custom_name: "Panturrilhas Em Pé Máquina", sets: "5", reps: "to failure (até a falha)", sort_order: 1 },
+      { template_id: workoutD, custom_name: "Panturrilhas Em Pé", sets: "5", reps: "to failure (até a falha)", sort_order: 1 },
       { template_id: workoutD, custom_name: "Flexor Deitado", sets: "5", reps: "20/15/10/8/8 + drop-set", sort_order: 2 },
       { template_id: workoutD, custom_name: "Flexor Sentado", sets: "3", reps: "10+10+10 (rest-pause)", sort_order: 3 },
-      { template_id: workoutD, custom_name: "Flexor Unilateral", sets: "4", reps: "10 + drop-set", sort_order: 4 },
-      { template_id: workoutD, custom_name: "Elevação de Quadril", sets: "4", reps: "8-12", sort_order: 5 },
-      { template_id: workoutD, custom_name: "Abdutora na Máquina", sets: "5", reps: "8-12", sort_order: 6 },
+      { template_id: workoutD, custom_name: "Flexão de Perna Unilateral", sets: "4", reps: "10 + drop-set", sort_order: 4 },
+      { template_id: workoutD, custom_name: "Elevação Pélvica", sets: "4", reps: "8-12", sort_order: 5 },
+      { template_id: workoutD, custom_name: "Cadeira Abdutora", sets: "5", reps: "8-12", sort_order: 6 },
       { template_id: workoutD, custom_name: "Agachamento Livre", sets: "4", reps: "12/10/8/6", sort_order: 7 },
       { template_id: workoutD, custom_name: "Leg Press Unilateral", sets: "4", reps: "8-10 each leg", sort_order: 8 }
     ]);
