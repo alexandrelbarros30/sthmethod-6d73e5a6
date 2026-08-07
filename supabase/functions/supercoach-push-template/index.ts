@@ -527,8 +527,12 @@ Deno.serve(async (req) => {
         const bucket = byLib.get(String(m.libId));
         const picked = bucket && bucket.length ? bucket.shift() : null;
         if (picked?.id) {
+          const videoUrl = picked.video_url || picked.video || '';
           await admin.from('workout_template_exercises')
-            .update({ supercoach_workout_id: Number(picked.id) })
+            .update({ 
+              supercoach_workout_id: Number(picked.id),
+              ...(videoUrl ? { video_url: videoUrl } : {})
+            })
             .eq('id', m.exId);
         }
       }
@@ -550,6 +554,8 @@ Deno.serve(async (req) => {
         const reason = directReasonById.get(String(current.id)) || 'cópia da biblioteca não retornou vínculo rastreável';
         try {
           const wid = await createScWorkout(token, current, scTrainingId, invertedSort, supersetGroup);
+          // O createScWorkout retorna o ID, mas o link do vídeo geralmente vem na library
+          // No entanto, se criamos direto, o vídeo pode vir do local.
           await admin.from('workout_template_exercises')
             .update({ supercoach_workout_id: wid })
             .eq('id', current.id);
@@ -586,10 +592,19 @@ Deno.serve(async (req) => {
       const scSort = Math.max(0, totalOrdered - 1 - idx);
       const patch = buildWorkoutPayload(ex, Number(wid), scTrainingId, scSort, supersetGroup, true);
       try {
-        await scFetch(token, `/workouts/${wid}`, {
+        const response = await scFetch(token, `/workouts/${wid}`, {
           method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify(patch),
         });
+        
+        // Sincroniza o vídeo de volta para o STH METHOD se o ST Coach retornou um
+        const remoteVideo = response?.workout?.video_url || response?.data?.video_url || response?.video_url;
+        if (remoteVideo && remoteVideo !== ex.video_url) {
+          await admin.from('workout_template_exercises')
+            .update({ video_url: remoteVideo })
+            .eq('id', ex.id);
+        }
+        
         patched++;
       } catch (e) {
         console.error('patch workout failed', wid, (e as any)?.message);
