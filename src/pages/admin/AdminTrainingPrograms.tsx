@@ -16,7 +16,7 @@ import ErrorDetailsDialog, { type ErrorDetails } from "@/components/shared/Error
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon, Download, RefreshCw, Sparkles, Loader2 } from "lucide-react";
-import { MoreHorizontal, Wrench, Database } from "lucide-react";
+import { MoreHorizontal, Wrench, Database, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
@@ -83,6 +83,7 @@ const AdminTrainingPrograms = () => {
   const [coverError, setCoverError] = useState<ErrorDetails | null>(null);
   const [generatingCoverId, setGeneratingCoverId] = useState<string | null>(null);
   const [creatingMaxProgram, setCreatingMaxProgram] = useState(false);
+  const [repairingProgram, setRepairingProgram] = useState(false);
 
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
@@ -789,6 +790,31 @@ const AdminTrainingPrograms = () => {
             <span className="hidden sm:inline text-[11px] text-muted-foreground uppercase tracking-wide mr-1">
               {filteredPrograms.length} programa(s)
             </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+              disabled={repairingProgram}
+              onClick={async () => {
+                const confirm = window.confirm("Isso irá reconstruir os exercícios do programa MASCULINO 1.0. Continuar?");
+                if (!confirm) return;
+                setRepairingProgram(true);
+                try {
+                  const { repairMasculino10Program } = await import("@/lib/repair-masculino-10");
+                  await repairMasculino10Program();
+                  toast.success("Programa MASCULINO 1.0 reparado com sucesso!");
+                  queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                  queryClient.invalidateQueries({ queryKey: ["program-workout-counts"] });
+                } catch (e: any) {
+                  toast.error("Erro ao reparar programa: " + e.message);
+                } finally {
+                  setRepairingProgram(false);
+                }
+              }}
+            >
+              <Wrench className={`w-4 h-4 mr-1.5 ${repairingProgram ? "animate-spin" : ""}`} />
+              Reparar Masculino 1.0
+            </Button>
             <Button
               variant="outline"
               size="sm"
