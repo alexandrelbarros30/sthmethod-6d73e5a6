@@ -112,13 +112,14 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     ]);
 
     // Finally, trigger ST Coach sync for each workout to link videos
-    const { data: templates } = await supabase.from("workout_templates").select("id").eq("program_id", programId);
+    const { data: templates } = await supabase.from("workout_templates").select("id").eq("program_id", programId).order("sort_order", { ascending: true });
     if (templates) {
       console.log(`[hipertrofia-max] Triggering sync for ${templates.length} templates`);
       for (const t of templates) {
         // This edge function will look up the exercises in ST Coach library by name
         // and link the video_url back to our database.
-        await invokeSuperCoachEdge("supercoach-push-template", { templateId: t.id });
+        const res = await invokeSuperCoachEdge("supercoach-push-template", { templateId: t.id });
+        console.log(`[hipertrofia-max] Template ${t.id} sync result:`, res);
       }
     }
 
