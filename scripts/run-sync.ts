@@ -1,5 +1,5 @@
-import { createHipertrofiaMaxProgram } from './src/lib/create-hipertrofia-max';
-import { supabase } from './src/integrations/supabase/client';
+import { createHipertrofiaMaxProgram } from '../src/lib/create-hipertrofia-max';
+import { supabase } from '../src/integrations/supabase/client';
 
 async function run() {
   const { data: { user } } = await supabase.auth.getUser();
