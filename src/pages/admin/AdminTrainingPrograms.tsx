@@ -15,8 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import ErrorDetailsDialog, { type ErrorDetails } from "@/components/shared/ErrorDetailsDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon, Download, RefreshCw } from "lucide-react";
-import { MoreHorizontal, Wrench } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon, Download, RefreshCw, Sparkles } from "lucide-react";
+import { MoreHorizontal, Wrench, Database } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
@@ -82,6 +82,7 @@ const AdminTrainingPrograms = () => {
   const [coverSyncing, setCoverSyncing] = useState<null | "push" | "pull">(null);
   const [coverError, setCoverError] = useState<ErrorDetails | null>(null);
   const [generatingCoverId, setGeneratingCoverId] = useState<string | null>(null);
+  const [creatingMaxProgram, setCreatingMaxProgram] = useState(false);
 
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
