@@ -50,7 +50,7 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     // Treino A: Peitorais e Deltóides
     const workoutA = await createWorkout("Semana 1 - Treino A", "Peitorais e Deltóides", 0);
     await supabase.from("workout_template_exercises").insert([
-      { template_id: workoutA, custom_name: "Supino 45º com Halteres", sets: "4", reps: "12/10/8/6 + drop-set", sort_order: 0, video_url: "https://vimeo.com/393165987" },
+      { template_id: workoutA, custom_name: "Supino 45º com Halteres", sets: "4", reps: "12/10/8/6 + drop-set", sort_order: 0 },
       { template_id: workoutA, custom_name: "Supino 45º Hammer", sets: "4", reps: "12/10/8/6 + drop-set", sort_order: 1 },
       { template_id: workoutA, custom_name: "Supino Reto Máquina", sets: "3", reps: "10", sort_order: 2 },
       { template_id: workoutA, custom_name: "Supino Declinado Máquina", sets: "3", reps: "8-12", sort_order: 3 },
@@ -114,7 +114,10 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     // Finally, trigger ST Coach sync for each workout to link videos
     const { data: templates } = await supabase.from("workout_templates").select("id").eq("program_id", programId);
     if (templates) {
+      console.log(`[hipertrofia-max] Triggering sync for ${templates.length} templates`);
       for (const t of templates) {
+        // This edge function will look up the exercises in ST Coach library by name
+        // and link the video_url back to our database.
         await invokeSuperCoachEdge("supercoach-push-template", { templateId: t.id });
       }
     }
