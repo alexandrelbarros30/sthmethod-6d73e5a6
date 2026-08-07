@@ -98,15 +98,15 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     ]);
 
     // Treino E: Braços e Costas
-    const workoutE = await createWorkout("Semana 1 - Treino E", "Braços e Costas", 4);
+    const workoutE = await createWorkout("Treino E", "Braços e Costas", 4);
     await supabase.from("workout_template_exercises").insert([
-      { template_id: workoutE, custom_name: "Rosca Direta EZ Bar", sets: "5", reps: "15/12/10/8/8 + drop-set", sort_order: 0 },
-      { template_id: workoutE, custom_name: "Rosca Scott Máquina", sets: "4", reps: "4x 10 + 2\" Peak Contraction", sort_order: 1 },
+      { template_id: workoutE, custom_name: "Rosca Direta", sets: "5", reps: "15/12/10/8/8 + drop-set", sort_order: 0 },
+      { template_id: workoutE, custom_name: "Rosca Scott", sets: "4", reps: "4x 10 + 2\" Peak Contraction", sort_order: 1 },
       { template_id: workoutE, custom_name: "Rosca Direta no Cabo", sets: "4", reps: "8-12", sort_order: 2 },
       { template_id: workoutE, custom_name: "Rosca Bíceps no Cross", sets: "4", reps: "8-12", sort_order: 3 },
-      { template_id: workoutE, custom_name: "Tríceps Testa com Corda", sets: "5", reps: "20/15/12/10/8/ + drop-set", sort_order: 4 },
+      { template_id: workoutE, custom_name: "Tríceps Testa", sets: "5", reps: "20/15/12/10/8/ + drop-set", sort_order: 4 },
       { template_id: workoutE, custom_name: "Tríceps Corda", sets: "4", reps: "8-12", sort_order: 5 },
-      { template_id: workoutE, custom_name: "Francês", sets: "3", reps: "8-12", sort_order: 6 },
+      { template_id: workoutE, custom_name: "Tríceps Francês", sets: "3", reps: "8-12", sort_order: 6 },
       { template_id: workoutE, custom_name: "Puxador Supinado", sets: "4", reps: "8-12", sort_order: 7 },
       { template_id: workoutE, custom_name: "Remada Máquina Aberta", sets: "4", reps: "8-12", sort_order: 8 }
     ]);
