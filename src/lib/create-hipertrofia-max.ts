@@ -72,11 +72,11 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     ]);
 
     // Treino C: Deltóides e Peitorais
-    const workoutC = await createWorkout("Semana 1 - Treino C", "Deltóides e Peitorais", 2);
+    const workoutC = await createWorkout("Treino C", "Deltóides e Peitorais", 2);
     await supabase.from("workout_template_exercises").insert([
       { template_id: workoutC, custom_name: "Desenvolvimento com Halteres", sets: "5", reps: "20/15/12/10/8 + drop-set", sort_order: 0 },
       { template_id: workoutC, custom_name: "Elevação Lateral", sets: "3", reps: "8-10 + drop-set em todas", sort_order: 1 },
-      { template_id: workoutC, custom_name: "Elevação Lateral Unil. no Cabo", sets: "3", reps: "12 each arm (cada braço)", sort_order: 2 },
+      { template_id: workoutC, custom_name: "Elevação Lateral Unilateral", sets: "3", reps: "12 each arm (cada braço)", sort_order: 2 },
       { template_id: workoutC, custom_name: "Elevação Frontal no Cabo", sets: "3", reps: "10", sort_order: 3 },
       { template_id: workoutC, custom_name: "Elevação Frontal com Halteres", sets: "3", reps: "10", sort_order: 4 },
       { template_id: workoutC, custom_name: "Supino 45º com Halteres", sets: "3", reps: "10/8/6 + drop-set", sort_order: 5 },
