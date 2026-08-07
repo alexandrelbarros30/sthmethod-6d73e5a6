@@ -60,7 +60,7 @@ export async function createHipertrofiaMaxProgram(userId: string) {
     ]);
 
     // Treino B: Dorsais: largura
-    const workoutB = await createWorkout("Semana 1 - Treino B", "Dorsais: largura", 1);
+    const workoutB = await createWorkout("Treino B", "Dorsais: largura", 1);
     await supabase.from("workout_template_exercises").insert([
       { template_id: workoutB, custom_name: "Pulldown com Corda", sets: "4", reps: "8-15", sort_order: 0 },
       { template_id: workoutB, custom_name: "Barra Fixa Aberta", sets: "3", reps: "to failure (até a falha)", sort_order: 1 },
@@ -68,7 +68,7 @@ export async function createHipertrofiaMaxProgram(userId: string) {
       { template_id: workoutB, custom_name: "Puxador Aberto", sets: "3", reps: "to failure (até a falha)", sort_order: 3 },
       { template_id: workoutB, custom_name: "Puxador Triângulo", sets: "3", reps: "8-12 + 1\" Peak Contraction", sort_order: 4 },
       { template_id: workoutB, custom_name: "Puxador Supinado", sets: "4", reps: "8-10 + 2\" Peak Contraction", sort_order: 5 },
-      { template_id: workoutB, custom_name: "Banco Romano", sets: "4", reps: "10", sort_order: 6 }
+      { template_id: workoutB, custom_name: "Extensão Lombar", sets: "4", reps: "10", sort_order: 6 }
     ]);
 
     // Treino C: Deltóides e Peitorais
