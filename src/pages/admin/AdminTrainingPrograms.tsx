@@ -84,6 +84,7 @@ const AdminTrainingPrograms = () => {
   const [generatingCoverId, setGeneratingCoverId] = useState<string | null>(null);
   const [creatingMaxProgram, setCreatingMaxProgram] = useState(false);
   const [repairingProgram, setRepairingProgram] = useState(false);
+  const [syncingVideos, setSyncingVideos] = useState(false);
 
   // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
   useEffect(() => {
@@ -790,31 +791,68 @@ const AdminTrainingPrograms = () => {
             <span className="hidden sm:inline text-[11px] text-muted-foreground uppercase tracking-wide mr-1">
               {filteredPrograms.length} programa(s)
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-red-500/50 text-red-500 hover:bg-red-500/10"
-              disabled={repairingProgram}
-              onClick={async () => {
-                const confirm = window.confirm("Isso irá reconstruir os exercícios do programa MASCULINO 1.0. Continuar?");
-                if (!confirm) return;
-                setRepairingProgram(true);
-                try {
-                  const { repairMasculino10Program } = await import("@/lib/repair-masculino-10");
-                  await repairMasculino10Program();
-                  toast.success("Programa MASCULINO 1.0 reparado com sucesso!");
-                  queryClient.invalidateQueries({ queryKey: ["training-programs"] });
-                  queryClient.invalidateQueries({ queryKey: ["program-workout-counts"] });
-                } catch (e: any) {
-                  toast.error("Erro ao reparar programa: " + e.message);
-                } finally {
-                  setRepairingProgram(false);
-                }
-              }}
-            >
-              <Wrench className={`w-4 h-4 mr-1.5 ${repairingProgram ? "animate-spin" : ""}`} />
-              Reparar Masculino 1.0
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+                disabled={repairingProgram}
+                onClick={async () => {
+                  const confirm = window.confirm("Isso irá reconstruir os exercícios do programa MASCULINO 1.0. Continuar?");
+                  if (!confirm) return;
+                  setRepairingProgram(true);
+                  try {
+                    const { repairMasculino10Program } = await import("@/lib/repair-masculino-10");
+                    await repairMasculino10Program();
+                    toast.success("Programa MASCULINO 1.0 reparado com sucesso!");
+                    queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                    queryClient.invalidateQueries({ queryKey: ["program-workout-counts"] });
+                  } catch (e: any) {
+                    toast.error("Erro ao reparar programa: " + e.message);
+                  } finally {
+                    setRepairingProgram(false);
+                  }
+                }}
+              >
+                <Wrench className={`w-4 h-4 mr-1.5 ${repairingProgram ? "animate-spin" : ""}`} />
+                Reparar Masculino 1.0
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                disabled={syncingVideos}
+                onClick={async () => {
+                  const PROGRAM_ID = '901bf922-431e-4bc6-8b5d-3caae258e834';
+                  setSyncingVideos(true);
+                  try {
+                    const { data: tpls, error: tErr } = await supabase
+                      .from("workout_templates")
+                      .select("id, title")
+                      .eq("program_id", PROGRAM_ID);
+                    
+                    if (tErr) throw tErr;
+                    if (!tpls || tpls.length === 0) throw new Error("Nenhum treino encontrado para este programa.");
+
+                    toast.info(`Iniciando sincronização de vídeos para ${tpls.length} treinos...`);
+
+                    for (const tpl of tpls) {
+                      toast.info(`Sincronizando: ${tpl.title}`);
+                      await invokeEdgeWithSimpleFallback("supercoach-push-template", { templateId: tpl.id });
+                    }
+
+                    toast.success("Migração de vídeos concluída com sucesso!");
+                  } catch (e: any) {
+                    toast.error("Erro ao sincronizar vídeos: " + e.message);
+                  } finally {
+                    setSyncingVideos(false);
+                  }
+                }}
+              >
+                <RefreshCw className={`w-4 h-4 mr-1.5 ${syncingVideos ? "animate-spin" : ""}`} />
+                Sincronizar Vídeos ST Coach
+              </Button>
+            </div>
             <Button
               variant="outline"
               size="sm"
