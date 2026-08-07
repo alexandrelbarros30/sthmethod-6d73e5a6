@@ -18,7 +18,7 @@ export async function repairMasculino10Program() {
         { custom_name: "Supino Reto Máquina", sets: "3", reps: "10", sort_order: 2 },
         { custom_name: "Supino Declinado Máquina", sets: "3", reps: "8-12", sort_order: 3 },
         { custom_name: "Crossover", sets: "5", reps: "15/15/12/12/10", sort_order: 4 },
-        { custom_name: "Elevação Frontal Corda", sets: "3", reps: "8-12 + drop-set", sort_order: 5 },
+        { custom_name: "Elevação Frontal no Cabo", sets: "3", reps: "8-12 + drop-set", sort_order: 5 },
         { custom_name: "Elevação Lateral Sentado", sets: "3", reps: "8-12 + drop-set", sort_order: 6 }
       ]
     },
@@ -28,8 +28,7 @@ export async function repairMasculino10Program() {
         { custom_name: "Pulldown com Corda", sets: "4", reps: "8-15", sort_order: 0 },
         { custom_name: "Barra Fixa Aberta", sets: "3", reps: "to failure (até a falha)", sort_order: 1 },
         { custom_name: "Puxador Aberto", sets: "3", reps: "8-12 + 3\" Peak Contraction", sort_order: 2 },
-        { custom_name: "Puxador Aberto", sets: "3", reps: "to failure (até a falha)", sort_order: 3 },
-        { custom_name: "Puxador Triângulo", sets: "3", reps: "8-12 + 1\" Peak Contraction", sort_order: 4 },
+        { custom_name: "Puxador Neutro", sets: "3", reps: "8-12 + 1\" Peak Contraction", sort_order: 4 },
         { custom_name: "Puxador Supinado", sets: "4", reps: "8-10 + 2\" Peak Contraction", sort_order: 5 },
         { custom_name: "Banco Romano", sets: "4", reps: "10", sort_order: 6 }
       ]
@@ -66,10 +65,10 @@ export async function repairMasculino10Program() {
         { custom_name: "Rosca Direta EZ Bar", sets: "5", reps: "15/12/10/8/8 + drop-set", sort_order: 0 },
         { custom_name: "Rosca Scott Máquina", sets: "4", reps: "4x 10 + 2\" Peak Contraction", sort_order: 1 },
         { custom_name: "Rosca Direta no Cabo", sets: "4", reps: "8-12", sort_order: 2 },
-        { custom_name: "Rosca Bíceps no Cross", sets: "4", reps: "8-12", sort_order: 3 },
+        { custom_name: "Rosca Bíceps no Cabo", sets: "4", reps: "8-12", sort_order: 3 },
         { custom_name: "Tríceps Testa com Corda", sets: "5", reps: "20/15/12/10/8/ + drop-set", sort_order: 4 },
         { custom_name: "Tríceps Corda", sets: "4", reps: "8-12", sort_order: 5 },
-        { custom_name: "Francês", sets: "3", reps: "8-12", sort_order: 6 },
+        { custom_name: "Francês com Halter", sets: "3", reps: "8-12", sort_order: 6 },
         { custom_name: "Puxador Supinado", sets: "4", reps: "8-12", sort_order: 7 },
         { custom_name: "Remada Máquina Aberta", sets: "4", reps: "8-12", sort_order: 8 }
       ]
