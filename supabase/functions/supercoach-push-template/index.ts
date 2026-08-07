@@ -528,10 +528,13 @@ Deno.serve(async (req) => {
         const picked = bucket && bucket.length ? bucket.shift() : null;
         if (picked?.id) {
           const videoUrl = picked.video_url || picked.video || '';
+          const libraryWorkoutId = picked.library_workout_id || picked.library_id || null;
+          
           await admin.from('workout_template_exercises')
             .update({ 
               supercoach_workout_id: Number(picked.id),
-              ...(videoUrl ? { video_url: videoUrl } : {})
+              ...(videoUrl ? { video_url: videoUrl } : {}),
+              ...(libraryWorkoutId ? { supercoach_library_id: Number(libraryWorkoutId) } : {})
             })
             .eq('id', m.exId);
         }
@@ -597,11 +600,17 @@ Deno.serve(async (req) => {
           body: JSON.stringify(patch),
         });
         
-        // Sincroniza o vídeo de volta para o STH METHOD se o ST Coach retornou um
+        // Sincroniza o vídeo e ID da biblioteca de volta para o STH METHOD se o ST Coach retornou
         const remoteVideo = response?.workout?.video_url || response?.data?.video_url || response?.video_url;
-        if (remoteVideo && remoteVideo !== ex.video_url) {
+        const remoteLibId = response?.workout?.library_workout_id || response?.data?.library_workout_id || response?.library_workout_id;
+        
+        const updateData: any = {};
+        if (remoteVideo && remoteVideo !== ex.video_url) updateData.video_url = remoteVideo;
+        if (remoteLibId && Number(remoteLibId) !== Number(ex.supercoach_library_id)) updateData.supercoach_library_id = Number(remoteLibId);
+        
+        if (Object.keys(updateData).length > 0) {
           await admin.from('workout_template_exercises')
-            .update({ video_url: remoteVideo })
+            .update(updateData)
             .eq('id', ex.id);
         }
         
